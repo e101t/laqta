@@ -110,7 +110,12 @@ class AppRouter {
         path: Routes.booking,
         name: Routes.nBooking,
         builder: (context, state) {
-          final bookingId = state.pathParameters['id']!;
+          final bookingId = state.pathParameters['id'];
+          if (bookingId == null || bookingId.isEmpty) {
+            return const Scaffold(
+              body: Center(child: Text('Missing booking id')),
+            );
+          }
           return BookingDetailsScreen(bookingId: bookingId);
         },
       ),
@@ -118,7 +123,10 @@ class AppRouter {
         path: Routes.chat,
         name: Routes.nChat,
         builder: (context, state) {
-          final chatId = state.pathParameters['id']!;
+          final chatId = state.pathParameters['id'];
+          if (chatId == null || chatId.isEmpty) {
+            return const Scaffold(body: Center(child: Text('Missing chat id')));
+          }
           final otherUserName = state.uri.queryParameters['name'] ?? 'Unknown';
           return ChatScreen(chatId: chatId, otherUserName: otherUserName);
         },
@@ -127,7 +135,12 @@ class AppRouter {
         path: Routes.photographer,
         name: Routes.nPhotographer,
         builder: (context, state) {
-          final photographerId = state.pathParameters['id']!;
+          final photographerId = state.pathParameters['id'];
+          if (photographerId == null || photographerId.isEmpty) {
+            return const Scaffold(
+              body: Center(child: Text('Missing photographer id')),
+            );
+          }
           return PhotographerProfileScreen(photographerId: photographerId);
         },
       ),
@@ -275,6 +288,11 @@ class AppRouter {
     final isAuth = path == Routes.auth;
     final isRole = path == Routes.role;
     final isBasicInfo = path == Routes.basicInfo;
+
+    if (isSplash) {
+      // Let SplashScreen handle initial navigation to avoid double-routing.
+      return null;
+    }
 
     final prefs = await SharedPreferences.getInstance();
     final onboardingSeen =
