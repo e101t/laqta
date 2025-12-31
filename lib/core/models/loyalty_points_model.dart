@@ -28,17 +28,19 @@ class LoyaltyPoints {
   });
 
   factory LoyaltyPoints.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
+    final transactionsRaw = data['transactions'];
+    final transactionMaps = transactionsRaw is List
+        ? transactionsRaw.whereType<Map<dynamic, dynamic>>()
+        : const <Map<dynamic, dynamic>>[];
     return LoyaltyPoints(
       userId: doc.id,
       totalPoints: data['totalPoints'] ?? 0,
       availablePoints: data['availablePoints'] ?? 0,
       usedPoints: data['usedPoints'] ?? 0,
-      transactions:
-          (data['transactions'] as List<dynamic>?)
-              ?.map((t) => PointTransaction.fromMap(t as Map<String, dynamic>))
-              .toList() ??
-          [],
+      transactions: transactionMaps
+          .map((t) => PointTransaction.fromMap(Map<String, dynamic>.from(t)))
+          .toList(),
       tier: data['tier'] ?? 'bronze',
       lastUpdated:
           (data['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),

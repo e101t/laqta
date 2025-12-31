@@ -26,7 +26,7 @@ class StoryModel {
   });
 
   factory StoryModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
     final createdAt =
         (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
     final expiresAt =
@@ -42,11 +42,7 @@ class StoryModel {
       caption: data['caption'],
       createdAt: createdAt,
       expiresAt: expiresAt,
-      views:
-          (data['views'] as List<dynamic>?)
-              ?.map((v) => StoryView.fromMap(v as Map<String, dynamic>))
-              .toList() ??
-          [],
+      views: _parseViews(data['views']),
       isActive: DateTime.now().isBefore(expiresAt),
     );
   }
@@ -70,6 +66,14 @@ class StoryModel {
   }
 
   int get viewsCount => views.length;
+
+  static List<StoryView> _parseViews(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<dynamic, dynamic>>()
+        .map((view) => StoryView.fromMap(Map<String, dynamic>.from(view)))
+        .toList();
+  }
 
   String getTimeAgo() {
     final now = DateTime.now();

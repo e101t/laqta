@@ -12,13 +12,16 @@ class PortfolioModel {
   });
 
   factory PortfolioModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final imagesList = data['images'] as List<dynamic>? ?? [];
+    final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
+    final imagesList = data['images'];
+    final rawImages = imagesList is List
+        ? imagesList.whereType<Map<dynamic, dynamic>>()
+        : const <Map<dynamic, dynamic>>[];
     return PortfolioModel(
       id: doc.id,
       photographerId: data['photographerId'] ?? '',
-      images: imagesList
-          .map((img) => PortfolioImage.fromMap(img as Map<String, dynamic>))
+      images: rawImages
+          .map((img) => PortfolioImage.fromMap(Map<String, dynamic>.from(img)))
           .toList(),
     );
   }
