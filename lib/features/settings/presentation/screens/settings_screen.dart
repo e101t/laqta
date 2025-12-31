@@ -4,10 +4,10 @@ import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/providers/theme_provider.dart';
 import 'package:luqta/core/providers/locale_provider.dart';
 import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/features/settings/settings_dependencies.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -94,8 +94,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _deleteAccount() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
@@ -104,13 +105,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       // Delete user data from Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .delete();
+      final result = await SettingsDependencies.deleteUserData().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to delete user data',
+        );
+      }
 
       // Delete user account from Firebase Auth
-      await user.delete();
+      final authDeleteResult = await AuthDependencies.deleteCurrentUser()
+          .call();
+      if (!authDeleteResult.isSuccess) {
+        throw StateError(
+          authDeleteResult.failureOrNull?.message ??
+              'Failed to delete auth account',
+        );
+      }
 
       // Clear local preferences
       final prefs = await SharedPreferences.getInstance();
@@ -135,7 +147,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _logout() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      final result = await AuthDependencies.signOut().call();
+      if (!result.isSuccess) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to logout: ${result.failureOrNull?.message}'),
+          ),
+        );
+        return;
+      }
 
       // Clear local preferences
       final prefs = await SharedPreferences.getInstance();

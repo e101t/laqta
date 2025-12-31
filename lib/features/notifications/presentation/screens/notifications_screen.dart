@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/notification_model.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/skeleton_loaders.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:luqta/features/notifications/notifications_dependencies.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -33,8 +33,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         setState(() {
           _isLoading = false;
           _errorMessage = 'User not authenticated';
@@ -42,15 +43,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return;
       }
 
-      final snapshot = await FirebaseFirestore.instance
-          .collection('notifications')
-          .where('userId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      final notifications = snapshot.docs
-          .map((doc) => NotificationModel.fromFirestore(doc))
-          .toList();
+      final result = await NotificationsDependencies.getNotifications().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load notifications',
+        );
+      }
+      final notifications = result.valueOrNull ?? <NotificationModel>[];
 
       setState(() {
         _notifications = notifications;
@@ -69,10 +70,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (notification.isRead) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('notifications')
-          .doc(notification.notificationId)
-          .update({'isRead': true});
+      final result = await NotificationsDependencies.markNotificationRead()
+          .call(notification.notificationId);
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ??
+              'Failed to mark notification as read',
+        );
+      }
 
       setState(() {
         final index = _notifications.indexOf(notification);
@@ -88,21 +93,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _markAllAsRead() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) return;
 
-      final batch = FirebaseFirestore.instance.batch();
-
-      for (final notification in _notifications.where((n) => !n.isRead)) {
-        batch.update(
-          FirebaseFirestore.instance
-              .collection('notifications')
-              .doc(notification.notificationId),
-          {'isRead': true},
+      final unreadIds = _notifications
+          .where((notification) => !notification.isRead)
+          .map((notification) => notification.notificationId)
+          .toList();
+      final result = await NotificationsDependencies.markAllNotificationsRead()
+          .call(userId: userId, notificationIds: unreadIds);
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ??
+              'Failed to mark all notifications as read',
         );
       }
-
-      await batch.commit();
 
       setState(() {
         _notifications = _notifications
@@ -120,10 +126,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _deleteNotification(NotificationModel notification) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('notifications')
-          .doc(notification.notificationId)
-          .delete();
+      final result = await NotificationsDependencies.deleteNotification().call(
+        notification.notificationId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to delete notification',
+        );
+      }
 
       setState(() {
         _notifications.remove(notification);

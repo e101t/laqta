@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/photographer_model.dart';
@@ -9,6 +7,9 @@ import 'package:luqta/core/models/review_model.dart';
 import 'package:luqta/core/models/user_model.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/photographer/photographer_dependencies.dart';
+import 'package:luqta/features/photographer/presentation/mappers/photographer_presentation_mapper.dart';
 import 'package:luqta/screens/booking/booking_request_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -57,60 +58,23 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     });
 
     try {
-      // Fetch user data
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.photographerId)
-          .get();
-
-      if (!userDoc.exists) {
-        throw Exception('Photographer not found');
-      }
-
-      _userData = UserModel.fromFirestore(userDoc);
-      if (_userData == null) {
-        throw Exception('Failed to parse user data');
-      }
-
-      // Fetch photographer data
-      final photographerDoc = await FirebaseFirestore.instance
-          .collection('photographers')
-          .doc(widget.photographerId)
-          .get();
-
-      if (!photographerDoc.exists) {
-        throw Exception('Photographer profile not found');
-      }
-
-      _photographerData = PhotographerModel.fromFirestore(photographerDoc);
-      if (_photographerData == null) {
-        throw Exception('Failed to parse photographer data');
-      }
-
-      // Fetch portfolio data
-      final portfolioQuery = await FirebaseFirestore.instance
-          .collection('portfolios')
-          .where('photographerId', isEqualTo: widget.photographerId)
-          .limit(1)
-          .get();
-
-      if (portfolioQuery.docs.isNotEmpty) {
-        _portfolioData = PortfolioModel.fromFirestore(
-          portfolioQuery.docs.first,
+      final result = await PhotographerDependencies.getPhotographerProfile()
+          .call(photographerId: widget.photographerId);
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Photographer not found',
         );
       }
 
-      // Fetch reviews
-      final reviewsQuery = await FirebaseFirestore.instance
-          .collection('reviews')
-          .where('targetId', isEqualTo: widget.photographerId)
-          .orderBy('createdAt', descending: true)
-          .limit(10)
-          .get();
-
-      _reviews = reviewsQuery.docs
-          .map((doc) => ReviewModel.fromFirestore(doc))
-          .toList();
+      final bundle = result.valueOrNull!;
+      _userData = PhotographerPresentationMapper.toUserModel(bundle.user);
+      _photographerData = PhotographerPresentationMapper.toPhotographerModel(
+        bundle.photographer,
+      );
+      _portfolioData = bundle.portfolio == null
+          ? null
+          : PhotographerPresentationMapper.toPortfolioModel(bundle.portfolio!);
+      _reviews = PhotographerPresentationMapper.toReviewModels(bundle.reviews);
     } catch (e) {
       _errorMessage = 'Failed to load photographer data: $e';
     } finally {
@@ -119,24 +83,30 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
   }
 
   Future<void> _checkIfFavorite() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
 
     try {
-      final favoriteDoc = await FirebaseFirestore.instance
-          .collection('favorites')
-          .doc('${user.uid}_${widget.photographerId}')
-          .get();
-
-      setState(() => _isFavorite = favoriteDoc.exists);
+      final result = await PhotographerDependencies.checkFavoriteStatus().call(
+        userId: userId,
+        photographerId: widget.photographerId,
+      );
+      if (!result.isSuccess) {
+        return;
+      }
+      if (mounted) {
+        setState(() => _isFavorite = result.valueOrNull ?? false);
+      }
     } catch (e) {
       // Handle error silently or log it
     }
   }
 
   Future<void> _toggleFavorite() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please log in to add favorites')),
@@ -149,18 +119,15 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     setState(() => _isFavorite = !_isFavorite);
 
     try {
-      final favoriteRef = FirebaseFirestore.instance
-          .collection('favorites')
-          .doc('${user.uid}_${widget.photographerId}');
-
-      if (_isFavorite) {
-        await favoriteRef.set({
-          'userId': user.uid,
-          'photographerId': widget.photographerId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        await favoriteRef.delete();
+      final result = await PhotographerDependencies.setFavoriteStatus().call(
+        userId: userId,
+        photographerId: widget.photographerId,
+        isFavorite: _isFavorite,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to update favorite',
+        );
       }
     } catch (e) {
       // Revert the state on error

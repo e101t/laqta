@@ -6,8 +6,9 @@ import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/core/models/booking_model.dart';
 import 'package:luqta/core/router/app_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/booking/booking_dependencies.dart';
+import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
 
 class BookingRequestScreen extends StatefulWidget {
   final String photographerId;
@@ -108,8 +109,9 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
 
   Future<void> _submitBooking() async {
     if (_isSubmitting) return;
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) {
       _showSnack('الرجاء تسجيل الدخول لإرسال طلب الحجز');
       return;
     }
@@ -118,8 +120,8 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
 
     try {
       final booking = BookingModel(
-        id: FirebaseFirestore.instance.collection('bookings').doc().id,
-        customerId: user.uid,
+        id: BookingDependencies.generateBookingId().call(),
+        customerId: userId,
         photographerId: widget.photographerId,
         date:
             '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}',
@@ -138,13 +140,23 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
         updatedAt: DateTime.now(),
       );
 
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(booking.id)
-          .set(booking.toFirestore());
+      final result = await BookingDependencies.createBooking().call(
+        BookingPresentationMapper.toDomain(booking),
+      );
+      if (!result.isSuccess) {
+        throw StateError('Create booking failed');
+      }
 
       if (mounted) {
         _showSnack('تم إرسال طلب الحجز بنجاح 👍', success: true);
+
+        final localizations = AppLocalizations.of(context);
+
+        if (!AppConstants.enablePayments) {
+          _showSnack(localizations.paymentsUnavailable);
+          Navigator.of(context).pop();
+          return;
+        }
 
         // Navigate to payment screen instead of bookings
         Navigator.of(context).pop();

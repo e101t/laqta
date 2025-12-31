@@ -2,6 +2,8 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 // Tier thresholds
 const int bronzeThreshold = 0;
 const int silverThreshold = 1000;
@@ -28,22 +30,16 @@ class LoyaltyPoints {
   });
 
   factory LoyaltyPoints.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
-    final transactionsRaw = data['transactions'];
-    final transactionMaps = transactionsRaw is List
-        ? transactionsRaw.whereType<Map<dynamic, dynamic>>()
-        : const <Map<dynamic, dynamic>>[];
+    final data = firestoreMap(doc.data());
+    final transactionMaps = readMapList(data, 'transactions');
     return LoyaltyPoints(
       userId: doc.id,
-      totalPoints: data['totalPoints'] ?? 0,
-      availablePoints: data['availablePoints'] ?? 0,
-      usedPoints: data['usedPoints'] ?? 0,
-      transactions: transactionMaps
-          .map((t) => PointTransaction.fromMap(Map<String, dynamic>.from(t)))
-          .toList(),
-      tier: data['tier'] ?? 'bronze',
-      lastUpdated:
-          (data['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      totalPoints: readInt(data, 'totalPoints'),
+      availablePoints: readInt(data, 'availablePoints'),
+      usedPoints: readInt(data, 'usedPoints'),
+      transactions: transactionMaps.map(PointTransaction.fromMap).toList(),
+      tier: readString(data, 'tier', defaultValue: 'bronze'),
+      lastUpdated: readDateTime(data, 'lastUpdated'),
     );
   }
 
@@ -142,12 +138,12 @@ class PointTransaction {
 
   factory PointTransaction.fromMap(Map<String, dynamic> map) {
     return PointTransaction(
-      transactionId: map['transactionId'] ?? '',
-      points: map['points'] ?? 0,
-      type: map['type'] ?? 'earned',
-      source: map['source'] ?? '',
-      description: map['description'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      transactionId: readString(map, 'transactionId'),
+      points: readInt(map, 'points'),
+      type: readString(map, 'type', defaultValue: 'earned'),
+      source: readString(map, 'source'),
+      description: readNullableString(map, 'description'),
+      createdAt: readDateTime(map, 'createdAt'),
     );
   }
 

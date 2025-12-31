@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class PortfolioModel {
   final String id;
   final String photographerId;
@@ -12,17 +14,12 @@ class PortfolioModel {
   });
 
   factory PortfolioModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
-    final imagesList = data['images'];
-    final rawImages = imagesList is List
-        ? imagesList.whereType<Map<dynamic, dynamic>>()
-        : const <Map<dynamic, dynamic>>[];
+    final data = firestoreMap(doc.data());
+    final rawImages = readMapList(data, 'images');
     return PortfolioModel(
       id: doc.id,
-      photographerId: data['photographerId'] ?? '',
-      images: rawImages
-          .map((img) => PortfolioImage.fromMap(Map<String, dynamic>.from(img)))
-          .toList(),
+      photographerId: readString(data, 'photographerId'),
+      images: rawImages.map(PortfolioImage.fromMap).toList(),
     );
   }
 
@@ -49,10 +46,10 @@ class PortfolioImage {
 
   factory PortfolioImage.fromMap(Map<String, dynamic> map) {
     return PortfolioImage(
-      url: map['url'] ?? '',
-      width: map['w'],
-      height: map['h'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      url: readString(map, 'url'),
+      width: readNullableInt(map, 'w'),
+      height: readNullableInt(map, 'h'),
+      createdAt: readDateTime(map, 'createdAt'),
     );
   }
 

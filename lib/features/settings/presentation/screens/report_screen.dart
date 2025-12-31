@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/settings/domain/entities/report_submission.dart';
+import 'package:luqta/features/settings/settings_dependencies.dart';
 
 class ReportScreen extends StatefulWidget {
   final String? reportedUserId;
@@ -85,23 +86,26 @@ class _ReportScreenState extends State<ReportScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         throw Exception('User not authenticated');
       }
 
-      final reportData = {
-        'reporterId': user.uid,
-        'reportedUserId': widget.reportedUserId,
-        'reportedUserName': widget.reportedUserName,
-        'reportType': widget.reportType.toString(),
-        'reason': _selectedReason,
-        'details': _detailsController.text.trim(),
-        'timestamp': FieldValue.serverTimestamp(),
-        'status': 'pending',
-      };
-
-      await FirebaseFirestore.instance.collection('reports').add(reportData);
+      final submission = ReportSubmission(
+        reporterId: userId,
+        reportedUserId: widget.reportedUserId,
+        reportedUserName: widget.reportedUserName,
+        reportType: widget.reportType.toString(),
+        reason: _selectedReason!,
+        details: _detailsController.text.trim(),
+      );
+      final result = await SettingsDependencies.submitReport().call(submission);
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to submit report',
+        );
+      }
 
       setState(() => _isSubmitting = false);
     } catch (e) {

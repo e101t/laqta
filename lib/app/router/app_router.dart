@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +10,7 @@ import 'routes.dart';
 // core
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/user_model.dart';
+import 'package:luqta/features/profile/profile_dependencies.dart';
 
 // app shell
 import 'package:luqta/app/main_app_screen.dart';
@@ -48,6 +47,8 @@ import 'package:luqta/features/review/presentation/screens/write_review_screen.d
 class AppRouter {
   static String? _cachedProfileUserId;
   static bool? _cachedProfileCompleted;
+  static bool _splashDelayComplete = false;
+  static Future<void>? _splashDelayFuture;
 
   static final GoRouter router = GoRouter(
     initialLocation: Routes.splash,
@@ -289,9 +290,12 @@ class AppRouter {
     final isRole = path == Routes.role;
     final isBasicInfo = path == Routes.basicInfo;
 
-    if (isSplash) {
-      // Let SplashScreen handle initial navigation to avoid double-routing.
-      return null;
+    if (isSplash && !_splashDelayComplete) {
+      _splashDelayFuture ??= Future.delayed(
+        const Duration(milliseconds: AppConstants.splashDuration),
+      );
+      await _splashDelayFuture;
+      _splashDelayComplete = true;
     }
 
     final prefs = await SharedPreferences.getInstance();
@@ -334,21 +338,20 @@ class AppRouter {
       return _cachedProfileCompleted!;
     }
 
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .get();
-
-    if (!userDoc.exists) {
+    final result = await ProfileDependencies.getUserProfile().call(
+      userId: userId,
+    );
+    if (!result.isSuccess) {
       _cachedProfileUserId = userId;
       _cachedProfileCompleted = false;
       return false;
     }
 
-    final user = UserModel.fromFirestore(userDoc);
+    final user = result.valueOrNull;
+    final completed = user?.profileCompleted ?? false;
     _cachedProfileUserId = userId;
-    _cachedProfileCompleted = user.profileCompleted;
-    return user.profileCompleted;
+    _cachedProfileCompleted = completed;
+    return completed;
   }
 
   static void invalidateProfileCache([String? userId]) {
@@ -376,6 +379,7 @@ class AppRouter {
   static void goToProfile(BuildContext context) => context.go(Routes.profile);
 
   static void goToBasicInfo(BuildContext context, String role) {
+    assert(role.isNotEmpty, 'role is required');
     final query = Uri(queryParameters: {'role': role}).query;
     context.go('${Routes.basicInfo}?$query');
   }
@@ -390,12 +394,14 @@ class AppRouter {
     String chatId,
     String otherUserName,
   ) {
+    assert(chatId.isNotEmpty, 'chatId is required');
     final path = _resolvePath(Routes.chat, {'id': chatId});
     final encodedName = Uri.encodeComponent(otherUserName);
     context.go('$path?name=$encodedName');
   }
 
   static void goToBookingDetails(BuildContext context, String bookingId) {
+    assert(bookingId.isNotEmpty, 'bookingId is required');
     context.go(_resolvePath(Routes.booking, {'id': bookingId}));
   }
 
@@ -403,6 +409,7 @@ class AppRouter {
     BuildContext context,
     String photographerId,
   ) {
+    assert(photographerId.isNotEmpty, 'photographerId is required');
     context.go(_resolvePath(Routes.photographer, {'id': photographerId}));
   }
 
@@ -426,6 +433,9 @@ class AppRouter {
     String photographerId,
     String photographerName,
   ) {
+    assert(bookingId.isNotEmpty, 'bookingId is required');
+    assert(photographerId.isNotEmpty, 'photographerId is required');
+    assert(photographerName.isNotEmpty, 'photographerName is required');
     final query = Uri(
       queryParameters: {
         'bookingId': bookingId,
@@ -443,6 +453,8 @@ class AppRouter {
     String photographerName,
     String sessionType,
   ) {
+    assert(bookingId.isNotEmpty, 'bookingId is required');
+    assert(amount.isFinite, 'amount must be finite');
     final query = Uri(
       queryParameters: {
         'bookingId': bookingId,

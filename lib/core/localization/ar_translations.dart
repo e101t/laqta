@@ -111,6 +111,7 @@ class ArTranslations {
   static const String payFull = 'دفع كامل';
   static const String paymentSuccessful = 'تم الدفع بنجاح';
   static const String paymentFailed = 'فشل الدفع';
+  static const String paymentsUnavailable = 'الدفع غير متاح حالياً';
 
   // Chat
   static const String chat = 'الدردشة';

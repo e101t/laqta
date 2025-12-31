@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class CommentModel {
   final String commentId;
   final String reelId;
@@ -22,16 +24,16 @@ class CommentModel {
   });
 
   factory CommentModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return CommentModel(
       commentId: doc.id,
-      reelId: data['reelId'] ?? '',
-      userId: data['userId'] ?? '',
-      userName: data['userName'] ?? 'Unknown User',
-      userPhotoUrl: data['userPhotoUrl'],
-      text: data['text'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      likes: data['likes'] ?? 0,
+      reelId: readString(data, 'reelId'),
+      userId: readString(data, 'userId'),
+      userName: readString(data, 'userName', defaultValue: 'Unknown User'),
+      userPhotoUrl: readNullableString(data, 'userPhotoUrl'),
+      text: readString(data, 'text'),
+      createdAt: readDateTime(data, 'createdAt'),
+      likes: readInt(data, 'likes'),
     );
   }
 

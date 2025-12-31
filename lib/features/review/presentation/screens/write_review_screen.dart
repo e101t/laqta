@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:luqta/core/models/review_model.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/review/domain/entities/review_submission.dart';
+import 'package:luqta/features/review/review_dependencies.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   final String bookingId;
@@ -48,15 +48,15 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         throw Exception('User not authenticated');
       }
 
-      final review = ReviewModel(
-        id: '', // Firestore will generate the ID
+      final review = ReviewSubmission(
         bookingId: widget.bookingId,
-        reviewerId: user.uid,
+        reviewerId: userId,
         targetId: widget.photographerId,
         rating: _overallRating.toInt(),
         comment: _commentController.text.trim().isNotEmpty
@@ -64,10 +64,12 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
             : null,
         createdAt: DateTime.now(),
       );
-
-      await FirebaseFirestore.instance
-          .collection('reviews')
-          .add(review.toFirestore());
+      final result = await ReviewDependencies.submitReview().call(review);
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to submit review',
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

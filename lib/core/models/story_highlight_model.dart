@@ -35,16 +35,17 @@ class StoryHighlight {
   });
 
   factory StoryHighlight.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = _safeData(doc.data());
+    final storyIds = _readStringList(data['storyIds']);
     return StoryHighlight(
       highlightId: doc.id,
-      photographerId: data['photographerId'] ?? '',
-      title: data['title'] ?? '',
-      coverImageUrl: data['coverImageUrl'] ?? '',
-      storyIds: List<String>.from(data['storyIds'] ?? []),
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      storiesCount: (data['storyIds'] as List?)?.length ?? 0,
+      photographerId: _readString(data['photographerId']),
+      title: _readString(data['title']),
+      coverImageUrl: _readString(data['coverImageUrl']),
+      storyIds: storyIds,
+      createdAt: _readDate(data['createdAt']) ?? DateTime.now(),
+      updatedAt: _readDate(data['updatedAt']) ?? DateTime.now(),
+      storiesCount: storyIds.length,
     );
   }
 
@@ -59,4 +60,38 @@ class StoryHighlight {
       'storiesCount': storiesCount,
     };
   }
+}
+
+Map<String, dynamic> _safeData(Map<String, dynamic>? data) {
+  return data ?? <String, dynamic>{};
+}
+
+String _readString(dynamic value) {
+  if (value == null) return '';
+  if (value is String) return value;
+  return value.toString();
+}
+
+List<String> _readStringList(dynamic value) {
+  if (value is List) {
+    return value.whereType<String>().toList();
+  }
+  return const [];
+}
+
+DateTime? _readDate(dynamic value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is num) {
+    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  }
+  if (value is String) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed != null) return parsed;
+    final millis = int.tryParse(value);
+    if (millis != null) {
+      return DateTime.fromMillisecondsSinceEpoch(millis);
+    }
+  }
+  return null;
 }

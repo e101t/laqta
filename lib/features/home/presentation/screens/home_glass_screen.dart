@@ -1,13 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/photographer_profile.dart';
-import 'package:luqta/core/models/reel_model.dart';
-import 'package:luqta/core/models/story_model.dart';
 import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/services/photographer_service.dart';
-import 'package:luqta/core/services/story_service.dart';
 import 'package:luqta/design_system/laqta_tokens.dart';
 import 'package:luqta/ui/chips_filter.dart';
 import 'package:luqta/ui/glass_card.dart';
@@ -17,6 +10,12 @@ import 'package:luqta/ui/photographer_card.dart';
 import 'package:luqta/ui/post_card.dart';
 import 'package:luqta/ui/story_bubble.dart';
 import 'package:luqta/ui/states.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/home/domain/entities/home_photographer.dart';
+import 'package:luqta/features/home/domain/entities/home_story.dart';
+import 'package:luqta/features/home/home_dependencies.dart';
+import 'package:luqta/features/reels/domain/entities/reel_model.dart';
+import 'package:luqta/features/reels/reels_dependencies.dart';
 
 class HomeGlassScreen extends StatefulWidget {
   final bool showBottomNav;
@@ -28,16 +27,13 @@ class HomeGlassScreen extends StatefulWidget {
 }
 
 class _HomeGlassScreenState extends State<HomeGlassScreen> {
-  final StoryService _storyService = StoryService();
-  final PhotographerService _photographerService = PhotographerService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   int _currentIndex = 0;
   int _filterIndex = 0;
+  String _currentUserId = '';
 
-  final List<StoryModel> _stories = [];
+  final List<HomeStory> _stories = [];
   final List<ReelModel> _reels = [];
-  final List<PhotographerProfile> _discover = [];
+  final List<HomePhotographer> _discover = [];
 
   bool _isLoadingStories = true;
   bool _isLoadingReels = true;
@@ -47,12 +43,19 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
   String? _reelsError;
   String? _discoverError;
 
-  String get _currentUserId => FirebaseAuth.instance.currentUser?.uid ?? '';
-
   @override
   void initState() {
     super.initState();
+    _loadCurrentUser();
     _loadAll();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final result = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = result.valueOrNull?.id ?? '';
+    });
   }
 
   Future<void> _loadAll() async {
@@ -66,7 +69,13 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
     });
 
     try {
-      final stories = await _storyService.fetchActiveStories();
+      final result = await HomeDependencies.getActiveStories().call();
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load stories',
+        );
+      }
+      final stories = result.valueOrNull ?? <HomeStory>[];
       if (!mounted) return;
       setState(() {
         _stories
@@ -90,12 +99,13 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
     });
 
     try {
-      final snapshot = await _firestore
-          .collection('reels')
-          .orderBy('createdAt', descending: true)
-          .limit(20)
-          .get();
-      final reels = snapshot.docs.map(ReelModel.fromFirestore).toList();
+      final result = await ReelsDependencies.getReels().call();
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load reels',
+        );
+      }
+      final reels = (result.valueOrNull ?? <ReelModel>[]).take(20).toList();
       if (!mounted) return;
       setState(() {
         _reels
@@ -119,7 +129,15 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
     });
 
     try {
-      final profiles = await _photographerService.fetchPhotographers(limit: 12);
+      final result = await HomeDependencies.getHomePhotographers().call(
+        limit: 12,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load photographers',
+        );
+      }
+      final profiles = result.valueOrNull ?? <HomePhotographer>[];
       if (!mounted) return;
       setState(() {
         _discover
@@ -136,9 +154,9 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
     }
   }
 
-  List<StoryModel> _uniqueStories() {
+  List<HomeStory> _uniqueStories() {
     final seen = <String>{};
-    final result = <StoryModel>[];
+    final result = <HomeStory>[];
     for (final story in _stories) {
       if (seen.add(story.photographerId)) {
         result.add(story);

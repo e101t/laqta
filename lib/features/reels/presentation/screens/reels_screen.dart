@@ -1,12 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/models/comment_model.dart';
-import 'package:luqta/core/models/reel_model.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:luqta/features/reels/domain/entities/comment_model.dart';
+import 'package:luqta/features/reels/domain/entities/reel_model.dart';
+import 'package:luqta/features/reels/reels_dependencies.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 
@@ -57,15 +58,15 @@ class _ReelsScreenState extends State<ReelsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('reels')
-          .orderBy('createdAt', descending: true)
-          .get();
+      final result = await ReelsDependencies.getReels().call();
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load reels',
+        );
+      }
 
       setState(() {
-        _reels = snapshot.docs
-            .map((doc) => ReelModel.fromFirestore(doc))
-            .toList();
+        _reels = result.valueOrNull ?? <ReelModel>[];
         _isLoading = false;
       });
 
@@ -104,10 +105,15 @@ class _ReelsScreenState extends State<ReelsScreen> {
     });
 
     try {
-      await FirebaseFirestore.instance
-          .collection('reels')
-          .doc(reel.reelId)
-          .update({'likes': FieldValue.increment(likeChange)});
+      final result = await ReelsDependencies.updateReelLikes().call(
+        reelId: reel.reelId,
+        delta: likeChange,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to update likes',
+        );
+      }
     } catch (e) {
       // Revert local change on error
       setState(() {
@@ -221,10 +227,15 @@ class _ReelsScreenState extends State<ReelsScreen> {
   void _shareReel(ReelModel reel) async {
     try {
       // Update shares count in Firestore
-      await FirebaseFirestore.instance
-          .collection('reels')
-          .doc(reel.reelId)
-          .update({'shares': FieldValue.increment(1)});
+      final result = await ReelsDependencies.updateReelShares().call(
+        reelId: reel.reelId,
+        delta: 1,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to update shares',
+        );
+      }
 
       // Update local state
       final index = _reels.indexOf(reel);
@@ -546,16 +557,17 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     setState(() => _isLoadingComments = true);
 
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('comments')
-          .where('reelId', isEqualTo: widget.reel.reelId)
-          .orderBy('createdAt', descending: true)
-          .get();
+      final result = await ReelsDependencies.getReelComments().call(
+        reelId: widget.reel.reelId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load comments',
+        );
+      }
 
       setState(() {
-        _comments = snapshot.docs
-            .map((doc) => CommentModel.fromFirestore(doc))
-            .toList();
+        _comments = result.valueOrNull ?? <CommentModel>[];
         _isLoadingComments = false;
       });
     } catch (e) {
@@ -574,7 +586,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
     try {
       // Get current user from Firebase Auth
-      final currentUser = FirebaseAuth.instance.currentUser;
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final currentUser = userResult.valueOrNull;
       if (currentUser == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -584,44 +597,42 @@ class _CommentsSheetState extends State<_CommentsSheet> {
         return;
       }
 
-      // Fetch current user data from Firestore
-      final userSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
-
-      if (!userSnapshot.exists) {
+      final profileResult = await ProfileDependencies.getUserProfile().call(
+        userId: currentUser.id,
+      );
+      if (!profileResult.isSuccess || profileResult.valueOrNull == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر العثور على بيانات المستخدم.')),
+            const SnackBar(content: Text('???? ?????? ??? ?????? ????????.')),
           );
         }
         return;
       }
 
-      final userData = userSnapshot.data() as Map<String, dynamic>;
-      final userName = userData['name'] ?? 'مستخدم غير معروف';
-      final userPhotoUrl = userData['photoUrl'] as String?;
+      final profile = profileResult.valueOrNull!;
+      final userName = profile.name.isNotEmpty
+          ? profile.name
+          : '?????? ??? ?????';
+      final userPhotoUrl = profile.photoUrl;
 
       final commentData = CommentModel(
         commentId: '',
         reelId: widget.reel.reelId,
-        userId: currentUser.uid,
+        userId: currentUser.id,
         userName: userName,
         userPhotoUrl: userPhotoUrl,
         text: text,
         createdAt: DateTime.now(),
       );
 
-      await FirebaseFirestore.instance
-          .collection('comments')
-          .add(commentData.toFirestore());
-
-      // Update comment count in the reel
-      await FirebaseFirestore.instance
-          .collection('reels')
-          .doc(widget.reel.reelId)
-          .update({'comments': FieldValue.increment(1)});
+      final result = await ReelsDependencies.addReelComment().call(
+        comment: commentData,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to add comment',
+        );
+      }
 
       _commentController.clear();
 

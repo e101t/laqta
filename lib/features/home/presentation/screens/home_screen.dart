@@ -2,21 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/photographer_profile.dart';
 import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/services/follow_service.dart';
-import 'package:luqta/core/services/photographer_service.dart';
-import 'package:luqta/core/services/story_service.dart';
 import 'package:luqta/core/utils/responsive.dart';
 import 'package:luqta/core/widgets/app_cards.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/models/story_model.dart';
 import 'package:luqta/core/widgets/story_widgets.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:logger/logger.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/screens/chat/chat_list_screen.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/home/domain/entities/home_photographer.dart';
+import 'package:luqta/features/home/domain/entities/home_story.dart';
+import 'package:luqta/features/home/home_dependencies.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,11 +25,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Logger _logger = Logger();
-  final PhotographerService _photographerService = PhotographerService();
-  final StoryService _storyService = StoryService();
-  final FollowService _followService = FollowService();
   bool _isLoading = true;
   bool _isLoadingStories = true;
+  String _currentUserId = '';
   String? _selectedGovernorate;
   String? _selectedSpecialty;
   String? _selectedGender; // NEW: Gender filter
@@ -87,24 +83,42 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   // Stories data
-  final List<StoryModel> _stories = [];
-  final List<PhotographerProfile> _photographers = [];
+  final List<HomeStory> _stories = [];
+  final List<HomePhotographer> _photographers = [];
   final Set<String> _followingPhotographers = {};
-  String get _currentUserId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
   @override
   void initState() {
     super.initState();
+    _bootstrapUser();
     _loadStories();
     _loadPhotographers();
-    _loadFollowing();
+  }
+
+  Future<void> _bootstrapUser() async {
+    await _loadCurrentUser();
+    await _loadFollowing();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final result = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = result.valueOrNull?.id ?? '';
+    });
   }
 
   Future<void> _loadStories() async {
     setState(() => _isLoadingStories = true);
 
     try {
-      final stories = await _storyService.fetchActiveStories();
+      final result = await HomeDependencies.getActiveStories().call();
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load stories',
+        );
+      }
+      final stories = result.valueOrNull ?? <HomeStory>[];
 
       if (!mounted) return;
       setState(() {
@@ -125,7 +139,15 @@ class _HomeScreenState extends State<HomeScreen> {
     if (userId.isEmpty) return;
 
     try {
-      final ids = await _followService.fetchFollowing(userId);
+      final result = await HomeDependencies.getFollowingIds().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load following',
+        );
+      }
+      final ids = result.valueOrNull ?? <String>{};
       if (!mounted) return;
       setState(() {
         _followingPhotographers
@@ -144,12 +166,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final results = await _photographerService.fetchPhotographers(
+      final result = await HomeDependencies.getHomePhotographers().call(
         governorate: _selectedGovernorate,
         specialty: _selectedSpecialty,
         gender: _selectedGender,
         minRating: _minRating,
       );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load photographers',
+        );
+      }
+      final results = result.valueOrNull ?? <HomePhotographer>[];
 
       if (!mounted) return;
       setState(() {
@@ -194,11 +222,16 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      await _followService.setFollowStatus(
+      final result = await HomeDependencies.setFollowStatus().call(
         followerId: userId,
         targetId: photographerId,
         follow: !isFollowing,
       );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to update follow status',
+        );
+      }
     } catch (e) {
       _logger.e('Error updating follow status: $e');
       // Revert the UI change on error
@@ -217,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _viewStory(List<StoryModel> photographerStories, int index) {
+  void _viewStory(List<HomeStory> photographerStories, int index) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -227,10 +260,16 @@ class _HomeScreenState extends State<HomeScreen> {
           currentUserId: _currentUserId,
           onStoryViewed: (storyId) async {
             try {
-              await _storyService.recordStoryView(
+              final result = await HomeDependencies.recordStoryView().call(
                 storyId: storyId,
                 userId: _currentUserId,
               );
+              if (!result.isSuccess) {
+                throw StateError(
+                  result.failureOrNull?.message ??
+                      'Failed to record story view',
+                );
+              }
             } catch (e) {
               _logger.e('Error marking story as viewed: $e');
             }
@@ -569,8 +608,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<PhotographerProfile> _filterBySection() {
-    final list = List<PhotographerProfile>.from(_photographers);
+  List<HomePhotographer> _filterBySection() {
+    final list = List<HomePhotographer>.from(_photographers);
     if (_activeSection == 1) {
       list.sort((a, b) => (b.rating).compareTo(a.rating));
     } else if (_activeSection == 3) {
@@ -854,7 +893,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildNearbySection() {
     if (_photographers.isEmpty) return const SizedBox.shrink();
     // For now: use top-rated as a proxy for "قريب منك"
-    final nearby = List<PhotographerProfile>.from(_photographers)
+    final nearby = List<HomePhotographer>.from(_photographers)
       ..sort((a, b) => b.rating.compareTo(a.rating));
     final subset = nearby.take(4).toList();
 
@@ -986,9 +1025,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  PhotographerProfile? _pickPhotographerOfWeek() {
+  HomePhotographer? _pickPhotographerOfWeek() {
     if (_photographers.isEmpty) return null;
-    final sorted = List<PhotographerProfile>.from(_photographers)
+    final sorted = List<HomePhotographer>.from(_photographers)
       ..sort((a, b) => b.rating.compareTo(a.rating));
     return sorted.first;
   }
@@ -1030,7 +1069,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildPhotographersSection(
     AppLocalizations localizations,
-    List<PhotographerProfile> data,
+    List<HomePhotographer> data,
   ) {
     if (_isLoading) {
       return Column(
@@ -1083,7 +1122,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPhotographerCard(
-    PhotographerProfile profile,
+    HomePhotographer profile,
     AppLocalizations localizations,
   ) {
     final isTop = profile.isTopRated || profile.rating >= 4.7;

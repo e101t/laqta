@@ -2,6 +2,8 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class ReelModel {
   final String reelId;
   final String photographerId;
@@ -36,22 +38,22 @@ class ReelModel {
   });
 
   factory ReelModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return ReelModel(
       reelId: doc.id,
-      photographerId: data['photographerId'] ?? '',
-      photographerName: data['photographerName'] ?? '',
-      photographerPhotoUrl: data['photographerPhotoUrl'],
-      videoUrl: data['videoUrl'] ?? '',
-      thumbnailUrl: data['thumbnailUrl'],
-      caption: data['caption'] ?? '',
-      tags: List<String>.from(data['tags'] ?? []),
-      views: data['views'] ?? 0,
-      likes: data['likes'] ?? 0,
-      comments: data['comments'] ?? 0,
-      shares: data['shares'] ?? 0,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      isVerified: data['isVerified'] ?? false,
+      photographerId: readString(data, 'photographerId'),
+      photographerName: readString(data, 'photographerName'),
+      photographerPhotoUrl: readNullableString(data, 'photographerPhotoUrl'),
+      videoUrl: readString(data, 'videoUrl'),
+      thumbnailUrl: readNullableString(data, 'thumbnailUrl'),
+      caption: readString(data, 'caption'),
+      tags: readStringList(data, 'tags'),
+      views: readInt(data, 'views'),
+      likes: readInt(data, 'likes'),
+      comments: readInt(data, 'comments'),
+      shares: readInt(data, 'shares'),
+      createdAt: readDateTime(data, 'createdAt'),
+      isVerified: readBool(data, 'isVerified'),
     );
   }
 

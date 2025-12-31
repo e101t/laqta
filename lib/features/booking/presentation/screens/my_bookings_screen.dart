@@ -1,15 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/core/models/chat_model.dart';
-import 'package:luqta/core/models/photographer_model.dart';
-import 'package:luqta/core/models/user_model.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/booking/booking_dependencies.dart';
+import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:luqta/features/chat/chat_dependencies.dart';
+import 'package:luqta/features/profile/domain/entities/user_profile.dart';
+import 'package:luqta/features/profile/profile_dependencies.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -43,20 +44,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         setState(() => _isLoading = false);
         return;
       }
 
-      final bookingsSnapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('customerId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      final bookings = bookingsSnapshot.docs
-          .map((doc) => BookingModel.fromFirestore(doc))
+      final result = await BookingDependencies.getMyBookings().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError('Load bookings failed');
+      }
+      final bookingEntities = result.valueOrNull ?? [];
+      final bookings = bookingEntities
+          .map(BookingPresentationMapper.toModel)
           .toList();
 
       // Separate active and past bookings
@@ -111,10 +114,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
     if (confirmed == true) {
       try {
-        await FirebaseFirestore.instance
-            .collection('bookings')
-            .doc(bookingId)
-            .update({'status': 'canceled', 'updatedAt': Timestamp.now()});
+        final result = await BookingDependencies.updateBookingStatus().call(
+          bookingId: bookingId,
+          status: 'canceled',
+        );
+        if (!result.isSuccess) {
+          throw StateError('Cancel failed');
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -135,78 +141,37 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   Future<void> _navigateToChat(BookingModel booking) async {
     try {
       // Get current user
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) return;
 
-      // Check if chat already exists for this booking
-      final chatQuery = await FirebaseFirestore.instance
-          .collection('chats')
-          .where('bookingId', isEqualTo: booking.id)
-          .limit(1)
-          .get();
-
-      String chatId;
-      String otherUserName;
-
-      if (chatQuery.docs.isNotEmpty) {
-        // Chat exists, use existing chat
-        final chatDoc = chatQuery.docs.first;
-        chatId = chatDoc.id;
-
-        // Get the other participant's name
-        final chat = ChatModel.fromFirestore(chatDoc);
-        final otherUserId = chat.participants.firstWhere(
-          (id) => id != user.uid,
-          orElse: () => '',
+      final chatResult = await ChatDependencies.getOrCreateBookingChat().call(
+        bookingId: booking.id,
+        participants: [userId, booking.photographerId],
+      );
+      if (!chatResult.isSuccess || chatResult.valueOrNull == null) {
+        throw StateError(
+          chatResult.failureOrNull?.message ?? 'Failed to open chat',
         );
-
-        if (otherUserId.isNotEmpty) {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(otherUserId)
-              .get();
-          otherUserName = userDoc.exists
-              ? UserModel.fromFirestore(userDoc).name
-              : 'Unknown';
-        } else {
-          otherUserName = 'Unknown';
-        }
-      } else {
-        // Create new chat
-        final newChatRef = FirebaseFirestore.instance.collection('chats').doc();
-        chatId = newChatRef.id;
-
-        // Get photographer name
-        final photographerDoc = await FirebaseFirestore.instance
-            .collection('photographers')
-            .doc(booking.photographerId)
-            .get();
-
-        otherUserName = photographerDoc.exists
-            ? PhotographerModel.fromFirestore(photographerDoc)
-                  .uid // Assuming uid is used as name, but actually we need name from users
-            : 'Unknown';
-
-        // Actually get name from users collection
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(booking.photographerId)
-            .get();
-
-        if (userDoc.exists) {
-          otherUserName = UserModel.fromFirestore(userDoc).name;
-        }
-
-        // Create chat document
-        final chat = ChatModel(
-          id: chatId,
-          bookingId: booking.id,
-          participants: [user.uid, booking.photographerId],
-          lastMessageAt: DateTime.now(),
-        );
-
-        await newChatRef.set(chat.toFirestore());
       }
+
+      final chat = chatResult.valueOrNull!;
+      final otherUserId = chat.participants.firstWhere(
+        (id) => id != userId,
+        orElse: () => '',
+      );
+      String otherUserName = 'Unknown';
+
+      if (otherUserId.isNotEmpty) {
+        final profileResult = await ProfileDependencies.getUserProfile().call(
+          userId: otherUserId,
+        );
+        if (profileResult.isSuccess && profileResult.valueOrNull != null) {
+          otherUserName = profileResult.valueOrNull!.name;
+        }
+      }
+
+      final chatId = chat.id;
 
       // Navigate to chat
       if (mounted) {
@@ -309,7 +274,7 @@ class _BookingCard extends StatefulWidget {
 }
 
 class _BookingCardState extends State<_BookingCard> {
-  UserModel? _photographerUser;
+  UserProfile? _photographerUser;
   bool _isLoadingPhotographer = true;
 
   @override
@@ -320,14 +285,11 @@ class _BookingCardState extends State<_BookingCard> {
 
   Future<void> _loadPhotographer() async {
     try {
-      // Load photographer user for name
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.booking.photographerId)
-          .get();
-
-      if (userDoc.exists) {
-        _photographerUser = UserModel.fromFirestore(userDoc);
+      final result = await ProfileDependencies.getUserProfile().call(
+        userId: widget.booking.photographerId,
+      );
+      if (result.isSuccess) {
+        _photographerUser = result.valueOrNull;
       }
 
       setState(() => _isLoadingPhotographer = false);

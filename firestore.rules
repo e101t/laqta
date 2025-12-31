@@ -41,6 +41,11 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
+
+      // Private user data (move sensitive fields here)
+      match /private/{docId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // Photographers collection
@@ -76,15 +81,20 @@ service cloud.firestore {
                       request.resource.data.customerId == request.auth.uid;
       allow update: if isSignedIn() &&
                       (request.auth.uid == resource.data.customerId ||
-                       request.auth.uid == resource.data.photographerId);
+                       request.auth.uid == resource.data.photographerId) &&
+                      request.resource.data.customerId == resource.data.customerId &&
+                      request.resource.data.photographerId == resource.data.photographerId;
       allow delete: if isOwner(resource.data.customerId);
     }
     
     // Chats collection
     match /chats/{chatId} {
       allow read: if isSignedIn() && isParticipant(resource.data.participants);
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isParticipant(resource.data.participants);
+      allow create: if isSignedIn() &&
+                      request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() &&
+                      isParticipant(resource.data.participants) &&
+                      request.resource.data.participants == resource.data.participants;
       allow delete: if isSignedIn() && isParticipant(resource.data.participants);
       
       match /messages/{messageId} {
@@ -126,6 +136,13 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow read: if false; // Admin only
       allow create: if isSignedIn() && request.resource.data.reporterId == request.auth.uid;
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if false; // Server-only
     }
   }
 }

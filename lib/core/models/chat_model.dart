@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class ChatModel {
   final String id;
   final String bookingId;
@@ -14,13 +16,12 @@ class ChatModel {
   });
 
   factory ChatModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return ChatModel(
       id: doc.id,
-      bookingId: data['bookingId'] ?? '',
-      participants: List<String>.from(data['participants'] ?? []),
-      lastMessageAt:
-          (data['lastMessageAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      bookingId: readString(data, 'bookingId'),
+      participants: readStringList(data, 'participants'),
+      lastMessageAt: readDateTime(data, 'lastMessageAt'),
     );
   }
 
@@ -53,15 +54,15 @@ class MessageModel {
   });
 
   factory MessageModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return MessageModel(
       id: doc.id,
-      chatId: data['chatId'] ?? '',
-      senderId: data['senderId'] ?? '',
-      type: data['type'] ?? 'text',
-      content: data['content'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      seenBy: List<String>.from(data['seenBy'] ?? []),
+      chatId: readString(data, 'chatId'),
+      senderId: readString(data, 'senderId'),
+      type: readString(data, 'type', defaultValue: 'text'),
+      content: readString(data, 'content'),
+      createdAt: readDateTime(data, 'createdAt'),
+      seenBy: readStringList(data, 'seenBy'),
     );
   }
 

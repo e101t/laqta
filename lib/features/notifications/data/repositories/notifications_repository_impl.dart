@@ -1,0 +1,66 @@
+import 'package:luqta/core/domain/failures/failure.dart';
+import 'package:luqta/core/domain/result/result.dart';
+import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
+import 'package:luqta/features/notifications/data/mappers/notification_mapper.dart';
+import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:luqta/features/notifications/domain/repositories/notifications_repository.dart';
+
+class NotificationsRepositoryImpl implements NotificationsRepository {
+  final NotificationsRemoteDataSource _remoteDataSource;
+
+  const NotificationsRepositoryImpl(this._remoteDataSource);
+
+  @override
+  Future<Result<List<NotificationModel>>> getNotifications({
+    required String userId,
+  }) async {
+    try {
+      final dtos = await _remoteDataSource.getNotifications(userId);
+      final notifications = dtos.map(NotificationMapper.toDomain).toList();
+      return Result.success(notifications);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to load notifications'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void>> markAsRead(String notificationId) async {
+    try {
+      await _remoteDataSource.markAsRead(notificationId);
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to mark notification as read'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void>> markAllAsRead({
+    required String userId,
+    required List<String> notificationIds,
+  }) async {
+    try {
+      await _remoteDataSource.markAllAsRead(notificationIds);
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to mark all notifications as read'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteNotification(String notificationId) async {
+    try {
+      await _remoteDataSource.deleteNotification(notificationId);
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to delete notification'),
+      );
+    }
+  }
+}

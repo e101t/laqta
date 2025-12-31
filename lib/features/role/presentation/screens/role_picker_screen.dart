@@ -5,9 +5,8 @@ import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/utils/responsive.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/models/user_model.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/role/role_dependencies.dart';
 
 class RolePickerScreen extends StatefulWidget {
   const RolePickerScreen({super.key});
@@ -31,19 +30,33 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final user = userResult.valueOrNull;
       if (user == null) {
         throw Exception('User not authenticated');
       }
 
-      final userDoc = await _persistRoleWithRetry(user);
-      final userModel = UserModel.fromFirestore(userDoc);
+      final result = await RoleDependencies.saveUserRole().call(
+        userId: user.id,
+        role: _selectedRole!,
+        lang: AppConstants.defaultLanguage,
+        name: user.displayName,
+        email: user.email,
+        phone: user.phoneNumber,
+        photoUrl: user.photoUrl,
+      );
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to save role',
+        );
+      }
+      final userProfile = result.valueOrNull!;
 
       setState(() => _isLoading = false);
 
       // Navigate to profile setup or home based on profile completion
       if (!mounted) return;
-      if (userModel.profileCompleted) {
+      if (userProfile.profileCompleted) {
         AppRouter.goToHome(context);
       } else {
         AppRouter.goToBasicInfo(context, _selectedRole!);
@@ -55,68 +68,6 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to save role: $e')));
     }
-  }
-
-  Future<DocumentSnapshot<Map<String, dynamic>>> _persistRoleWithRetry(
-    User user,
-  ) async {
-    final userDocRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
-    var delay = const Duration(milliseconds: 400);
-    const maxAttempts = 3;
-
-    for (var attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        final existingDoc = await userDocRef.get();
-        final timestamp = FieldValue.serverTimestamp();
-
-        if (existingDoc.exists) {
-          await userDocRef.update({
-            'role': _selectedRole,
-            'updatedAt': timestamp,
-          });
-        } else {
-          await userDocRef.set({
-            'uid': user.uid,
-            'name': user.displayName ?? '',
-            'email': user.email,
-            'phone': user.phoneNumber,
-            'photoUrl': user.photoURL,
-            'role': _selectedRole,
-            'username': null,
-            'usernameLower': null,
-            'gender': null,
-            'birthYear': null,
-            'age': null,
-            'governorate': '',
-            'lang': AppConstants.defaultLanguage,
-            'profileCompleted': false,
-            'over18Confirmed': false,
-            'blockedUsers': <String>[],
-            'interests': <String>[],
-            'createdAt': timestamp,
-            'updatedAt': timestamp,
-          });
-        }
-
-        return await userDocRef.get();
-      } on FirebaseException catch (e) {
-        final shouldRetry =
-            e.code == 'unavailable' && attempt < maxAttempts - 1;
-        if (shouldRetry) {
-          await Future.delayed(delay);
-          delay *= 2;
-          continue;
-        }
-        rethrow;
-      }
-    }
-
-    throw FirebaseException(
-      plugin: 'cloud_firestore',
-      message: 'Unable to save role after multiple attempts',
-    );
   }
 
   Widget _buildRoleHero(

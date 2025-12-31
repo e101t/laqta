@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class ReviewModel {
   final String id;
   final String bookingId;
@@ -20,15 +22,15 @@ class ReviewModel {
   });
 
   factory ReviewModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return ReviewModel(
       id: doc.id,
-      bookingId: data['bookingId'] ?? '',
-      reviewerId: data['reviewerId'] ?? '',
-      targetId: data['targetId'] ?? '',
-      rating: data['rating'] ?? 5,
-      comment: data['comment'],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      bookingId: readString(data, 'bookingId'),
+      reviewerId: readString(data, 'reviewerId'),
+      targetId: readString(data, 'targetId'),
+      rating: readInt(data, 'rating', defaultValue: 5),
+      comment: readNullableString(data, 'comment'),
+      createdAt: readDateTime(data, 'createdAt'),
     );
   }
 

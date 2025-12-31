@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class PhotographerModel {
   final String uid;
   final List<String> specialties;
@@ -37,22 +39,22 @@ class PhotographerModel {
   });
 
   factory PhotographerModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return PhotographerModel(
       uid: doc.id,
-      specialties: List<String>.from(data['specialties'] ?? []),
-      governorates: List<String>.from(data['governorates'] ?? []),
-      rate: (data['rate'] ?? 0.0).toDouble(),
-      reviewsCount: data['reviewsCount'] ?? 0,
-      basePrice: (data['basePrice'] ?? 0.0).toDouble(),
-      currency: data['currency'] ?? 'IQD',
-      bio: data['bio'] ?? '',
-      instagram: data['instagram'],
-      tiktok: data['tiktok'],
-      geo: data['geo'],
-      isVerified: data['isVerified'] ?? false,
-      verifiedAt: (data['verifiedAt'] as Timestamp?)?.toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      specialties: readStringList(data, 'specialties'),
+      governorates: readStringList(data, 'governorates'),
+      rate: readDouble(data, 'rate'),
+      reviewsCount: readInt(data, 'reviewsCount'),
+      basePrice: readDouble(data, 'basePrice'),
+      currency: readString(data, 'currency', defaultValue: 'IQD'),
+      bio: readString(data, 'bio'),
+      instagram: readNullableString(data, 'instagram'),
+      tiktok: readNullableString(data, 'tiktok'),
+      geo: readGeoPoint(data, 'geo'),
+      isVerified: readBool(data, 'isVerified'),
+      verifiedAt: readDate(data['verifiedAt']),
+      updatedAt: readDateTime(data, 'updatedAt'),
     );
   }
 

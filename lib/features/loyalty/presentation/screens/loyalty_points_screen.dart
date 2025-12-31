@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/models/loyalty_points_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/loyalty/domain/entities/loyalty_points.dart';
+import 'package:luqta/features/loyalty/loyalty_dependencies.dart';
 
 class LoyaltyPointsScreen extends StatefulWidget {
   const LoyaltyPointsScreen({super.key});
@@ -25,37 +25,23 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         // Handle not logged in
         setState(() => _isLoading = false);
         return;
       }
 
-      final doc = await FirebaseFirestore.instance
-          .collection('loyalty_points')
-          .doc(user.uid)
-          .get();
-
-      if (doc.exists) {
-        _loyaltyPoints = LoyaltyPoints.fromFirestore(doc);
-      } else {
-        // Create default loyalty points document
-        _loyaltyPoints = LoyaltyPoints(
-          userId: user.uid,
-          totalPoints: 0,
-          availablePoints: 0,
-          usedPoints: 0,
-          tier: 'bronze',
-          lastUpdated: DateTime.now(),
-          transactions: [],
+      final result = await LoyaltyDependencies.getLoyaltyPoints().call(
+        userId: userId,
+      );
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load loyalty points',
         );
-        // Save to Firestore
-        await FirebaseFirestore.instance
-            .collection('loyalty_points')
-            .doc(user.uid)
-            .set(_loyaltyPoints.toFirestore());
       }
+      _loyaltyPoints = result.valueOrNull!;
     } catch (e) {
       // Handle error, perhaps show a snackbar or log
       debugPrint('Error loading loyalty points: $e');

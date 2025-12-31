@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,63 +35,6 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
-    _checkAppState();
-  }
-
-  Future<void> _checkAppState() async {
-    await Future.delayed(
-      const Duration(milliseconds: AppConstants.splashDuration),
-    );
-
-    if (!mounted) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    final onboardingSeen =
-        prefs.getBool(AppConstants.keyOnboardingSeen) ?? false;
-
-    if (!mounted) return;
-
-    if (!onboardingSeen) {
-      AppRouter.goToOnboarding(context);
-      return;
-    }
-
-    // Check if user is logged in
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      // User not logged in, go to auth
-      AppRouter.goToAuth(context);
-      return;
-    }
-
-    // User is logged in, check profile completion
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
-
-      if (!mounted) return;
-
-      if (userDoc.exists) {
-        final userData = UserModel.fromFirestore(userDoc);
-        if (userData.profileCompleted) {
-          // Profile completed, go to main app
-          AppRouter.goToHome(context);
-        } else {
-          // Profile not completed, go to role picker or profile completion
-          AppRouter.goToRole(context);
-        }
-      } else {
-        // User document doesn't exist, go to role picker
-        AppRouter.goToRole(context);
-      }
-    } catch (e) {
-      // Error fetching user data, go to auth as fallback
-      if (!mounted) return;
-      AppRouter.goToAuth(context);
-    }
   }
 
   @override

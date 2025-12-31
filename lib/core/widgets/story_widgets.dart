@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/models/story_model.dart';
+import 'package:luqta/features/home/domain/entities/home_story.dart';
 
 /// Story Circle Widget - Used in horizontal list
 class StoryCircle extends StatelessWidget {
@@ -115,7 +115,7 @@ class StoryCircle extends StatelessWidget {
 
 /// Story Viewer Screen - Full screen story viewer
 class StoryViewerScreen extends StatefulWidget {
-  final List<StoryModel> stories;
+  final List<HomeStory> stories;
   final int initialIndex;
   final String currentUserId;
   final Function(String storyId) onStoryViewed;
@@ -447,7 +447,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
 
 /// Viewers Bottom Sheet
 class _ViewersSheet extends StatelessWidget {
-  final StoryModel story;
+  final HomeStory story;
 
   const _ViewersSheet({required this.story});
 

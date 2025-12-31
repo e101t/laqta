@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class StoryModel {
   final String storyId;
   final String photographerId;
@@ -26,20 +28,18 @@ class StoryModel {
   });
 
   factory StoryModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>? ?? <String, dynamic>{};
-    final createdAt =
-        (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+    final data = firestoreMap(doc.data());
+    final createdAt = readDate(data['createdAt']) ?? DateTime.now();
     final expiresAt =
-        (data['expiresAt'] as Timestamp?)?.toDate() ??
-        createdAt.add(const Duration(hours: 24));
+        readDate(data['expiresAt']) ?? createdAt.add(const Duration(hours: 24));
 
     return StoryModel(
       storyId: doc.id,
-      photographerId: data['photographerId'] ?? '',
-      photographerName: data['photographerName'] ?? '',
-      photographerPhotoUrl: data['photographerPhotoUrl'],
-      imageUrl: data['imageUrl'] ?? '',
-      caption: data['caption'],
+      photographerId: readString(data, 'photographerId'),
+      photographerName: readString(data, 'photographerName'),
+      photographerPhotoUrl: readNullableString(data, 'photographerPhotoUrl'),
+      imageUrl: readString(data, 'imageUrl'),
+      caption: readNullableString(data, 'caption'),
       createdAt: createdAt,
       expiresAt: expiresAt,
       views: _parseViews(data['views']),
@@ -115,9 +115,9 @@ class StoryView {
 
   factory StoryView.fromMap(Map<String, dynamic> map) {
     return StoryView(
-      userId: map['userId'] ?? '',
-      userName: map['userName'] ?? '',
-      viewedAt: (map['viewedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      userId: readString(map, 'userId'),
+      userName: readString(map, 'userName'),
+      viewedAt: readDateTime(map, 'viewedAt'),
     );
   }
 

@@ -2,6 +2,8 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class NotificationModel {
   final String notificationId;
   final String userId;
@@ -28,18 +30,18 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return NotificationModel(
       notificationId: doc.id,
-      userId: data['userId'] ?? '',
-      title: data['title'] ?? '',
-      body: data['body'] ?? '',
-      type: data['type'] ?? 'system',
-      data: data['data'] as Map<String, dynamic>?,
-      isRead: data['isRead'] ?? false,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      imageUrl: data['imageUrl'],
-      actionUrl: data['actionUrl'],
+      userId: readString(data, 'userId'),
+      title: readString(data, 'title'),
+      body: readString(data, 'body'),
+      type: readString(data, 'type', defaultValue: 'system'),
+      data: readMapOrNull(data, 'data'),
+      isRead: readBool(data, 'isRead'),
+      createdAt: readDateTime(data, 'createdAt'),
+      imageUrl: readNullableString(data, 'imageUrl'),
+      actionUrl: readNullableString(data, 'actionUrl'),
     );
   }
 

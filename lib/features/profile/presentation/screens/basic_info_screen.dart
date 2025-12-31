@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/constants/app_theme.dart';
@@ -7,6 +5,9 @@ import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/utils/debouncer.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/profile/domain/entities/user_profile_update.dart';
+import 'package:luqta/features/profile/profile_dependencies.dart';
 
 class BasicInfoScreen extends StatefulWidget {
   final String userRole;
@@ -50,35 +51,34 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
   }
 
   Future<void> _loadExistingUser() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) {
       setState(() => _isLoadingInitial = false);
       return;
     }
 
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
+    final result = await ProfileDependencies.getUserProfile().call(
+      userId: userId,
+    );
+    final profile = result.valueOrNull;
 
-    if (doc.exists) {
-      final data = doc.data()!;
-      _usernameController.text = (data['username'] ?? '').toString();
-      _fullNameController.text = (data['name'] ?? '').toString();
-      final birthYearRaw = data['birthYear'];
+    if (result.isSuccess && profile != null) {
+      _usernameController.text = (profile.username ?? '').toString();
+      _fullNameController.text = (profile.name).toString();
+      final birthYearRaw = profile.birthYear;
       if (birthYearRaw != null && birthYearRaw.toString().isNotEmpty) {
         _birthYearController.text = birthYearRaw.toString();
       }
-      _selectedGender = data['gender'] as String?;
-      final govRaw = data['governorate'] as String?;
-      if (govRaw != null &&
-          govRaw.isNotEmpty &&
+      _selectedGender = profile.gender;
+      final govRaw = profile.governorate;
+      if (govRaw.isNotEmpty &&
           AppConstants.iraqiGovernoratesAr.contains(govRaw)) {
         _selectedGovernorate = govRaw;
       } else {
         _selectedGovernorate = null;
       }
-      _over18Confirmed = data['over18Confirmed'] == true;
+      _over18Confirmed = profile.over18Confirmed;
       if (_usernameController.text.trim().isNotEmpty) {
         _usernameAvailable = true;
       }
@@ -100,15 +100,15 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     setState(() => _isCheckingUsername = true);
 
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('usernameLower', isEqualTo: username)
-          .limit(1)
-          .get();
-
+      final result = await ProfileDependencies.checkUsernameAvailability().call(
+        username,
+      );
+      if (!result.isSuccess) {
+        throw StateError(result.failureOrNull?.message ?? 'Check failed');
+      }
       setState(() {
         _isCheckingUsername = false;
-        _usernameAvailable = querySnapshot.docs.isEmpty;
+        _usernameAvailable = result.valueOrNull ?? false;
       });
     } catch (e) {
       setState(() {
@@ -147,8 +147,9 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         throw Exception('لم يتم العثور على مستخدم مسجل حالياً');
       }
 
@@ -156,25 +157,25 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       final birthYear = int.tryParse(_birthYearController.text.trim());
       final age = birthYear != null ? DateTime.now().year - birthYear : null;
 
-      final userData = {
-        'role': widget.userRole,
-        'name': _fullNameController.text.trim(),
-        'username': username,
-        'usernameLower': username,
-        'governorate': _selectedGovernorate!,
-        'gender': _selectedGender,
-        'birthYear': birthYear,
-        'age': age,
-        'over18Confirmed': _over18Confirmed,
-        'profileCompleted': true,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(userData, SetOptions(merge: true));
-      AppRouter.invalidateProfileCache(user.uid);
+      final data = BasicInfoData(
+        role: widget.userRole,
+        name: _fullNameController.text.trim(),
+        username: username,
+        governorate: _selectedGovernorate!,
+        gender: _selectedGender,
+        birthYear: birthYear,
+        age: age,
+        over18Confirmed: _over18Confirmed,
+        profileCompleted: true,
+      );
+      final result = await ProfileDependencies.saveBasicInfo().call(
+        userId: userId,
+        data: data,
+      );
+      if (!result.isSuccess) {
+        throw StateError(result.failureOrNull?.message ?? 'Save failed');
+      }
+      AppRouter.invalidateProfileCache(userId);
 
       setState(() => _isLoading = false);
 

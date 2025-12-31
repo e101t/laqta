@@ -1,8 +1,3 @@
-import 'dart:io';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:luqta/core/constants/app_theme.dart';
@@ -12,6 +7,10 @@ import 'package:luqta/core/models/user_model.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/profile/domain/entities/user_profile_update.dart';
+import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:luqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,7 +32,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final authUser = FirebaseAuth.instance.currentUser;
+    final authResult = await AuthDependencies.getCurrentUser().call();
+    final authUser = authResult.valueOrNull;
     if (authUser == null) {
       setState(() {
         _errorMessage = 'الرجاء تسجيل الدخول لعرض الحساب';
@@ -43,21 +43,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(authUser.uid)
-          .get();
-
-      if (!doc.exists) {
-        setState(() {
-          _errorMessage = 'أكمل البيانات الأساسية من فضلك';
-          _isLoading = false;
-        });
-        return;
+      final result = await ProfileDependencies.getUserProfile().call(
+        userId: authUser.id,
+      );
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw StateError(result.failureOrNull?.message ?? 'User not found');
       }
 
       setState(() {
-        _user = UserModel.fromFirestore(doc);
+        _user = ProfilePresentationMapper.toUserModel(result.valueOrNull!);
         _isLoading = false;
       });
     } catch (e) {
@@ -69,13 +63,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _updateUser(Map<String, dynamic> updates) async {
-    final authUser = FirebaseAuth.instance.currentUser;
+    final authResult = await AuthDependencies.getCurrentUser().call();
+    final authUser = authResult.valueOrNull;
     if (authUser == null || _user == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(authUser.uid)
-        .update(updates);
+    final update = UserProfileUpdate(
+      name: updates['name'] as String?,
+      email: updates['email'] as String?,
+      phone: updates['phone'] as String?,
+      governorate: updates['governorate'] as String?,
+      photoUrl: updates['photoUrl'] as String?,
+      username: updates['username'] as String?,
+      gender: updates['gender'] as String?,
+      age: updates['age'] as int?,
+      birthYear: updates['birthYear'] as int?,
+      role: updates['role'] as String?,
+      profileCompleted: updates['profileCompleted'] as bool?,
+      over18Confirmed: updates['over18Confirmed'] as bool?,
+    );
+    final result = await ProfileDependencies.updateUserProfile().call(
+      userId: authUser.id,
+      update: update,
+    );
+    if (!result.isSuccess) {
+      throw StateError(result.failureOrNull?.message ?? 'Update failed');
+    }
 
     setState(() {
       _user = _user!.copyWith(
@@ -97,22 +109,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (pickedFile != null) {
         setState(() => _isUploading = true);
 
-        final file = File(pickedFile.path);
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return;
+        final userResult = await AuthDependencies.getCurrentUser().call();
+        final userId = userResult.valueOrNull?.id;
+        if (userId == null || userId.isEmpty) return;
 
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('users')
-            .child(user.uid)
-            .child('profile')
-            .child('profile_${user.uid}.jpg');
-
-        await storageRef.putFile(
-          file,
-          SettableMetadata(contentType: 'image/jpeg'),
+        final result = await ProfileDependencies.uploadProfilePhoto().call(
+          userId: userId,
+          filePath: pickedFile.path,
         );
-        final downloadUrl = await storageRef.getDownloadURL();
+        if (!result.isSuccess || result.valueOrNull == null) {
+          throw StateError('Upload failed');
+        }
+        final downloadUrl = result.valueOrNull!;
 
         await _updateUser({'photoUrl': downloadUrl});
 

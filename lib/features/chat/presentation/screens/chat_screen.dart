@@ -1,18 +1,16 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/screens/settings/report_screen.dart';
-import 'package:luqta/core/models/chat_model.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/chat/chat_dependencies.dart';
+import 'package:luqta/features/chat/domain/entities/chat_message.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -31,13 +29,23 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<MessageModel> _messages = [];
+  final List<ChatMessage> _messages = [];
   bool _isLoading = true;
+  String _currentUserId = '';
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserId();
     _loadMessages();
+  }
+
+  Future<void> _loadCurrentUserId() async {
+    final result = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = result.valueOrNull?.id ?? '';
+    });
   }
 
   @override
@@ -51,17 +59,14 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final messagesSnapshot = await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .orderBy('createdAt', descending: false)
-          .get();
-
-      _messages.clear();
-      _messages.addAll(
-        messagesSnapshot.docs.map((doc) => MessageModel.fromFirestore(doc)),
+      final result = await ChatDependencies.getChatMessages().call(
+        chatId: widget.chatId,
       );
+      if (!result.isSuccess) {
+        throw StateError('Failed to load messages');
+      }
+      _messages.clear();
+      _messages.addAll(result.valueOrNull ?? []);
     } catch (e) {
       // Handle error - could show a snackbar or log
       debugPrint('Error loading messages: $e');
@@ -82,77 +87,40 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _blockUser() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
-    // Get the other user's ID from the chat participants
-    final chatDoc = await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .get();
+    try {
+      final result = await ChatDependencies.toggleBlockUser().call(
+        chatId: widget.chatId,
+        currentUserId: currentUserId,
+      );
+      if (!result.isSuccess) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unable to determine user.')),
+          );
+        }
+        return;
+      }
 
-    if (!chatDoc.exists) return;
-
-    final chatData = chatDoc.data() as Map<String, dynamic>;
-    final participants = List<String>.from(chatData['participants'] ?? []);
-    final otherUserId = participants.firstWhere(
-      (id) => id != currentUser.uid,
-      orElse: () => '',
-    );
-
-    if (otherUserId.isEmpty) {
+      final isBlocked = result.valueOrNull ?? false;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to determine user.')),
+          SnackBar(
+            content: Text(isBlocked ? 'User blocked' : 'User unblocked'),
+          ),
         );
+        Navigator.of(context).pop();
       }
-      return;
-    }
-
-    // Get current user's document
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .get();
-
-    if (!userDoc.exists) return;
-
-    final userData = userDoc.data() as Map<String, dynamic>;
-    final blockedUsers = List<String>.from(userData['blockedUsers'] ?? []);
-
-    if (blockedUsers.contains(otherUserId)) {
-      // User is already blocked, unblock them
-      blockedUsers.remove(otherUserId);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('User unblocked')));
-      }
-    } else {
-      // Block the user
-      blockedUsers.add(otherUserId);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('User blocked')));
-      }
-    }
-
-    // Update the user's blockedUsers list
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .update({'blockedUsers': blockedUsers});
-
-    // Navigate back to chat list
-    if (mounted) {
-      Navigator.of(context).pop();
+    } catch (e) {
+      debugPrint('Error blocking user: $e');
     }
   }
 
   Future<void> _deleteChat() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
     // Show confirmation dialog
     final shouldDelete = await showDialog<bool>(
@@ -178,24 +146,12 @@ class _ChatScreenState extends State<ChatScreen> {
     if (shouldDelete != true) return;
 
     try {
-      // Delete all messages in the chat
-      final messagesSnapshot = await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .get();
-
-      final batch = FirebaseFirestore.instance.batch();
-      for (final doc in messagesSnapshot.docs) {
-        batch.delete(doc.reference);
-      }
-
-      // Delete the chat document
-      batch.delete(
-        FirebaseFirestore.instance.collection('chats').doc(widget.chatId),
+      final result = await ChatDependencies.deleteChatWithMessages().call(
+        chatId: widget.chatId,
       );
-
-      await batch.commit();
+      if (!result.isSuccess) {
+        throw StateError('Delete chat failed');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -213,49 +169,35 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _reportUser() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+  Future<void> _reportUser() async {
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
-    // Get the other user's ID from the chat participants
-    FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .get()
-        .then((chatDoc) {
-          if (!chatDoc.exists) return;
+    final result = await ChatDependencies.getOtherParticipantId().call(
+      chatId: widget.chatId,
+      currentUserId: currentUserId,
+    );
+    final otherUserId = result.valueOrNull;
+    if (!result.isSuccess || otherUserId == null || otherUserId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to determine user.')),
+        );
+      }
+      return;
+    }
 
-          final chatData = chatDoc.data() as Map<String, dynamic>;
-          final participants = List<String>.from(
-            chatData['participants'] ?? [],
-          );
-          final otherUserId = participants.firstWhere(
-            (id) => id != currentUser.uid,
-            orElse: () => '',
-          );
-
-          if (otherUserId.isEmpty) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Unable to determine user.')),
-              );
-            }
-            return;
-          }
-
-          // Navigate to report screen
-          if (mounted) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ReportScreen(
-                  reportedUserId: otherUserId,
-                  reportedUserName: widget.otherUserName,
-                  reportType: ReportType.user,
-                ),
-              ),
-            );
-          }
-        });
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ReportScreen(
+            reportedUserId: otherUserId,
+            reportedUserName: widget.otherUserName,
+            reportType: ReportType.user,
+          ),
+        ),
+      );
+    }
   }
 
   void _showChatOptions() {
@@ -332,18 +274,16 @@ class _ChatScreenState extends State<ChatScreen> {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
-    final message = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
+    );
+    final message = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
       content: content,
       createdAt: DateTime.now(),
       type: 'text',
@@ -355,18 +295,10 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(message.id)
-          .set(message.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
+      final result = await ChatDependencies.sendChatMessage().call(message);
+      if (!result.isSuccess) {
+        throw StateError('Send message failed');
+      }
     } catch (e) {
       // Handle error - could show a snackbar or log
       debugPrint('Error sending message: $e');
@@ -385,19 +317,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (pickedFile == null) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
     // Create a temporary message for UI feedback
-    final tempMessage = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
+    );
+    final tempMessage = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
       content: 'Uploading image...',
       createdAt: DateTime.now(),
       type: 'image',
@@ -408,46 +338,22 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Upload image to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_images')
-          .child(widget.chatId)
-          .child('${tempMessage.id}.jpg');
-
-      final file = File(pickedFile.path);
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the message with the actual image URL
-      final imageMessage = MessageModel(
-        id: tempMessage.id,
+      final result = await ChatDependencies.sendChatMediaMessage().call(
         chatId: widget.chatId,
-        senderId: currentUser.uid,
-        content: downloadUrl,
-        createdAt: DateTime.now(),
+        senderId: currentUserId,
         type: 'image',
+        filePath: pickedFile.path,
+        messageId: messageId,
       );
+      final imageMessage = result.valueOrNull;
+      if (!result.isSuccess || imageMessage == null) {
+        throw StateError('Send image failed');
+      }
 
-      // Replace the temporary message
       setState(() {
         _messages.remove(tempMessage);
         _messages.add(imageMessage);
       });
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(imageMessage.id)
-          .set(imageMessage.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
     } catch (e) {
       debugPrint('Error sending image: $e');
       // Remove the temporary message on error
@@ -470,19 +376,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (pickedFile == null) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
     // Create a temporary message for UI feedback
-    final tempMessage = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
+    );
+    final tempMessage = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
       content: 'Uploading video...',
       createdAt: DateTime.now(),
       type: 'video',
@@ -493,46 +397,22 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Upload video to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_videos')
-          .child(widget.chatId)
-          .child('${tempMessage.id}.mp4');
-
-      final file = File(pickedFile.path);
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the message with the actual video URL
-      final videoMessage = MessageModel(
-        id: tempMessage.id,
+      final result = await ChatDependencies.sendChatMediaMessage().call(
         chatId: widget.chatId,
-        senderId: currentUser.uid,
-        content: downloadUrl,
-        createdAt: DateTime.now(),
+        senderId: currentUserId,
         type: 'video',
+        filePath: pickedFile.path,
+        messageId: messageId,
       );
+      final videoMessage = result.valueOrNull;
+      if (!result.isSuccess || videoMessage == null) {
+        throw StateError('Send video failed');
+      }
 
-      // Replace the temporary message
       setState(() {
         _messages.remove(tempMessage);
         _messages.add(videoMessage);
       });
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(videoMessage.id)
-          .set(videoMessage.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
     } catch (e) {
       debugPrint('Error sending video: $e');
       // Remove the temporary message on error
@@ -567,19 +447,18 @@ class _ChatScreenState extends State<ChatScreen> {
     if (result == null || result.files.isEmpty) return;
 
     final pickedFile = result.files.first;
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
+    if (pickedFile.path == null) return;
 
     // Create a temporary message for UI feedback
-    final tempMessage = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
+    );
+    final tempMessage = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
       content: 'Uploading document...',
       createdAt: DateTime.now(),
       type: 'document',
@@ -590,46 +469,24 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Upload document to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_documents')
-          .child(widget.chatId)
-          .child('${tempMessage.id}_${pickedFile.name}');
-
-      final file = File(pickedFile.path!);
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the message with the actual document URL and metadata
-      final documentMessage = MessageModel(
-        id: tempMessage.id,
+      final result = await ChatDependencies.sendChatMediaMessage().call(
         chatId: widget.chatId,
-        senderId: currentUser.uid,
-        content: '$downloadUrl|${pickedFile.name}|${pickedFile.size}',
-        createdAt: DateTime.now(),
+        senderId: currentUserId,
         type: 'document',
+        filePath: pickedFile.path!,
+        messageId: messageId,
+        fileName: pickedFile.name,
+        fileSize: pickedFile.size,
       );
+      final documentMessage = result.valueOrNull;
+      if (!result.isSuccess || documentMessage == null) {
+        throw StateError('Send document failed');
+      }
 
-      // Replace the temporary message
       setState(() {
         _messages.remove(tempMessage);
         _messages.add(documentMessage);
       });
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(documentMessage.id)
-          .set(documentMessage.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
     } catch (e) {
       debugPrint('Error sending document: $e');
       // Remove the temporary message on error
@@ -694,8 +551,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      final currentUser = FirebaseAuth.instance.currentUser;
-                      final isMe = message.senderId == currentUser?.uid;
+                      final isMe = message.senderId == _currentUserId;
 
                       return _MessageBubble(message: message, isMe: isMe);
                     },
@@ -770,7 +626,7 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _MessageBubble extends StatefulWidget {
-  final MessageModel message;
+  final ChatMessage message;
   final bool isMe;
 
   const _MessageBubble({required this.message, required this.isMe});
@@ -808,7 +664,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
     return '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildDocumentWidget(MessageModel message) {
+  Widget _buildDocumentWidget(ChatMessage message) {
     final parts = message.content.split('|');
     final url = parts[0];
     final fileName = parts.length > 1 ? parts[1] : 'Document';

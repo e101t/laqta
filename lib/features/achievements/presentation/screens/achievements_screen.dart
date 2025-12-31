@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/models/achievement_model.dart';
 import 'package:luqta/core/widgets/skeleton_loaders.dart';
+import 'package:luqta/features/achievements/achievements_dependencies.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -33,8 +33,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         setState(() {
           _errorMessage = 'User not authenticated';
           _isLoading = false;
@@ -42,20 +43,20 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         return;
       }
 
-      final userId = user.uid;
-
       // Load all achievements
       final achievements = Achievement.getAllAchievements();
 
       // Load user achievements from Firestore
-      final userAchievementsSnapshot = await FirebaseFirestore.instance
-          .collection('user_achievements')
-          .where('userId', isEqualTo: userId)
-          .get();
-
       final userAchievements = <String, UserAchievement>{};
-      for (final doc in userAchievementsSnapshot.docs) {
-        final userAchievement = UserAchievement.fromFirestore(doc);
+      final result = await AchievementsDependencies.getUserAchievements().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load achievements',
+        );
+      }
+      for (final userAchievement in result.valueOrNull ?? []) {
         userAchievements[userAchievement.achievementId] = userAchievement;
       }
 

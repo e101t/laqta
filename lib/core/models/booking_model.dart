@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class BookingModel {
   final String id;
   final String customerId;
@@ -38,24 +40,26 @@ class BookingModel {
   });
 
   factory BookingModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
+    final paymentMap = readMapOrNull(data, 'payment') ?? <String, dynamic>{};
+    final locationMap = readMapOrNull(data, 'location') ?? <String, dynamic>{};
     return BookingModel(
       id: doc.id,
-      customerId: data['customerId'] ?? '',
-      photographerId: data['photographerId'] ?? '',
-      date: data['date'] ?? '',
-      time: data['time'] ?? '',
-      duration: data['duration'] ?? 60,
-      type: data['type'] ?? '',
-      price: (data['price'] ?? 0.0).toDouble(),
-      currency: data['currency'] ?? 'IQD',
-      status: data['status'] ?? 'pending',
-      payment: PaymentInfo.fromMap(data['payment'] ?? {}),
-      location: LocationInfo.fromMap(data['location'] ?? {}),
-      notes: data['notes'],
-      chatId: data['chatId'],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      customerId: readString(data, 'customerId'),
+      photographerId: readString(data, 'photographerId'),
+      date: readString(data, 'date'),
+      time: readString(data, 'time'),
+      duration: readInt(data, 'duration', defaultValue: 60),
+      type: readString(data, 'type'),
+      price: readDouble(data, 'price'),
+      currency: readString(data, 'currency', defaultValue: 'IQD'),
+      status: readString(data, 'status', defaultValue: 'pending'),
+      payment: PaymentInfo.fromMap(paymentMap),
+      location: LocationInfo.fromMap(locationMap),
+      notes: readNullableString(data, 'notes'),
+      chatId: readNullableString(data, 'chatId'),
+      createdAt: readDateTime(data, 'createdAt'),
+      updatedAt: readDateTime(data, 'updatedAt'),
     );
   }
 
@@ -121,10 +125,10 @@ class PaymentInfo {
 
   factory PaymentInfo.fromMap(Map<String, dynamic> map) {
     return PaymentInfo(
-      status: map['status'] ?? 'pending',
-      intentId: map['intentId'],
-      amount: map['amount']?.toDouble(),
-      paidAt: (map['paidAt'] as Timestamp?)?.toDate(),
+      status: readString(map, 'status', defaultValue: 'pending'),
+      intentId: readNullableString(map, 'intentId'),
+      amount: readNullableDouble(map, 'amount'),
+      paidAt: readDate(map['paidAt']),
     );
   }
 
@@ -161,9 +165,9 @@ class LocationInfo {
 
   factory LocationInfo.fromMap(Map<String, dynamic> map) {
     return LocationInfo(
-      lat: map['lat']?.toDouble(),
-      lng: map['lng']?.toDouble(),
-      text: map['text'],
+      lat: readNullableDouble(map, 'lat'),
+      lng: readNullableDouble(map, 'lng'),
+      text: readNullableString(map, 'text'),
     );
   }
 

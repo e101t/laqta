@@ -28,8 +28,10 @@ migrate_working_dir/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.flutter-plugins
 .pub-cache/
 .pub/
+.packages
 /build/
 /coverage/
 
@@ -43,6 +45,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+android/.gradle/
+android/local.properties
 # Backups created during fixes
 *.bak
 *.bak_*
@@ -51,4 +55,8 @@ app.*.map.json
 # Firebase secrets
 android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+ios/Runner.xcworkspace/
 

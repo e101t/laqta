@@ -1,14 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/chat_model.dart';
-import 'package:luqta/core/models/user_model.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/chat/chat_dependencies.dart';
+import 'package:luqta/features/chat/domain/entities/chat_thread_preview.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -19,7 +18,7 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   bool _isLoading = true;
-  final List<ChatPreview> _chats = [];
+  final List<ChatThreadPreview> _chats = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -35,7 +34,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     super.dispose();
   }
 
-  List<ChatPreview> get _filteredChats {
+  List<ChatThreadPreview> get _filteredChats {
     if (_searchQuery.trim().isEmpty) return _chats;
     final query = _searchQuery.toLowerCase();
     return _chats
@@ -51,97 +50,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         setState(() => _isLoading = false);
         return;
       }
 
-      // Load chats where current user is a participant
-      final chatsSnapshot = await FirebaseFirestore.instance
-          .collection('chats')
-          .where('participants', arrayContains: currentUser.uid)
-          .orderBy('lastMessageAt', descending: true)
-          .get();
-
-      final chatPreviews = <ChatPreview>[];
-
-      for (final chatDoc in chatsSnapshot.docs) {
-        final chat = ChatModel.fromFirestore(chatDoc);
-
-        // Get the other participant's ID
-        final otherUserId = chat.participants.firstWhere(
-          (id) => id != currentUser.uid,
-          orElse: () => '',
-        );
-        if (otherUserId.isEmpty) {
-          debugPrint('Chat ${chat.id} missing participant');
-          continue;
-        }
-
-        // Load other user's data
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(otherUserId)
-            .get();
-
-        if (!userDoc.exists) continue;
-
-        final otherUser = UserModel.fromFirestore(userDoc);
-
-        // Load last message
-        final messagesSnapshot = await FirebaseFirestore.instance
-            .collection('chats')
-            .doc(chat.id)
-            .collection('messages')
-            .orderBy('createdAt', descending: true)
-            .limit(1)
-            .get();
-
-        String lastMessage = '';
-        DateTime lastMessageTime = chat.lastMessageAt;
-        int unreadCount = 0;
-
-        if (messagesSnapshot.docs.isNotEmpty) {
-          final lastMessageDoc = messagesSnapshot.docs.first;
-          final message = MessageModel.fromFirestore(lastMessageDoc);
-          lastMessage = message.content;
-          lastMessageTime = message.createdAt;
-
-          // Count unread messages (messages not seen by current user)
-          final allMessagesSnapshot = await FirebaseFirestore.instance
-              .collection('chats')
-              .doc(chat.id)
-              .collection('messages')
-              .where('senderId', isNotEqualTo: currentUser.uid)
-              .get();
-
-          unreadCount = allMessagesSnapshot.docs
-              .where(
-                (doc) =>
-                    !MessageModel.fromFirestore(doc).isSeenBy(currentUser.uid),
-              )
-              .length;
-        }
-
-        // Check if user is online (user is online if lastSeen is within last 5 minutes)
-        final isOnline =
-            otherUser.lastSeen != null &&
-            DateTime.now().difference(otherUser.lastSeen!).inMinutes < 5;
-
-        chatPreviews.add(
-          ChatPreview(
-            chatId: chat.id,
-            userId: otherUser.uid,
-            userName: otherUser.name,
-            userImage: otherUser.photoUrl ?? '',
-            lastMessage: lastMessage,
-            timestamp: lastMessageTime,
-            unreadCount: unreadCount,
-            isOnline: isOnline,
-          ),
-        );
-      }
+      final result = await ChatDependencies.getChatThreads().call(
+        userId: userId,
+      );
+      final chatPreviews = result.valueOrNull ?? [];
 
       setState(() {
         _chats.clear();
@@ -178,11 +97,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     if (confirmed == true) {
       try {
-        // Delete chat document from Firestore
-        await FirebaseFirestore.instance
-            .collection('chats')
-            .doc(chatId)
-            .delete();
+        final result = await ChatDependencies.deleteChat().call(chatId: chatId);
+        if (!result.isSuccess) {
+          throw StateError('Delete chat failed');
+        }
 
         // Remove from local list
         setState(() {
@@ -304,7 +222,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
 }
 
 class _ChatListItem extends StatelessWidget {
-  final ChatPreview chat;
+  final ChatThreadPreview chat;
   final VoidCallback onTap;
   final String Function(DateTime) formatTimestamp;
 
@@ -406,26 +324,4 @@ class _ChatListItem extends StatelessWidget {
       onTap: onTap,
     );
   }
-}
-
-class ChatPreview {
-  final String chatId;
-  final String userId;
-  final String userName;
-  final String userImage;
-  final String lastMessage;
-  final DateTime timestamp;
-  final int unreadCount;
-  final bool isOnline;
-
-  ChatPreview({
-    required this.chatId,
-    required this.userId,
-    required this.userName,
-    required this.userImage,
-    required this.lastMessage,
-    required this.timestamp,
-    required this.unreadCount,
-    required this.isOnline,
-  });
 }

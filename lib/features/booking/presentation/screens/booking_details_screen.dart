@@ -1,13 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/constants/app_theme.dart';
+import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/booking_model.dart';
 import 'package:luqta/core/models/photographer_model.dart';
 import 'package:luqta/core/models/user_model.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/booking/booking_dependencies.dart';
+import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:luqta/features/photographer/photographer_dependencies.dart';
+import 'package:luqta/features/photographer/presentation/mappers/photographer_presentation_mapper.dart';
 
 class BookingDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -32,32 +37,26 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   Future<void> _loadBookingDetails() async {
     try {
-      final bookingDoc = await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(widget.bookingId)
-          .get();
+      final result = await BookingDependencies.getBookingById().call(
+        widget.bookingId,
+      );
+      final bookingEntity = result.valueOrNull;
+      if (bookingEntity != null) {
+        _booking = BookingPresentationMapper.toModel(bookingEntity);
 
-      if (bookingDoc.exists) {
-        _booking = BookingModel.fromFirestore(bookingDoc);
-
-        // Load photographer details
-        final photographerDoc = await FirebaseFirestore.instance
-            .collection('photographers')
-            .doc(_booking!.photographerId)
-            .get();
-
-        if (photographerDoc.exists) {
-          _photographer = PhotographerModel.fromFirestore(photographerDoc);
-
-          // Load photographer user for name
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(_booking!.photographerId)
-              .get();
-
-          if (userDoc.exists) {
-            _photographerUser = UserModel.fromFirestore(userDoc);
-          }
+        final photographerResult =
+            await PhotographerDependencies.getPhotographerProfile().call(
+              photographerId: _booking!.photographerId,
+            );
+        if (photographerResult.isSuccess &&
+            photographerResult.valueOrNull != null) {
+          final bundle = photographerResult.valueOrNull!;
+          _photographer = PhotographerPresentationMapper.toPhotographerModel(
+            bundle.photographer,
+          );
+          _photographerUser = PhotographerPresentationMapper.toUserModel(
+            bundle.user,
+          );
         }
       }
     } catch (e) {
@@ -123,10 +122,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   Future<void> _cancelBooking() async {
     try {
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(widget.bookingId)
-          .update({'status': 'canceled', 'updatedAt': Timestamp.now()});
+      final result = await BookingDependencies.updateBookingStatus().call(
+        bookingId: widget.bookingId,
+        status: 'canceled',
+      );
+      if (!result.isSuccess) {
+        throw StateError('Cancel failed');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -279,19 +281,18 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser != null) {
-                          final userIds = [
-                            currentUser.uid,
-                            _booking!.photographerId,
-                          ];
-                          userIds.sort();
-                          final chatId = userIds.join('_');
-                          final otherUserName =
-                              _photographerUser?.name ?? 'Photographer';
-                          AppRouter.goToChat(context, chatId, otherUserName);
-                        }
+                      onPressed: () async {
+                        final userResult =
+                            await AuthDependencies.getCurrentUser().call();
+                        final userId = userResult.valueOrNull?.id;
+                        if (userId == null || userId.isEmpty) return;
+                        if (!context.mounted) return;
+                        final userIds = [userId, _booking!.photographerId];
+                        userIds.sort();
+                        final chatId = userIds.join('_');
+                        final otherUserName =
+                            _photographerUser?.name ?? 'Photographer';
+                        AppRouter.goToChat(context, chatId, otherUserName);
                       },
                       icon: const Icon(Icons.message, size: 16),
                       label: const Text('Chat'),
@@ -304,6 +305,17 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
+                          if (!AppConstants.enablePayments) {
+                            final localizations = AppLocalizations.of(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  localizations.paymentsUnavailable,
+                                ),
+                              ),
+                            );
+                            return;
+                          }
                           AppRouter.goToPayment(
                             context,
                             _booking!.id,

@@ -4,9 +4,9 @@ import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/payment/payment_dependencies.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String bookingId;
@@ -34,8 +34,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize Stripe with your publishable key
-    Stripe.publishableKey = AppConstants.stripePublishableKey;
+    if (AppConstants.enablePayments) {
+      // Initialize Stripe with your publishable key
+      Stripe.publishableKey = AppConstants.stripePublishableKey;
+    }
   }
 
   Future<void> _processPayment() async {
@@ -118,11 +120,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Future<PaymentMethod?> _showPaymentSheet(String clientSecret) async {
     try {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'LAQTA',
-          customerId: FirebaseAuth.instance.currentUser?.uid,
+          customerId: userId,
           customerEphemeralKeySecret: null, // Should come from backend
           // Add UI customizations
           style: ThemeMode.light,
@@ -151,18 +155,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _updateBookingPaymentStatus(String paymentIntentId) async {
-    final bookingRef = FirebaseFirestore.instance
-        .collection('bookings')
-        .doc(widget.bookingId);
-
-    await bookingRef.update({
-      'payment.status': 'succeeded',
-      'payment.intentId': paymentIntentId,
-      'payment.paidAt': FieldValue.serverTimestamp(),
-      'payment.amount': widget.amount,
-      'status': 'confirmed', // Update booking status to confirmed
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    final result = await PaymentDependencies.updateBookingPaymentStatus().call(
+      bookingId: widget.bookingId,
+      paymentIntentId: paymentIntentId,
+      amount: widget.amount,
+    );
+    if (!result.isSuccess) {
+      throw StateError(
+        result.failureOrNull?.message ?? 'Failed to update payment status',
+      );
+    }
   }
 
   void _showPaymentSuccess() {
@@ -189,6 +191,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+
+    if (!AppConstants.enablePayments) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(title: Text(localizations.payment)),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              localizations.paymentsUnavailable,
+              style: AppTypography.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,

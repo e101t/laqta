@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:luqta/core/utils/firestore_parsers.dart';
+
 class OfferModel {
   final String id;
   final String photographerId;
@@ -20,16 +22,15 @@ class OfferModel {
   });
 
   factory OfferModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return OfferModel(
       id: doc.id,
-      photographerId: data['photographerId'] ?? '',
-      title: data['title'] ?? '',
-      description: data['desc'],
-      discountPct: data['discountPct'] ?? 0,
-      validUntil:
-          (data['validUntil'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      photographerId: readString(data, 'photographerId'),
+      title: readString(data, 'title'),
+      description: readNullableString(data, 'desc'),
+      discountPct: readInt(data, 'discountPct'),
+      validUntil: readDateTime(data, 'validUntil'),
+      createdAt: readDateTime(data, 'createdAt'),
     );
   }
 

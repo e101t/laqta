@@ -136,6 +136,7 @@ class AppLocalizations {
       'payFull': EnTranslations.payFull,
       'paymentSuccessful': EnTranslations.paymentSuccessful,
       'paymentFailed': EnTranslations.paymentFailed,
+      'paymentsUnavailable': EnTranslations.paymentsUnavailable,
     },
     'ar': {
       'appName': ArTranslations.appName,
@@ -258,6 +259,7 @@ class AppLocalizations {
       'payFull': ArTranslations.payFull,
       'paymentSuccessful': ArTranslations.paymentSuccessful,
       'paymentFailed': ArTranslations.paymentFailed,
+      'paymentsUnavailable': ArTranslations.paymentsUnavailable,
     },
   };
 
@@ -385,6 +387,7 @@ class AppLocalizations {
   String get payFull => translate('payFull');
   String get paymentSuccessful => translate('paymentSuccessful');
   String get paymentFailed => translate('paymentFailed');
+  String get paymentsUnavailable => translate('paymentsUnavailable');
 }
 
 class _AppLocalizationsDelegate

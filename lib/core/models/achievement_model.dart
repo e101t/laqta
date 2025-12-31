@@ -135,13 +135,13 @@ class UserAchievement {
   });
 
   factory UserAchievement.fromFirestore(dynamic doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = _safeData(doc);
     return UserAchievement(
-      userId: data['userId'] ?? '',
-      achievementId: data['achievementId'] ?? '',
-      currentProgress: data['currentProgress'] ?? 0,
-      isUnlocked: data['isUnlocked'] ?? false,
-      unlockedAt: (data['unlockedAt'] as Timestamp?)?.toDate(),
+      userId: _readString(data['userId']),
+      achievementId: _readString(data['achievementId']),
+      currentProgress: _readInt(data['currentProgress']),
+      isUnlocked: _readBool(data['isUnlocked']),
+      unlockedAt: _readDate(data['unlockedAt']),
     );
   }
 
@@ -173,4 +173,57 @@ class UserAchievement {
       unlockedAt: unlockedAt ?? this.unlockedAt,
     );
   }
+}
+
+Map<String, dynamic> _safeData(dynamic doc) {
+  if (doc is Map<String, dynamic>) return doc;
+  if (doc is Map) return Map<String, dynamic>.from(doc);
+  if (doc is DocumentSnapshot) return doc.data() ?? <String, dynamic>{};
+  try {
+    final raw = doc?.data();
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+  } catch (_) {}
+  return <String, dynamic>{};
+}
+
+String _readString(dynamic value) {
+  if (value == null) return '';
+  if (value is String) return value;
+  return value.toString();
+}
+
+int _readInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+bool _readBool(dynamic value) {
+  if (value is bool) return value;
+  if (value is num) return value != 0;
+  if (value is String) {
+    final normalized = value.toLowerCase();
+    if (normalized == 'true' || normalized == '1') return true;
+    if (normalized == 'false' || normalized == '0') return false;
+  }
+  return false;
+}
+
+DateTime? _readDate(dynamic value) {
+  if (value is Timestamp) return value.toDate();
+  if (value is DateTime) return value;
+  if (value is num) {
+    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+  }
+  if (value is String) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed != null) return parsed;
+    final millis = int.tryParse(value);
+    if (millis != null) {
+      return DateTime.fromMillisecondsSinceEpoch(millis);
+    }
+  }
+  return null;
 }

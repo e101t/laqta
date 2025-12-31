@@ -10,9 +10,8 @@ import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/core/models/photographer_model.dart';
+import 'package:luqta/features/search/domain/entities/search_result_photographer.dart';
+import 'package:luqta/features/search/search_dependencies.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -84,66 +83,19 @@ class _SearchScreenState extends State<SearchScreen>
     _errorMessage = null;
 
     try {
-      // Search in Firestore
-      final queryLower = query.toLowerCase();
-
-      // Query users collection for photographers
-      final userQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('role', isEqualTo: 'photographer')
-          .get();
-
-      // Query photographers collection for additional data
-      final photographerQuery = await FirebaseFirestore.instance
-          .collection('photographers')
-          .get();
-
-      final Map<String, PhotographerModel> photographerMap = {};
-      for (var doc in photographerQuery.docs) {
-        photographerMap[doc.id] = PhotographerModel.fromFirestore(doc);
+      final result = await SearchDependencies.searchPhotographers().call(
+        query: query,
+      );
+      if (!result.isSuccess) {
+        _results.clear();
+        _errorMessage = result.failureOrNull?.message;
+      } else {
+        _results
+          ..clear()
+          ..addAll(result.valueOrNull ?? []);
+        _results.sort((a, b) => b.rating.compareTo(a.rating));
+        _errorMessage = null;
       }
-
-      _results.clear();
-
-      for (var userDoc in userQuery.docs) {
-        final user = UserModel.fromFirestore(userDoc);
-        final photographer = photographerMap[user.uid];
-
-        if (photographer != null) {
-          // Check if query matches name, specialties, or governorates
-          final matchesName = user.name.toLowerCase().contains(queryLower);
-          final matchesSpecialties = photographer.specialties.any(
-            (s) => s.toLowerCase().contains(queryLower),
-          );
-          final matchesGovernorates =
-              photographer.governorates.any(
-                (g) => g.toLowerCase().contains(queryLower),
-              ) ||
-              user.governorate.toLowerCase().contains(queryLower);
-
-          if (matchesName || matchesSpecialties || matchesGovernorates) {
-            _results.add(
-              SearchResultPhotographer(
-                id: user.uid,
-                name: user.name,
-                image: user.photoUrl ?? '',
-                specialties: photographer.specialties,
-                rating: photographer.rating,
-                reviewCount: photographer.reviewsCount,
-                startingPrice: photographer.basePrice,
-                governorate: user.governorate,
-                username: user.username,
-                gender: user.gender,
-                age: user.age,
-              ),
-            );
-          }
-        }
-      }
-
-      // Sort results by rating (highest first)
-      _results.sort((a, b) => b.rating.compareTo(a.rating));
-      _errorMessage = null;
     } catch (e) {
       debugPrint('Search error: $e');
       _results.clear();
@@ -354,32 +306,4 @@ class _SearchScreenState extends State<SearchScreen>
       ],
     );
   }
-}
-
-class SearchResultPhotographer {
-  final String id;
-  final String name;
-  final String image;
-  final List<String> specialties;
-  final double rating;
-  final int reviewCount;
-  final double startingPrice;
-  final String governorate;
-  final String? username;
-  final String? gender;
-  final int? age;
-
-  SearchResultPhotographer({
-    required this.id,
-    required this.name,
-    required this.image,
-    required this.specialties,
-    required this.rating,
-    required this.reviewCount,
-    required this.startingPrice,
-    required this.governorate,
-    this.username,
-    this.gender,
-    this.age,
-  });
 }

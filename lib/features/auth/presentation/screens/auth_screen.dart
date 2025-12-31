@@ -8,8 +8,8 @@ import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/utils/responsive.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -81,39 +81,23 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       await _ensureGoogleSignInInitialized();
-      final GoogleSignInAccount googleUser = await GoogleSignIn.instance
-          .authenticate();
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-      final idToken = googleAuth.idToken;
-      if (idToken == null || idToken.isEmpty) {
-        throw Exception('Missing Google ID token');
-      }
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        idToken: idToken,
-      );
-
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // Successfully signed in
+      final result = await AuthDependencies.signInWithGoogle().call();
+      if (!result.isSuccess) {
+        final failure = result.failureOrNull;
+        if (failure?.code == 'canceled') {
+          return;
+        }
         if (!mounted) return;
-        AppRouter.goToRole(context);
-      } else {
-        throw Exception('Failed to sign in with Google');
-      }
-    } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
+        _showSnackBar(
+          _formatErrorMessage(
+            localizations.googleSignInFailed,
+            failure?.message,
+          ),
+        );
         return;
       }
       if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(
-          localizations.googleSignInFailed,
-          e.description ?? e.toString(),
-        ),
-      );
+      AppRouter.goToRole(context);
     } catch (e) {
       if (!mounted) return;
       _showSnackBar(
@@ -145,23 +129,26 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.verifyPhoneNumber(
+      final result = await AuthDependencies.verifyPhoneNumber().call(
         phoneNumber: _phoneController.text,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-verification on Android
-          await FirebaseAuth.instance.signInWithCredential(credential);
+        onVerificationCompleted: (_) {
           if (!mounted) return;
+          setState(() => _isLoading = false);
           AppRouter.goToRole(context);
         },
-        verificationFailed: (FirebaseAuthException e) {
+        onVerificationFailed: (failure) {
           if (!mounted) return;
           _showSnackBar(
-            _formatErrorMessage(localizations.verificationFailed, e.message),
+            _formatErrorMessage(
+              localizations.verificationFailed,
+              failure.message,
+            ),
           );
           setState(() => _isLoading = false);
         },
-        codeSent: (String verificationId, int? resendToken) {
+        onCodeSent: (String verificationId, int? resendToken) {
           _verificationId = verificationId;
+          if (!mounted) return;
           setState(() {
             _isLoading = false;
             _showOTPVerification = true;
@@ -169,10 +156,20 @@ class _AuthScreenState extends State<AuthScreen> {
           });
           _startResendTimer();
         },
-        codeAutoRetrievalTimeout: (String verificationId) {
+        onCodeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
         },
       );
+      if (!result.isSuccess) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        _showSnackBar(
+          _formatErrorMessage(
+            localizations.phoneAuthError,
+            result.failureOrNull?.message,
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
@@ -198,14 +195,21 @@ class _AuthScreenState extends State<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+      final result = await AuthDependencies.signInWithPhoneCredential().call(
         verificationId: _verificationId!,
         smsCode: _otpController.text,
       );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-
       setState(() => _isLoading = false);
+      if (!result.isSuccess) {
+        if (!mounted) return;
+        _showSnackBar(
+          _formatErrorMessage(
+            localizations.otpVerificationFailed,
+            result.failureOrNull?.message,
+          ),
+        );
+        return;
+      }
 
       if (!mounted) return;
       AppRouter.goToRole(context);
@@ -248,32 +252,41 @@ class _AuthScreenState extends State<AuthScreen> {
     });
 
     try {
-      await FirebaseAuth.instance.verifyPhoneNumber(
+      final result = await AuthDependencies.verifyPhoneNumber().call(
         phoneNumber: _phoneController.text,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-verification on Android
-          await FirebaseAuth.instance.signInWithCredential(credential);
+        onVerificationCompleted: (_) {
           if (!mounted) return;
+          setState(() => _isLoading = false);
           AppRouter.goToRole(context);
         },
-        verificationFailed: (FirebaseAuthException e) {
+        onVerificationFailed: (failure) {
           if (!mounted) return;
           _showSnackBar(
-            _formatErrorMessage(localizations.resendFailed, e.message),
+            _formatErrorMessage(localizations.resendFailed, failure.message),
           );
           setState(() => _isLoading = false);
         },
-        codeSent: (String verificationId, int? resendToken) {
+        onCodeSent: (String verificationId, int? resendToken) {
           _verificationId = verificationId;
+          if (!mounted) return;
           setState(() => _isLoading = false);
           _startResendTimer();
-          if (!mounted) return;
           _showSnackBar(localizations.otpSentSuccess);
         },
-        codeAutoRetrievalTimeout: (String verificationId) {
+        onCodeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
         },
       );
+      if (!result.isSuccess) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        _showSnackBar(
+          _formatErrorMessage(
+            localizations.resendError,
+            result.failureOrNull?.message,
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;

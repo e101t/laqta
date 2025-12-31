@@ -1,12 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/models/portfolio_model.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:luqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
 
 class PortfolioEditorScreen extends StatefulWidget {
   const PortfolioEditorScreen({super.key});
@@ -27,26 +26,24 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
   }
 
   Future<void> _loadPortfolio() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
 
     try {
-      final portfolioQuery = await FirebaseFirestore.instance
-          .collection('portfolios')
-          .where('photographerId', isEqualTo: user.uid)
-          .get();
-
-      if (portfolioQuery.docs.isNotEmpty) {
-        final portfolio = PortfolioModel.fromFirestore(
-          portfolioQuery.docs.first,
-        );
-        setState(() {
-          _portfolioImages = portfolio.images;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
+      final result = await ProfileDependencies.getPortfolio().call(
+        photographerId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(result.failureOrNull?.message ?? 'Load failed');
       }
+      final portfolio = result.valueOrNull;
+      setState(() {
+        _portfolioImages = portfolio == null
+            ? []
+            : ProfilePresentationMapper.toPortfolioImages(portfolio.images);
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
@@ -72,23 +69,18 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       setState(() => _isUploading = true);
 
       try {
-        final file = File(pickedFile.path);
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return;
+        final userResult = await AuthDependencies.getCurrentUser().call();
+        final userId = userResult.valueOrNull?.id;
+        if (userId == null || userId.isEmpty) return;
 
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('photographers')
-            .child(user.uid)
-            .child('portfolio')
-            .child(fileName);
-
-        await storageRef.putFile(
-          file,
-          SettableMetadata(contentType: 'image/jpeg'),
+        final result = await ProfileDependencies.uploadPortfolioImage().call(
+          photographerId: userId,
+          filePath: pickedFile.path,
         );
-        final downloadUrl = await storageRef.getDownloadURL();
+        if (!result.isSuccess || result.valueOrNull == null) {
+          throw StateError('Upload failed');
+        }
+        final downloadUrl = result.valueOrNull!;
 
         final newImage = PortfolioImage(
           url: downloadUrl,
@@ -122,8 +114,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
 
     // Delete from storage
     try {
-      final storageRef = FirebaseStorage.instance.refFromURL(imageToRemove.url);
-      await storageRef.delete();
+      await ProfileDependencies.deleteStorageFile().call(imageToRemove.url);
     } catch (e) {
       // Continue even if storage deletion fails
     }
@@ -142,29 +133,17 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
   }
 
   Future<void> _savePortfolio() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
 
     try {
-      final portfolioData = {
-        'photographerId': user.uid,
-        'images': _portfolioImages.map((img) => img.toMap()).toList(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      final portfolioQuery = await FirebaseFirestore.instance
-          .collection('portfolios')
-          .where('photographerId', isEqualTo: user.uid)
-          .get();
-
-      if (portfolioQuery.docs.isNotEmpty) {
-        // Update existing
-        await portfolioQuery.docs.first.reference.update(portfolioData);
-      } else {
-        // Create new
-        await FirebaseFirestore.instance
-            .collection('portfolios')
-            .add(portfolioData);
+      final result = await ProfileDependencies.savePortfolio().call(
+        photographerId: userId,
+        images: ProfilePresentationMapper.toDomainImages(_portfolioImages),
+      );
+      if (!result.isSuccess) {
+        throw StateError(result.failureOrNull?.message ?? 'Save failed');
       }
     } catch (e) {
       if (mounted) {
