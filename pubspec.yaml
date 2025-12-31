@@ -1,0 +1,111 @@
+name: luqta
+description: "Photography booking platform connecting customers with photographers in Iraq"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  provider: ^6.1.1
+  
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  cloud_firestore: ^6.1.0
+  firebase_storage: ^13.0.4
+  firebase_messaging: ^16.0.4
+  firebase_analytics: ^12.0.4
+  firebase_crashlytics: ^5.0.5
+  cloud_functions: ^6.0.4
+  
+  # Authentication
+  google_sign_in: ^7.2.0
+  
+  # Payment
+  flutter_stripe: ^12.1.1
+  
+  # UI/UX
+  cached_network_image: ^3.3.1
+  image_picker: ^1.0.7
+  file_picker: ^10.3.6
+  photo_view: ^0.15.0
+  lottie: ^3.0.0
+  shimmer: ^3.0.0
+  flutter_staggered_animations: ^1.1.1
+  video_player: ^2.8.2
+  
+  # Utilities
+  intl: ^0.20.2
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.4
+  share_plus: ^12.0.1
+  image: ^4.1.7
+  uuid: ^4.3.3
+  connectivity_plus: ^7.0.0
+  logger: ^2.0.2
+  
+  # Routing
+  go_router: ^17.0.0
+  
+  # Motion & Icons
+  animations: ^2.0.11
+  fluentui_system_icons: ^1.1.232
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  image_path: assets/icons/app_icon.png
+  adaptive_icon_background: "#0A1F2E"
+  adaptive_icon_foreground: assets/icons/app_icon.png
+  android: true
+  ios: true
+  web:
+    generate: true
+    background_color: "#0A1F2E"
+    theme_color: "#4DB6E5"
+  macos:
+    generate: true
+  windows:
+    generate: true
+    icon_size: 256
+  min_sdk_android: 23
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/lottie/
+    - assets/icons/
+
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700
+
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700

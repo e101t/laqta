@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>تشغيل LAQTA على الهاتف</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: #667eea;
+            color: white;
+        }
+        .btn {
+            background: white;
+            color: #667eea;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>📱 تطبيق LAQTA</h1>
+    
+    <div class="info">
+        <h3>لتشغيل التطبيق على هاتفك:</h3>
+        <p><strong>1.</strong> تأكد من أن الكمبيوتر والهاتف على نفس الـ WiFi</p>
+        <p><strong>2.</strong> شغل هذا الملف: <code>تشغيل_على_الموبايل.bat</code></p>
+        <p><strong>3.</strong> على هاتفك، اذهب إلى العنوان المعروض</p>
+    </div>
+
+    <button class="btn" onclick="openMobileGuide()">📖 دليل بسيط</button>
+    <button class="btn" onclick="startServer()">🚀 تشغيل السيرفر</button>
+
+    <div class="info">
+        <h3>🔑 للحساب التجريبي:</h3>
+        <p>رقم الهاتف: +201234567890</p>
+        <p>كود OTP: 123456</p>
+    </div>
+
+    <script>
+        function openMobileGuide() {
+            window.open('دليل_الموبايل.md', '_blank');
+        }
+        
+        function startServer() {
+            alert('سيتم تشغيل السيرفر...\n\nانتظر قليلاً ثم سترى رسالة بالعنوان المطلوب');
+            window.open('تشغيل_على_الموبايل.bat', '_blank');
+        }
+    </script>
+</body>
+</html>
