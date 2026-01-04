@@ -315,8 +315,9 @@ class AppRouter {
       _cachedProfileUserId = null;
       _cachedProfileCompleted = null;
 
+      if (isSplash) return Routes.auth;
       if (isOnboarding && onboardingSeen) return Routes.auth;
-      if (isSplash || isOnboarding || isAuth) return null;
+      if (isOnboarding || isAuth) return null;
       return Routes.auth;
     }
 
@@ -325,6 +326,13 @@ class AppRouter {
     final role = profileStatus.role.trim();
     final hasRole = role.isNotEmpty;
     final inProfileFlow = isRole || isBasicInfo;
+
+    if (isSplash) {
+      if (profileCompleted) return Routes.main;
+      if (!hasRole) return Routes.role;
+      final query = Uri(queryParameters: {'role': role}).query;
+      return '${Routes.basicInfo}?$query';
+    }
 
     if (isOnboarding && onboardingSeen) {
       if (profileCompleted) return Routes.main;
