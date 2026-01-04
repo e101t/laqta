@@ -25,6 +25,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConstants.keyOnboardingSeen, true);
+    AppRouter.markOnboardingSeen();
     if (!mounted) return;
     AppRouter.goToAuth(context);
   }

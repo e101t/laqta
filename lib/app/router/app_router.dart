@@ -48,6 +48,7 @@ class AppRouter {
   static String? _cachedProfileUserId;
   static bool? _cachedProfileCompleted;
   static String? _cachedProfileRole;
+  static bool? _overrideOnboardingSeen;
   static bool _splashDelayComplete = false;
   static Future<void>? _splashDelayFuture;
 
@@ -301,7 +302,8 @@ class AppRouter {
 
     final prefs = await SharedPreferences.getInstance();
     final onboardingSeen =
-        prefs.getBool(AppConstants.keyOnboardingSeen) ?? false;
+        _overrideOnboardingSeen ??
+        (prefs.getBool(AppConstants.keyOnboardingSeen) ?? false);
 
     // Force onboarding first time
     if (!onboardingSeen && !isOnboarding) {
@@ -380,6 +382,10 @@ class AppRouter {
       _cachedProfileCompleted = null;
       _cachedProfileRole = null;
     }
+  }
+
+  static void markOnboardingSeen() {
+    _overrideOnboardingSeen = true;
   }
 
   // Backward-compatible aliases (some screens may call AppRouter.settings etc.)
