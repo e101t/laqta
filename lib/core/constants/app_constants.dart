@@ -108,6 +108,7 @@ class AppConstants {
   static const String stripePublishableKey =
       'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY';
   static const bool enablePayments = false;
+  static const bool enableAppCheck = true;
 
   // Limits
   static const int maxPortfolioImages = 20;
