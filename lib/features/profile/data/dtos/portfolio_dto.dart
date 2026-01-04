@@ -66,10 +66,10 @@ class PortfolioImageDto {
 
   factory PortfolioImageDto.fromMap(Map<String, dynamic> map) {
     return PortfolioImageDto(
-      url: map['url'] ?? '',
-      width: map['w'],
-      height: map['h'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      url: _readString(map, 'url'),
+      width: _readNullableInt(map, 'w'),
+      height: _readNullableInt(map, 'h'),
+      createdAt: _readDateTime(map['createdAt']),
     );
   }
 
@@ -80,5 +80,41 @@ class PortfolioImageDto {
       'h': height,
       'createdAt': Timestamp.fromDate(createdAt),
     };
+  }
+
+  static String _readString(
+    Map<String, dynamic> data,
+    String key, {
+    String fallback = '',
+  }) {
+    final value = data[key];
+    if (value is String) {
+      return value;
+    }
+    return fallback;
+  }
+
+  static int? _readNullableInt(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value);
+    }
+    return null;
+  }
+
+  static DateTime _readDateTime(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    return DateTime.now();
   }
 }

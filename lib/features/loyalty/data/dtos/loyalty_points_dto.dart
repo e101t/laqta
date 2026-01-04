@@ -107,12 +107,12 @@ class PointTransactionDto {
 
   factory PointTransactionDto.fromMap(Map<String, dynamic> map) {
     return PointTransactionDto(
-      transactionId: map['transactionId'] ?? '',
-      points: map['points'] ?? 0,
-      type: map['type'] ?? 'earned',
-      source: map['source'] ?? '',
-      description: map['description'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      transactionId: _readString(map, 'transactionId'),
+      points: _readInt(map, 'points'),
+      type: _readString(map, 'type', fallback: 'earned'),
+      source: _readString(map, 'source'),
+      description: _readNullableString(map, 'description'),
+      createdAt: _readDateTime(map['createdAt']),
     );
   }
 
@@ -125,5 +125,53 @@ class PointTransactionDto {
       'description': description,
       'createdAt': Timestamp.fromDate(createdAt),
     };
+  }
+
+  static String _readString(
+    Map<String, dynamic> data,
+    String key, {
+    String fallback = '',
+  }) {
+    final value = data[key];
+    if (value is String) {
+      return value;
+    }
+    return fallback;
+  }
+
+  static String? _readNullableString(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value is String) {
+      return value;
+    }
+    return null;
+  }
+
+  static int _readInt(
+    Map<String, dynamic> data,
+    String key, {
+    int fallback = 0,
+  }) {
+    final value = data[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? fallback;
+    }
+    return fallback;
+  }
+
+  static DateTime _readDateTime(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    return DateTime.now();
   }
 }
