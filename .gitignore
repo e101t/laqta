@@ -47,6 +47,9 @@ app.*.map.json
 /android/app/release
 android/.gradle/
 android/local.properties
+android/key.properties
+android/keystore/
+*.jks
 # Backups created during fixes
 *.bak
 *.bak_*
