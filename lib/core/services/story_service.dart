@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/models/story_model.dart';
+import 'package:luqta/core/utils/firestore_parsers.dart';
 
 /// Provides Firestore access helpers for stories.
 class StoryService {
@@ -29,7 +30,8 @@ class StoryService {
     if (userId.isEmpty) return;
 
     final userDoc = await _firestore.collection('users').doc(userId).get();
-    final userName = userDoc.data()?['name'] ?? 'Unknown';
+    final userData = firestoreMap(userDoc.data());
+    final userName = readString(userData, 'name', defaultValue: 'Unknown');
 
     final storyRef = _firestore.collection('stories').doc(storyId);
 
@@ -37,15 +39,11 @@ class StoryService {
       final snapshot = await transaction.get(storyRef);
       if (!snapshot.exists) return;
 
-      final data = snapshot.data();
-      final currentViews = (data?['views'] as List<dynamic>? ?? [])
-          .map<Map<String, dynamic>>(
-            (view) => Map<String, dynamic>.from(view as Map<String, dynamic>),
-          )
-          .toList();
+      final data = firestoreMap(snapshot.data());
+      final currentViews = readMapList(data, 'views');
 
       final alreadyViewed = currentViews.any(
-        (view) => (view['userId'] as String?) == userId,
+        (view) => view['userId'] == userId,
       );
 
       if (alreadyViewed) {

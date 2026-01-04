@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/utils/firestore_parsers.dart';
 
 /// Handles follow/unfollow workflows against Firestore.
 class FollowService {
@@ -18,7 +19,7 @@ class FollowService {
         .get();
 
     return snapshot.docs
-        .map((doc) => doc.data()['followingId'] as String? ?? '')
+        .map((doc) => readString(doc.data(), 'followingId'))
         .where((id) => id.isNotEmpty)
         .toSet();
   }

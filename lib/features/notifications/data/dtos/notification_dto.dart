@@ -35,7 +35,7 @@ class NotificationDto {
       title: _readString(data, 'title'),
       body: _readString(data, 'body'),
       type: _readString(data, 'type', fallback: 'system'),
-      data: data['data'] as Map<String, dynamic>?,
+      data: _readMapOrNull(data['data']),
       isRead: _readBool(data, 'isRead'),
       createdAt: _readDateTime(data['createdAt']),
       imageUrl: _readNullableString(data, 'imageUrl'),
@@ -79,5 +79,15 @@ class NotificationDto {
       return value;
     }
     return DateTime.now();
+  }
+
+  static Map<String, dynamic>? _readMapOrNull(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return null;
   }
 }
