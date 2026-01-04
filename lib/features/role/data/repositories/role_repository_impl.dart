@@ -1,5 +1,6 @@
 import 'package:luqta/core/domain/failures/failure.dart';
 import 'package:luqta/core/domain/result/result.dart';
+import 'package:luqta/core/security/secure_exceptions.dart';
 import 'package:luqta/features/profile/data/mappers/profile_mapper.dart';
 import 'package:luqta/features/profile/domain/entities/user_profile.dart';
 import 'package:luqta/features/role/data/datasources/role_remote_data_source.dart';
@@ -31,8 +32,14 @@ class RoleRepositoryImpl implements RoleRepository {
         photoUrl: photoUrl,
       );
       return Result.success(ProfileMapper.toDomain(dto));
-    } catch (_) {
-      return Result.failure(const Failure(message: 'Failed to save role'));
+    } catch (e) {
+      String? code;
+      if (e is SecureException) {
+        code = e.code;
+      }
+      return Result.failure(
+        Failure(message: 'Failed to save role', code: code ?? e.toString()),
+      );
     }
   }
 }

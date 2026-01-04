@@ -141,13 +141,20 @@ service cloud.firestore {
       ];
     }
 
+    function userUpdateKeysAllowed() {
+      return request.resource.data
+          .diff(resource.data)
+          .changedKeys()
+          .hasOnly(userKeys());
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId) &&
                     hasOnlyKeys(request.resource.data, userKeys()) &&
                     hasValidRoleIfPresent(request.resource.data);
       allow update: if isOwner(userId) &&
-                    hasOnlyKeys(request.resource.data, userKeys()) &&
+                    userUpdateKeysAllowed() &&
                     hasValidRoleIfPresent(request.resource.data);
       allow delete: if isOwner(userId);
 
