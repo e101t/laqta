@@ -34,7 +34,7 @@ service firebase.storage {
     }
     
     function isBookingParticipant(bookingId) {
-      let booking = firestore.get(/databases/(default)/documents/bookings/$(bookingId));
+      let booking = firestore.get(/databases/$(database)/documents/bookings/$(bookingId));
       return isSignedIn() &&
              booking != null &&
              booking.data != null &&
@@ -45,7 +45,7 @@ service firebase.storage {
     }
     
     function isChatParticipant(chatId) {
-      let chat = firestore.get(/databases/(default)/documents/chats/$(chatId));
+      let chat = firestore.get(/databases/$(database)/documents/chats/$(chatId));
       return isSignedIn() &&
              chat != null &&
              chat.data != null &&
@@ -92,6 +92,10 @@ service firebase.storage {
       allow read: if isChatParticipant(chatId);
       allow write: if isChatParticipant(chatId) && isValidDocument();
       allow delete: if isChatParticipant(chatId);
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
