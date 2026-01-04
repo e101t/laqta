@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/features/settings/data/datasources/settings_remote_data_source.dart';
 import 'package:luqta/features/settings/domain/entities/report_submission.dart';
 
 class FirestoreSettingsRemoteDataSource implements SettingsRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final SecureFirestore _secure;
 
   FirestoreSettingsRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   CollectionReference<Map<String, dynamic>> get _reportsCollection =>
       _firestore.collection('reports');
@@ -27,11 +30,11 @@ class FirestoreSettingsRemoteDataSource implements SettingsRemoteDataSource {
       'status': 'pending',
     };
 
-    await _reportsCollection.add(reportData);
+    await _secure.guard(() => _reportsCollection.add(reportData));
   }
 
   @override
   Future<void> deleteUserData(String userId) async {
-    await _usersCollection.doc(userId).delete();
+    await _secure.guard(() => _usersCollection.doc(userId).delete());
   }
 }

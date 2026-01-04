@@ -2,13 +2,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/models/photographer_model.dart';
 import 'package:luqta/core/models/photographer_profile.dart';
 import 'package:luqta/core/models/user_model.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
 
 /// Encapsulates Firestore access for photographer listings.
 class PhotographerService {
   PhotographerService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   final FirebaseFirestore _firestore;
+  final SecureFirestore _secure;
 
   Future<List<PhotographerProfile>> fetchPhotographers({
     String? governorate,
@@ -17,10 +20,9 @@ class PhotographerService {
     double minRating = 0,
     int limit = 50,
   }) async {
-    final snapshot = await _firestore
-        .collection('photographers')
-        .limit(limit)
-        .get();
+    final snapshot = await _secure.guard(
+      () => _firestore.collection('photographers').limit(limit).get(),
+    );
 
     if (snapshot.docs.isEmpty) return [];
 
@@ -62,7 +64,9 @@ class PhotographerService {
         .collection('photographers')
         .doc(photographerId);
 
-    final results = await Future.wait([userRef.get(), photographerRef.get()]);
+    final results = await _secure.guard(
+      () => Future.wait([userRef.get(), photographerRef.get()]),
+    );
     final userDoc = results[0];
     final photographerDoc = results[1];
 
@@ -84,10 +88,12 @@ class PhotographerService {
 
     for (var i = 0; i < userIds.length; i += chunkSize) {
       final chunk = userIds.skip(i).take(chunkSize).toList();
-      final snapshot = await _firestore
-          .collection('users_public')
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
+      final snapshot = await _secure.guard(
+        () => _firestore
+            .collection('users_public')
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get(),
+      );
 
       for (final doc in snapshot.docs) {
         final user = UserModel.fromFirestore(doc);

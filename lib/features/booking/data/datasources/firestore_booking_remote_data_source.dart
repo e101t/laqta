@@ -1,31 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/constants/app_constants.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
 
 class FirestoreBookingRemoteDataSource implements BookingRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final SecureFirestore _secure;
 
   FirestoreBookingRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('bookings');
 
   @override
   Future<List<BookingDto>> getMyBookings(String userId) async {
-    final snapshot = await _collection
-        .where('customerId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .limit(AppConstants.queryLimit)
-        .get();
+    final snapshot = await _secure.guard(
+      () => _collection
+          .where('customerId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(AppConstants.queryLimit)
+          .get(),
+    );
 
     return snapshot.docs.map(BookingDto.fromFirestore).toList();
   }
 
   @override
   Future<BookingDto> getBookingById(String bookingId) async {
-    final doc = await _collection.doc(bookingId).get();
+    final doc = await _secure.guard(() => _collection.doc(bookingId).get());
     if (!doc.exists) {
       throw StateError('Booking not found');
     }
@@ -37,15 +42,17 @@ class FirestoreBookingRemoteDataSource implements BookingRemoteDataSource {
     final docRef = booking.id.isEmpty
         ? _collection.doc()
         : _collection.doc(booking.id);
-    await docRef.set(booking.toMap());
+    await _secure.guard(() => docRef.set(booking.toMap()));
   }
 
   @override
   Future<void> updateBookingStatus(String bookingId, String status) async {
-    await _collection.doc(bookingId).update({
-      'status': status,
-      'updatedAt': Timestamp.now(),
-    });
+    await _secure.guard(
+      () => _collection.doc(bookingId).update({
+        'status': status,
+        'updatedAt': Timestamp.now(),
+      }),
+    );
   }
 
   @override

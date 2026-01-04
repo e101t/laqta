@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
+import 'package:luqta/core/security/secure_storage.dart';
 import 'package:luqta/core/utils/user_public_fields.dart';
 import 'package:luqta/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:luqta/features/profile/data/dtos/portfolio_dto.dart';
@@ -10,12 +12,16 @@ import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
 class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
+  final SecureFirestore _secure;
+  final SecureStorage _secureStorage;
 
   FirestoreProfileRemoteDataSource({
     FirebaseFirestore? firestore,
     FirebaseStorage? storage,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance;
+       _storage = storage ?? FirebaseStorage.instance,
+       _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
+       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
@@ -28,7 +34,7 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
 
   @override
   Future<UserProfileDto?> getUserProfile(String userId) async {
-    final doc = await _usersCollection.doc(userId).get();
+    final doc = await _secure.guard(() => _usersCollection.doc(userId).get());
     if (!doc.exists) {
       return null;
     }
@@ -41,26 +47,30 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     String userId,
     Map<String, dynamic> updates,
   ) async {
-    await _usersCollection.doc(userId).update(updates);
+    await _secure.guard(() => _usersCollection.doc(userId).update(updates));
     await _syncPublicProfile(userId, updates);
   }
 
   @override
   Future<void> saveBasicInfo(String userId, Map<String, dynamic> data) async {
-    await _usersCollection.doc(userId).set({
-      ...data,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await _secure.guard(
+      () => _usersCollection.doc(userId).set({
+        ...data,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)),
+    );
 
     await _syncPublicProfile(userId, data);
   }
 
   @override
   Future<bool> isUsernameAvailable(String usernameLower) async {
-    final snapshot = await _usersCollection
-        .where('usernameLower', isEqualTo: usernameLower)
-        .limit(1)
-        .get();
+    final snapshot = await _secure.guard(
+      () => _usersCollection
+          .where('usernameLower', isEqualTo: usernameLower)
+          .limit(1)
+          .get(),
+    );
     return snapshot.docs.isEmpty;
   }
 
@@ -73,19 +83,23 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
         .child('profile')
         .child('profile_$userId.jpg');
 
-    await storageRef.putFile(
-      File(filePath),
-      SettableMetadata(contentType: 'image/jpeg'),
+    await _secureStorage.guard(
+      () => storageRef.putFile(
+        File(filePath),
+        SettableMetadata(contentType: 'image/jpeg'),
+      ),
     );
-    return storageRef.getDownloadURL();
+    return _secureStorage.guard(() => storageRef.getDownloadURL());
   }
 
   @override
   Future<PortfolioDto?> getPortfolio(String photographerId) async {
-    final query = await _portfolioCollection
-        .where('photographerId', isEqualTo: photographerId)
-        .limit(1)
-        .get();
+    final query = await _secure.guard(
+      () => _portfolioCollection
+          .where('photographerId', isEqualTo: photographerId)
+          .limit(1)
+          .get(),
+    );
 
     if (query.docs.isEmpty) {
       return null;
@@ -104,15 +118,17 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    final query = await _portfolioCollection
-        .where('photographerId', isEqualTo: photographerId)
-        .limit(1)
-        .get();
+    final query = await _secure.guard(
+      () => _portfolioCollection
+          .where('photographerId', isEqualTo: photographerId)
+          .limit(1)
+          .get(),
+    );
 
     if (query.docs.isNotEmpty) {
-      await query.docs.first.reference.update(payload);
+      await _secure.guard(() => query.docs.first.reference.update(payload));
     } else {
-      await _portfolioCollection.add(payload);
+      await _secure.guard(() => _portfolioCollection.add(payload));
     }
   }
 
@@ -129,17 +145,19 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
         .child('portfolio')
         .child(fileName);
 
-    await storageRef.putFile(
-      File(filePath),
-      SettableMetadata(contentType: 'image/jpeg'),
+    await _secureStorage.guard(
+      () => storageRef.putFile(
+        File(filePath),
+        SettableMetadata(contentType: 'image/jpeg'),
+      ),
     );
-    return storageRef.getDownloadURL();
+    return _secureStorage.guard(() => storageRef.getDownloadURL());
   }
 
   @override
   Future<void> deleteFileByUrl(String url) async {
     final ref = _storage.refFromURL(url);
-    await ref.delete();
+    await _secureStorage.guard(() => ref.delete());
   }
 
   Future<void> _ensurePublicProfile(
@@ -147,7 +165,9 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     Map<String, dynamic>? data,
   ) async {
     if (data == null) return;
-    final publicDoc = await _usersPublicCollection.doc(userId).get();
+    final publicDoc = await _secure.guard(
+      () => _usersPublicCollection.doc(userId).get(),
+    );
     if (publicDoc.exists) return;
 
     final payload = buildUserPublicData(data);
@@ -156,9 +176,11 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
       payload['createdAt'] = data['createdAt'] ?? FieldValue.serverTimestamp();
     }
     payload['updatedAt'] = FieldValue.serverTimestamp();
-    await _usersPublicCollection
-        .doc(userId)
-        .set(payload, SetOptions(merge: true));
+    await _secure.guard(
+      () => _usersPublicCollection
+          .doc(userId)
+          .set(payload, SetOptions(merge: true)),
+    );
   }
 
   Future<void> _syncPublicProfile(
@@ -168,8 +190,10 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     final payload = buildUserPublicData(updates);
     if (payload.isEmpty) return;
     payload['updatedAt'] = FieldValue.serverTimestamp();
-    await _usersPublicCollection
-        .doc(userId)
-        .set(payload, SetOptions(merge: true));
+    await _secure.guard(
+      () => _usersPublicCollection
+          .doc(userId)
+          .set(payload, SetOptions(merge: true)),
+    );
   }
 }

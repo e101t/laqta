@@ -1,31 +1,38 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/constants/app_constants.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
 import 'package:luqta/features/notifications/data/dtos/notification_dto.dart';
 
 class FirestoreNotificationsRemoteDataSource
     implements NotificationsRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final SecureFirestore _secure;
 
   FirestoreNotificationsRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('notifications');
 
   @override
   Future<List<NotificationDto>> getNotifications(String userId) async {
-    final snapshot = await _collection
-        .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .limit(AppConstants.queryLimit)
-        .get();
+    final snapshot = await _secure.guard(
+      () => _collection
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .limit(AppConstants.queryLimit)
+          .get(),
+    );
     return snapshot.docs.map(NotificationDto.fromFirestore).toList();
   }
 
   @override
   Future<void> markAsRead(String notificationId) async {
-    await _collection.doc(notificationId).update({'isRead': true});
+    await _secure.guard(
+      () => _collection.doc(notificationId).update({'isRead': true}),
+    );
   }
 
   @override
@@ -35,11 +42,11 @@ class FirestoreNotificationsRemoteDataSource
     for (final id in notificationIds) {
       batch.update(_collection.doc(id), {'isRead': true});
     }
-    await batch.commit();
+    await _secure.guard(() => batch.commit());
   }
 
   @override
   Future<void> deleteNotification(String notificationId) async {
-    await _collection.doc(notificationId).delete();
+    await _secure.guard(() => _collection.doc(notificationId).delete());
   }
 }

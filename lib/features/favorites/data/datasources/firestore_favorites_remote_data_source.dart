@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/constants/app_constants.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
 import 'package:luqta/features/favorites/data/dtos/favorite_dto.dart';
 import 'package:luqta/features/photographer/data/dtos/photographer_dto.dart';
@@ -7,9 +8,11 @@ import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
 
 class FirestoreFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final SecureFirestore _secure;
 
   FirestoreFavoritesRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   CollectionReference<Map<String, dynamic>> get _favoritesCollection =>
       _firestore.collection('favorites');
@@ -22,10 +25,12 @@ class FirestoreFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
 
   @override
   Future<List<FavoriteDto>> getFavorites(String userId) async {
-    final snapshot = await _favoritesCollection
-        .where('userId', isEqualTo: userId)
-        .limit(AppConstants.queryLimit)
-        .get();
+    final snapshot = await _secure.guard(
+      () => _favoritesCollection
+          .where('userId', isEqualTo: userId)
+          .limit(AppConstants.queryLimit)
+          .get(),
+    );
     return snapshot.docs.map(FavoriteDto.fromFirestore).toList();
   }
 
@@ -47,7 +52,9 @@ class FirestoreFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
 
   @override
   Future<void> removeFavorite(String userId, String photographerId) async {
-    await _favoritesCollection.doc('${userId}_$photographerId').delete();
+    await _secure.guard(
+      () => _favoritesCollection.doc('${userId}_$photographerId').delete(),
+    );
   }
 
   Future<List<T>> _getByIds<T>(
@@ -61,9 +68,9 @@ class FirestoreFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
 
     for (var i = 0; i < ids.length; i += chunkSize) {
       final chunk = ids.skip(i).take(chunkSize).toList();
-      final snapshot = await collection
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
+      final snapshot = await _secure.guard(
+        () => collection.where(FieldPath.documentId, whereIn: chunk).get(),
+      );
       results.addAll(snapshot.docs.map(mapper));
     }
 

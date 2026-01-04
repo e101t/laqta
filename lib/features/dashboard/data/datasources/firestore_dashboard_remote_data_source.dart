@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:luqta/core/constants/app_constants.dart';
+import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
 import 'package:luqta/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
 
 class FirestoreDashboardRemoteDataSource implements DashboardRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final SecureFirestore _secure;
 
   FirestoreDashboardRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   CollectionReference<Map<String, dynamic>> get _bookingsCollection =>
       _firestore.collection('bookings');
@@ -20,10 +23,12 @@ class FirestoreDashboardRemoteDataSource implements DashboardRemoteDataSource {
   Future<List<BookingDto>> getPhotographerBookings(
     String photographerId,
   ) async {
-    final snapshot = await _bookingsCollection
-        .where('photographerId', isEqualTo: photographerId)
-        .limit(AppConstants.queryLimit)
-        .get();
+    final snapshot = await _secure.guard(
+      () => _bookingsCollection
+          .where('photographerId', isEqualTo: photographerId)
+          .limit(AppConstants.queryLimit)
+          .get(),
+    );
     return snapshot.docs.map(BookingDto.fromFirestore).toList();
   }
 
@@ -35,9 +40,10 @@ class FirestoreDashboardRemoteDataSource implements DashboardRemoteDataSource {
 
     for (var i = 0; i < userIds.length; i += chunkSize) {
       final chunk = userIds.skip(i).take(chunkSize).toList();
-      final snapshot = await _usersCollection
-          .where(FieldPath.documentId, whereIn: chunk)
-          .get();
+      final snapshot = await _secure.guard(
+        () =>
+            _usersCollection.where(FieldPath.documentId, whereIn: chunk).get(),
+      );
       results.addAll(snapshot.docs.map(UserProfileDto.fromFirestore));
     }
 
