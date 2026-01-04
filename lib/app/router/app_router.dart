@@ -47,6 +47,7 @@ import 'package:luqta/features/review/presentation/screens/write_review_screen.d
 class AppRouter {
   static String? _cachedProfileUserId;
   static bool? _cachedProfileCompleted;
+  static String? _cachedProfileRole;
   static bool _splashDelayComplete = false;
   static Future<void>? _splashDelayFuture;
 
@@ -317,14 +318,27 @@ class AppRouter {
       return Routes.auth;
     }
 
-    final profileCompleted = await _isProfileCompleted(user.uid);
+    final profileStatus = await _getProfileStatus(user.uid);
+    final profileCompleted = profileStatus.completed;
+    final role = profileStatus.role.trim();
+    final hasRole = role.isNotEmpty;
     final inProfileFlow = isRole || isBasicInfo;
 
     if (isOnboarding && onboardingSeen) {
-      return profileCompleted ? Routes.main : Routes.role;
+      if (profileCompleted) return Routes.main;
+      if (!hasRole) return Routes.role;
+      final query = Uri(queryParameters: {'role': role}).query;
+      return '${Routes.basicInfo}?$query';
     }
 
-    if (!profileCompleted && !inProfileFlow) return Routes.role;
+    if (!profileCompleted) {
+      if (!hasRole) {
+        if (!isRole) return Routes.role;
+      } else if (!isBasicInfo) {
+        final query = Uri(queryParameters: {'role': role}).query;
+        return '${Routes.basicInfo}?$query';
+      }
+    }
 
     if (profileCompleted && (isAuth || inProfileFlow || isOnboarding)) {
       return Routes.main;
@@ -333,9 +347,12 @@ class AppRouter {
     return null;
   }
 
-  static Future<bool> _isProfileCompleted(String userId) async {
+  static Future<_ProfileStatus> _getProfileStatus(String userId) async {
     if (_cachedProfileUserId == userId && _cachedProfileCompleted != null) {
-      return _cachedProfileCompleted!;
+      return _ProfileStatus(
+        completed: _cachedProfileCompleted ?? false,
+        role: _cachedProfileRole ?? '',
+      );
     }
 
     final result = await ProfileDependencies.getUserProfile().call(
@@ -344,20 +361,24 @@ class AppRouter {
     if (!result.isSuccess) {
       _cachedProfileUserId = userId;
       _cachedProfileCompleted = false;
-      return false;
+      _cachedProfileRole = '';
+      return const _ProfileStatus(completed: false, role: '');
     }
 
     final user = result.valueOrNull;
     final completed = user?.profileCompleted ?? false;
+    final role = user?.role ?? '';
     _cachedProfileUserId = userId;
     _cachedProfileCompleted = completed;
-    return completed;
+    _cachedProfileRole = role;
+    return _ProfileStatus(completed: completed, role: role);
   }
 
   static void invalidateProfileCache([String? userId]) {
     if (userId == null || userId == _cachedProfileUserId) {
       _cachedProfileUserId = null;
       _cachedProfileCompleted = null;
+      _cachedProfileRole = null;
     }
   }
 
@@ -487,4 +508,11 @@ class GoRouterRefreshStream extends ChangeNotifier {
     _subscription.cancel();
     super.dispose();
   }
+}
+
+class _ProfileStatus {
+  final bool completed;
+  final String role;
+
+  const _ProfileStatus({required this.completed, required this.role});
 }
