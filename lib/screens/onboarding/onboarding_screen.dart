@@ -1,1 +1,1 @@
-export 'package:luqta/screens/onboarding/onboarding_screen.dart';
+export 'package:luqta/features/onboarding/presentation/screens/onboarding_screen.dart';
