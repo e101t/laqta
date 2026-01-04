@@ -64,6 +64,16 @@ service cloud.firestore {
       ]);
     }
 
+    function canCustomerUpdateBookingStatus() {
+      return request.auth.uid == resource.data.customerId &&
+             request.resource.data.status == 'canceled';
+    }
+
+    function canPhotographerUpdateBookingStatus() {
+      return request.auth.uid == resource.data.photographerId &&
+             request.resource.data.status in ['confirmed', 'rejected', 'done'];
+    }
+
     function chatUpdateKeysAllowed() {
       return request.resource.data.diff(resource.data).changedKeys().hasOnly([
         'lastMessageAt'
@@ -197,6 +207,9 @@ service cloud.firestore {
                       request.resource.data.currency == resource.data.currency &&
                       request.resource.data.createdAt == resource.data.createdAt &&
                       isValidBookingStatus(request.resource.data.status) &&
+                      (request.resource.data.status == resource.data.status ||
+                       canCustomerUpdateBookingStatus() ||
+                       canPhotographerUpdateBookingStatus()) &&
                       bookingUpdateKeysAllowed();
       allow delete: if isOwner(resource.data.customerId);
     }
