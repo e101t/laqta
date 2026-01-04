@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
@@ -46,6 +47,10 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
         photoUrl: user.photoUrl,
       );
       if (!result.isSuccess || result.valueOrNull == null) {
+        if (kDebugMode) {
+          final code = result.failureOrNull?.code;
+          debugPrint('Save role failed: ${code ?? 'unknown'}');
+        }
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to save role',
         );

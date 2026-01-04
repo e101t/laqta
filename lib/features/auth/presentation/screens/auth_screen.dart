@@ -84,6 +84,10 @@ class _AuthScreenState extends State<AuthScreen> {
       final result = await AuthDependencies.signInWithGoogle().call();
       if (!result.isSuccess) {
         final failure = result.failureOrNull;
+        if (kDebugMode) {
+          final code = failure?.code;
+          debugPrint('Google sign-in failed: ${code ?? 'unknown'}');
+        }
         if (failure?.code == 'canceled') {
           return;
         }
@@ -138,6 +142,10 @@ class _AuthScreenState extends State<AuthScreen> {
         },
         onVerificationFailed: (failure) {
           if (!mounted) return;
+          if (kDebugMode) {
+            final code = failure.code;
+            debugPrint('Phone verification failed: ${code ?? 'unknown'}');
+          }
           _showSnackBar(
             _formatErrorMessage(
               localizations.verificationFailed,
@@ -202,6 +210,10 @@ class _AuthScreenState extends State<AuthScreen> {
       setState(() => _isLoading = false);
       if (!result.isSuccess) {
         if (!mounted) return;
+        if (kDebugMode) {
+          final code = result.failureOrNull?.code;
+          debugPrint('OTP verification failed: ${code ?? 'unknown'}');
+        }
         _showSnackBar(
           _formatErrorMessage(
             localizations.otpVerificationFailed,
@@ -261,6 +273,10 @@ class _AuthScreenState extends State<AuthScreen> {
         },
         onVerificationFailed: (failure) {
           if (!mounted) return;
+          if (kDebugMode) {
+            final code = failure.code;
+            debugPrint('Resend OTP failed: ${code ?? 'unknown'}');
+          }
           _showSnackBar(
             _formatErrorMessage(localizations.resendFailed, failure.message),
           );
