@@ -28,6 +28,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   PhotographerModel? _photographer;
   UserModel? _photographerUser;
   bool _isLoading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -36,10 +37,18 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   Future<void> _loadBookingDetails() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
     try {
       final result = await BookingDependencies.getBookingById().call(
         widget.bookingId,
       );
+      if (!result.isSuccess) {
+        throw StateError('Load booking failed');
+      }
       final bookingEntity = result.valueOrNull;
       if (bookingEntity != null) {
         _booking = BookingPresentationMapper.toModel(bookingEntity);
@@ -61,6 +70,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       }
     } catch (e) {
       debugPrint('Error loading booking details: $e');
+      _hasError = true;
     }
 
     if (mounted) {
@@ -157,11 +167,13 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     if (_booking == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: const EmptyState(
-          icon: Icons.event_busy,
-          title: 'Booking Not Found',
-          message: 'The booking details could not be loaded.',
-        ),
+        body: _hasError
+            ? EmptyStates.error(onRetry: _loadBookingDetails)
+            : const EmptyState(
+                icon: Icons.event_busy,
+                title: 'Booking Not Found',
+                message: 'The booking details could not be loaded.',
+              ),
       );
     }
 
