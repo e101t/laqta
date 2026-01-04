@@ -84,7 +84,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load favorites: $e';
+        _errorMessage = 'Failed to load favorites';
       });
     }
   }

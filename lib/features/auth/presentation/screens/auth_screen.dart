@@ -303,7 +303,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   String _formatErrorMessage(String base, String? details) {
-    if (details == null || details.trim().isEmpty) {
+    if (!kDebugMode || details == null || details.trim().isEmpty) {
       return base;
     }
     return '$base: $details';

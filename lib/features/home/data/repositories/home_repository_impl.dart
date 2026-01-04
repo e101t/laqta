@@ -19,7 +19,7 @@ class HomeRepositoryImpl implements HomeRepository {
       final mapped = stories.map(HomeStoryMapper.fromModel).toList();
       return Result.success(mapped);
     } catch (e) {
-      return Result.failure(Failure(message: e.toString()));
+      return Result.failure(const Failure(message: 'Failed to load stories'));
     }
   }
 
@@ -32,7 +32,9 @@ class HomeRepositoryImpl implements HomeRepository {
       await _remoteDataSource.recordStoryView(storyId: storyId, userId: userId);
       return Result.success(null);
     } catch (e) {
-      return Result.failure(Failure(message: e.toString()));
+      return Result.failure(
+        const Failure(message: 'Failed to record story view'),
+      );
     }
   }
 
@@ -55,7 +57,9 @@ class HomeRepositoryImpl implements HomeRepository {
       final mapped = profiles.map(HomePhotographerMapper.fromProfile).toList();
       return Result.success(mapped);
     } catch (e) {
-      return Result.failure(Failure(message: e.toString()));
+      return Result.failure(
+        const Failure(message: 'Failed to load photographers'),
+      );
     }
   }
 
@@ -65,7 +69,7 @@ class HomeRepositoryImpl implements HomeRepository {
       final ids = await _remoteDataSource.fetchFollowingIds(userId);
       return Result.success(ids);
     } catch (e) {
-      return Result.failure(Failure(message: e.toString()));
+      return Result.failure(const Failure(message: 'Failed to load following'));
     }
   }
 
@@ -83,7 +87,9 @@ class HomeRepositoryImpl implements HomeRepository {
       );
       return Result.success(null);
     } catch (e) {
-      return Result.failure(Failure(message: e.toString()));
+      return Result.failure(
+        const Failure(message: 'Failed to update follow status'),
+      );
     }
   }
 }

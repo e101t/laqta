@@ -112,9 +112,9 @@ class _ReportScreenState extends State<ReportScreen> {
       setState(() => _isSubmitting = false);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('حدث خطأ أثناء إرسال البلاغ: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حدث خطأ أثناء إرسال البلاغ')),
+      );
       return;
     }
 

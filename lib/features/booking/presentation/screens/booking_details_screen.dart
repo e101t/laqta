@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/constants/app_theme.dart';
@@ -69,7 +70,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Error loading booking details: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading booking details: $e');
+      }
       _hasError = true;
     }
 
@@ -148,9 +151,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error canceling booking: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error canceling booking')),
+        );
       }
     }
   }

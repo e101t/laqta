@@ -66,7 +66,7 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save role: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to save role')));
     }
   }
 

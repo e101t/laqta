@@ -76,7 +76,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
           : PhotographerPresentationMapper.toPortfolioModel(bundle.portfolio!);
       _reviews = PhotographerPresentationMapper.toReviewModels(bundle.reviews);
     } catch (e) {
-      _errorMessage = 'Failed to load photographer data: $e';
+      _errorMessage = 'Failed to load photographer data';
     } finally {
       setState(() => _isLoading = false);
     }
@@ -206,7 +206,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
         _showErrorSnackBar('Cannot open Instagram link');
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to open Instagram: $e');
+      _showErrorSnackBar('Failed to open Instagram');
     }
   }
 
@@ -243,7 +243,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
         _showErrorSnackBar('Cannot open TikTok link');
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to open TikTok: $e');
+      _showErrorSnackBar('Failed to open TikTok');
     }
   }
 

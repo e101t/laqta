@@ -87,7 +87,7 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
       if (!mounted) return;
       setState(() {
         _isLoadingStories = false;
-        _storiesError = e.toString();
+        _storiesError = 'Failed to load stories';
       });
     }
   }
@@ -117,7 +117,7 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
       if (!mounted) return;
       setState(() {
         _isLoadingReels = false;
-        _reelsError = e.toString();
+        _reelsError = 'Failed to load reels';
       });
     }
   }
@@ -149,7 +149,7 @@ class _HomeGlassScreenState extends State<HomeGlassScreen> {
       if (!mounted) return;
       setState(() {
         _isLoadingDiscover = false;
-        _discoverError = e.toString();
+        _discoverError = 'Failed to load photographers';
       });
     }
   }

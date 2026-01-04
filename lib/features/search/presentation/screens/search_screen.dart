@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
@@ -97,9 +98,11 @@ class _SearchScreenState extends State<SearchScreen>
         _errorMessage = null;
       }
     } catch (e) {
-      debugPrint('Search error: $e');
+      if (kDebugMode) {
+        debugPrint('Search error: $e');
+      }
       _results.clear();
-      _errorMessage = e.toString();
+      _errorMessage = 'Search failed';
     }
 
     setState(() => _isSearching = false);

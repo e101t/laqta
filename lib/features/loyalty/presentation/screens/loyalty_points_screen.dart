@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
@@ -44,7 +45,9 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
       _loyaltyPoints = result.valueOrNull!;
     } catch (e) {
       // Handle error, perhaps show a snackbar or log
-      debugPrint('Error loading loyalty points: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading loyalty points: $e');
+      }
     } finally {
       setState(() => _isLoading = false);
     }

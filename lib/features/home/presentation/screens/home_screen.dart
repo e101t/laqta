@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
@@ -24,7 +25,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final Logger _logger = Logger();
+  final Logger _logger = Logger(level: kDebugMode ? Level.debug : Level.off);
   bool _isLoading = true;
   bool _isLoadingStories = true;
   String _currentUserId = '';

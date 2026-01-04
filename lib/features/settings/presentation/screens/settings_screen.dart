@@ -141,7 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete account: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete account')));
     }
   }
 
@@ -174,7 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to logout: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to logout')));
     }
   }
 

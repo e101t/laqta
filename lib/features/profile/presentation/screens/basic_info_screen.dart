@@ -117,7 +117,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('حدث خطأ أثناء فحص اسم المستخدم: $e')),
+          const SnackBar(content: Text('حدث خطأ أثناء فحص اسم المستخدم')),
         );
       }
     }
@@ -186,7 +186,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('حدث خطأ أثناء الحفظ: $e')));
+      ).showSnackBar(const SnackBar(content: Text('حدث خطأ أثناء الحفظ')));
     }
   }
 

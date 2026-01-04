@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
@@ -86,7 +87,9 @@ class _PhotographerDashboardScreenState
       }
     } catch (e) {
       // Handle error, perhaps show snackbar
-      debugPrint('Error loading dashboard data: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading dashboard data: $e');
+      }
     }
 
     setState(() => _isLoading = false);
@@ -110,9 +113,9 @@ class _PhotographerDashboardScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error accepting booking: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error accepting booking')),
+        );
       }
     }
     _loadDashboardData();
@@ -136,9 +139,9 @@ class _PhotographerDashboardScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error rejecting booking: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error rejecting booking')),
+        );
       }
     }
     _loadDashboardData();

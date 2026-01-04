@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:luqta/core/constants/app_theme.dart';
@@ -27,7 +28,7 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  final Logger _logger = Logger();
+  final Logger _logger = Logger(level: kDebugMode ? Level.debug : Level.off);
   bool _isLoading = false;
   String? _error;
 
@@ -81,7 +82,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _logger.e('Payment error: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = 'Payment failed. Please try again.';
         });
       }
     } finally {

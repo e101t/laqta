@@ -170,7 +170,7 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnack('تعذّر إرسال الطلب: $e');
+        _showSnack('تعذّر إرسال الطلب');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

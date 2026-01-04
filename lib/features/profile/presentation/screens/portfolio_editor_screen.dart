@@ -47,9 +47,9 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load portfolio: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to load portfolio')),
+        );
       }
     }
   }
@@ -101,7 +101,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Failed to add image: $e')));
+          ).showSnackBar(const SnackBar(content: Text('Failed to add image')));
         }
       } finally {
         setState(() => _isUploading = false);
@@ -147,9 +147,9 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save portfolio: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to save portfolio')),
+        );
       }
     }
   }

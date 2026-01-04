@@ -61,7 +61,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load notifications: ${e.toString()}';
+        _errorMessage = 'Failed to load notifications';
       });
     }
   }
@@ -86,7 +86,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to mark notification as read: ${e.toString()}';
+        _errorMessage = 'Failed to mark notification as read';
       });
     }
   }
@@ -118,8 +118,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage =
-            'Failed to mark all notifications as read: ${e.toString()}';
+        _errorMessage = 'Failed to mark all notifications as read';
       });
     }
   }
@@ -141,7 +140,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to delete notification: ${e.toString()}';
+        _errorMessage = 'Failed to delete notification';
       });
     }
   }

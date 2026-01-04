@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -75,7 +76,9 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.addAll(result.valueOrNull ?? []);
     } catch (e) {
       // Handle error - could show a snackbar or log
-      debugPrint('Error loading messages: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading messages: $e');
+      }
       hasError = true;
     }
 
@@ -127,7 +130,9 @@ class _ChatScreenState extends State<ChatScreen> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      debugPrint('Error blocking user: $e');
+      if (kDebugMode) {
+        debugPrint('Error blocking user: $e');
+      }
     }
   }
 
@@ -173,7 +178,9 @@ class _ChatScreenState extends State<ChatScreen> {
         Navigator.of(context).pop(); // Go back to chat list
       }
     } catch (e) {
-      debugPrint('Error deleting chat: $e');
+      if (kDebugMode) {
+        debugPrint('Error deleting chat: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -314,7 +321,9 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } catch (e) {
       // Handle error - could show a snackbar or log
-      debugPrint('Error sending message: $e');
+      if (kDebugMode) {
+        debugPrint('Error sending message: $e');
+      }
       // Remove the message from UI if sending failed
       setState(() {
         _messages.remove(message);
@@ -368,7 +377,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages.add(imageMessage);
       });
     } catch (e) {
-      debugPrint('Error sending image: $e');
+      if (kDebugMode) {
+        debugPrint('Error sending image: $e');
+      }
       // Remove the temporary message on error
       setState(() {
         _messages.remove(tempMessage);
@@ -427,7 +438,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages.add(videoMessage);
       });
     } catch (e) {
-      debugPrint('Error sending video: $e');
+      if (kDebugMode) {
+        debugPrint('Error sending video: $e');
+      }
       // Remove the temporary message on error
       setState(() {
         _messages.remove(tempMessage);
@@ -501,7 +514,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages.add(documentMessage);
       });
     } catch (e) {
-      debugPrint('Error sending document: $e');
+      if (kDebugMode) {
+        debugPrint('Error sending document: $e');
+      }
       // Remove the temporary message on error
       setState(() {
         _messages.remove(tempMessage);

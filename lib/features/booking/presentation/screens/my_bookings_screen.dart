@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
@@ -90,7 +91,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         }
       }
     } catch (e) {
-      debugPrint('Error loading bookings: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading bookings: $e');
+      }
       _hasError = true;
     }
 
@@ -138,7 +141,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to cancel booking: $e')),
+            const SnackBar(content: Text('Failed to cancel booking')),
           );
         }
       }
@@ -185,7 +188,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         AppRouter.goToChat(context, chatId, otherUserName);
       }
     } catch (e) {
-      debugPrint('Error navigating to chat: $e');
+      if (kDebugMode) {
+        debugPrint('Error navigating to chat: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -304,7 +309,9 @@ class _BookingCardState extends State<_BookingCard> {
       setState(() => _isLoadingPhotographer = false);
     } catch (e) {
       setState(() => _isLoadingPhotographer = false);
-      debugPrint('Error loading photographer: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading photographer: $e');
+      }
     }
   }
 

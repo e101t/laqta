@@ -56,7 +56,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'تعذّر تحميل الملف الشخصي: $e';
+        _errorMessage = 'تعذّر تحميل الملف الشخصي';
         _isLoading = false;
       });
     }
@@ -132,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       setState(() => _isUploading = false);
-      messenger.showSnackBar(SnackBar(content: Text('فشل رفع الصورة: $e')));
+      messenger.showSnackBar(const SnackBar(content: Text('فشل رفع الصورة')));
     }
   }
 
@@ -197,9 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SnackBar(content: Text('تم تحديث $title بنجاح')),
         );
       } catch (e) {
-        messenger.showSnackBar(
-          SnackBar(content: Text('تعذّر تحديث $title: $e')),
-        );
+        messenger.showSnackBar(SnackBar(content: Text('تعذّر تحديث $title')));
       }
     }
   }

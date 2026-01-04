@@ -87,7 +87,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to load achievements: $e';
+        _errorMessage = 'Failed to load achievements';
         _isLoading = false;
       });
     }

@@ -84,7 +84,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit review: $e'),
+            content: Text('Failed to submit review'),
             backgroundColor: AppColors.error,
           ),
         );
