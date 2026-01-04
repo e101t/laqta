@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
 import 'package:luqta/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
 import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
@@ -13,7 +14,7 @@ class FirestoreDashboardRemoteDataSource implements DashboardRemoteDataSource {
       _firestore.collection('bookings');
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      _firestore.collection('users');
+      _firestore.collection('users_public');
 
   @override
   Future<List<BookingDto>> getPhotographerBookings(
@@ -21,6 +22,7 @@ class FirestoreDashboardRemoteDataSource implements DashboardRemoteDataSource {
   ) async {
     final snapshot = await _bookingsCollection
         .where('photographerId', isEqualTo: photographerId)
+        .limit(AppConstants.queryLimit)
         .get();
     return snapshot.docs.map(BookingDto.fromFirestore).toList();
   }

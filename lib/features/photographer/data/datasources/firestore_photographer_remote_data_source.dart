@@ -12,7 +12,7 @@ class FirestorePhotographerRemoteDataSource
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      _firestore.collection('users');
+      _firestore.collection('users_public');
 
   CollectionReference<Map<String, dynamic>> get _photographersCollection =>
       _firestore.collection('photographers');

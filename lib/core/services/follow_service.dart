@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/utils/firestore_parsers.dart';
 
 /// Handles follow/unfollow workflows against Firestore.
@@ -16,6 +17,7 @@ class FollowService {
 
     final snapshot = await _collection
         .where('followerId', isEqualTo: userId)
+        .limit(AppConstants.queryLimit)
         .get();
 
     return snapshot.docs

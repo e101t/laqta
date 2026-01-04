@@ -57,7 +57,7 @@ class PhotographerService {
   Future<PhotographerProfile?> fetchPhotographerProfile(
     String photographerId,
   ) async {
-    final userRef = _firestore.collection('users').doc(photographerId);
+    final userRef = _firestore.collection('users_public').doc(photographerId);
     final photographerRef = _firestore
         .collection('photographers')
         .doc(photographerId);
@@ -85,7 +85,7 @@ class PhotographerService {
     for (var i = 0; i < userIds.length; i += chunkSize) {
       final chunk = userIds.skip(i).take(chunkSize).toList();
       final snapshot = await _firestore
-          .collection('users')
+          .collection('users_public')
           .where(FieldPath.documentId, whereIn: chunk)
           .get();
 

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
 import 'package:luqta/features/favorites/data/dtos/favorite_dto.dart';
 import 'package:luqta/features/photographer/data/dtos/photographer_dto.dart';
@@ -14,7 +15,7 @@ class FirestoreFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
       _firestore.collection('favorites');
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      _firestore.collection('users');
+      _firestore.collection('users_public');
 
   CollectionReference<Map<String, dynamic>> get _photographersCollection =>
       _firestore.collection('photographers');
@@ -23,6 +24,7 @@ class FirestoreFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
   Future<List<FavoriteDto>> getFavorites(String userId) async {
     final snapshot = await _favoritesCollection
         .where('userId', isEqualTo: userId)
+        .limit(AppConstants.queryLimit)
         .get();
     return snapshot.docs.map(FavoriteDto.fromFirestore).toList();
   }

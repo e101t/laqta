@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:luqta/features/chat/data/dtos/chat_dto.dart';
 
@@ -17,6 +18,12 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
   CollectionReference<Map<String, dynamic>> get _chatsCollection =>
       _firestore.collection('chats');
 
+  CollectionReference<Map<String, dynamic>> get _usersCollection =>
+      _firestore.collection('users');
+
+  CollectionReference<Map<String, dynamic>> get _usersPublicCollection =>
+      _firestore.collection('users_public');
+
   @override
   String createMessageId(String chatId) {
     return _chatsCollection.doc(chatId).collection('messages').doc().id;
@@ -27,6 +34,7 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
     final snapshot = await _chatsCollection
         .where('participants', arrayContains: userId)
         .orderBy('lastMessageAt', descending: true)
+        .limit(AppConstants.queryLimit)
         .get();
 
     return snapshot.docs.map(ChatDto.fromFirestore).toList();
@@ -76,6 +84,7 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
         .doc(chatId)
         .collection('messages')
         .orderBy('createdAt', descending: false)
+        .limitToLast(AppConstants.chatMessagesLimit)
         .get();
 
     return snapshot.docs.map(ChatMessageDto.fromFirestore).toList();
@@ -105,14 +114,21 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
         .doc(chatId)
         .collection('messages')
         .where('senderId', isNotEqualTo: currentUserId)
+        .limit(AppConstants.chatMessagesLimit)
         .get();
 
     return snapshot.docs.map(ChatMessageDto.fromFirestore).toList();
   }
 
   @override
+  Future<Map<String, dynamic>?> getPublicUserData(String userId) async {
+    final doc = await _usersPublicCollection.doc(userId).get();
+    return doc.data();
+  }
+
+  @override
   Future<Map<String, dynamic>?> getUserData(String userId) async {
-    final doc = await _firestore.collection('users').doc(userId).get();
+    final doc = await _usersCollection.doc(userId).get();
     return doc.data();
   }
 

@@ -35,14 +35,10 @@ class ChatRepositoryImpl implements ChatRepository {
           continue;
         }
 
-        final userData = await _remoteDataSource.getUserData(otherUserId);
-        if (userData == null) {
-          continue;
-        }
-
-        final userName = _readString(userData['name']);
-        final userImage = _readString(userData['photoUrl']);
-        final lastSeen = _readDateTime(userData['lastSeen']);
+        final userData = await _remoteDataSource.getPublicUserData(otherUserId);
+        final userName = _readString(userData?['name']);
+        final userImage = _readString(userData?['photoUrl']);
+        final lastSeen = _readDateTime(userData?['lastSeen']);
         final isOnline =
             lastSeen != null &&
             DateTime.now().difference(lastSeen).inMinutes < 5;

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
 import 'package:luqta/features/notifications/data/dtos/notification_dto.dart';
 
@@ -17,6 +18,7 @@ class FirestoreNotificationsRemoteDataSource
     final snapshot = await _collection
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
+        .limit(AppConstants.queryLimit)
         .get();
     return snapshot.docs.map(NotificationDto.fromFirestore).toList();
   }

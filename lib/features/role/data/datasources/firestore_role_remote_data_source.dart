@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/utils/user_public_fields.dart';
 import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
 import 'package:luqta/features/role/data/datasources/role_remote_data_source.dart';
 
@@ -10,6 +11,9 @@ class FirestoreRoleRemoteDataSource implements RoleRemoteDataSource {
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
+
+  CollectionReference<Map<String, dynamic>> get _usersPublicCollection =>
+      _firestore.collection('users_public');
 
   @override
   Future<UserProfileDto> saveUserRole({
@@ -57,6 +61,7 @@ class FirestoreRoleRemoteDataSource implements RoleRemoteDataSource {
         }
 
         final savedDoc = await userDocRef.get();
+        await _syncPublicProfile(userId, savedDoc.data());
         return UserProfileDto.fromFirestore(savedDoc);
       } on FirebaseException catch (e) {
         final shouldRetry =
@@ -74,5 +79,21 @@ class FirestoreRoleRemoteDataSource implements RoleRemoteDataSource {
       plugin: 'cloud_firestore',
       message: 'Unable to save role after multiple attempts',
     );
+  }
+
+  Future<void> _syncPublicProfile(
+    String userId,
+    Map<String, dynamic>? data,
+  ) async {
+    if (data == null) return;
+    final payload = buildUserPublicData(data);
+    if (payload.isEmpty) return;
+    if (!payload.containsKey('createdAt')) {
+      payload['createdAt'] = data['createdAt'] ?? FieldValue.serverTimestamp();
+    }
+    payload['updatedAt'] = FieldValue.serverTimestamp();
+    await _usersPublicCollection
+        .doc(userId)
+        .set(payload, SetOptions(merge: true));
   }
 }

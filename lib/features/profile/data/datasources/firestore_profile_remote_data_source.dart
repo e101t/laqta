@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:luqta/core/utils/user_public_fields.dart';
 import 'package:luqta/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:luqta/features/profile/data/dtos/portfolio_dto.dart';
 import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
@@ -19,6 +20,9 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
 
+  CollectionReference<Map<String, dynamic>> get _usersPublicCollection =>
+      _firestore.collection('users_public');
+
   CollectionReference<Map<String, dynamic>> get _portfolioCollection =>
       _firestore.collection('portfolios');
 
@@ -28,6 +32,7 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     if (!doc.exists) {
       return null;
     }
+    await _ensurePublicProfile(userId, doc.data());
     return UserProfileDto.fromFirestore(doc);
   }
 
@@ -37,6 +42,7 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     Map<String, dynamic> updates,
   ) async {
     await _usersCollection.doc(userId).update(updates);
+    await _syncPublicProfile(userId, updates);
   }
 
   @override
@@ -45,6 +51,8 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
       ...data,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    await _syncPublicProfile(userId, data);
   }
 
   @override
@@ -132,5 +140,36 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
   Future<void> deleteFileByUrl(String url) async {
     final ref = _storage.refFromURL(url);
     await ref.delete();
+  }
+
+  Future<void> _ensurePublicProfile(
+    String userId,
+    Map<String, dynamic>? data,
+  ) async {
+    if (data == null) return;
+    final publicDoc = await _usersPublicCollection.doc(userId).get();
+    if (publicDoc.exists) return;
+
+    final payload = buildUserPublicData(data);
+    if (payload.isEmpty) return;
+    if (!payload.containsKey('createdAt')) {
+      payload['createdAt'] = data['createdAt'] ?? FieldValue.serverTimestamp();
+    }
+    payload['updatedAt'] = FieldValue.serverTimestamp();
+    await _usersPublicCollection
+        .doc(userId)
+        .set(payload, SetOptions(merge: true));
+  }
+
+  Future<void> _syncPublicProfile(
+    String userId,
+    Map<String, dynamic> updates,
+  ) async {
+    final payload = buildUserPublicData(updates);
+    if (payload.isEmpty) return;
+    payload['updatedAt'] = FieldValue.serverTimestamp();
+    await _usersPublicCollection
+        .doc(userId)
+        .set(payload, SetOptions(merge: true));
   }
 }

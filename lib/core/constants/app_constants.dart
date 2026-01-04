@@ -114,6 +114,8 @@ class AppConstants {
   static const int minPortfolioImages = 3;
   static const int maxImageSizeMB = 5;
   static const int pageSize = 20;
+  static const int queryLimit = 50;
+  static const int chatMessagesLimit = 100;
 
   // Durations (milliseconds)
   static const int animationDurationShort = 120;

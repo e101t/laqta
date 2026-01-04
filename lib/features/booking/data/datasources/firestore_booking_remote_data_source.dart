@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
 
@@ -16,6 +17,7 @@ class FirestoreBookingRemoteDataSource implements BookingRemoteDataSource {
     final snapshot = await _collection
         .where('customerId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
+        .limit(AppConstants.queryLimit)
         .get();
 
     return snapshot.docs.map(BookingDto.fromFirestore).toList();

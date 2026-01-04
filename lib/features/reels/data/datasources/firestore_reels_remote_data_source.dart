@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/features/reels/data/datasources/reels_remote_data_source.dart';
 import 'package:luqta/features/reels/data/dtos/comment_dto.dart';
 import 'package:luqta/features/reels/data/dtos/reel_dto.dart';
@@ -19,6 +20,7 @@ class FirestoreReelsRemoteDataSource implements ReelsRemoteDataSource {
   Future<List<ReelDto>> getReels() async {
     final snapshot = await _reelsCollection
         .orderBy('createdAt', descending: true)
+        .limit(AppConstants.queryLimit)
         .get();
     return snapshot.docs.map(ReelDto.fromFirestore).toList();
   }
@@ -39,6 +41,7 @@ class FirestoreReelsRemoteDataSource implements ReelsRemoteDataSource {
     final snapshot = await _commentsCollection
         .where('reelId', isEqualTo: reelId)
         .orderBy('createdAt', descending: true)
+        .limit(AppConstants.queryLimit)
         .get();
     return snapshot.docs.map(CommentDto.fromFirestore).toList();
   }
