@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/screens/settings/report_screen.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:luqta/features/chat/chat_dependencies.dart';
@@ -31,6 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = true;
+  bool _hasError = false;
   String _currentUserId = '';
 
   @override
@@ -56,8 +58,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadMessages() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
+    var hasError = false;
     try {
       final result = await ChatDependencies.getChatMessages().call(
         chatId: widget.chatId,
@@ -70,10 +76,17 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       // Handle error - could show a snackbar or log
       debugPrint('Error loading messages: $e');
+      hasError = true;
     }
 
-    setState(() => _isLoading = false);
-    _scrollToBottom();
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _hasError = hasError;
+    });
+    if (!hasError) {
+      _scrollToBottom();
+    }
   }
 
   void _scrollToBottom() {
@@ -545,6 +558,14 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
+                : _hasError
+                ? EmptyStates.error(onRetry: _loadMessages)
+                : _messages.isEmpty
+                ? const EmptyState(
+                    icon: Icons.chat_bubble_outline,
+                    title: 'No messages yet',
+                    message: 'Start the conversation by sending a message.',
+                  )
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),

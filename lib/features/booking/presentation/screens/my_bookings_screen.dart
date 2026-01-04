@@ -23,6 +23,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
+  bool _hasError = false;
 
   final List<BookingModel> _activeBookings = [];
   final List<BookingModel> _pastBookings = [];
@@ -41,13 +42,19 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _loadBookings() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
     try {
       final userResult = await AuthDependencies.getCurrentUser().call();
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
         return;
       }
 
@@ -83,8 +90,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         }
       }
     } catch (e) {
-      // Handle error - could show snackbar or error state
       debugPrint('Error loading bookings: $e');
+      _hasError = true;
     }
 
     if (mounted) {
@@ -205,6 +212,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       ),
       body: _isLoading
           ? const LoadingIndicator()
+          : _hasError && _activeBookings.isEmpty && _pastBookings.isEmpty
+          ? EmptyStates.error(onRetry: _loadBookings)
           : RefreshIndicator(
               onRefresh: _loadBookings,
               child: TabBarView(

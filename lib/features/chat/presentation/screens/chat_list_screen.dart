@@ -18,6 +18,7 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   bool _isLoading = true;
+  bool _hasError = false;
   final List<ChatThreadPreview> _chats = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -47,13 +48,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _loadChats() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
     try {
       final userResult = await AuthDependencies.getCurrentUser().call();
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
-        setState(() => _isLoading = false);
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
         return;
       }
 
@@ -62,14 +70,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
       );
       final chatPreviews = result.valueOrNull ?? [];
 
+      if (!mounted) return;
       setState(() {
         _chats.clear();
         _chats.addAll(chatPreviews);
         _isLoading = false;
+        _hasError = false;
       });
     } catch (e) {
       // Handle error - for now, just set loading to false
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
     }
   }
 
@@ -147,6 +161,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       appBar: AppBar(title: Text(localizations.messages)),
       body: _isLoading
           ? const LoadingIndicator()
+          : _hasError && _chats.isEmpty
+          ? EmptyStates.error(onRetry: _loadChats)
           : Column(
               children: [
                 Padding(
