@@ -26,6 +26,19 @@ service cloud.firestore {
     function isParticipant(participants) {
       return isSignedIn() && request.auth.uid in participants;
     }
+
+    function isNonEmptyString(value) {
+      return value is string && value.size() > 0;
+    }
+
+    function canWriteReview(bookingId, photographerId) {
+      let booking = get(/databases/$(database)/documents/bookings/$(bookingId));
+      return booking != null &&
+             booking.data != null &&
+             booking.data.status == 'done' &&
+             booking.data.customerId == request.auth.uid &&
+             booking.data.photographerId == photographerId;
+    }
     
     function isChatParticipant(chatId) {
       return isSignedIn() &&
@@ -120,7 +133,13 @@ service cloud.firestore {
     match /reviews/{reviewId} {
       allow read: if true; // Public read
       allow create: if isSignedIn() &&
-                      request.resource.data.reviewerId == request.auth.uid;
+                      request.resource.data.reviewerId == request.auth.uid &&
+                      isNonEmptyString(request.resource.data.bookingId) &&
+                      isNonEmptyString(request.resource.data.targetId) &&
+                      canWriteReview(
+                        request.resource.data.bookingId,
+                        request.resource.data.targetId
+                      );
       allow update: if isOwner(resource.data.reviewerId);
       allow delete: if isOwner(resource.data.reviewerId);
     }
