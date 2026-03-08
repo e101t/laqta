@@ -5,6 +5,15 @@ import '../entities/reel_model.dart';
 abstract class ReelsRepository {
   Future<Result<List<ReelModel>>> getReels();
 
+  Future<Result<void>> createReel({required ReelModel reel});
+
+  Future<Result<String>> uploadReelMedia({
+    required String photographerId,
+    required String reelId,
+    required String filePath,
+    required String contentType,
+  });
+
   Future<Result<void>> updateReelLikes({
     required String reelId,
     required int delta,

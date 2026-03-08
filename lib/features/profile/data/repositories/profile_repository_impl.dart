@@ -59,6 +59,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
         'name': data.name,
         'username': normalized,
         'usernameLower': normalized,
+        if (data.email != null) 'email': data.email,
+        if (data.phone != null) 'phone': data.phone,
         'governorate': data.governorate,
         'gender': data.gender,
         'birthYear': data.birthYear,

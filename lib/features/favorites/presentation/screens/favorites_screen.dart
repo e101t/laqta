@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
@@ -52,6 +51,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _loadFavorites() async {
     final userResult = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
     final userId = userResult.valueOrNull?.id;
     if (userId == null || userId.isEmpty) {
       setState(() {
@@ -70,6 +70,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       final result = await FavoritesDependencies.getFavorites().call(
         userId: userId,
       );
+      if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to load favorites',
@@ -82,6 +83,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
       setState(() => _isLoading = false);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _errorMessage = 'Failed to load favorites';
@@ -143,9 +145,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(localizations.favorites)),
       body: _isLoading
           ? const LoadingIndicator()
@@ -154,13 +156,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  Icon(Icons.error_outline, size: 64, color: scheme.error),
                   const SizedBox(height: 16),
                   Text(_errorMessage!, textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadFavorites,
-                    child: const Text('Retry'),
+                    child: Text(localizations.retry),
                   ),
                 ],
               ),
@@ -198,6 +200,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Widget _buildFavoritesList(List<FavoritePhotographer> list) {
+    final scheme = Theme.of(context).colorScheme;
+
     if (list.isEmpty) {
       return Center(
         child: EmptyState(
@@ -222,7 +226,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: 16),
               decoration: BoxDecoration(
-                color: AppColors.error,
+                color: scheme.error,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.delete, color: Colors.white),

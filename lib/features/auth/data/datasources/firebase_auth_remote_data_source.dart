@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:luqta/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:luqta/features/auth/data/dtos/auth_user_dto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   final FirebaseAuth _auth;
@@ -37,6 +38,75 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       throw StateError('Google sign-in returned no user');
     }
 
+    return AuthUserDto.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<AuthUserDto> signInWithApple() async {
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+    );
+
+    final idToken = credential.identityToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Missing Apple identity token');
+    }
+
+    final oauthCredential = OAuthProvider(
+      'apple.com',
+    ).credential(idToken: idToken, accessToken: credential.authorizationCode);
+
+    final userCredential = await _auth.signInWithCredential(oauthCredential);
+    final user = userCredential.user;
+    if (user == null) {
+      throw StateError('Apple sign-in returned no user');
+    }
+
+    if ((user.displayName == null || user.displayName!.isEmpty) &&
+        (credential.givenName != null || credential.familyName != null)) {
+      final givenName = credential.givenName ?? '';
+      final familyName = credential.familyName ?? '';
+      final fullName = '$givenName $familyName'.trim();
+      if (fullName.isNotEmpty) {
+        await user.updateDisplayName(fullName);
+      }
+    }
+
+    return AuthUserDto.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<AuthUserDto> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw StateError('Password sign-in returned no user');
+    }
+    return AuthUserDto.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<AuthUserDto> signUpWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw StateError('Password sign-up returned no user');
+    }
     return AuthUserDto.fromFirebaseUser(user);
   }
 

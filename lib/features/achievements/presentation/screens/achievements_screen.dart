@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/models/achievement_model.dart';
 import 'package:luqta/core/widgets/skeleton_loaders.dart';
 import 'package:luqta/features/achievements/achievements_dependencies.dart';
@@ -34,6 +33,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
     try {
       final userResult = await AuthDependencies.getCurrentUser().call();
+      if (!mounted) return;
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
         setState(() {
@@ -51,6 +51,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       final result = await AchievementsDependencies.getUserAchievements().call(
         userId: userId,
       );
+      if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to load achievements',
@@ -86,6 +87,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to load achievements';
         _isLoading = false;
@@ -95,8 +97,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('الإنجازات 🏆'), centerTitle: true),
       body: _isLoading
           ? SkeletonList(
@@ -110,15 +114,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: AppColors.error,
+                      color: scheme.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       _errorMessage!,
-                      style: AppTypography.bodyLarge,
+                      style: textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -138,13 +142,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 const SizedBox(height: 24),
 
                 // Progress Overview
-                Text('التقدم', style: AppTypography.h3),
+                Text('التقدم', style: textTheme.titleLarge),
                 const SizedBox(height: 12),
                 _buildProgressCard(),
                 const SizedBox(height: 24),
 
                 // Achievements List
-                Text('جميع الإنجازات', style: AppTypography.h3),
+                Text('جميع الإنجازات', style: textTheme.titleLarge),
                 const SizedBox(height: 12),
                 ..._achievements.map((achievement) {
                   final userAchievement =
@@ -160,18 +164,19 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   Widget _buildStatsCard() {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.cta],
+        gradient: LinearGradient(
+          colors: [scheme.primary, scheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: scheme.primary.withValues(alpha: 0.30),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -192,7 +197,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           const SizedBox(height: 8),
           Text(
             'إنجاز مفتوح',
-            style: AppTypography.h4.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
             ),
           ),
@@ -226,13 +231,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   Widget _buildProgressCard() {
     final progress = _unlockedCount / _achievements.length;
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,11 +247,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('التقدم الكلي', style: AppTypography.h4),
+              Text('التقدم الكلي', style: textTheme.titleMedium),
               Text(
                 '${(progress * 100).toStringAsFixed(0)}%',
-                style: AppTypography.h4.copyWith(
-                  color: AppColors.primary,
+                style: textTheme.titleMedium?.copyWith(
+                  color: scheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -256,8 +263,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 12,
-              backgroundColor: AppColors.divider,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              backgroundColor: scheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation(scheme.primary),
             ),
           ),
         ],
@@ -274,6 +281,9 @@ class _AchievementCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final isUnlocked = userAchievement?.isUnlocked ?? false;
     final progress = userAchievement?.getProgress(achievement) ?? 0.0;
     final currentProgress = userAchievement?.currentProgress ?? 0;
@@ -283,13 +293,13 @@ class _AchievementCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isUnlocked
-            ? AppColors.primary.withValues(alpha: 0.05)
-            : AppColors.surface,
+            ? scheme.primary.withValues(alpha: 0.06)
+            : scheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isUnlocked
-              ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.divider,
+              ? scheme.primary.withValues(alpha: 0.30)
+              : scheme.outlineVariant,
           width: isUnlocked ? 2 : 1,
         ),
       ),
@@ -301,8 +311,8 @@ class _AchievementCard extends StatelessWidget {
             height: 70,
             decoration: BoxDecoration(
               color: isUnlocked
-                  ? AppColors.primary.withValues(alpha: 0.1)
-                  : AppColors.divider.withValues(alpha: 0.3),
+                  ? scheme.primary.withValues(alpha: 0.12)
+                  : scheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
@@ -327,16 +337,16 @@ class _AchievementCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         achievement.title,
-                        style: AppTypography.h4.copyWith(
+                        style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: isUnlocked ? AppColors.primary : null,
+                          color: isUnlocked ? scheme.primary : null,
                         ),
                       ),
                     ),
                     if (isUnlocked)
-                      const Icon(
+                      Icon(
                         Icons.check_circle,
-                        color: AppColors.success,
+                        color: scheme.tertiary,
                         size: 24,
                       ),
                   ],
@@ -344,8 +354,8 @@ class _AchievementCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   achievement.description,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -360,18 +370,16 @@ class _AchievementCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: progress,
                             minHeight: 6,
-                            backgroundColor: AppColors.divider,
-                            valueColor: const AlwaysStoppedAnimation(
-                              AppColors.primary,
-                            ),
+                            backgroundColor: scheme.surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation(scheme.primary),
                           ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '$currentProgress/${achievement.requiredCount}',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textSecondary,
+                        style: textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -388,18 +396,22 @@ class _AchievementCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.cta.withValues(alpha: 0.1),
+                      color: scheme.secondary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.stars, size: 14, color: AppColors.cta),
+                        Icon(
+                          Icons.stars,
+                          size: 14,
+                          color: scheme.secondary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '+${achievement.rewardPoints} نقطة',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.cta,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: scheme.secondary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -421,12 +433,13 @@ class _AchievementSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ShimmerLoading(
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

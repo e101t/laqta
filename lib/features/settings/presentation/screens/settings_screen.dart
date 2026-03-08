@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/providers/theme_provider.dart';
 import 'package:luqta/core/providers/locale_provider.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/settings/presentation/screens/policies_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:luqta/features/settings/settings_dependencies.dart';
@@ -28,6 +28,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
       _reduceMotion = prefs.getBool('reduceMotion') ?? false;
@@ -84,7 +85,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => _deleteAccount(),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: Text(localizations.delete),
           ),
         ],
@@ -183,7 +186,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(localizations.settings)),
       body: ListView(
         children: [
@@ -194,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: const Text('استلام تحديثات الحجوزات والرسائل'),
             value: _notificationsEnabled,
             onChanged: _toggleNotifications,
-            activeThumbColor: AppColors.primary,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const Divider(),
 
@@ -207,10 +209,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text(localizations.darkModeSubtitle),
                 value: themeProvider.isDarkMode,
                 onChanged: _toggleDarkMode,
-                activeThumbColor: AppColors.primary,
+                activeThumbColor: Theme.of(context).colorScheme.primary,
                 secondary: Icon(
                   themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               );
             },
@@ -224,7 +226,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(localizations.reduceMotionSubtitle),
             value: _reduceMotion,
             onChanged: _toggleReduceMotion,
-            activeThumbColor: AppColors.primary,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const Divider(),
 
@@ -256,6 +258,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Legal Section
           _buildSectionHeader(localizations.legalSection),
           ListTile(
+            leading: const Icon(Icons.gavel_outlined),
+            title: Text(localizations.policies),
+            subtitle: const Text('Read platform policies & terms'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PoliciesScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.shield_outlined),
+            title: Text(localizations.bookingPolicies),
+            subtitle: const Text('ضمان الحجز، التعديلات، النزاعات'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => AppRouter.goToBookingPolicies(context),
+          ),
+          ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
             title: Text(localizations.privacy),
             trailing: const Icon(Icons.chevron_right),
@@ -272,18 +291,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Account Actions
           _buildSectionHeader(localizations.accountSection),
           ListTile(
-            leading: const Icon(Icons.logout, color: AppColors.primary),
+            leading: Icon(
+              Icons.logout,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             title: Text(
               localizations.logout,
-              style: const TextStyle(color: AppColors.primary),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
             onTap: _logout,
           ),
           ListTile(
-            leading: const Icon(Icons.delete_forever, color: AppColors.error),
+            leading: Icon(
+              Icons.delete_forever,
+              color: Theme.of(context).colorScheme.error,
+            ),
             title: Text(
               localizations.deleteAccount,
-              style: const TextStyle(color: AppColors.error),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             onTap: () => _showDeleteAccountDialog(localizations),
           ),
@@ -291,7 +316,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 32),
 
           // App Version
-          Center(child: Text('Luqta v1.0.0', style: AppTypography.caption)),
+          Center(
+            child: Text(
+              'Luqta v1.0.0',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -299,11 +329,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(
         title,
-        style: AppTypography.h4.copyWith(color: AppColors.primary),
+        style: textTheme.titleMedium?.copyWith(
+          color: scheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

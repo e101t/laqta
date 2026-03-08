@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
@@ -124,7 +123,10 @@ class _ReportScreenState extends State<ReportScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        final textTheme = Theme.of(context).textTheme;
+        return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -133,13 +135,13 @@ class _ReportScreenState extends State<ReportScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
+                color: scheme.tertiary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle,
                 size: 50,
-                color: AppColors.success,
+                color: scheme.tertiary,
               ),
             ),
             const SizedBox(height: 20),
@@ -151,8 +153,8 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 12),
             Text(
               'شكراً لك! سنقوم بمراجعة البلاغ في أقرب وقت.',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -169,14 +171,17 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('إرسال بلاغ 🚨'), centerTitle: true),
       body: Form(
         key: _formKey,
@@ -191,16 +196,16 @@ class _ReportScreenState extends State<ReportScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.error.withValues(alpha: 0.2),
-                      AppColors.error.withValues(alpha: 0.05),
+                      scheme.error.withValues(alpha: 0.20),
+                      scheme.error.withValues(alpha: 0.06),
                     ],
                   ),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.report_problem,
                   size: 50,
-                  color: AppColors.error,
+                  color: scheme.error,
                 ),
               ),
             ),
@@ -211,28 +216,27 @@ class _ReportScreenState extends State<ReportScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: scheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: scheme.outlineVariant),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.person, color: AppColors.textSecondary),
+                    Icon(Icons.person, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'الإبلاغ عن:',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
                           Text(
                             widget.reportedUserName!,
-                            style: AppTypography.h4,
+                            style: textTheme.titleMedium,
                           ),
                         ],
                       ),
@@ -244,7 +248,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ],
 
             // Title
-            Text('سبب البلاغ ⚠️', style: AppTypography.h3),
+            Text('سبب البلاغ ⚠️', style: textTheme.titleLarge),
             const SizedBox(height: 16),
 
             // Report Reasons Grid
@@ -272,10 +276,10 @@ class _ReportScreenState extends State<ReportScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.error.withValues(alpha: 0.1)
-                          : AppColors.surface,
+                          ? scheme.error.withValues(alpha: 0.12)
+                          : scheme.surface,
                       border: Border.all(
-                        color: isSelected ? AppColors.error : AppColors.divider,
+                        color: isSelected ? scheme.error : scheme.outlineVariant,
                         width: isSelected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -290,10 +294,10 @@ class _ReportScreenState extends State<ReportScreen> {
                         const SizedBox(height: 8),
                         Text(
                           reason.title,
-                          style: AppTypography.bodySmall.copyWith(
+                          style: textTheme.bodySmall?.copyWith(
                             color: isSelected
-                                ? AppColors.error
-                                : AppColors.textPrimary,
+                                ? scheme.error
+                                : scheme.onSurface,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -309,7 +313,7 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 24),
 
             // Details
-            Text('تفاصيل إضافية 📋', style: AppTypography.h3),
+            Text('تفاصيل إضافية 📋', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             AppTextField(
               controller: _detailsController,
@@ -332,27 +336,23 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
+                color: scheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
+                  color: scheme.primary.withValues(alpha: 0.25),
                 ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: AppColors.info,
-                    size: 20,
-                  ),
+                  Icon(Icons.info_outline, color: scheme.primary, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'سيتم مراجعة بلاغك من قبل فريقنا خلال 24-48 ساعة. '
                       'نحن نأخذ جميع البلاغات على محمل الجد ونعمل على توفير بيئة آمنة للجميع.',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.info,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.primary,
                         height: 1.5,
                       ),
                     ),

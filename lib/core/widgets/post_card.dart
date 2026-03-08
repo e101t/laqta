@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/laqta_tokens.dart';
+import '../utils/image_provider.dart';
 import 'glass_card.dart';
 
 class PostCard extends StatelessWidget {
@@ -24,6 +25,7 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatarProvider = resolveImageProvider(authorAvatarUrl);
     return GlassCard(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -34,10 +36,8 @@ class PostCard extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: LaqtaColors.border,
-                backgroundImage: authorAvatarUrl != null
-                    ? NetworkImage(authorAvatarUrl!)
-                    : null,
-                child: authorAvatarUrl == null
+                backgroundImage: avatarProvider,
+                child: avatarProvider == null
                     ? const Icon(Icons.person_outline)
                     : null,
               ),
@@ -85,7 +85,8 @@ class PostCard extends StatelessWidget {
   }
 
   Widget _buildMedia() {
-    if (imageUrl.trim().isEmpty) {
+    final provider = resolveImageProvider(imageUrl);
+    if (provider == null) {
       return Container(
         color: LaqtaColors.border,
         alignment: Alignment.center,
@@ -93,8 +94,8 @@ class PostCard extends StatelessWidget {
       );
     }
 
-    return Image.network(
-      imageUrl,
+    return Image(
+      image: provider,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return Container(

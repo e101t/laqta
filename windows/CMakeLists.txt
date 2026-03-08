@@ -1,5 +1,11 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+
+# Visual Studio 2026 ships with CMake 4+, which dropped compatibility for
+# projects declaring `cmake_minimum_required(VERSION < 3.5)`. Some third-party
+# dependencies (e.g., Firebase C++ SDK) still do, so opt into the compatibility
+# shim to avoid configure-time failures.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "CMake policy minimum for third-party projects" FORCE)
 project(luqta LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
@@ -68,7 +74,12 @@ include(flutter/generated_plugins.cmake)
 set(BUILD_BUNDLE_DIR "$<TARGET_FILE_DIR:${BINARY_NAME}>")
 # Make the "install" step default, as it's required to run.
 set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+# CMake defaults the install prefix to Program Files on Windows. That breaks
+# non-admin Flutter builds because the generated "INSTALL" step runs during the
+# Visual Studio build. Install next to the executable unless the user explicitly
+# configured a custom prefix.
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR
+   CMAKE_INSTALL_PREFIX MATCHES "^[A-Za-z]:/Program Files( \\(x86\\))?/")
   set(CMAKE_INSTALL_PREFIX "${BUILD_BUNDLE_DIR}" CACHE PATH "..." FORCE)
 endif()
 

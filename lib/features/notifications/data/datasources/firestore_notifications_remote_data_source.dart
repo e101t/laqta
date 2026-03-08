@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
@@ -8,10 +9,15 @@ class FirestoreNotificationsRemoteDataSource
     implements NotificationsRemoteDataSource {
   final FirebaseFirestore _firestore;
   final SecureFirestore _secure;
+  final FirebaseFunctions _functions;
 
-  FirestoreNotificationsRemoteDataSource({FirebaseFirestore? firestore})
+  FirestoreNotificationsRemoteDataSource({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  })
     : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
+      _functions = functions ?? FirebaseFunctions.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('notifications');
@@ -26,6 +32,12 @@ class FirestoreNotificationsRemoteDataSource
           .get(),
     );
     return snapshot.docs.map(NotificationDto.fromFirestore).toList();
+  }
+
+  @override
+  Future<void> createNotification(NotificationDto notification) async {
+    final callable = _functions.httpsCallable('createNotification');
+    await callable.call(notification.toMap());
   }
 
   @override

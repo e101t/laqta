@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
@@ -161,6 +160,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
 
+    if (!mounted) return;
     if (shouldDelete != true) return;
 
     try {
@@ -197,6 +197,7 @@ class _ChatScreenState extends State<ChatScreen> {
       chatId: widget.chatId,
       currentUserId: currentUserId,
     );
+    if (!mounted) return;
     final otherUserId = result.valueOrNull;
     if (!result.isSuccess || otherUserId == null || otherUserId.isEmpty) {
       if (mounted) {
@@ -325,9 +326,11 @@ class _ChatScreenState extends State<ChatScreen> {
         debugPrint('Error sending message: $e');
       }
       // Remove the message from UI if sending failed
-      setState(() {
-        _messages.remove(message);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(message);
+        });
+      }
     }
 
     _scrollToBottom();
@@ -336,6 +339,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (!mounted) return;
 
     if (pickedFile == null) return;
 
@@ -367,6 +371,7 @@ class _ChatScreenState extends State<ChatScreen> {
         filePath: pickedFile.path,
         messageId: messageId,
       );
+      if (!mounted) return;
       final imageMessage = result.valueOrNull;
       if (!result.isSuccess || imageMessage == null) {
         throw StateError('Send image failed');
@@ -381,9 +386,11 @@ class _ChatScreenState extends State<ChatScreen> {
         debugPrint('Error sending image: $e');
       }
       // Remove the temporary message on error
-      setState(() {
-        _messages.remove(tempMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(tempMessage);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -397,6 +404,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _sendVideo() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
+    if (!mounted) return;
 
     if (pickedFile == null) return;
 
@@ -428,6 +436,7 @@ class _ChatScreenState extends State<ChatScreen> {
         filePath: pickedFile.path,
         messageId: messageId,
       );
+      if (!mounted) return;
       final videoMessage = result.valueOrNull;
       if (!result.isSuccess || videoMessage == null) {
         throw StateError('Send video failed');
@@ -442,9 +451,11 @@ class _ChatScreenState extends State<ChatScreen> {
         debugPrint('Error sending video: $e');
       }
       // Remove the temporary message on error
-      setState(() {
-        _messages.remove(tempMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(tempMessage);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -469,6 +480,7 @@ class _ChatScreenState extends State<ChatScreen> {
         'pptx',
       ],
     );
+    if (!mounted) return;
 
     if (result == null || result.files.isEmpty) return;
 
@@ -504,6 +516,7 @@ class _ChatScreenState extends State<ChatScreen> {
         fileName: pickedFile.name,
         fileSize: pickedFile.size,
       );
+      if (!mounted) return;
       final documentMessage = result.valueOrNull;
       if (!result.isSuccess || documentMessage == null) {
         throw StateError('Send document failed');
@@ -518,9 +531,11 @@ class _ChatScreenState extends State<ChatScreen> {
         debugPrint('Error sending document: $e');
       }
       // Remove the temporary message on error
-      setState(() {
-        _messages.remove(tempMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(tempMessage);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to send document')),
@@ -534,9 +549,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -546,12 +563,10 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.otherUserName, style: AppTypography.h4),
+                  Text(widget.otherUserName, style: textTheme.titleMedium),
                   Text(
                     'Online',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.success,
-                    ),
+                    style: textTheme.labelSmall?.copyWith(color: scheme.tertiary),
                   ),
                 ],
               ),
@@ -598,7 +613,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: scheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -632,7 +647,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: AppColors.background,
+                        fillColor: scheme.surfaceContainerHighest,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
@@ -642,10 +657,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
                     child: IconButton(
                       icon: const Icon(Icons.send, color: Colors.white),
                       onPressed: _sendMessage,
@@ -701,6 +713,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 
   Widget _buildDocumentWidget(ChatMessage message) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final parts = message.content.split('|');
     final url = parts[0];
     final fileName = parts.length > 1 ? parts[1] : 'Document';
@@ -723,12 +737,12 @@ class _MessageBubbleState extends State<_MessageBubble> {
         decoration: BoxDecoration(
           color: widget.isMe
               ? Colors.white.withValues(alpha: 0.1)
-              : AppColors.surface,
+              : scheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: widget.isMe
                 ? Colors.white.withValues(alpha: 0.3)
-                : AppColors.textSecondary.withValues(alpha: 0.3),
+                : scheme.outlineVariant,
           ),
         ),
         child: Row(
@@ -742,8 +756,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
                 children: [
                   Text(
                     fileName,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: widget.isMe ? Colors.white : AppColors.textPrimary,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: widget.isMe ? Colors.white : scheme.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -752,10 +766,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
                   if (fileSize > 0) ...[
                     Text(
                       _formatFileSize(fileSize),
-                      style: AppTypography.caption.copyWith(
+                      style: textTheme.labelSmall?.copyWith(
                         color: widget.isMe
                             ? Colors.white.withValues(alpha: 0.7)
-                            : AppColors.textSecondary,
+                            : scheme.onSurfaceVariant,
                       ),
                     ),
                   ] else ...[
@@ -781,6 +795,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -796,7 +812,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: widget.isMe ? AppColors.primary : AppColors.surface,
+                color: widget.isMe ? scheme.primary : scheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -870,20 +886,20 @@ class _MessageBubbleState extends State<_MessageBubble> {
                   ] else ...[
                     Text(
                       widget.message.content,
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: textTheme.bodyMedium?.copyWith(
                         color: widget.isMe
                             ? Colors.white
-                            : AppColors.textPrimary,
+                            : scheme.onSurface,
                       ),
                     ),
                   ],
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(widget.message.createdAt),
-                    style: AppTypography.caption.copyWith(
+                    style: textTheme.labelSmall?.copyWith(
                       color: widget.isMe
                           ? Colors.white.withValues(alpha: 0.7)
-                          : AppColors.textSecondary,
+                          : scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -892,10 +908,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
           ),
           if (widget.isMe) ...[
             const SizedBox(width: 8),
-            const CircleAvatar(
+            CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary,
-              child: Icon(Icons.person, size: 16, color: Colors.white),
+              backgroundColor: scheme.primary,
+              child: const Icon(Icons.person, size: 16, color: Colors.white),
             ),
           ],
         ],

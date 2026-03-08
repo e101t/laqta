@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:luqta/features/review/domain/entities/review_submission.dart';
 import 'package:luqta/features/review/review_dependencies.dart';
+import 'package:luqta/features/trust/trust_dependencies.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   final String bookingId;
@@ -23,11 +24,11 @@ class WriteReviewScreen extends StatefulWidget {
 }
 
 class _WriteReviewScreenState extends State<WriteReviewScreen> {
-  double _overallRating = 0;
-  double _qualityRating = 0;
-  double _professionalismRating = 0;
+  double _onTimeRating = 0;
   double _communicationRating = 0;
-  double _valueRating = 0;
+  double _qualityRating = 0;
+  double _deliverySpeedRating = 0;
+  bool? _recommend;
 
   final TextEditingController _commentController = TextEditingController();
   bool _isSubmitting = false;
@@ -39,10 +40,21 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   }
 
   bool _canSubmit() {
-    return _overallRating > 0 && _commentController.text.trim().isNotEmpty;
+    return _onTimeRating > 0 &&
+        _communicationRating > 0 &&
+        _qualityRating > 0 &&
+        _deliverySpeedRating > 0;
+  }
+
+  int _averageRating() {
+    final avg =
+        (_onTimeRating + _communicationRating + _qualityRating + _deliverySpeedRating) /
+            4;
+    return avg.round().clamp(1, 5);
   }
 
   Future<void> _submitReview() async {
+    final localizations = AppLocalizations.of(context);
     if (!_canSubmit()) return;
 
     setState(() => _isSubmitting = true);
@@ -58,12 +70,18 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
         bookingId: widget.bookingId,
         reviewerId: userId,
         targetId: widget.photographerId,
-        rating: _overallRating.toInt(),
+        rating: _averageRating(),
+        qualityRating: _qualityRating.round(),
+        communicationRating: _communicationRating.round(),
+        onTimeRating: _onTimeRating.round(),
+        deliverySpeedRating: _deliverySpeedRating.round(),
+        recommend: _recommend,
         comment: _commentController.text.trim().isNotEmpty
             ? _commentController.text.trim()
             : null,
         createdAt: DateTime.now(),
       );
+
       final result = await ReviewDependencies.submitReview().call(review);
       if (!result.isSuccess) {
         throw StateError(
@@ -71,21 +89,30 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
         );
       }
 
+      await TrustDependencies.incrementReviewStats().call(
+        bookingId: widget.bookingId,
+        photographerId: widget.photographerId,
+        qualityRating: _qualityRating,
+        communicationRating: _communicationRating,
+        onTimeRating: _onTimeRating,
+        deliverySpeedRating: _deliverySpeedRating,
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Review submitted successfully!'),
-            backgroundColor: AppColors.success,
+          SnackBar(
+            content: Text(localizations.reviewSubmitted),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
         Navigator.pop(context);
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit review'),
-            backgroundColor: AppColors.error,
+            content: Text(localizations.reviewSubmitFailed),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -98,21 +125,23 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Write Review')),
+      appBar: AppBar(title: Text(localizations.smartReview)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Photographer Info
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: scheme.outlineVariant),
               ),
               child: Row(
                 children: [
@@ -122,11 +151,11 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.photographerName, style: AppTypography.h4),
+                        Text(widget.photographerName, style: textTheme.titleMedium),
                         Text(
-                          'How was your experience?',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                          localizations.smartReviewSubtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -137,92 +166,74 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Overall Rating
-            Text('Overall Rating', style: AppTypography.h3),
-            const SizedBox(height: 12),
-            Center(
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        iconSize: 48,
-                        icon: Icon(
-                          index < _overallRating
-                              ? Icons.star
-                              : Icons.star_border,
-                          color: AppColors.cta,
-                        ),
-                        onPressed: () {
-                          setState(() => _overallRating = index + 1.0);
-                        },
-                      );
-                    }),
-                  ),
-                  if (_overallRating > 0)
-                    Text(
-                      _getRatingText(_overallRating),
-                      style: AppTypography.h4.copyWith(color: AppColors.cta),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Detailed Ratings
-            Text('Detailed Ratings', style: AppTypography.h3),
-            const SizedBox(height: 16),
-
             _buildRatingSlider(
-              'Quality',
-              Icons.high_quality,
-              _qualityRating,
-              (value) => setState(() => _qualityRating = value),
+              localizations.onTimeDelivery,
+              Icons.timer,
+              _onTimeRating,
+              (value) => setState(() => _onTimeRating = value),
             ),
             const SizedBox(height: 16),
-
             _buildRatingSlider(
-              'Professionalism',
-              Icons.business_center,
-              _professionalismRating,
-              (value) => setState(() => _professionalismRating = value),
-            ),
-            const SizedBox(height: 16),
-
-            _buildRatingSlider(
-              'Communication',
+              localizations.communication,
               Icons.chat_bubble,
               _communicationRating,
               (value) => setState(() => _communicationRating = value),
             ),
             const SizedBox(height: 16),
-
             _buildRatingSlider(
-              'Value for Money',
-              Icons.payments,
-              _valueRating,
-              (value) => setState(() => _valueRating = value),
+              localizations.quality,
+              Icons.high_quality,
+              _qualityRating,
+              (value) => setState(() => _qualityRating = value),
+            ),
+            const SizedBox(height: 16),
+            _buildRatingSlider(
+              localizations.deliverySpeed,
+              Icons.local_shipping,
+              _deliverySpeedRating,
+              (value) => setState(() => _deliverySpeedRating = value),
             ),
             const SizedBox(height: 24),
 
-            // Comment
-            Text('Your Review', style: AppTypography.h3),
-            const SizedBox(height: 12),
+            Text(localizations.recommendQuestion, style: textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: Text(localizations.yes),
+                    selected: _recommend == true,
+                    onSelected: (selected) =>
+                        setState(() => _recommend = selected ? true : null),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ChoiceChip(
+                    label: Text(localizations.no),
+                    selected: _recommend == false,
+                    onSelected: (selected) =>
+                        setState(() => _recommend = selected ? false : null),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            Text(localizations.commentOptional, style: textTheme.titleMedium),
+            const SizedBox(height: 8),
             AppTextField(
               controller: _commentController,
-              label: 'Tell us about your experience',
-              hint: 'Share your thoughts about the photography session...',
-              maxLines: 5,
+              label: localizations.reviewCommentHint,
+              maxLines: 4,
               maxLength: 500,
             ),
             const SizedBox(height: 24),
 
-            // Submit Button
             SizedBox(
               width: double.infinity,
               child: CTAButton(
-                text: 'Submit Review',
+                text: localizations.submitReview,
                 onPressed: _canSubmit() && !_isSubmitting
                     ? _submitReview
                     : null,
@@ -241,19 +252,26 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
     double value,
     ValueChanged<double> onChanged,
   ) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 20, color: AppColors.primary),
+            Icon(icon, size: 20, color: scheme.primary),
             const SizedBox(width: 8),
-            Text(label, style: AppTypography.bodyLarge),
+            Text(label, style: textTheme.bodyLarge),
             const Spacer(),
             if (value > 0)
               Text(
                 value.toStringAsFixed(1),
-                style: AppTypography.h4.copyWith(color: AppColors.cta),
+                style: textTheme.titleMedium?.copyWith(
+                  color: scheme.secondary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
           ],
         ),
@@ -265,17 +283,9 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
           divisions: 10,
           label: value.toStringAsFixed(1),
           onChanged: onChanged,
-          activeColor: AppColors.cta,
+          activeColor: scheme.secondary,
         ),
       ],
     );
-  }
-
-  String _getRatingText(double rating) {
-    if (rating >= 4.5) return 'Excellent';
-    if (rating >= 3.5) return 'Very Good';
-    if (rating >= 2.5) return 'Good';
-    if (rating >= 1.5) return 'Fair';
-    return 'Poor';
   }
 }

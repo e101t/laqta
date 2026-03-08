@@ -7,6 +7,18 @@ abstract class AuthRepository {
 
   Future<Result<AuthUser>> signInWithGoogle();
 
+  Future<Result<AuthUser>> signInWithApple();
+
+  Future<Result<AuthUser>> signInWithPassword({
+    required String email,
+    required String password,
+  });
+
+  Future<Result<AuthUser>> signUpWithPassword({
+    required String email,
+    required String password,
+  });
+
   Future<Result<AuthUser>> signInWithPhoneCredential({
     required String verificationId,
     required String smsCode,

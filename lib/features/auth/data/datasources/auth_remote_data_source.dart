@@ -12,6 +12,18 @@ abstract class AuthRemoteDataSource {
 
   Future<AuthUserDto> signInWithGoogle();
 
+  Future<AuthUserDto> signInWithApple();
+
+  Future<AuthUserDto> signInWithPassword({
+    required String email,
+    required String password,
+  });
+
+  Future<AuthUserDto> signUpWithPassword({
+    required String email,
+    required String password,
+  });
+
   Future<AuthUserDto> signInWithPhoneCredential({
     required String verificationId,
     required String smsCode,

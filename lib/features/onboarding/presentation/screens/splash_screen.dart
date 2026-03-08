@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -46,6 +45,9 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       body: Stack(
@@ -65,8 +67,8 @@ class _SplashScreenState extends State<SplashScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.black.withValues(alpha: 0.05),
-                    AppColors.background.withValues(alpha: 0.9),
-                    AppColors.background,
+                    theme.scaffoldBackgroundColor.withValues(alpha: 0.9),
+                    theme.scaffoldBackgroundColor,
                   ],
                 ),
               ),
@@ -83,15 +85,15 @@ class _SplashScreenState extends State<SplashScreen>
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.primary, AppColors.cta],
+                          colors: [scheme.primary, scheme.secondary],
                         ),
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.4),
+                            color: scheme.primary.withValues(alpha: 0.4),
                             blurRadius: 30,
                             offset: const Offset(0, 15),
                             spreadRadius: 5,
@@ -112,17 +114,17 @@ class _SplashScreenState extends State<SplashScreen>
                       children: [
                         Text(
                           localizations.appName,
-                          style: AppTypography.h1.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
+                          style: textTheme.displaySmall?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.w800,
                             fontSize: 42,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'LAQTA',
-                          style: AppTypography.h2.copyWith(
-                            color: AppColors.textSecondary,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: scheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 2,
                           ),
@@ -138,8 +140,8 @@ class _SplashScreenState extends State<SplashScreen>
                       children: [
                         Text(
                           localizations.loading,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -148,13 +150,13 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 16),
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 40,
                       height: 40,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
+                          scheme.primary,
                         ),
                       ),
                     ),

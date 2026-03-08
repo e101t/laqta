@@ -48,6 +48,8 @@ class NotificationModel {
         return '?';
       case 'offer':
         return '??';
+      case 'request':
+        return '??';
       case 'payment':
         return '??';
       case 'system':

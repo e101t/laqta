@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/core/security/secure_storage.dart';
 import 'package:luqta/core/utils/user_public_fields.dart';
@@ -53,20 +54,39 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
 
   @override
   Future<void> saveBasicInfo(String userId, Map<String, dynamic> data) async {
-    await _secure.guard(
-      () => _usersCollection.doc(userId).set({
-        ...data,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true)),
-    );
+    final ref = _usersCollection.doc(userId);
+    final existing = await _secure.guard(() => ref.get());
+    final timestamp = FieldValue.serverTimestamp();
 
-    await _syncPublicProfile(userId, data);
+    final payload = <String, dynamic>{
+      ...data,
+      'updatedAt': timestamp,
+    };
+
+    // Ensure the user document exists with required fields.
+    // This allows onboarding to skip the dedicated role screen.
+    if (!existing.exists) {
+      payload.addAll({
+        'uid': userId,
+        'lang': AppConstants.defaultLanguage,
+        'photoUrl': null,
+        'fcmToken': null,
+        'lastSeen': null,
+        'blockedUsers': <String>[],
+        'interests': <String>[],
+        'createdAt': timestamp,
+      });
+    }
+
+    await _secure.guard(() => ref.set(payload, SetOptions(merge: true)));
+
+    await _syncPublicProfile(userId, payload);
   }
 
   @override
   Future<bool> isUsernameAvailable(String usernameLower) async {
     final snapshot = await _secure.guard(
-      () => _usersCollection
+      () => _usersPublicCollection
           .where('usernameLower', isEqualTo: usernameLower)
           .limit(1)
           .get(),

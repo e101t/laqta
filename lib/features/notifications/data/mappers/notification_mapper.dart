@@ -16,4 +16,19 @@ class NotificationMapper {
       actionUrl: dto.actionUrl,
     );
   }
+
+  static NotificationDto toDto(NotificationModel model) {
+    return NotificationDto(
+      id: model.notificationId,
+      userId: model.userId,
+      title: model.title,
+      body: model.body,
+      type: model.type,
+      data: model.data,
+      isRead: model.isRead,
+      createdAt: model.createdAt,
+      imageUrl: model.imageUrl,
+      actionUrl: model.actionUrl,
+    );
+  }
 }

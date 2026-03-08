@@ -33,6 +33,11 @@ class PhotographerMapper {
       reviewerId: dto.reviewerId,
       targetId: dto.targetId,
       rating: dto.rating,
+      qualityRating: dto.qualityRating,
+      communicationRating: dto.communicationRating,
+      onTimeRating: dto.onTimeRating,
+      deliverySpeedRating: dto.deliverySpeedRating,
+      recommend: dto.recommend,
       comment: dto.comment,
       createdAt: dto.createdAt,
     );

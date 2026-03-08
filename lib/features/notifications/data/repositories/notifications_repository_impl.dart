@@ -26,6 +26,19 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   }
 
   @override
+  Future<Result<void>> createNotification(NotificationModel notification) async {
+    try {
+      final dto = NotificationMapper.toDto(notification);
+      await _remoteDataSource.createNotification(dto);
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to create notification'),
+      );
+    }
+  }
+
+  @override
   Future<Result<void>> markAsRead(String notificationId) async {
     try {
       await _remoteDataSource.markAsRead(notificationId);

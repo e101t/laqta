@@ -67,10 +67,10 @@ class LaqtaTheme {
 
   static ThemeData dark({bool isArabic = true}) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: LaqtaColors.primary,
+      seedColor: LaqtaColors.accent,
       brightness: Brightness.dark,
-      primary: LaqtaColors.primary,
-      secondary: LaqtaColors.accent,
+      primary: LaqtaColors.accent,
+      secondary: LaqtaColors.primary,
       surface: LaqtaColors.surfaceDark,
       error: LaqtaColors.error,
     );
@@ -116,9 +116,16 @@ class LaqtaTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: LaqtaColors.surfaceDark,
         elevation: 6,
-        indicatorColor: LaqtaColors.primary.withValues(alpha: 0.2),
+        indicatorColor: LaqtaColors.accent.withValues(alpha: 0.25),
         labelTextStyle: WidgetStateProperty.all(
           textTheme.labelSmall?.copyWith(color: LaqtaColors.inkMutedDark),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: LaqtaColors.accent,
+          foregroundColor: Colors.black,
+          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       cardTheme: CardThemeData(

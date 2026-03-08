@@ -23,6 +23,25 @@ class ReelsMapper {
     );
   }
 
+  static ReelDto toReelDto(ReelModel model) {
+    return ReelDto(
+      id: model.reelId,
+      photographerId: model.photographerId,
+      photographerName: model.photographerName,
+      photographerPhotoUrl: model.photographerPhotoUrl,
+      videoUrl: model.videoUrl,
+      thumbnailUrl: model.thumbnailUrl,
+      caption: model.caption,
+      tags: model.tags,
+      views: model.views,
+      likes: model.likes,
+      comments: model.comments,
+      shares: model.shares,
+      createdAt: model.createdAt,
+      isVerified: model.isVerified,
+    );
+  }
+
   static CommentModel toComment(CommentDto dto) {
     return CommentModel(
       commentId: dto.id,

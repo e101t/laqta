@@ -142,6 +142,11 @@ class PhotographerReviewDto {
   final String reviewerId;
   final String targetId;
   final int rating;
+  final int qualityRating;
+  final int communicationRating;
+  final int onTimeRating;
+  final int deliverySpeedRating;
+  final bool? recommend;
   final String? comment;
   final DateTime createdAt;
 
@@ -151,6 +156,11 @@ class PhotographerReviewDto {
     required this.reviewerId,
     required this.targetId,
     required this.rating,
+    required this.qualityRating,
+    required this.communicationRating,
+    required this.onTimeRating,
+    required this.deliverySpeedRating,
+    this.recommend,
     this.comment,
     required this.createdAt,
   });
@@ -165,6 +175,11 @@ class PhotographerReviewDto {
       reviewerId: _readString(data, 'reviewerId'),
       targetId: _readString(data, 'targetId'),
       rating: _readInt(data, 'rating'),
+      qualityRating: _readInt(data, 'qualityRating'),
+      communicationRating: _readInt(data, 'communicationRating'),
+      onTimeRating: _readInt(data, 'onTimeRating'),
+      deliverySpeedRating: _readInt(data, 'deliverySpeedRating'),
+      recommend: data['recommend'] is bool ? data['recommend'] as bool : null,
       comment: _readNullableString(data, 'comment'),
       createdAt: _readDateTime(data['createdAt']),
     );

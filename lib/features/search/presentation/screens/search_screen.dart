@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/constants/app_animations.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
@@ -50,6 +49,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   Future<void> _loadRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final recentSearchesJson = prefs.getString('recent_searches');
     if (recentSearchesJson != null) {
       final List<dynamic> decoded = json.decode(recentSearchesJson);
@@ -87,6 +87,7 @@ class _SearchScreenState extends State<SearchScreen>
       final result = await SearchDependencies.searchPhotographers().call(
         query: query,
       );
+      if (!mounted) return;
       if (!result.isSuccess) {
         _results.clear();
         _errorMessage = result.failureOrNull?.message;
@@ -101,10 +102,12 @@ class _SearchScreenState extends State<SearchScreen>
       if (kDebugMode) {
         debugPrint('Search error: $e');
       }
+      if (!mounted) return;
       _results.clear();
       _errorMessage = 'Search failed';
     }
 
+    if (!mounted) return;
     setState(() => _isSearching = false);
 
     // Save to recent searches
@@ -140,9 +143,7 @@ class _SearchScreenState extends State<SearchScreen>
     final showResults = _searchController.text.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
         automaticallyImplyLeading: false,
         titleSpacing: 0,
         toolbarHeight: 72,
@@ -249,11 +250,18 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   Widget _buildRecentSearches(AppLocalizations localizations) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         // Quick Filters
-        Text(localizations.popularSpecialties, style: AppTypography.h3),
+        Text(
+          localizations.popularSpecialties,
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -275,7 +283,10 @@ class _SearchScreenState extends State<SearchScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(localizations.recentSearches, style: AppTypography.h3),
+              Text(
+                localizations.recentSearches,
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
               TextButton(
                 onPressed: () {
                   setState(() => _recentSearches.clear());
@@ -290,10 +301,7 @@ class _SearchScreenState extends State<SearchScreen>
             final query = _recentSearches[index];
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.history,
-                color: AppColors.textSecondary,
-              ),
+              leading: Icon(Icons.history, color: scheme.onSurfaceVariant),
               title: Text(query),
               trailing: IconButton(
                 icon: const Icon(Icons.close, size: 20),

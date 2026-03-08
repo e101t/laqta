@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/security/secure_firestore.dart';
@@ -38,12 +39,13 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
 
   @override
   Future<List<ChatDto>> getChatsForUser(String userId) async {
+    Query<Map<String, dynamic>> query =
+        _chatsCollection.where('participants', arrayContains: userId);
+    if (!kDebugMode) {
+      query = query.orderBy('lastMessageAt', descending: true);
+    }
     final snapshot = await _secure.guard(
-      () => _chatsCollection
-          .where('participants', arrayContains: userId)
-          .orderBy('lastMessageAt', descending: true)
-          .limit(AppConstants.queryLimit)
-          .get(),
+      () => query.limit(AppConstants.queryLimit).get(),
     );
 
     return snapshot.docs.map(ChatDto.fromFirestore).toList();

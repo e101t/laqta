@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/router/app_router.dart';
@@ -79,6 +78,8 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
     AppLocalizations localizations, {
     bool compact = false,
   }) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final height = compact ? 220.0 : 360.0;
 
     return ClipRRect(
@@ -102,8 +103,8 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       Colors.black.withValues(alpha: 0.06),
-                      AppColors.cta.withValues(alpha: 0.2),
-                      AppColors.background.withValues(alpha: 0.1),
+                      scheme.secondary.withValues(alpha: 0.20),
+                      scheme.surface.withValues(alpha: 0.10),
                     ],
                   ),
                 ),
@@ -118,7 +119,7 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
                 children: [
                   Text(
                     localizations.chooseRole,
-                    style: AppTypography.h2.copyWith(
+                    style: textTheme.headlineSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -126,7 +127,7 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
                   const SizedBox(height: 8),
                   Text(
                     localizations.authSubtitle,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
@@ -144,7 +145,6 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -185,13 +185,15 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
   }
 
   Widget _buildRoleContent(AppLocalizations localizations) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           localizations.chooseRole,
-          style: AppTypography.h2.copyWith(
-            color: AppColors.textPrimary,
+          style: textTheme.headlineSmall?.copyWith(
+            color: scheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.start,
@@ -248,6 +250,8 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -256,17 +260,17 @@ class _RoleCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : AppColors.surface,
+              ? scheme.primary.withValues(alpha: 0.12)
+              : scheme.surface,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
+            color: isSelected ? scheme.primary : scheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: scheme.primary.withValues(alpha: 0.22),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -280,14 +284,14 @@ class _RoleCard extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primary
-                    : AppColors.primary.withValues(alpha: 0.1),
+                    ? scheme.primary
+                    : scheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
                 size: 32,
-                color: isSelected ? Colors.white : AppColors.primary,
+                color: isSelected ? Colors.white : scheme.primary,
               ),
             ),
             const SizedBox(width: 16),
@@ -297,26 +301,26 @@ class _RoleCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTypography.h3.copyWith(
+                    style: textTheme.titleLarge?.copyWith(
                       color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textPrimary,
+                          ? scheme.primary
+                          : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              const Icon(
+              Icon(
                 Icons.check_circle,
-                color: AppColors.primary,
+                color: scheme.primary,
                 size: 28,
               ),
           ],

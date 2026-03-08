@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+import 'package:luqta/core/localization/app_localizations.dart';
 
 /// Custom Text Field Widget
 class AppTextField extends StatelessWidget {
@@ -121,7 +121,7 @@ class AppTextField extends StatelessWidget {
       inputFormatters: inputFormatters,
       autofillHints: autofillHints,
       autovalidateMode: autovalidateMode,
-      style: textStyle ?? AppTypography.bodyMedium,
+      style: textStyle ?? Theme.of(context).textTheme.bodyMedium,
       decoration: _buildDecoration(effectivePrefix, effectiveSuffix),
     );
   }
@@ -269,24 +269,30 @@ class _PasswordStrengthIndicator extends StatelessWidget {
     return score.clamp(0, 1);
   }
 
-  String get _label {
-    if (_score == 0) return '';
-    if (_score < 0.25) return 'Weak password';
-    if (_score < 0.5) return 'Fair password';
-    if (_score < 0.75) return 'Good password';
-    return 'Strong password';
-  }
-
-  Color get _color {
-    if (_score < 0.25) return AppColors.error;
-    if (_score < 0.5) return AppColors.warning;
-    if (_score < 0.75) return AppColors.cta;
-    return AppColors.success;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_score == 0) return const SizedBox.shrink();
+
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final color = _score < 0.25
+        ? scheme.error
+        : _score < 0.5
+        ? scheme.secondary
+        : _score < 0.75
+        ? scheme.tertiary
+        : scheme.primary;
+
+    final label = _score < 0.25
+        ? localizations.weakPassword
+        : _score < 0.5
+        ? localizations.fairPassword
+        : _score < 0.75
+        ? localizations.goodPassword
+        : localizations.strongPassword;
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -298,12 +304,12 @@ class _PasswordStrengthIndicator extends StatelessWidget {
             child: LinearProgressIndicator(
               value: _score,
               minHeight: 6,
-              backgroundColor: AppColors.divider,
-              color: _color,
+              backgroundColor: scheme.surfaceContainerHighest,
+              color: color,
             ),
           ),
           const SizedBox(height: 4),
-          Text(_label, style: AppTypography.caption.copyWith(color: _color)),
+          Text(label, style: textTheme.labelSmall?.copyWith(color: color)),
         ],
       ),
     );
@@ -431,10 +437,14 @@ class ChipSelectionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTypography.h4),
+        Text(label, style: textTheme.titleSmall),
         const SizedBox(height: 8),
         Wrap(
           alignment: alignment,
@@ -452,11 +462,11 @@ class ChipSelectionField extends StatelessWidget {
                   onSelected(option);
                 }
               },
-              backgroundColor: AppColors.background,
-              selectedColor: AppColors.primary.withValues(alpha: 0.2),
-              checkmarkColor: AppColors.primary,
-              labelStyle: AppTypography.bodySmall.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+              backgroundColor: scheme.surface,
+              selectedColor: scheme.primary.withValues(alpha: 0.12),
+              checkmarkColor: scheme.primary,
+              labelStyle: textTheme.bodySmall?.copyWith(
+                color: isSelected ? scheme.primary : scheme.onSurface,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             );
@@ -610,9 +620,10 @@ class _AppSearchFieldState extends State<AppSearchField> {
   }
 
   Widget? _buildPrefix(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final searchIcon =
         widget.leading ??
-        const Icon(Icons.search, color: AppColors.textSecondary);
+        Icon(Icons.search, color: scheme.onSurfaceVariant);
 
     final showBack = widget.showBackButton || widget.onBack != null;
     if (!showBack) return searchIcon;
@@ -656,16 +667,19 @@ class _AppSearchFieldState extends State<AppSearchField> {
       width: clearButton == null ? 40 : 88,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [if (clearButton != null) clearButton, widget.trailing!],
+        children: [...?(clearButton == null ? null : [clearButton]), widget.trailing!],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final border = OutlineInputBorder(
       borderRadius: widget.borderRadius,
-      borderSide: BorderSide(color: AppColors.divider),
+      borderSide: BorderSide(color: scheme.outlineVariant),
     );
 
     return Container(
@@ -683,19 +697,19 @@ class _AppSearchFieldState extends State<AppSearchField> {
         onTap: widget.onTap,
         onChanged: _handleChanged,
         onSubmitted: widget.onSubmitted,
-        style: widget.textStyle ?? AppTypography.bodyMedium,
+        style: widget.textStyle ?? theme.textTheme.bodyMedium,
         decoration: InputDecoration(
-          hintText: widget.hintText ?? 'Search...',
+          hintText: widget.hintText ?? localizations.searchPhotographers,
           prefixIcon: _buildPrefix(context),
           suffixIcon: _buildSuffix(),
           filled: true,
-          fillColor: widget.backgroundColor ?? AppColors.background,
+          fillColor: widget.backgroundColor ?? scheme.surface,
           contentPadding:
               widget.contentPadding ??
               const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           enabledBorder: border,
           focusedBorder: border.copyWith(
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+            borderSide: BorderSide(color: scheme.primary, width: 1.5),
           ),
           border: border,
         ),

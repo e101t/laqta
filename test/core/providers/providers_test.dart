@@ -15,8 +15,9 @@ void main() {
     final provider = ThemeProvider();
     await Future.delayed(const Duration(milliseconds: 10));
 
-    expect(provider.isDarkMode, isFalse);
-    expect(provider.themeMode, ThemeMode.light);
+    expect(provider.isDarkMode, isTrue);
+    expect(provider.themeMode, ThemeMode.dark);
+    expect(provider.darkThemeFor(const Locale('en')).brightness, Brightness.dark);
     expect(provider.themeFor(const Locale('en')).brightness, Brightness.light);
   });
 
@@ -26,11 +27,11 @@ void main() {
 
     await provider.toggleTheme();
 
-    expect(provider.isDarkMode, isTrue);
-    expect(provider.themeMode, ThemeMode.dark);
+    expect(provider.isDarkMode, isFalse);
+    expect(provider.themeMode, ThemeMode.light);
 
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool('isDarkMode'), isTrue);
+    expect(prefs.getBool('isDarkMode'), isFalse);
   });
 
   test('LocaleProvider defaults to Arabic', () async {

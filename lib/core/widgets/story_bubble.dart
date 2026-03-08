@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/laqta_tokens.dart';
+import '../utils/image_provider.dart';
 
 class StoryBubble extends StatelessWidget {
   final String title;
@@ -24,6 +25,7 @@ class StoryBubble extends StatelessWidget {
         : isViewed
         ? LaqtaColors.border
         : LaqtaColors.primary;
+    final imageProvider = resolveImageProvider(imageUrl);
 
     return GestureDetector(
       onTap: onTap,
@@ -38,10 +40,8 @@ class StoryBubble extends StatelessWidget {
             child: CircleAvatar(
               radius: 26,
               backgroundColor: LaqtaColors.surface,
-              backgroundImage: imageUrl != null
-                  ? NetworkImage(imageUrl!)
-                  : null,
-              child: imageUrl == null
+              backgroundImage: imageProvider,
+              child: imageProvider == null
                   ? Icon(
                       isAdd ? Icons.add : Icons.person_outline,
                       color: LaqtaColors.inkMuted,

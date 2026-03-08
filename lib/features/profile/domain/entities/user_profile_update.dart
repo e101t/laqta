@@ -32,6 +32,8 @@ class BasicInfoData {
   final String role;
   final String name;
   final String username;
+  final String? email;
+  final String? phone;
   final String governorate;
   final String? gender;
   final int? birthYear;
@@ -43,6 +45,8 @@ class BasicInfoData {
     required this.role,
     required this.name,
     required this.username,
+    this.email,
+    this.phone,
     required this.governorate,
     this.gender,
     this.birthYear,

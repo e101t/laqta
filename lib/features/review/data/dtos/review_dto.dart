@@ -5,6 +5,11 @@ class ReviewDto {
   final String reviewerId;
   final String targetId;
   final int rating;
+  final int qualityRating;
+  final int communicationRating;
+  final int onTimeRating;
+  final int deliverySpeedRating;
+  final bool? recommend;
   final String? comment;
   final DateTime createdAt;
 
@@ -13,6 +18,11 @@ class ReviewDto {
     required this.reviewerId,
     required this.targetId,
     required this.rating,
+    required this.qualityRating,
+    required this.communicationRating,
+    required this.onTimeRating,
+    required this.deliverySpeedRating,
+    this.recommend,
     this.comment,
     required this.createdAt,
   });
@@ -23,6 +33,11 @@ class ReviewDto {
       'reviewerId': reviewerId,
       'targetId': targetId,
       'rating': rating,
+      'qualityRating': qualityRating,
+      'communicationRating': communicationRating,
+      'onTimeRating': onTimeRating,
+      'deliverySpeedRating': deliverySpeedRating,
+      'recommend': recommend,
       'comment': comment,
       'createdAt': Timestamp.fromDate(createdAt),
     };

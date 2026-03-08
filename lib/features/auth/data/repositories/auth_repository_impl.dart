@@ -5,6 +5,7 @@ import 'package:luqta/core/domain/result/result.dart';
 import 'package:luqta/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:luqta/features/auth/domain/entities/auth_user.dart';
 import 'package:luqta/features/auth/domain/repositories/auth_repository.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
@@ -25,6 +26,48 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<AuthUser>> signInWithGoogle() async {
     try {
       final dto = await _remoteDataSource.signInWithGoogle();
+      return Result.success(dto.toDomain());
+    } catch (e) {
+      return Result.failure(_mapFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<AuthUser>> signInWithApple() async {
+    try {
+      final dto = await _remoteDataSource.signInWithApple();
+      return Result.success(dto.toDomain());
+    } catch (e) {
+      return Result.failure(_mapFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<AuthUser>> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final dto = await _remoteDataSource.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      return Result.success(dto.toDomain());
+    } catch (e) {
+      return Result.failure(_mapFailure(e));
+    }
+  }
+
+  @override
+  Future<Result<AuthUser>> signUpWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final dto = await _remoteDataSource.signUpWithPassword(
+        email: email,
+        password: password,
+      );
       return Result.success(dto.toDomain());
     } catch (e) {
       return Result.failure(_mapFailure(e));
@@ -100,6 +143,15 @@ class AuthRepositoryImpl implements AuthRepository {
           : error.code.name;
       return Failure(
         message: error.description ?? error.toString(),
+        code: code,
+      );
+    }
+    if (error is SignInWithAppleAuthorizationException) {
+      final code = error.code == AuthorizationErrorCode.canceled
+          ? 'canceled'
+          : error.code.name;
+      return Failure(
+        message: error.message,
         code: code,
       );
     }

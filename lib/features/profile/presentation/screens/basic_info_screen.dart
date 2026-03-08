@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/utils/debouncer.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
@@ -22,22 +22,55 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _birthYearController = TextEditingController();
   final Debouncer _usernameDebouncer = Debouncer(
     delay: const Duration(milliseconds: 500),
   );
 
+  static const Set<String> _reservedUsernames = {
+    'admin',
+    'support',
+    'system',
+    'root',
+    'owner',
+    'official',
+    'laqta',
+    'luqta',
+    'photographer',
+    'customer',
+    'help',
+    'service',
+    'staff',
+    'admin1',
+    'mod',
+    'moderator',
+    'ادمـن',
+    'ادمن',
+    'الدعم',
+    'نظام',
+    'المساعدة',
+    'لقطة',
+    'لقتة',
+  };
+
   String? _selectedGender;
   String? _selectedGovernorate;
+  String? _selectedRole;
   bool _over18Confirmed = false;
   bool _isCheckingUsername = false;
   bool _usernameAvailable = false;
+  String? _usernameError;
+  bool _isSuggesting = false;
+  List<String> _suggestions = [];
   bool _isLoading = false;
   bool _isLoadingInitial = true;
 
   @override
   void initState() {
     super.initState();
+    _selectedRole = widget.userRole.trim().isEmpty ? null : widget.userRole.trim();
     _loadExistingUser();
   }
 
@@ -45,6 +78,8 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
   void dispose() {
     _usernameController.dispose();
     _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     _birthYearController.dispose();
     _usernameDebouncer.dispose();
     super.dispose();
@@ -52,8 +87,10 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
 
   Future<void> _loadExistingUser() async {
     final userResult = await AuthDependencies.getCurrentUser().call();
-    final userId = userResult.valueOrNull?.id;
+    final authUser = userResult.valueOrNull;
+    final userId = authUser?.id;
     if (userId == null || userId.isEmpty) {
+      if (!mounted) return;
       setState(() => _isLoadingInitial = false);
       return;
     }
@@ -64,8 +101,14 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     final profile = result.valueOrNull;
 
     if (result.isSuccess && profile != null) {
+      if (_selectedRole == null && profile.role.trim().isNotEmpty) {
+        _selectedRole = profile.role.trim();
+      }
       _usernameController.text = (profile.username ?? '').toString();
       _fullNameController.text = (profile.name).toString();
+      _emailController.text = (profile.email ?? authUser?.email ?? '').toString();
+      _phoneController.text =
+          (profile.phone ?? authUser?.phoneNumber ?? '').toString();
       final birthYearRaw = profile.birthYear;
       if (birthYearRaw != null && birthYearRaw.toString().isNotEmpty) {
         _birthYearController.text = birthYearRaw.toString();
@@ -82,17 +125,41 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       if (_usernameController.text.trim().isNotEmpty) {
         _usernameAvailable = true;
       }
+    } else {
+      _emailController.text = (authUser?.email ?? '').toString();
+      _phoneController.text = (authUser?.phoneNumber ?? '').toString();
     }
 
+    if (!mounted) return;
     setState(() => _isLoadingInitial = false);
   }
 
   Future<void> _checkUsernameAvailability(String rawUsername) async {
     final username = rawUsername.trim().toLowerCase();
-    if (username.length < 3) {
+    if (username.length < 2) {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
+        _usernameError = null;
+      });
+      return;
+    }
+
+    if (_isUsernameForbidden(username)) {
+      setState(() {
+        _isCheckingUsername = false;
+        _usernameAvailable = false;
+        _usernameError = 'اسم المستخدم محجوز';
+      });
+      return;
+    }
+
+    if (!_isUsernameFormatValid(username)) {
+      setState(() {
+        _isCheckingUsername = false;
+        _usernameAvailable = false;
+        _usernameError =
+            'اسم المستخدم يجب أن يبدأ بحرف ويحتوي حروفاً أو أرقاماً فقط';
       });
       return;
     }
@@ -109,11 +176,13 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = result.valueOrNull ?? false;
+        _usernameError = (_usernameAvailable) ? null : 'اسم المستخدم غير متاح';
       });
     } catch (e) {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
+        _usernameError = 'تعذر التحقق من اسم المستخدم';
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -123,8 +192,114 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     }
   }
 
+  Future<void> _generateSuggestions() async {
+    setState(() {
+      _isSuggesting = true;
+      _suggestions = [];
+    });
+
+    final candidates = _buildUsernameCandidates();
+    final unique = <String>{};
+    final results = <String>[];
+
+    for (final candidate in candidates) {
+      final normalized = _normalizeUsername(candidate);
+      if (normalized.isEmpty) continue;
+      if (_isUsernameForbidden(normalized)) continue;
+      if (!_isUsernameFormatValid(normalized)) continue;
+      if (unique.contains(normalized)) continue;
+      unique.add(normalized);
+
+      final check = await ProfileDependencies.checkUsernameAvailability().call(
+        normalized,
+      );
+      if (check.isSuccess && (check.valueOrNull ?? false)) {
+        results.add(normalized);
+      }
+      if (results.length >= 6) break;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isSuggesting = false;
+        _suggestions = results;
+      });
+    }
+  }
+
+  List<String> _buildUsernameCandidates() {
+    final name = _fullNameController.text.trim().toLowerCase();
+    final email = _emailController.text.trim().toLowerCase();
+    final phone = _phoneController.text.trim();
+    final selectedRole = (_selectedRole ?? '').trim();
+
+    final emailBase = email.contains('@') ? email.split('@').first : '';
+    final phoneSuffix =
+        phone.replaceAll(RegExp(r'\D'), '').replaceAll(RegExp(r'^0+'), '');
+    final phoneTail =
+        phoneSuffix.length >= 4 ? phoneSuffix.substring(phoneSuffix.length - 4) : '';
+
+    final bases = <String>{
+      if (name.isNotEmpty) name,
+      if (emailBase.isNotEmpty) emailBase,
+      if (phoneTail.isNotEmpty) 'user$phoneTail',
+      if (selectedRole == AppConstants.rolePhotographer) 'photo',
+      if (selectedRole == AppConstants.roleCustomer) 'client',
+      'user',
+    };
+
+    final candidates = <String>[];
+    for (final base in bases) {
+      candidates.add(base);
+      for (var i = 1; i <= 3; i++) {
+        candidates.add('$base$i');
+      }
+      if (phoneTail.isNotEmpty) {
+        candidates.add('${base}_$phoneTail');
+      }
+    }
+    return candidates;
+  }
+
+  String _normalizeUsername(String raw) {
+    var normalized = raw.toLowerCase();
+    normalized = normalized.replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (normalized.isEmpty) return '';
+    if (!RegExp(r'^[a-z]').hasMatch(normalized)) {
+      normalized = 'u$normalized';
+    }
+    return normalized;
+  }
+
+  bool _isUsernameForbidden(String username) {
+    if (_reservedUsernames.contains(username)) return true;
+    if (username.startsWith('admin')) return true;
+    if (username.startsWith('support')) return true;
+    if (username.startsWith('system')) return true;
+    return false;
+  }
+
+  bool _isUsernameFormatValid(String username) {
+    final regex = RegExp(r'^[a-z][a-z0-9]*$');
+    return regex.hasMatch(username) && username.length >= 2;
+  }
+
   Future<void> _saveAndContinue() async {
+    final localizations = AppLocalizations.of(context);
+    final selectedRole = (_selectedRole ?? '').trim();
+    if (selectedRole.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(localizations.chooseRole)));
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
+    if (_usernameError != null && _usernameError!.isNotEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_usernameError!)));
+      return;
+    }
     if (_selectedGender == null) {
       ScaffoldMessenger.of(
         context,
@@ -154,13 +329,17 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       }
 
       final username = _usernameController.text.trim().toLowerCase();
+      final email = _emailController.text.trim();
+      final phone = _phoneController.text.trim();
       final birthYear = int.tryParse(_birthYearController.text.trim());
       final age = birthYear != null ? DateTime.now().year - birthYear : null;
 
       final data = BasicInfoData(
-        role: widget.userRole,
+        role: selectedRole,
         name: _fullNameController.text.trim(),
         username: username,
+        email: email.isEmpty ? null : email,
+        phone: phone.isEmpty ? null : phone,
         governorate: _selectedGovernorate!,
         gender: _selectedGender,
         birthYear: birthYear,
@@ -196,8 +375,14 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final localizations = AppLocalizations.of(context);
+    final roleLocked = widget.userRole.trim().isNotEmpty;
+    final selectedRole = (_selectedRole ?? '').trim();
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('المعلومات الأساسية'),
         centerTitle: true,
@@ -213,13 +398,13 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.cta],
+                    gradient: LinearGradient(
+                      colors: [scheme.primary, scheme.secondary],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
+                        color: scheme.primary.withValues(alpha: 0.3),
                         blurRadius: 15,
                         offset: const Offset(0, 8),
                       ),
@@ -234,7 +419,48 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               ),
               const SizedBox(height: 32),
 
-              Text('اسم المستخدم (Username)', style: AppTypography.h4),
+              Text(
+                localizations.chooseRole,
+                style:
+                    textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              IgnorePointer(
+                ignoring: roleLocked,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _GenderOption(
+                        icon: Icons.person,
+                        label: localizations.customer,
+                        isSelected:
+                            selectedRole == AppConstants.roleCustomer,
+                        onTap: () => setState(
+                          () => _selectedRole = AppConstants.roleCustomer,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _GenderOption(
+                        icon: Icons.camera_alt,
+                        label: localizations.photographer,
+                        isSelected:
+                            selectedRole == AppConstants.rolePhotographer,
+                        onTap: () => setState(
+                          () => _selectedRole = AppConstants.rolePhotographer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              Text(
+                'اسم المستخدم (Username)',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _usernameController,
@@ -254,6 +480,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                         offset: normalized.length,
                       );
                   }
+                  setState(() => _usernameError = null);
                   _usernameDebouncer(
                     () => _checkUsernameAvailability(normalized),
                   );
@@ -263,46 +490,51 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                     return 'الرجاء إدخال اسم المستخدم';
                   }
                   final normalized = value.trim().toLowerCase();
-                  final regex = RegExp(r'^[a-z][a-z0-9]*$');
-                  if (!regex.hasMatch(normalized)) {
+                  if (_isUsernameForbidden(normalized)) {
+                    return 'اسم المستخدم محجوز';
+                  }
+                  if (!_isUsernameFormatValid(normalized)) {
                     return 'اسم المستخدم يجب أن يبدأ بحرف ويحتوي حروفاً أو أرقاماً فقط (بدون مسافات)';
                   }
-                  if (normalized.length < 3) {
-                    return 'يجب ألا يقل عن 3 أحرف';
+                  if (normalized.length < 2) {
+                    return 'يجب ألا يقل عن حرفين';
                   }
                   if (!_usernameAvailable && !_isCheckingUsername) {
                     return 'اسم المستخدم غير متاح';
+                  }
+                  if (_usernameError != null && _usernameError!.isNotEmpty) {
+                    return _usernameError;
                   }
                   return null;
                 },
               ),
               if (_isCheckingUsername)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Text(
                     'جارٍ التحقق...',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ),
               if (_usernameAvailable && !_isCheckingUsername)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Row(
                     children: [
                       Icon(
                         Icons.check_circle,
                         size: 16,
-                        color: AppColors.success,
+                        color: scheme.tertiary,
                       ),
                       SizedBox(width: 4),
                       Text(
                         'اسم المستخدم متاح',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.success,
+                          color: scheme.tertiary,
                         ),
                       ),
                     ],
@@ -310,23 +542,99 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                 ),
               if (!_usernameAvailable &&
                   !_isCheckingUsername &&
-                  _usernameController.text.length >= 3)
-                const Padding(
+                  _usernameController.text.length >= 2)
+                Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Row(
                     children: [
-                      Icon(Icons.error, size: 16, color: AppColors.error),
+                      Icon(Icons.error, size: 16, color: scheme.error),
                       SizedBox(width: 4),
                       Text(
                         'اسم المستخدم غير متاح',
-                        style: TextStyle(fontSize: 12, color: AppColors.error),
+                        style: TextStyle(fontSize: 12, color: scheme.error),
                       ),
                     ],
                   ),
                 ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'اقتراحات اسم مستخدم',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _isSuggesting ? null : _generateSuggestions,
+                    child: Text(_isSuggesting ? 'جاري...' : 'اقتراحات'),
+                  ),
+                ],
+              ),
+              if (_suggestions.isNotEmpty)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _suggestions
+                      .map(
+                        (suggestion) => ActionChip(
+                          label: Text(suggestion),
+                          onPressed: () {
+                            _usernameController.text = suggestion;
+                            _usernameController.selection =
+                                TextSelection.collapsed(
+                              offset: suggestion.length,
+                            );
+                            _checkUsernameAvailability(suggestion);
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
               const SizedBox(height: 20),
 
-              Text('الاسم الكامل', style: AppTypography.h4),
+              Text(
+                'رقم الهاتف',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              AppTextField(
+                controller: _phoneController,
+                hint: 'رقم الهاتف',
+                prefixIcon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                enabled: false,
+              ),
+              const SizedBox(height: 20),
+
+              Text(
+                'البريد الإلكتروني (اختياري)',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              AppTextField(
+                controller: _emailController,
+                hint: 'example@email.com',
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return null;
+                  }
+                  final normalized = value.trim();
+                  if (!normalized.contains('@') || !normalized.contains('.')) {
+                    return 'صيغة البريد الإلكتروني غير صحيحة';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+
+              Text(
+                'الاسم الكامل',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _fullNameController,
@@ -341,7 +649,10 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text('الجنس', style: AppTypography.h4),
+              Text(
+                'الجنس',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -366,7 +677,10 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text('سنة الميلاد', style: AppTypography.h4),
+              Text(
+                'سنة الميلاد',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _birthYearController,
@@ -388,7 +702,10 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               ),
               const SizedBox(height: 20),
 
-              Text('المحافظة', style: AppTypography.h4),
+              Text(
+                'المحافظة',
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
               AppDropdownField<String>(
                 initialValue: _selectedGovernorate,
@@ -405,10 +722,10 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.05),
+                  color: scheme.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: scheme.primary.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -418,7 +735,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                       onChanged: (value) {
                         setState(() => _over18Confirmed = value ?? false);
                       },
-                      activeColor: AppColors.primary,
+                      activeColor: scheme.primary,
                     ),
                     const SizedBox(width: 8),
                     const Expanded(
@@ -461,6 +778,10 @@ class _GenderOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -469,10 +790,10 @@ class _GenderOption extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : AppColors.surface,
+              ? scheme.primary.withValues(alpha: 0.1)
+              : scheme.surface,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
+            color: isSelected ? scheme.primary : scheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -482,14 +803,14 @@ class _GenderOption extends StatelessWidget {
             Icon(
               icon,
               size: 40,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              color: isSelected ? scheme.primary : scheme.onSurfaceVariant,
             ),
             const SizedBox(height: 8),
             Text(
               label,
-              style: AppTypography.bodyMedium.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              style: textTheme.bodyMedium?.copyWith(
+                color: isSelected ? scheme.primary : scheme.onSurface,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
               ),
             ),
           ],

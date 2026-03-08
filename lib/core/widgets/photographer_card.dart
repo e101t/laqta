@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/laqta_tokens.dart';
+import '../utils/image_provider.dart';
 import 'rating_row.dart';
 import 'price_tag.dart';
 
@@ -23,6 +24,7 @@ class PhotographerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageProvider = resolveImageProvider(avatarUrl);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(LaqtaRadii.l),
@@ -39,10 +41,8 @@ class PhotographerCard extends StatelessWidget {
             CircleAvatar(
               radius: 24,
               backgroundColor: LaqtaColors.border,
-              backgroundImage: avatarUrl != null
-                  ? NetworkImage(avatarUrl!)
-                  : null,
-              child: avatarUrl == null
+              backgroundImage: imageProvider,
+              child: imageProvider == null
                   ? const Icon(Icons.camera_alt_outlined)
                   : null,
             ),

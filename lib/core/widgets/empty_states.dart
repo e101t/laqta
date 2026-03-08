@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 
 /// Empty state widget for various scenarios
 class EmptyState extends StatelessWidget {
@@ -22,77 +21,98 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Animated emoji
-            TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 800),
-              tween: Tween(begin: 0.0, end: 1.0),
-              curve: Curves.elasticOut,
-              builder: (context, value, child) {
-                return Transform.scale(
-                  scale: value,
-                  child: Text(emoji, style: const TextStyle(fontSize: 80)),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-            // Icon
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 50, color: AppColors.primary),
-            ),
-            const SizedBox(height: 24),
-
-            // Title
-            Text(
-              title,
-              style: AppTypography.h2.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-
-            // Message
-            Text(
-              message,
-              style: AppTypography.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-
-            // Action button
-            if (actionLabel != null && onAction != null)
-              ElevatedButton.icon(
-                onPressed: onAction,
-                icon: const Icon(Icons.add_circle_outline),
-                label: Text(actionLabel!),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-          ],
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Animated emoji
+        TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 800),
+          tween: Tween(begin: 0.0, end: 1.0),
+          curve: Curves.elasticOut,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Text(emoji, style: const TextStyle(fontSize: 80)),
+            );
+          },
         ),
-      ),
+        const SizedBox(height: 24),
+
+        // Icon
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: scheme.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 50, color: scheme.primary),
+        ),
+        const SizedBox(height: 24),
+
+        // Title
+        Text(
+          title,
+          style: textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+
+        // Message
+        Text(
+          message,
+          style: textTheme.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+
+        // Action button
+        if (actionLabel != null && onAction != null)
+          ElevatedButton.icon(
+            onPressed: onAction,
+            icon: const Icon(Icons.add_circle_outline),
+            label: Text(actionLabel!),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 32,
+                vertical: 16,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+      ],
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const padding = EdgeInsets.all(32);
+        if (constraints.maxHeight.isFinite) {
+          final minHeight = (constraints.maxHeight - padding.vertical)
+              .clamp(0, double.infinity)
+              .toDouble();
+          return SingleChildScrollView(
+            padding: padding,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minHeight),
+              child: Center(child: content),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: padding,
+          child: Center(child: content),
+        );
+      },
     );
   }
 }

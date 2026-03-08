@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/user_model.dart';
@@ -35,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authResult = await AuthDependencies.getCurrentUser().call();
     final authUser = authResult.valueOrNull;
     if (authUser == null) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'الرجاء تسجيل الدخول لعرض الحساب';
         _isLoading = false;
@@ -50,11 +50,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw StateError(result.failureOrNull?.message ?? 'User not found');
       }
 
+      if (!mounted) return;
       setState(() {
         _user = ProfilePresentationMapper.toUserModel(result.valueOrNull!);
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'تعذّر تحميل الملف الشخصي';
         _isLoading = false;
@@ -89,6 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       throw StateError(result.failureOrNull?.message ?? 'Update failed');
     }
 
+    if (!mounted) return;
     setState(() {
       _user = _user!.copyWith(
         name: updates['name'] as String? ?? _user!.name,
@@ -105,6 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      if (!mounted) return;
 
       if (pickedFile != null) {
         setState(() => _isUploading = true);
@@ -124,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         await _updateUser({'photoUrl': downloadUrl});
 
+        if (!mounted) return;
         setState(() => _isUploading = false);
 
         messenger.showSnackBar(
@@ -131,6 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isUploading = false);
       messenger.showSnackBar(const SnackBar(content: Text('فشل رفع الصورة')));
     }
@@ -205,6 +211,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -219,15 +228,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.error_outline,
                   size: 64,
-                  color: AppColors.error,
+                  color: scheme.error,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage!,
-                  style: AppTypography.bodyLarge,
+                  style: textTheme.bodyLarge?.copyWith(color: scheme.error),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -256,7 +265,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final ageLabel = user.age != null ? '${user.age} سنة' : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('حسابي'),
         actions: [
@@ -275,7 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: scheme.primary,
                     backgroundImage: user.photoUrl != null
                         ? NetworkImage(user.photoUrl!)
                         : null,
@@ -292,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     right: 0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: scheme.primary,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
@@ -321,16 +329,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             Text(
               user.name,
-              style: AppTypography.h2,
+              style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             if (user.username != null && user.username!.isNotEmpty)
               Text(
                 '@${user.username}',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
             const SizedBox(height: 8),
 
@@ -341,28 +347,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 _buildChip(
                   icon: Icons.verified_user,
-                  label: user.role == AppConstants.rolePhotographer
+                  label: user.role == AppConstants.roleAdmin
+                      ? 'Admin'
+                      : user.role == AppConstants.rolePhotographer
                       ? localizations.photographer
                       : localizations.customer,
-                  color: AppColors.primary,
+                  color: scheme.primary,
                 ),
                 if (genderLabel != null)
                   _buildChip(
                     icon: user.gender == 'female' ? Icons.female : Icons.male,
                     label: genderLabel,
-                    color: AppColors.cta,
+                    color: scheme.secondary,
                   ),
                 if (ageLabel != null)
                   _buildChip(
                     icon: Icons.cake,
                     label: ageLabel,
-                    color: AppColors.info,
+                    color: scheme.primary,
                   ),
                 if (user.governorate.isNotEmpty)
                   _buildChip(
                     icon: Icons.location_on,
                     label: user.governorate,
-                    color: AppColors.success,
+                    color: scheme.tertiary,
                   ),
               ],
             ),
@@ -416,7 +424,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   AppRouter.goToFavorites(context);
                 },
               ),
-            ] else ...[
+            ] else if (user.role == AppConstants.rolePhotographer) ...[
               PrimaryButton(
                 text: localizations.dashboard,
                 icon: Icons.dashboard,
@@ -430,6 +438,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.photo_library,
                 onPressed: () {
                   AppRouter.goToPortfolioEditor(context);
+                },
+              ),
+            ] else ...[
+              PrimaryButton(
+                text: 'Admin dashboard',
+                icon: Icons.admin_panel_settings,
+                onPressed: () {
+                  AppRouter.goToHome(context);
                 },
               ),
             ],
@@ -446,35 +462,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String fieldKey,
     bool editable = true,
   }) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: scheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: AppColors.primary),
+            child: Icon(icon, color: scheme.primary),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTypography.caption),
+                Text(title, style: textTheme.labelSmall),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: AppTypography.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -482,7 +500,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (editable)
             IconButton(
               icon: const Icon(Icons.edit, size: 20),
-              color: AppColors.textSecondary,
+              color: scheme.onSurfaceVariant,
               onPressed: () => _editField(fieldKey, title),
             ),
         ],
@@ -493,21 +511,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildChip({
     required IconData icon,
     required String label,
-    Color color = AppColors.primary,
+    Color? color,
   }) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final chipColor = color ?? scheme.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: chipColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(color: chipColor.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
+          Icon(icon, size: 16, color: chipColor),
           const SizedBox(width: 6),
-          Text(label, style: AppTypography.bodySmall),
+          Text(label, style: textTheme.bodySmall),
         ],
       ),
     );

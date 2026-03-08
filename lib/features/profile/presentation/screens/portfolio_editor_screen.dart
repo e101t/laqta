@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/models/portfolio_model.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
@@ -156,8 +155,11 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Edit Portfolio'),
         actions: [
@@ -184,18 +186,18 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.photo_library,
                     size: 64,
-                    color: AppColors.textSecondary,
+                    color: scheme.onSurfaceVariant,
                   ),
                   const SizedBox(height: 16),
-                  Text('No portfolio images yet', style: AppTypography.h3),
+                  Text('No portfolio images yet', style: textTheme.titleLarge),
                   const SizedBox(height: 8),
                   Text(
                     'Add up to 20 images to showcase your work',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),

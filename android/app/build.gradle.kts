@@ -12,6 +12,18 @@ val releaseSigningConfigured = listOf(
     "keyPassword"
 ).all { keystoreProperties[it] != null }
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
+val googleMapsApiKey: String =
+    (findProperty("googleMapsApiKey") as String?)
+        ?: localProperties.getProperty("googleMapsApiKey")
+        ?: System.getenv("GOOGLE_MAPS_API_KEY")
+        ?: ""
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -42,6 +54,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Avoid committing API keys into the repo. Provide via:
+        // - android/local.properties: googleMapsApiKey=...
+        // - env var: GOOGLE_MAPS_API_KEY
+        // - gradle prop: -PgoogleMapsApiKey=...
+        resValue("string", "google_maps_key", googleMapsApiKey)
     }
 
     signingConfigs {

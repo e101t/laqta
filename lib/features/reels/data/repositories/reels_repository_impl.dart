@@ -23,6 +23,38 @@ class ReelsRepositoryImpl implements ReelsRepository {
   }
 
   @override
+  Future<Result<void>> createReel({required ReelModel reel}) async {
+    try {
+      await _remoteDataSource.createReel(ReelsMapper.toReelDto(reel));
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(const Failure(message: 'Failed to create post'));
+    }
+  }
+
+  @override
+  Future<Result<String>> uploadReelMedia({
+    required String photographerId,
+    required String reelId,
+    required String filePath,
+    required String contentType,
+  }) async {
+    try {
+      final url = await _remoteDataSource.uploadReelMedia(
+        photographerId: photographerId,
+        reelId: reelId,
+        filePath: filePath,
+        contentType: contentType,
+      );
+      return Result.success(url);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to upload media'),
+      );
+    }
+  }
+
+  @override
   Future<Result<void>> updateReelLikes({
     required String reelId,
     required int delta,

@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/router/app_router.dart';
@@ -10,6 +10,9 @@ import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+enum AuthMode { signIn, signUp }
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -21,17 +24,65 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   static Future<void>? _googleSignInInit;
   bool _isLoading = false;
-  bool _showPhoneAuth = false; // ابدأ بعرض خيارات الدخول أولاً
+  bool _showPhoneAuth = false; // Start with social auth options
   bool _showOTPVerification = false;
+  late AuthMode _mode;
+  final _identifierController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
   int _resendTimer = 0;
   String? _verificationId;
   Timer? _timer;
+  bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    const devAuthMode =
+        String.fromEnvironment('LAQTA_DEV_AUTH_MODE', defaultValue: '');
+    final normalized = devAuthMode.trim().toLowerCase();
+    _mode = kDebugMode && (normalized == 'signup' || normalized == 'sign_up')
+        ? AuthMode.signUp
+        : AuthMode.signIn;
+  }
+
+  void _trackTap(String action) {
+    if (kDebugMode) {
+      debugPrint("AUTH_TAP:$action");
+    }
+  }
+
+  bool get _isSignUp => _mode == AuthMode.signUp;
+
+  void _handleBackFromPhone() {
+    if (_isLoading) return;
+    _timer?.cancel();
+    _timer = null;
+    setState(() {
+      _showPhoneAuth = false;
+      _showOTPVerification = false;
+      _phoneController.clear();
+      _otpController.clear();
+      _resendTimer = 0;
+      _verificationId = null;
+    });
+  }
+
+  void _handleBackFromOTP() {
+    if (_isLoading) return;
+    setState(() {
+      _showOTPVerification = false;
+      _otpController.clear();
+      _verificationId = null;
+    });
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _identifierController.dispose();
+    _passwordController.dispose();
     _phoneController.dispose();
     _otpController.dispose();
     super.dispose();
@@ -70,6 +121,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    _trackTap("google");
     final localizations = AppLocalizations.of(context);
 
     if (!_isGoogleSignInSupported) {
@@ -101,7 +153,7 @@ class _AuthScreenState extends State<AuthScreen> {
         return;
       }
       if (!mounted) return;
-      AppRouter.goToRole(context);
+      AppRouter.goToProfileSetup(context);
     } catch (e) {
       if (!mounted) return;
       _showSnackBar(
@@ -113,11 +165,111 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithApple() async {
+    _trackTap("apple");
     final localizations = AppLocalizations.of(context);
-    _showSnackBar(localizations.appleSignInUnavailable);
+    final isAvailable = await SignInWithApple.isAvailable();
+    if (!isAvailable) {
+      _showSnackBar(localizations.appleSignInUnavailable);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthDependencies.signInWithApple().call();
+      if (!result.isSuccess) {
+        final failure = result.failureOrNull;
+        if (failure?.code == 'canceled') {
+          return;
+        }
+        if (!mounted) return;
+        _showSnackBar(
+          _formatErrorMessage(
+            localizations.appleSignInFailed,
+            failure?.message,
+          ),
+        );
+        return;
+      }
+      if (!mounted) return;
+      AppRouter.goToProfileSetup(context);
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar(
+        _formatErrorMessage(localizations.appleSignInFailed, e.toString()),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _signInWithPassword() async {
+    _trackTap("password");
+    final localizations = AppLocalizations.of(context);
+
+    final identifier = _identifierController.text.trim();
+    final password = _passwordController.text;
+
+    if (identifier.isEmpty) {
+      _showSnackBar('الرجاء إدخال اسم المستخدم أو البريد الإلكتروني');
+      return;
+    }
+    if (password.isEmpty) {
+      _showSnackBar('الرجاء إدخال كلمة المرور');
+      return;
+    }
+
+    final normalized = identifier.replaceAll(' ', '');
+    final looksLikePhone = RegExp(r'^\\+?\\d{7,}$').hasMatch(normalized);
+    if (looksLikePhone && !normalized.contains('@')) {
+      _showSnackBar('للدخول برقم الهاتف استخدم التحقق بالرمز (OTP)');
+      setState(() {
+        _showPhoneAuth = true;
+        _showOTPVerification = false;
+        _phoneController.text = identifier;
+      });
+      return;
+    }
+
+    final email = normalized.contains('@')
+        ? normalized
+        : '${normalized.toLowerCase()}@laqta.app';
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthDependencies.signInWithPassword().call(
+        email: email,
+        password: password,
+      );
+      if (!result.isSuccess) {
+        final failure = result.failureOrNull;
+        if (kDebugMode) {
+          debugPrint('Password sign-in failed: ${failure?.code ?? 'unknown'}');
+        }
+        _showSnackBar(
+          _formatErrorMessage(localizations.somethingWentWrong, failure?.message),
+        );
+        return;
+      }
+      if (!mounted) return;
+      AppRouter.goToProfileSetup(context);
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar(
+        _formatErrorMessage(localizations.somethingWentWrong, e.toString()),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _signInWithPhone() async {
+    _trackTap("phone");
     final localizations = AppLocalizations.of(context);
 
     if (!_isPhoneAuthSupported) {
@@ -138,7 +290,7 @@ class _AuthScreenState extends State<AuthScreen> {
         onVerificationCompleted: (_) {
           if (!mounted) return;
           setState(() => _isLoading = false);
-          AppRouter.goToRole(context);
+          AppRouter.goToProfileSetup(context);
         },
         onVerificationFailed: (failure) {
           if (!mounted) return;
@@ -188,6 +340,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _verifyOTP() async {
+    _trackTap("otp_verify");
     final localizations = AppLocalizations.of(context);
 
     if (_otpController.text.length != AppConstants.otpLength) {
@@ -224,7 +377,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
 
       if (!mounted) return;
-      AppRouter.goToRole(context);
+      AppRouter.goToProfileSetup(context);
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
@@ -249,6 +402,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _resendOTP() async {
+    _trackTap("otp_resend");
     final localizations = AppLocalizations.of(context);
 
     if (!_isPhoneAuthSupported) {
@@ -269,7 +423,7 @@ class _AuthScreenState extends State<AuthScreen> {
         onVerificationCompleted: (_) {
           if (!mounted) return;
           setState(() => _isLoading = false);
-          AppRouter.goToRole(context);
+          AppRouter.goToProfileSetup(context);
         },
         onVerificationFailed: (failure) {
           if (!mounted) return;
@@ -313,9 +467,29 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        showCloseIcon: true,
+      ),
+    );
+  }
+
+  void _setAuthMode(AuthMode mode) {
+    if (_mode == mode) return;
+    setState(() {
+      _mode = mode;
+      _showPhoneAuth = false;
+      _showOTPVerification = false;
+      _verificationId = null;
+      _identifierController.clear();
+      _passwordController.clear();
+      _phoneController.clear();
+      _otpController.clear();
+    });
   }
 
   String _formatErrorMessage(String base, String? details) {
@@ -329,158 +503,201 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = Responsive.isWideLayout(context);
-            final content = isWide
-                ? Row(
-                    children: [
-                      Expanded(child: _buildAuthHero(localizations)),
-                      const SizedBox(width: 32),
-                      Expanded(child: _buildAuthContent(localizations)),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildAuthHero(localizations, compact: true),
-                      const SizedBox(height: 24),
-                      _buildAuthContent(localizations),
-                    ],
-                  );
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_isLoading) return;
+        if (_showOTPVerification) {
+          _handleBackFromOTP();
+          return;
+        }
+        if (_showPhoneAuth) {
+          _handleBackFromPhone();
+          return;
+        }
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Center(
-                  child: SizedBox(
-                    width: isWide ? 960 : double.infinity,
-                    child: content,
-                  ),
-                ),
+        // Auth is part of onboarding; go back to language selector instead of exiting.
+        AppRouter.goToLanguage(context);
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            const _AuthBackdrop(),
+            SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight),
+                      child: Center(
+                        child: SizedBox(
+                          width: Responsive.isWideLayout(context)
+                              ? 520
+                              : double.infinity,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildHeader(localizations),
+                              const SizedBox(height: 20),
+                              _AuthGlassCard(
+                                padding: const EdgeInsets.all(18),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    _buildModeToggle(localizations),
+                                    const SizedBox(height: 20),
+                                    _buildAuthContent(localizations),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+            if (_isLoading) const _AuthLoadingBarrier(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildAuthContent(AppLocalizations localizations) {
+  Widget _buildHeader(AppLocalizations localizations) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final title =
+        _isSignUp ? localizations.signUpTitle : localizations.signInTitle;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          localizations.welcomeBack,
-          style: AppTypography.h2.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
+        Container(
+          height: 72,
+          width: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [scheme.primary, scheme.secondary],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: scheme.primary.withValues(alpha: 0.25),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-          textAlign: TextAlign.start,
+          child: const Icon(
+            Icons.camera_alt,
+            size: 32,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 220),
+          child: Text(
+            title,
+            key: ValueKey(title),
+            style: textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           localizations.authSubtitle,
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+          style: textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
           ),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
-        if (!_showPhoneAuth && !_showOTPVerification)
-          ..._buildSocialAuth(localizations)
-        else if (_showPhoneAuth && !_showOTPVerification)
-          ..._buildPhoneAuth(localizations)
-        else
-          ..._buildOTPVerification(localizations),
       ],
     );
   }
 
-  Widget _buildAuthHero(
-    AppLocalizations localizations, {
-    bool compact = false,
-  }) {
-    final height = compact ? 220.0 : 360.0;
+  Widget _buildModeToggle(AppLocalizations localizations) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: SizedBox(
-        height: height,
-        child: Stack(
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _ModeChip(
+              label: localizations.signInTitle,
+              isActive: !_isSignUp,
+              onTap: () => _setAuthMode(AuthMode.signIn),
+              textTheme: textTheme,
+              scheme: scheme,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ModeChip(
+              label: localizations.signUpTitle,
+              isActive: _isSignUp,
+              onTap: () {
+                if (_isLoading) return;
+                _setAuthMode(AuthMode.signIn);
+                AppRouter.goToSignUpDetails(context);
+              },
+              textTheme: textTheme,
+              scheme: scheme,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthContent(AppLocalizations localizations) {
+    final contentKey = _showOTPVerification
+        ? 'otp'
+        : _showPhoneAuth
+        ? 'phone'
+        : 'social';
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final slide = Tween<Offset>(
+          begin: const Offset(0, 0.04),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(position: slide, child: child),
+        );
+      },
+      child: KeyedSubtree(
+        key: ValueKey(contentKey),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Positioned.fill(
-              child: Image.asset(
-                'assets/images/hero_auth.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-              ),
-            ),
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.08),
-                      AppColors.primary.withValues(alpha: 0.2),
-                      AppColors.background.withValues(alpha: 0.1),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 24,
-              right: 24,
-              bottom: 24,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.primary, AppColors.cta],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.35),
-                          blurRadius: 18,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    localizations.welcomeToLuqta,
-                    style: AppTypography.h2.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    localizations.authSubtitle,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            if (!_showPhoneAuth && !_showOTPVerification)
+              ..._buildSocialAuth(localizations)
+            else if (_showPhoneAuth && !_showOTPVerification)
+              ..._buildPhoneAuth(localizations)
+            else
+              ..._buildOTPVerification(localizations),
           ],
         ),
       ),
@@ -488,124 +705,181 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   List<Widget> _buildSocialAuth(AppLocalizations localizations) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    if (_isSignUp) {
+      return [
+        CTAButton(
+          text: localizations.signUpTitle,
+          icon: Icons.person_add_alt_1_rounded,
+          onPressed: _isLoading ? null : () => AppRouter.goToSignUpDetails(context),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Text(
+                localizations.or,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        ..._buildProviderButtons(localizations),
+      ];
+    }
+
     return [
-      Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.textSecondary.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: _isLoading ? null : _signInWithGoogle,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: AppColors.textPrimary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: AppColors.divider),
-            ),
-          ),
-          icon: const Icon(Icons.g_mobiledata, size: 24, color: Colors.red),
-          label: Text(
-            localizations.signInWithGoogle,
-            style: AppTypography.bodyLarge.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+      AppTextField(
+        controller: _identifierController,
+        label: 'اسم المستخدم / البريد',
+        hint: 'مثال: ahmedphoto23',
+        prefixIcon: Icons.person_outline,
+        enabled: !_isLoading,
+        textInputAction: TextInputAction.next,
       ),
-
+      const SizedBox(height: 12),
+      AppTextField(
+        controller: _passwordController,
+        label: 'كلمة المرور',
+        hint: '••••••••',
+        prefixIcon: Icons.lock_outline,
+        enabled: !_isLoading,
+        obscureText: _obscurePassword,
+        suffixIcon: _obscurePassword
+            ? Icons.visibility_outlined
+            : Icons.visibility_off_outlined,
+        onSuffixTap: () =>
+            setState(() => _obscurePassword = !_obscurePassword),
+        textInputAction: TextInputAction.done,
+        onFieldSubmitted: (_) => _signInWithPassword(),
+      ),
       const SizedBox(height: 16),
-
-      // Apple Sign In
-      Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.textSecondary.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: _isLoading ? null : _signInWithApple,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          icon: const Icon(Icons.apple, size: 24),
-          label: Text(
-            localizations.signInWithApple,
-            style: AppTypography.bodyLarge.copyWith(
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ),
+      PrimaryButton(
+        text: localizations.signInTitle,
+        icon: Icons.login_rounded,
+        onPressed: _isLoading ? null : _signInWithPassword,
+        isLoading: _isLoading,
       ),
-
-      const SizedBox(height: 24),
-
-      // OR Divider
+      const SizedBox(height: 18),
       Row(
         children: [
-          const Expanded(child: Divider()),
+          Expanded(
+            child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+          ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Text(
-              'أو',
-              style: AppTypography.bodyMedium,
-              textDirection: TextDirection.rtl,
+              localizations.or,
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ),
-          const Expanded(child: Divider()),
+          Expanded(
+            child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+          ),
         ],
       ),
+      const SizedBox(height: 18),
+      ..._buildProviderButtons(localizations),
+    ];
+  }
 
-      const SizedBox(height: 24),
+  List<Widget> _buildProviderButtons(AppLocalizations localizations) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final googleLabel =
+        _isSignUp ? localizations.signUpWithGoogle : localizations.signInWithGoogle;
+    final appleLabel =
+        _isSignUp ? localizations.signUpWithApple : localizations.signInWithApple;
+    final phoneLabel =
+        _isSignUp ? localizations.signUpWithPhone : localizations.signInWithPhone;
+
+    return [
+      _AuthProviderButton(
+        onPressed: _isLoading ? null : _signInWithGoogle,
+        backgroundColor: theme.brightness == Brightness.dark
+            ? const Color(0xFFF8FAFC)
+            : scheme.surface,
+        foregroundColor: Colors.black,
+        border: BorderSide(color: scheme.outlineVariant),
+        icon: const _AuthBadge(
+          backgroundColor: Colors.white,
+          child: Icon(Icons.g_mobiledata_rounded, color: Color(0xFF4285F4)),
+        ),
+        label: googleLabel,
+        textStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+      ),
+
+      const SizedBox(height: 14),
+
+      _AuthProviderButton(
+        onPressed: _isLoading ? null : _signInWithApple,
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        icon: const _AuthBadge(
+          backgroundColor: Colors.black,
+          child: Icon(Icons.apple, color: Colors.white),
+        ),
+        label: appleLabel,
+        textStyle: textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+        ),
+      ),
+
+      const SizedBox(height: 18),
 
       if (_isPhoneAuthSupported)
-        CTAButton(
-          text: localizations.signInWithPhone,
-          icon: Icons.phone,
+        _AuthProviderButton(
           onPressed: _isLoading
               ? null
               : () {
+                  _trackTap("phone_start");
                   setState(() {
                     _showPhoneAuth = true;
                     _showOTPVerification = false;
                   });
                 },
-        )
-      else
+           backgroundColor: scheme.primary,
+           foregroundColor: scheme.onPrimary,
+           icon: const _AuthBadge(
+             backgroundColor: Colors.black,
+             child: Icon(Icons.phone_iphone_rounded, color: Colors.white),
+           ),
+           label: phoneLabel,
+           textStyle:
+               textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w800),
+         )
+       else
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
+            color: scheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline, color: AppColors.primary),
+              Icon(Icons.info_outline, color: scheme.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   localizations.phoneAuthSupportInfo,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.primary,
-                  ),
+                  style: textTheme.bodySmall?.copyWith(color: scheme.primary),
                 ),
               ),
             ],
@@ -620,14 +894,7 @@ class _AuthScreenState extends State<AuthScreen> {
         alignment: AlignmentDirectional.centerStart,
         child: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            setState(() {
-              _showPhoneAuth = false;
-              _showOTPVerification = false;
-              _phoneController.clear();
-              _verificationId = null;
-            });
-          },
+          onPressed: _handleBackFromPhone,
         ),
       ),
       const SizedBox(height: 4),
@@ -660,13 +927,7 @@ class _AuthScreenState extends State<AuthScreen> {
         alignment: AlignmentDirectional.centerStart,
         child: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            setState(() {
-              _showOTPVerification = false;
-              _otpController.clear();
-              _verificationId = null;
-            });
-          },
+          onPressed: _handleBackFromOTP,
         ),
       ),
 
@@ -675,7 +936,7 @@ class _AuthScreenState extends State<AuthScreen> {
       // OTP Info
       Text(
         localizations.enterOTP,
-        style: AppTypography.bodyMedium,
+        style: Theme.of(context).textTheme.bodyMedium,
         textAlign: TextAlign.center,
       ),
 
@@ -683,7 +944,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
       Text(
         _phoneController.text,
-        style: AppTypography.h4.copyWith(color: AppColors.primary),
+        style: Theme.of(context)
+            .textTheme
+            .titleMedium
+            ?.copyWith(color: Theme.of(context).colorScheme.primary),
         textAlign: TextAlign.center,
       ),
 
@@ -698,7 +962,7 @@ class _AuthScreenState extends State<AuthScreen> {
         textInputAction: TextInputAction.done,
         maxLength: AppConstants.otpLength,
         textAlign: TextAlign.center,
-        textStyle: AppTypography.h2,
+        textStyle: Theme.of(context).textTheme.headlineSmall,
         autofillHints: const [AutofillHints.oneTimeCode],
         onFieldSubmitted: (_) => _verifyOTP(),
       ),
@@ -724,5 +988,343 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       ),
     ];
+  }
+}
+
+class _ModeChip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+  final TextTheme textTheme;
+  final ColorScheme scheme;
+
+  const _ModeChip({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+    required this.textTheme,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isActive ? scheme.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.25),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : null,
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Center(
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: isActive ? scheme.onPrimary : scheme.onSurface,
+                  ) ??
+                  TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: isActive ? scheme.onPrimary : scheme.onSurface,
+                  ),
+              child: Text(label),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthBackdrop extends StatelessWidget {
+  const _AuthBackdrop();
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final base = brightness == Brightness.dark
+        ? const Color(0xFF14110D)
+        : const Color(0xFFF8F1E7);
+    final mid = brightness == Brightness.dark
+        ? const Color(0xFF1B1711)
+        : const Color(0xFFF2E7DA);
+    final coolGlow = brightness == Brightness.dark
+        ? const Color(0xFF2A2E3A).withValues(alpha: 0.12)
+        : const Color(0xFFF7EFE5).withValues(alpha: 0.45);
+    final warmGlow = brightness == Brightness.dark
+        ? const Color(0xFF8A5A2B).withValues(alpha: 0.25)
+        : const Color(0xFFF1D8B5).withValues(alpha: 0.75);
+    final roseGlow = brightness == Brightness.dark
+        ? const Color(0xFF6E3D2B).withValues(alpha: 0.16)
+        : const Color(0xFFF3E1CB).withValues(alpha: 0.6);
+
+    return IgnorePointer(
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [base, mid, base],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: -140,
+            right: -80,
+            child: _SoftGlow(size: 260, color: coolGlow),
+          ),
+          Positioned(
+            bottom: -160,
+            left: -90,
+            child: _SoftGlow(size: 300, color: warmGlow),
+          ),
+          Positioned(
+            top: 140,
+            left: -120,
+            child: _SoftGlow(size: 220, color: roseGlow),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SoftGlow extends StatelessWidget {
+  final double size;
+  final Color color;
+
+  const _SoftGlow({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: size,
+      width: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthGlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  const _AuthGlassCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+
+    final borderColor = brightness == Brightness.dark
+        ? Colors.white.withValues(alpha: 0.12)
+        : scheme.outlineVariant.withValues(alpha: 0.7);
+    final gradientStart = brightness == Brightness.dark
+        ? Colors.white.withValues(alpha: 0.07)
+        : Colors.white.withValues(alpha: 0.95);
+    final gradientEnd = brightness == Brightness.dark
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.white.withValues(alpha: 0.8);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.32),
+            blurRadius: 32,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: borderColor, width: 1),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [gradientStart, gradientEnd],
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthProviderButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final BorderSide? border;
+  final Widget icon;
+  final String label;
+  final TextStyle? textStyle;
+
+  const _AuthProviderButton({
+    required this.onPressed,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    this.border,
+    required this.icon,
+    required this.label,
+    this.textStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final effectiveBorder = border ?? BorderSide(color: scheme.outlineVariant);
+    final effectiveForeground = onPressed == null
+        ? foregroundColor.withValues(alpha: 0.55)
+        : foregroundColor;
+    final resolvedTextStyle = (textStyle ?? Theme.of(context).textTheme.bodyLarge)
+        ?.copyWith(color: effectiveForeground);
+
+    return SizedBox(
+      height: 52,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: effectiveForeground,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: effectiveBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            icon,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: resolvedTextStyle,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(width: 36),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AuthBadge extends StatelessWidget {
+  final Widget child;
+  final Color backgroundColor;
+
+  const _AuthBadge({required this.child, required this.backgroundColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      width: 32,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 10,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Center(child: child),
+    );
+  }
+}
+
+class _AuthLoadingBarrier extends StatelessWidget {
+  const _AuthLoadingBarrier();
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          const ModalBarrier(dismissible: false, color: Color(0x66000000)),
+          Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surface.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: scheme.outlineVariant.withValues(alpha: 0.7),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 16,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          scheme.primary,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      localizations.loading,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

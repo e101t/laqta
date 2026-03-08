@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
@@ -102,12 +101,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
       ),
     );
+    if (!mounted) return;
 
     if (confirmed == true) {
       try {
@@ -117,9 +119,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
         }
 
         // Remove from local list
-        setState(() {
-          _chats.removeWhere((chat) => chat.chatId == chatId);
-        });
+        if (mounted) {
+          setState(() {
+            _chats.removeWhere((chat) => chat.chatId == chatId);
+          });
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(
@@ -155,9 +159,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
     final chats = _filteredChats;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(localizations.messages)),
       body: _isLoading
           ? const LoadingIndicator()
@@ -204,7 +208,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 key: Key(chat.chatId),
                                 direction: DismissDirection.endToStart,
                                 background: Container(
-                                  color: AppColors.error,
+                                  color: scheme.error,
                                   alignment: Alignment.centerRight,
                                   padding: const EdgeInsets.only(right: 16),
                                   child: const Icon(
@@ -250,14 +254,16 @@ class _ChatListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       leading: Stack(
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            child: const Icon(Icons.person, color: AppColors.primary),
+            backgroundColor: scheme.primary.withValues(alpha: 0.12),
+            child: Icon(Icons.person, color: scheme.primary),
           ),
           if (chat.isOnline)
             Positioned(
@@ -267,9 +273,9 @@ class _ChatListItem extends StatelessWidget {
                 width: 14,
                 height: 14,
                 decoration: BoxDecoration(
-                  color: AppColors.success,
+                  color: scheme.tertiary,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.surface, width: 2),
+                  border: Border.all(color: scheme.surface, width: 2),
                 ),
               ),
             ),
@@ -280,7 +286,7 @@ class _ChatListItem extends StatelessWidget {
           Expanded(
             child: Text(
               chat.userName,
-              style: AppTypography.h4.copyWith(
+              style: textTheme.titleMedium?.copyWith(
                 fontWeight: chat.unreadCount > 0
                     ? FontWeight.bold
                     : FontWeight.normal,
@@ -291,10 +297,10 @@ class _ChatListItem extends StatelessWidget {
           ),
           Text(
             formatTimestamp(chat.timestamp),
-            style: AppTypography.caption.copyWith(
+            style: textTheme.labelSmall?.copyWith(
               color: chat.unreadCount > 0
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
+                  ? scheme.primary
+                  : scheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -304,10 +310,10 @@ class _ChatListItem extends StatelessWidget {
           Expanded(
             child: Text(
               chat.lastMessage,
-              style: AppTypography.bodySmall.copyWith(
+              style: textTheme.bodySmall?.copyWith(
                 color: chat.unreadCount > 0
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
+                    ? scheme.onSurface
+                    : scheme.onSurfaceVariant,
                 fontWeight: chat.unreadCount > 0
                     ? FontWeight.w600
                     : FontWeight.normal,
@@ -320,14 +326,11 @@ class _ChatListItem extends StatelessWidget {
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
               constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               child: Text(
                 chat.unreadCount.toString(),
-                style: AppTypography.caption.copyWith(
+                style: textTheme.labelSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),

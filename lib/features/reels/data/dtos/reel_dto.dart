@@ -53,6 +53,24 @@ class ReelDto {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'photographerId': photographerId,
+      'photographerName': photographerName,
+      'photographerPhotoUrl': photographerPhotoUrl,
+      'videoUrl': videoUrl,
+      'thumbnailUrl': thumbnailUrl,
+      'caption': caption,
+      'tags': tags,
+      'views': views,
+      'likes': likes,
+      'comments': comments,
+      'shares': shares,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'isVerified': isVerified,
+    };
+  }
+
   static String _readString(
     Map<String, dynamic> data,
     String key, {

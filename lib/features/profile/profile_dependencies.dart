@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:luqta/features/profile/data/datasources/firestore_profile_remote_data_source.dart';
 import 'package:luqta/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:luqta/features/profile/data/repositories/profile_repository_impl.dart';
@@ -15,9 +16,15 @@ import 'package:luqta/features/profile/domain/usecases/upload_profile_photo.dart
 class ProfileDependencies {
   static final ProfileRemoteDataSource _remoteDataSource =
       FirestoreProfileRemoteDataSource();
-  static final ProfileRepository _repository = ProfileRepositoryImpl(
-    _remoteDataSource,
-  );
+  static ProfileRepository? _repositoryOverride;
+
+  @visibleForTesting
+  static void setRepositoryOverride(ProfileRepository? repository) {
+    _repositoryOverride = repository;
+  }
+
+  static ProfileRepository get _repository =>
+      _repositoryOverride ?? ProfileRepositoryImpl(_remoteDataSource);
 
   static GetUserProfile getUserProfile() => GetUserProfile(_repository);
 

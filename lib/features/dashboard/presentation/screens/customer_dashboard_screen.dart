@@ -1,452 +1,1054 @@
-import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'dart:async';
 
-class CustomerDashboardScreen extends StatelessWidget {
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:luqta/core/models/story_model.dart';
+import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/core/models/booking_model.dart';
+import 'package:luqta/core/services/story_service.dart';
+import 'package:luqta/core/theme/laqta_tokens.dart';
+import 'package:luqta/core/utils/runtime_env.dart';
+import 'package:luqta/core/widgets/app_buttons.dart';
+import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:luqta/core/widgets/loading_widgets.dart';
+import 'package:luqta/core/widgets/skeleton_loaders.dart';
+import 'package:luqta/core/widgets/story_bubble.dart';
+import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:luqta/features/booking/booking_dependencies.dart';
+import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:luqta/features/explore/presentation/screens/story_viewer_screen.dart';
+import 'package:intl/intl.dart';
+
+class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('لوحة التحكم'), centerTitle: true),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Greeting Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.cta],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 40, color: AppColors.primary),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'مرحباً، أحمد! 👋',
-                        style: AppTypography.h3.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'جاهز لحجز جلستك القادمة؟',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
+  State<CustomerDashboardScreen> createState() => _CustomerDashboardScreenState();
+}
 
-          // Quick Actions
-          Text('إجراءات سريعة', style: AppTypography.h3),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.search,
-                  label: 'ابحث عن مصور',
-                  color: AppColors.primary,
-                  onTap: () {
-                    AppRouter.goToSearch(context);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.card_giftcard,
-                  label: 'نقاط الولاء',
-                  color: AppColors.cta,
-                  onTap: () {
-                    AppRouter.goToLoyaltyPoints(context);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.emoji_events,
-                  label: 'الإنجازات',
-                  color: AppColors.success,
-                  onTap: () {
-                    AppRouter.goToAchievements(context);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.favorite,
-                  label: 'المفضلة',
-                  color: AppColors.error,
-                  onTap: () {
-                    AppRouter.goToFavorites(context);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
+class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
+  StoryService? _storyService;
+  final PageController _offersController = PageController(viewportFraction: 0.9);
+  Timer? _offersTimer;
+  int _offersIndex = 0;
 
-          // My Bookings Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('حجوزاتي الأخيرة', style: AppTypography.h3),
-              TextButton(
-                onPressed: () {
-                  AppRouter.goToBookings(context);
-                },
-                child: const Text('عرض الكل'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+  String _userId = '';
+  bool _isLoading = true;
+  bool _hasError = false;
+  final List<BookingModel> _upcomingBookings = [];
+  final List<_FeaturedProduct> _featuredProducts = [];
 
-          // Bookings List
-          _BookingCard(
-            photographerName: 'أحمد محمد',
-            specialty: 'تصوير زفاف',
-            date: '15 نوفمبر 2024',
-            time: '4:00 مساءً',
+  static const List<_FeaturedProduct> _demoFeaturedProducts = [
+    _FeaturedProduct(
+      id: 'demo_product_1',
+      title: 'إطار صور فاخر',
+      subtitle: 'خشب طبيعي + زجاج مقاوم للخدش',
+      priceIQD: 35000,
+      assetPath: 'assets/images/offers/offer_1.png',
+      badge: 'جديد',
+    ),
+    _FeaturedProduct(
+      id: 'demo_product_2',
+      title: 'ألبوم مطبوع',
+      subtitle: 'ورق عالي الجودة + تصميم أنيق',
+      priceIQD: 65000,
+      assetPath: 'assets/images/offers/offer_2.png',
+      badge: 'الأكثر مبيعًا',
+    ),
+    _FeaturedProduct(
+      id: 'demo_product_3',
+      title: 'جلسة تصوير منتجات',
+      subtitle: 'باقة مناسبة للمتاجر والمتاجر الإلكترونية',
+      priceIQD: 120000,
+      assetPath: 'assets/images/offers/offer_3.png',
+      badge: 'عرض',
+    ),
+  ];
+
+  bool _storiesLoading = true;
+  String? _storiesError;
+  List<StoryModel> _stories = [];
+
+  final List<_OfferSlide> _offerSlides = const [
+    _OfferSlide(
+      title: 'جلسات بورتريه فاخرة',
+      subtitle: 'خصم ٢٠٪ على جلسات التصوير الشخصية هذا الأسبوع',
+      cta: 'احجز الآن',
+      assetPath: 'assets/images/offers/offer_1.png',
+    ),
+    _OfferSlide(
+      title: 'تصوير مناسبات مميز',
+      subtitle: 'احجز باقة المناسبات واحصل على ألبوم مطبوع مجانًا',
+      cta: 'استكشف الباقة',
+      assetPath: 'assets/images/offers/offer_2.png',
+    ),
+    _OfferSlide(
+      title: 'تصوير منتجات احترافي',
+      subtitle: 'لأصحاب المتاجر: جلسات احترافية بأسعار خاصة',
+      cta: 'ابدأ الآن',
+      assetPath: 'assets/images/offers/offer_3.png',
+    ),
+  ];
+  bool get _useDemoContent => kDebugMode && !isFlutterTestEnv();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboard();
+    _loadStories();
+    _startOffersAutoScroll();
+  }
+
+  void _startOffersAutoScroll() {
+    _offersTimer?.cancel();
+    _offersTimer = Timer.periodic(const Duration(seconds: 6), (_) {
+      if (_offerSlides.isEmpty || !_offersController.hasClients) return;
+      final nextIndex = (_offersIndex + 1) % _offerSlides.length;
+      _offersController.animateToPage(
+        nextIndex,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _offersTimer?.cancel();
+    _offersController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDashboard() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+    if (kDebugMode) {
+      if (Firebase.apps.isNotEmpty) {
+        final authUser = FirebaseAuth.instance.currentUser;
+        final app = Firebase.app();
+        debugPrint(
+          'CustomerDashboardScreen:_loadDashboard auth=${authUser?.uid ?? 'null'} '
+          'project=${app.name}:${app.options.projectId}',
+        );
+      } else {
+        debugPrint('CustomerDashboardScreen:_loadDashboard Firebase not initialized');
+      }
+    }
+
+    try {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
+        throw StateError('Missing user');
+      }
+      _userId = userId;
+
+      final bookingResult = await BookingDependencies.getMyBookings().call(
+        userId: userId,
+      );
+      if (bookingResult.isSuccess) {
+        _upcomingBookings
+          ..clear()
+          ..addAll(
+            (bookingResult.valueOrNull ?? [])
+                .map(BookingPresentationMapper.toModel)
+                .where(
+                  (booking) =>
+                      booking.status != 'canceled' &&
+                      booking.status != 'completed' &&
+                      booking.status != 'done',
+                )
+                .toList(),
+          );
+      }
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Failed to load dashboard: $e');
+      }
+      if (!mounted) return;
+      if (_useDemoContent) {
+        _applyDemoDashboard();
+        setState(() {
+          _isLoading = false;
+          _hasError = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
+      }
+    }
+  }
+
+  void _applyDemoDashboard() {
+    final now = DateTime.now();
+    _featuredProducts
+      ..clear()
+      ..addAll(_demoFeaturedProducts);
+
+    _upcomingBookings
+      ..clear()
+      ..addAll(
+        [
+          BookingModel(
+            id: 'demo_booking_1',
+            customerId: 'demo_client',
+            photographerId: 'demo_ph_1',
+            date: '2026-02-10',
+            time: '06:30 PM',
+            duration: 120,
+            type: 'جلسة عائلية',
+            price: 150000,
             status: 'confirmed',
-            onTap: () {},
+            payment: PaymentInfo(
+              status: 'deposit_paid',
+              amount: 50000,
+              paidAt: now.subtract(const Duration(days: 1)),
+            ),
+            location: LocationInfo(text: 'بغداد - المنصور'),
+            deliverables: DeliverablesInfo(
+              photosCount: 25,
+              includesEditing: true,
+            ),
+            timeline: BookingTimeline(
+              confirmedAt: now.subtract(const Duration(days: 1)),
+            ),
+            createdAt: now.subtract(const Duration(days: 2)),
+            updatedAt: now,
           ),
-          const SizedBox(height: 12),
-          _BookingCard(
-            photographerName: 'سارة علي',
-            specialty: 'تصوير شخصي',
-            date: '20 نوفمبر 2024',
-            time: '2:00 مساءً',
+          BookingModel(
+            id: 'demo_booking_2',
+            customerId: 'demo_client',
+            photographerId: 'demo_ph_3',
+            date: '2026-02-20',
+            time: '05:00 PM',
+            duration: 90,
+            type: 'تصوير مناسبات',
+            price: 220000,
             status: 'pending',
-            onTap: () {},
+            payment: PaymentInfo(status: 'pending', amount: 0),
+            location: LocationInfo(text: 'أربيل - عينكاوا'),
+            deliverables: DeliverablesInfo(
+              photosCount: 40,
+              includesEditing: true,
+            ),
+            timeline: BookingTimeline(),
+            createdAt: now.subtract(const Duration(days: 1)),
+            updatedAt: now,
           ),
-          const SizedBox(height: 24),
+        ],
+      );
+  }
 
-          // Favorite Photographers
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('مصورين مفضلين', style: AppTypography.h3),
-              TextButton(
-                onPressed: () {
-                  AppRouter.goToFavorites(context);
-                },
-                child: const Text('عرض الكل'),
-              ),
-            ],
+  List<_FeaturedProduct> _visibleProducts() =>
+      _useDemoContent ? _demoFeaturedProducts : _featuredProducts;
+
+  String _formatIQD(BuildContext context, int amount) {
+    final locale = Localizations.localeOf(context).toString();
+    final formatted = NumberFormat.decimalPattern(locale).format(amount);
+    return '$formatted د.ع';
+  }
+
+  Future<void> _loadStories() async {
+    setState(() {
+      _storiesLoading = true;
+      _storiesError = null;
+    });
+    try {
+      final service = _storyService ?? StoryService();
+      _storyService = service;
+      final stories = await service.fetchActiveStories();
+      if (!mounted) return;
+      setState(() {
+        _stories = stories.isEmpty && _useDemoContent
+            ? _buildDemoStories()
+            : stories;
+        _storiesLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      if (_useDemoContent) {
+        setState(() {
+          _stories = _buildDemoStories();
+          _storiesLoading = false;
+          _storiesError = null;
+        });
+      } else {
+        setState(() {
+          _storiesLoading = false;
+          _storiesError = 'Failed to load stories';
+        });
+      }
+    }
+  }
+
+  List<StoryModel> _buildDemoStories() {
+    final now = DateTime.now();
+    return [
+      StoryModel(
+        storyId: 'demo_story_1',
+        photographerId: 'demo_ph_1',
+        photographerName: 'مروة الحربي',
+        photographerPhotoUrl: 'assets/images/placeholder.jpg',
+        imageUrl: 'assets/images/hero_auth.png',
+        caption: 'بورتريه فاخر بإضاءة ذهبية ناعمة.',
+        createdAt: now.subtract(const Duration(hours: 1)),
+        expiresAt: now.add(const Duration(hours: 23)),
+        isActive: true,
+      ),
+      StoryModel(
+        storyId: 'demo_story_2',
+        photographerId: 'demo_ph_2',
+        photographerName: 'سيف الكعبي',
+        photographerPhotoUrl: 'assets/images/placeholder.jpg',
+        imageUrl: 'assets/images/hero_role.png',
+        caption: 'مناسبات بلمسة سينمائية أنيقة.',
+        createdAt: now.subtract(const Duration(hours: 3)),
+        expiresAt: now.add(const Duration(hours: 21)),
+        isActive: true,
+      ),
+      StoryModel(
+        storyId: 'demo_story_3',
+        photographerId: 'demo_ph_3',
+        photographerName: 'نور الهادي',
+        photographerPhotoUrl: 'assets/images/placeholder.jpg',
+        imageUrl: 'assets/images/hero_welcome.png',
+        caption: 'تصوير منتجات بخلفية نظيفة ولمسة فاخرة.',
+        createdAt: now.subtract(const Duration(hours: 6)),
+        expiresAt: now.add(const Duration(hours: 18)),
+        isActive: true,
+      ),
+      StoryModel(
+        storyId: 'demo_story_4',
+        photographerId: 'demo_ph_4',
+        photographerName: 'رنيم البغدادي',
+        photographerPhotoUrl: 'assets/images/placeholder.jpg',
+        imageUrl: 'assets/images/hero_auth.png',
+        caption: 'جلسات عائلية دافئة في الضوء الطبيعي.',
+        createdAt: now.subtract(const Duration(hours: 8)),
+        expiresAt: now.add(const Duration(hours: 16)),
+        isActive: true,
+      ),
+      StoryModel(
+        storyId: 'demo_story_5',
+        photographerId: 'demo_ph_5',
+        photographerName: 'عمر السعدي',
+        photographerPhotoUrl: 'assets/images/placeholder.jpg',
+        imageUrl: 'assets/images/hero_role.png',
+        caption: 'تصوير طعام احترافي لإبراز التفاصيل.',
+        createdAt: now.subtract(const Duration(hours: 10)),
+        expiresAt: now.add(const Duration(hours: 14)),
+        isActive: true,
+      ),
+      StoryModel(
+        storyId: 'demo_story_6',
+        photographerId: 'demo_ph_6',
+        photographerName: 'زهـراء سالم',
+        photographerPhotoUrl: 'assets/images/placeholder.jpg',
+        imageUrl: 'assets/images/hero_welcome.png',
+        caption: 'تصوير أطفال بأسلوب هادئ وآمن.',
+        createdAt: now.subtract(const Duration(hours: 12)),
+        expiresAt: now.add(const Duration(hours: 12)),
+        isActive: true,
+      ),
+    ];
+  }
+
+  void _openStoryViewer(List<StoryModel> stories, int index) {
+    if (stories.isEmpty) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => StoryViewerScreen(
+          stories: stories,
+          initialIndex: index,
+          currentUserId: _userId,
+          isCustomer: true,
+          onCreateRequest: _openCreateRequestFromStory,
+        ),
+      ),
+    );
+  }
+
+  void _openCreateRequestFromStory(StoryModel story) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CreateRequestScreen(
+          prefillNotes:
+              'مرجع من قصة المصور ${story.photographerName}: ${story.caption ?? ''}',
+          prefillReferenceImages: [story.imageUrl],
+          prefillSelectedPhotographerId: story.photographerId,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOffersSlider() {
+    if (_offerSlides.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'العروض المميزة',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 190,
+          child: PageView.builder(
+            controller: _offersController,
+            itemCount: _offerSlides.length,
+            onPageChanged: (index) => setState(() => _offersIndex = index),
+            itemBuilder: (context, index) {
+              final slide = _offerSlides[index];
+              return _OfferSlideCard(
+                slide: slide,
+                onTap: () => AppRouter.goToCreateRequest(context),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _offerSlides.length,
+            (index) {
+              final isActive = index == _offersIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                height: 6,
+                width: isActive ? 22 : 8,
+                decoration: BoxDecoration(
+                  color: isActive ? LaqtaColors.accent : LaqtaColors.border,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStoriesSection() {
+    if (_storiesLoading) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'القصص',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-
-          // Favorites Horizontal List
           SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 3,
-              itemBuilder: (context, index) {
-                return _FavoritePhotographerCard(
-                  name: 'مصور ${index + 1}',
-                  rating: 4.5 + (index * 0.2),
-                  reviewsCount: 120 + (index * 20),
-                  onTap: () {},
-                );
-              },
+            height: 90,
+            child: ShimmerLoading(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemBuilder: (_, index) => const SkeletonBox(
+                  width: 68,
+                  height: 68,
+                  borderRadius: BorderRadius.all(Radius.circular(40)),
+                ),
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemCount: 6,
+              ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _QuickActionCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _QuickActionCard({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white, size: 28),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BookingCard extends StatelessWidget {
-  final String photographerName;
-  final String specialty;
-  final String date;
-  final String time;
-  final String status; // pending, confirmed, completed, cancelled
-  final VoidCallback onTap;
-
-  const _BookingCard({
-    required this.photographerName,
-    required this.specialty,
-    required this.date,
-    required this.time,
-    required this.status,
-    required this.onTap,
-  });
-
-  Color _getStatusColor() {
-    switch (status) {
-      case 'confirmed':
-        return AppColors.success;
-      case 'pending':
-        return AppColors.cta;
-      case 'completed':
-        return AppColors.info;
-      case 'cancelled':
-        return AppColors.error;
-      default:
-        return AppColors.textSecondary;
+      );
     }
-  }
 
-  String _getStatusText() {
-    switch (status) {
-      case 'confirmed':
-        return 'مؤكد ✓';
-      case 'pending':
-        return 'قيد الانتظار ⏳';
-      case 'completed':
-        return 'مكتمل ✅';
-      case 'cancelled':
-        return 'ملغي ✖';
-      default:
-        return '';
+    if (_storiesError != null) {
+      return EmptyStates.error(
+        message: _storiesError,
+        onRetry: _loadStories,
+      );
     }
+
+    if (_stories.isEmpty) {
+      return EmptyStates.noStories();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'القصص',
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 96,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _stories.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final story = _stories[index];
+              return StoryBubble(
+                title: story.photographerName,
+                imageUrl: story.photographerPhotoUrl,
+                isViewed: _userId.isNotEmpty && story.hasUserViewed(_userId),
+                onTap: () => _openStoryViewer(_stories, index),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: AppColors.primary,
-                size: 30,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(localizations.home),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => AppRouter.goToSearch(context),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const LoadingIndicator()
+          : _hasError
+          ? EmptyStates.error(onRetry: _loadDashboard)
+          : RefreshIndicator(
+              onRefresh: () async {
+                await _loadDashboard();
+                await _loadStories();
+              },
+              child: ListView(
+                padding: const EdgeInsets.all(16),
                 children: [
-                  Text(photographerName, style: AppTypography.h4),
-                  const SizedBox(height: 4),
-                  Text(
-                    specialty,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [scheme.primary, scheme.secondary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          localizations.bookWithConfidence,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          localizations.requestQuickPrompt,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        CTAButton(
+                          text: localizations.createRequest,
+                          onPressed: () => AppRouter.goToCreateRequest(context),
+                          icon: Icons.add,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
+                  _buildOffersSlider(),
+                  const SizedBox(height: 24),
+                  _buildStoriesSection(),
+                  const SizedBox(height: 24),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text('$date - $time', style: AppTypography.bodySmall),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _getStatusColor().withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _getStatusText(),
-                style: AppTypography.bodySmall.copyWith(
-                  color: _getStatusColor(),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FavoritePhotographerCard extends StatelessWidget {
-  final String name;
-  final double rating;
-  final int reviewsCount;
-  final VoidCallback onTap;
-
-  const _FavoritePhotographerCard({
-    required this.name,
-    required this.rating,
-    required this.reviewsCount,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 150,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.3),
-                    AppColors.cta.withValues(alpha: 0.3),
-                  ],
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-              ),
-              child: const Center(
-                child: Icon(Icons.person, size: 50, color: Colors.white),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, size: 14, color: AppColors.cta),
-                      const SizedBox(width: 4),
                       Text(
-                        rating.toStringAsFixed(1),
-                        style: AppTypography.bodySmall,
-                      ),
-                      Text(
-                        ' ($reviewsCount)',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+                        localizations.featuredProducts,
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
+                      TextButton(
+                        onPressed: () => AppRouter.goToShop(context),
+                        child: Text(localizations.viewAll),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_visibleProducts().isEmpty)
+                    EmptyState(
+                      icon: Icons.storefront_outlined,
+                      title: localizations.noProducts,
+                      message: localizations.productsEmptyMessage,
+                      emoji: '🛍️',
+                    )
+                  else
+                    SizedBox(
+                      height: 190,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _visibleProducts().length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 12),
+                        itemBuilder: (context, index) => _FeaturedProductCard(
+                          product: _visibleProducts()[index],
+                          priceLabel: _formatIQD(context, _visibleProducts()[index].priceIQD),
+                          onTap: () => AppRouter.goToShop(context),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        localizations.upcomingBookings,
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => AppRouter.goToBookings(context),
+                        child: Text(localizations.viewAll),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_upcomingBookings.isEmpty)
+                    EmptyState(
+                      icon: Icons.event_busy,
+                      title: localizations.noBookings,
+                      message: localizations.noBookingsMessage,
+                    )
+                  else
+                    Column(
+                      children: _upcomingBookings
+                          .take(3)
+                          .map(
+                            (booking) => Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ListTile(
+                                title: Text(booking.type),
+                                subtitle: Text(
+                                  '${booking.date} - ${booking.time}',
+                                ),
+                                trailing: Text(
+                                  booking.status.toUpperCase(),
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: scheme.primary,
+                                  ),
+                                ),
+                                onTap: () => AppRouter.goToBookingDetails(
+                                  context,
+                                  booking.id,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class _FeaturedProduct {
+  final String id;
+  final String title;
+  final String subtitle;
+  final int priceIQD;
+  final String assetPath;
+  final String? badge;
+
+  const _FeaturedProduct({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.priceIQD,
+    required this.assetPath,
+    this.badge,
+  });
+}
+
+class _FeaturedProductCard extends StatelessWidget {
+  final _FeaturedProduct product;
+  final String priceLabel;
+  final VoidCallback onTap;
+
+  const _FeaturedProductCard({
+    required this.product,
+    required this.priceLabel,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SizedBox(
+      width: 280,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(22),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: scheme.onSurface.withValues(alpha: 0.10)),
+              boxShadow: LaqtaShadows.soft,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Image.asset(
+                      product.assetPath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                LaqtaColors.primary.withValues(alpha: 0.95),
+                                LaqtaColors.accent.withValues(alpha: 0.35),
+                              ],
+                            ),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.storefront_outlined,
+                              color: Colors.white70,
+                              size: 44,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.10),
+                            Colors.black.withValues(alpha: 0.70),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (product.badge != null)
+                    PositionedDirectional(
+                      top: 12,
+                      start: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.16),
+                          ),
+                        ),
+                        child: Text(
+                          product.badge!,
+                          style: textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  PositionedDirectional(
+                    bottom: 12,
+                    start: 12,
+                    end: 12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          product.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.78),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                priceLabel,
+                                style: textTheme.titleSmall?.copyWith(
+                                  color: LaqtaColors.accent,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: LaqtaColors.accent,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                AppLocalizations.of(context).orderNow,
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OfferSlide {
+  final String title;
+  final String subtitle;
+  final String cta;
+  final String assetPath;
+
+  const _OfferSlide({
+    required this.title,
+    required this.subtitle,
+    required this.cta,
+    required this.assetPath,
+  });
+}
+
+class _OfferSlideCard extends StatelessWidget {
+  final _OfferSlide slide;
+  final VoidCallback? onTap;
+
+  const _OfferSlideCard({
+    required this.slide,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    slide.assetPath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              LaqtaColors.primary.withValues(alpha: 0.95),
+                              LaqtaColors.accent.withValues(alpha: 0.35),
+                            ],
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.photo_camera_outlined,
+                            color: Colors.white70,
+                            size: 44,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.55),
+                          LaqtaColors.primary.withValues(alpha: 0.65),
+                          Colors.black.withValues(alpha: 0.35),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: LaqtaColors.accent.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: LaqtaColors.accent.withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.local_offer_outlined,
+                                size: 14,
+                                color: LaqtaColors.accent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'عرض',
+                                style: textTheme.labelSmall?.copyWith(
+                                  color: LaqtaColors.accent,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          slide.title,
+                          style: textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          slide.subtitle,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: ElevatedButton(
+                            onPressed: onTap,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: LaqtaColors.accent,
+                              foregroundColor: scheme.onSecondary,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 6,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  slide.cta,
+                                  style: textTheme.labelLarge?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

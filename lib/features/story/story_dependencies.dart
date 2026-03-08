@@ -1,0 +1,26 @@
+import 'package:flutter/foundation.dart';
+import 'package:luqta/features/story/data/datasources/firestore_story_remote_data_source.dart';
+import 'package:luqta/features/story/data/datasources/story_remote_data_source.dart';
+import 'package:luqta/features/story/data/repositories/story_repository_impl.dart';
+import 'package:luqta/features/story/domain/repositories/story_repository.dart';
+import 'package:luqta/features/story/domain/usecases/create_story.dart';
+import 'package:luqta/features/story/domain/usecases/upload_story_image.dart';
+
+class StoryDependencies {
+  static final StoryRemoteDataSource _remoteDataSource =
+      FirestoreStoryRemoteDataSource();
+  static StoryRepository? _repositoryOverride;
+
+  @visibleForTesting
+  static void setRepositoryOverride(StoryRepository? repository) {
+    _repositoryOverride = repository;
+  }
+
+  static StoryRepository get _repository =>
+      _repositoryOverride ?? StoryRepositoryImpl(_remoteDataSource);
+
+  static UploadStoryImage uploadStoryImage() =>
+      UploadStoryImage(_repository);
+
+  static CreateStory createStory() => CreateStory(_repository);
+}

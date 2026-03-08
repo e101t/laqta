@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/photographer_model.dart';
 import 'package:luqta/core/models/portfolio_model.dart';
 import 'package:luqta/core/models/review_model.dart';
 import 'package:luqta/core/models/user_model.dart';
+import 'package:luqta/core/router/app_router.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:luqta/features/photographer/photographer_dependencies.dart';
 import 'package:luqta/features/photographer/presentation/mappers/photographer_presentation_mapper.dart';
-import 'package:luqta/screens/booking/booking_request_screen.dart';
+import 'package:luqta/features/trust/domain/entities/trust_stats.dart';
+import 'package:luqta/features/trust/trust_dependencies.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -36,6 +37,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
   PhotographerModel? _photographerData;
   PortfolioModel? _portfolioData;
   List<ReviewModel> _reviews = [];
+  TrustStats? _trustStats;
 
   @override
   void initState() {
@@ -75,6 +77,13 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
           ? null
           : PhotographerPresentationMapper.toPortfolioModel(bundle.portfolio!);
       _reviews = PhotographerPresentationMapper.toReviewModels(bundle.reviews);
+
+      final trustResult = await TrustDependencies.getTrustStats().call(
+        widget.photographerId,
+      );
+      if (trustResult.isSuccess) {
+        _trustStats = trustResult.valueOrNull;
+      }
     } catch (e) {
       _errorMessage = 'Failed to load photographer data';
     } finally {
@@ -141,30 +150,14 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
   }
 
   void _bookNow() {
-    if (_userData == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to book: Photographer data not loaded'),
-        ),
-      );
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingRequestScreen(
-          photographerId: widget.photographerId,
-          photographerName: _userData!.name,
-        ),
-      ),
-    );
+    AppRouter.goToCreateRequest(context);
   }
 
   void _share() {
+    final trustLabel = _trustLabel();
     final String shareText =
         'Check out this photographer: ${_userData!.name}\n'
-        'Rating: ${_photographerData!.rate} (${_photographerData!.reviewsCount} reviews)\n'
+        'Trust score: $trustLabel\n'
         'Specialties: ${_photographerData!.specialties.join(', ')}\n'
         'Starting from: ${_photographerData!.basePrice.toStringAsFixed(0)} IQD';
 
@@ -274,9 +267,42 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     }
   }
 
+  String _trustLabel() {
+    double average = 0;
+    int count = 0;
+
+    if (_trustStats != null && _trustStats!.reviewCount > 0) {
+      average =
+          (_trustStats!.avgQuality +
+                  _trustStats!.avgCommunication +
+                  _trustStats!.avgOnTime +
+                  _trustStats!.avgDelivery) /
+              4;
+      count = _trustStats!.reviewCount;
+    } else if (_reviews.isNotEmpty) {
+      final total = _reviews.fold<double>(0, (sum, review) {
+        return sum +
+            review.qualityRating +
+            review.communicationRating +
+            review.onTimeRating +
+            review.deliverySpeedRating;
+      });
+      average = total / (_reviews.length * 4);
+      count = _reviews.length;
+    }
+
+    if (count == 0) return 'New';
+    if (average >= 4.2) return 'High';
+    if (average >= 3.2) return 'Medium';
+    return 'Low';
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     if (_isLoading) {
       return const Scaffold(body: LoadingIndicator());
@@ -291,15 +317,15 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                Icon(
                   Icons.error_outline,
                   size: 64,
-                  color: AppColors.error,
+                  color: scheme.error,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage!,
-                  style: AppTypography.bodyLarge,
+                  style: textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -326,7 +352,6 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     final ageLabel = _userData!.age != null ? '${_userData!.age} سنة' : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar with Image
@@ -340,7 +365,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                   _userData!.photoUrl != null
                       ? Image.network(_userData!.photoUrl!, fit: BoxFit.cover)
                       : Container(
-                          color: AppColors.primary,
+                          color: scheme.primary,
                           child: const Icon(
                             Icons.camera_alt,
                             size: 80,
@@ -391,7 +416,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                           Expanded(
                             child: Text(
                               _userData!.name,
-                              style: AppTypography.h2,
+                              style: textTheme.headlineSmall,
                             ),
                           ),
                           if (_photographerData!.isTopRated)
@@ -401,7 +426,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.cta,
+                                color: scheme.secondary,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -415,7 +440,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                                   const SizedBox(width: 4),
                                   Text(
                                     localizations.topRated,
-                                    style: AppTypography.caption.copyWith(
+                                    style: textTheme.labelSmall?.copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -427,18 +452,18 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                       ),
                       const SizedBox(height: 12),
 
-                      // Rating
+                      // Trust Score
                       Row(
                         children: [
-                          const Icon(
-                            Icons.star,
-                            color: AppColors.starFilled,
+                          Icon(
+                            Icons.verified,
+                            color: scheme.primary,
                             size: 20,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${_photographerData!.rate} (${_photographerData!.reviewsCount} ${localizations.reviews})',
-                            style: AppTypography.bodyMedium.copyWith(
+                            'Trust: ${_trustLabel()}',
+                            style: textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -481,7 +506,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                               (gov) => Chip(
                                 avatar: const Icon(Icons.location_on, size: 16),
                                 label: Text(gov),
-                                backgroundColor: AppColors.background,
+                                backgroundColor: scheme.surface,
                               ),
                             )
                             .toList(),
@@ -500,15 +525,13 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(
-                                    alpha: 0.1,
-                                  ),
+                                  color: scheme.primary.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Text(
                                   spec,
-                                  style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.primary,
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: scheme.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -521,7 +544,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                       // Bio
                       Text(
                         _photographerData!.bio,
-                        style: AppTypography.bodyMedium,
+                        style: textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
 
@@ -533,13 +556,13 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                             if (_photographerData!.instagram != null)
                               IconButton(
                                 icon: const Icon(Icons.camera_alt),
-                                color: AppColors.primary,
+                                color: scheme.primary,
                                 onPressed: _openInstagram,
                               ),
                             if (_photographerData!.tiktok != null)
                               IconButton(
                                 icon: const Icon(Icons.music_note),
-                                color: AppColors.primary,
+                                color: scheme.primary,
                                 onPressed: _openTikTok,
                               ),
                           ],
@@ -551,12 +574,15 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                         children: [
                           Text(
                             localizations.startingFrom,
-                            style: AppTypography.bodyMedium,
+                            style: textTheme.bodyMedium,
                           ),
                           const Spacer(),
                           Text(
                             '${_photographerData!.basePrice.toStringAsFixed(0)} IQD',
-                            style: AppTypography.price,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ],
                       ),
@@ -569,9 +595,9 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                 // Tabs
                 TabBar(
                   controller: _tabController,
-                  labelColor: AppColors.primary,
-                  unselectedLabelColor: AppColors.textSecondary,
-                  indicatorColor: AppColors.primary,
+                  labelColor: scheme.primary,
+                  unselectedLabelColor: scheme.onSurfaceVariant,
+                  indicatorColor: scheme.primary,
                   tabs: [
                     const Tab(text: 'الملخص'),
                     Tab(text: localizations.reviews),
@@ -598,7 +624,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: scheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
@@ -647,13 +673,14 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
 
   Widget _buildReviewsTab(AppLocalizations localizations) {
     if (_reviews.isEmpty) {
-      return const Center(child: Text('لا توجد تقييمات بعد'));
+      return const Center(child: Text('No reviews yet.'));
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _reviews.length,
       itemBuilder: (context, index) {
+        final textTheme = Theme.of(context).textTheme;
         final review = _reviews[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -670,31 +697,45 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Customer', style: AppTypography.h4),
-                          Row(
-                            children: List.generate(
-                              5,
-                              (i) => Icon(
-                                Icons.star,
-                                size: 16,
-                                color: i < review.rating
-                                    ? AppColors.starFilled
-                                    : AppColors.starEmpty,
-                              ),
-                            ),
+                          Text('Client', style: textTheme.titleMedium),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatDateTime(review.createdAt),
+                            style: textTheme.labelSmall,
                           ),
                         ],
                       ),
                     ),
-                    Text(
-                      _formatDateTime(review.createdAt),
-                      style: AppTypography.caption,
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                if (review.comment != null)
-                  Text(review.comment!, style: AppTypography.bodyMedium),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _MetricChip(label: 'Quality', value: review.qualityRating),
+                    _MetricChip(
+                      label: 'Communication',
+                      value: review.communicationRating,
+                    ),
+                    _MetricChip(label: 'On time', value: review.onTimeRating),
+                    _MetricChip(
+                      label: 'Delivery',
+                      value: review.deliverySpeedRating,
+                    ),
+                    if (review.recommend != null)
+                      _FlagChip(
+                        label: review.recommend!
+                            ? 'Recommended'
+                            : 'Not recommended',
+                        positive: review.recommend!,
+                      ),
+                  ],
+                ),
+                if (review.comment != null) ...[
+                  const SizedBox(height: 12),
+                  Text(review.comment!, style: textTheme.bodyMedium),
+                ],
               ],
             ),
           ),
@@ -704,25 +745,30 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
   }
 
   Widget _buildSummaryTab(AppLocalizations localizations) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         ListTile(
-          leading: const Icon(Icons.place, color: AppColors.primary),
+          leading: Icon(Icons.place, color: scheme.primary),
           title: Text(_userData?.governorate ?? ''),
           subtitle: const Text('المحافظة'),
         ),
         ListTile(
-          leading: const Icon(Icons.price_change, color: AppColors.primary),
+          leading: Icon(Icons.price_change, color: scheme.primary),
           title: Text(
             '${_photographerData!.basePrice.toStringAsFixed(0)} IQD',
-            style: AppTypography.h4.copyWith(color: AppColors.primary),
+            style: textTheme.titleMedium?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           subtitle: Text(localizations.startingFrom),
         ),
         if (_photographerData!.specialties.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text('التخصصات', style: AppTypography.h4),
+          Text('التخصصات', style: textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -731,7 +777,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                 .map(
                   (s) => Chip(
                     label: Text(s),
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.08),
+                    backgroundColor: scheme.primaryContainer,
                   ),
                 )
                 .toList(),
@@ -743,8 +789,6 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
           icon: const Icon(Icons.calendar_month),
           label: Text(localizations.bookNow),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(48),
           ),
         ),
@@ -761,19 +805,103 @@ class _ProfileChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: scheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.primary),
+          Icon(icon, size: 14, color: scheme.primary),
           const SizedBox(width: 4),
-          Text(label, style: AppTypography.caption),
+          Text(label, style: textTheme.labelSmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  final String label;
+  final int value;
+
+  const _MetricChip({required this.label, required this.value});
+
+  Color _chipColor(ColorScheme scheme) {
+    if (value >= 4) return scheme.tertiary;
+    if (value >= 3) return scheme.secondary;
+    return scheme.error;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final color = _chipColor(scheme);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: textTheme.labelSmall),
+          const SizedBox(width: 6),
+          Text(
+            '$value/5',
+            style: textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FlagChip extends StatelessWidget {
+  final String label;
+  final bool positive;
+
+  const _FlagChip({required this.label, required this.positive});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final color = positive ? scheme.tertiary : scheme.error;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            positive ? Icons.thumb_up : Icons.thumb_down,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

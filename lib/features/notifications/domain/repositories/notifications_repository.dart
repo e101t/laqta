@@ -6,6 +6,8 @@ abstract class NotificationsRepository {
     required String userId,
   });
 
+  Future<Result<void>> createNotification(NotificationModel notification);
+
   Future<Result<void>> markAsRead(String notificationId);
 
   Future<Result<void>> markAllAsRead({

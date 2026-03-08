@@ -56,7 +56,6 @@ class StoryModel {
       'caption': caption,
       'createdAt': Timestamp.fromDate(createdAt),
       'expiresAt': Timestamp.fromDate(expiresAt),
-      'views': views.map((v) => v.toMap()).toList(),
       'isActive': isActive,
     };
   }

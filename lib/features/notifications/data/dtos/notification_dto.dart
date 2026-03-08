@@ -43,6 +43,20 @@ class NotificationDto {
     );
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'title': title,
+      'body': body,
+      'type': type,
+      'data': data,
+      'isRead': isRead,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'imageUrl': imageUrl,
+      'actionUrl': actionUrl,
+    };
+  }
+
   static String _readString(
     Map<String, dynamic> data,
     String key, {

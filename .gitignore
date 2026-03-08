@@ -63,3 +63,12 @@ ios/.symlinks/
 ios/Flutter/ephemeral/
 ios/Runner.xcworkspace/
 
+# Node / Firebase Functions
+functions/node_modules/
+functions/.firebase/
+functions/.runtimeconfig.json
+
+# Local helper outputs
+repo_tree.txt
+patch.diff
+

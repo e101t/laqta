@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/skeleton_loaders.dart';
@@ -34,6 +33,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     try {
       final userResult = await AuthDependencies.getCurrentUser().call();
+      if (!mounted) return;
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
         setState(() {
@@ -46,6 +46,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final result = await NotificationsDependencies.getNotifications().call(
         userId: userId,
       );
+      if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to load notifications',
@@ -59,6 +60,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
         _errorMessage = 'Failed to load notifications';
@@ -72,6 +74,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       final result = await NotificationsDependencies.markNotificationRead()
           .call(notification.notificationId);
+      if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ??
@@ -85,6 +88,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _unreadCount--;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to mark notification as read';
       });
@@ -94,6 +98,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _markAllAsRead() async {
     try {
       final userResult = await AuthDependencies.getCurrentUser().call();
+      if (!mounted) return;
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) return;
 
@@ -103,6 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .toList();
       final result = await NotificationsDependencies.markAllNotificationsRead()
           .call(userId: userId, notificationIds: unreadIds);
+      if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ??
@@ -117,6 +123,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _unreadCount = 0;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to mark all notifications as read';
       });
@@ -128,6 +135,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       final result = await NotificationsDependencies.deleteNotification().call(
         notification.notificationId,
       );
+      if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to delete notification',
@@ -139,6 +147,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (!notification.isRead) _unreadCount--;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Failed to delete notification';
       });
@@ -148,9 +157,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -160,7 +171,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.error,
+                  color: scheme.error,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -195,23 +206,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
                       size: 48,
-                      color: AppColors.error,
+                      color: scheme.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       _errorMessage!,
                       textAlign: TextAlign.center,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.error,
-                      ),
+                      style: textTheme.bodyMedium?.copyWith(color: scheme.error),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _loadNotifications,
-                      child: const Text('Retry'),
+                      child: Text(localizations.retry),
                     ),
                   ],
                 ),
@@ -251,13 +260,17 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Dismissible(
       key: Key(notification.notificationId),
       direction: DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.error,
+          color: scheme.error,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.centerRight,
@@ -269,13 +282,13 @@ class _NotificationCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: notification.isRead
-              ? AppColors.surface
-              : AppColors.primary.withValues(alpha: 0.05),
+              ? scheme.surface
+              : scheme.primary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: notification.isRead
-                ? AppColors.divider
-                : AppColors.primary.withValues(alpha: 0.3),
+                ? scheme.outlineVariant
+                : scheme.primary.withValues(alpha: 0.3),
             width: notification.isRead ? 1 : 2,
           ),
         ),
@@ -290,7 +303,7 @@ class _NotificationCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   notification.title,
-                  style: AppTypography.h4.copyWith(
+                  style: textTheme.titleMedium?.copyWith(
                     fontWeight: notification.isRead
                         ? FontWeight.w500
                         : FontWeight.bold,
@@ -301,8 +314,8 @@ class _NotificationCard extends StatelessWidget {
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -314,16 +327,14 @@ class _NotificationCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 notification.body,
-                style: AppTypography.bodyMedium,
+                style: textTheme.bodyMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 8),
               Text(
                 notification.getTimeAgo(),
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -340,12 +351,13 @@ class _NotificationSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return ShimmerLoading(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

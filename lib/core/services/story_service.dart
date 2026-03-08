@@ -32,41 +32,32 @@ class StoryService {
     required String storyId,
     required String userId,
   }) async {
-    if (userId.isEmpty) return;
+    if (storyId.isEmpty || userId.isEmpty) return;
 
-    final userDoc = await _secure.guard(
-      () => _firestore.collection('users').doc(userId).get(),
-    );
-    final userData = firestoreMap(userDoc.data());
-    final userName = readString(userData, 'name', defaultValue: 'Unknown');
+    try {
+      final userDoc = await _secure.guard(
+        () => _firestore.collection('users').doc(userId).get(),
+      );
+      final userData = firestoreMap(userDoc.data());
+      final userName = readString(userData, 'name', defaultValue: 'Unknown');
 
-    final storyRef = _firestore.collection('stories').doc(storyId);
+      final viewRef = _firestore
+          .collection('stories')
+          .doc(storyId)
+          .collection('views')
+          .doc(userId);
 
-    await _secure.guard(
-      () => _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(storyRef);
-        if (!snapshot.exists) return;
-
-        final data = firestoreMap(snapshot.data());
-        final currentViews = readMapList(data, 'views');
-
-        final alreadyViewed = currentViews.any(
-          (view) => view['userId'] == userId,
-        );
-
-        if (alreadyViewed) {
-          return;
-        }
-
-        final view = StoryView(
-          userId: userId,
-          userName: userName,
-          viewedAt: DateTime.now(),
-        ).toMap();
-
-        currentViews.add(view);
-        transaction.update(storyRef, {'views': currentViews});
-      }),
-    );
+      await _secure.guard(
+        () => viewRef.set(
+          StoryView(
+            userId: userId,
+            userName: userName,
+            viewedAt: DateTime.now(),
+          ).toMap(),
+        ),
+      );
+    } catch (_) {
+      // Story views are best-effort.
+    }
   }
 }
