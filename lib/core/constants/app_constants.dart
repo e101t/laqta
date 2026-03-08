@@ -82,19 +82,47 @@ class AppConstants {
   static const String bookingPending = 'pending';
   static const String bookingConfirmed = 'confirmed';
   static const String bookingRejected = 'rejected';
+  static const String bookingInProgress = 'in_progress';
+  static const String bookingAwaitingDelivery = 'awaiting_delivery';
+  static const String bookingDelivered = 'delivered';
+  static const String bookingRevisionRequested = 'revision_requested';
   static const String bookingDone = 'done';
+  static const String bookingCompleted = 'completed';
   static const String bookingCanceled = 'canceled';
+  static const String bookingDisputeOpen = 'dispute_open';
+
+  // Request Status
+  static const String requestDraft = 'draft';
+  static const String requestPublished = 'published';
+  static const String requestAwaitingOffers = 'awaiting_offers';
+  static const String requestOfferSelected = 'offer_selected';
+  static const String requestClosed = 'closed';
+  static const String requestCanceled = 'canceled';
+  static const String requestExpired = 'expired';
+
+  // Offer Status
+  static const String offerSubmitted = 'submitted';
+  static const String offerAccepted = 'accepted';
+  static const String offerRejected = 'rejected';
+  static const String offerWithdrawn = 'withdrawn';
 
   // Payment Status
   static const String paymentPending = 'pending';
+  static const String paymentDepositPending = 'deposit_pending';
+  static const String paymentDepositPaid = 'deposit_paid';
+  static const String paymentEscrowHeld = 'escrow_held';
+  static const String paymentReleased = 'released';
   static const String paymentSucceeded = 'succeeded';
   static const String paymentFailed = 'failed';
   static const String paymentRefunded = 'refunded';
+  static const String paymentRefundedPartial = 'refunded_partial';
+  static const String paymentRefundedFull = 'refunded_full';
 
   // User Roles
   static const String roleCustomer = 'customer';
   static const String rolePhotographer = 'photographer';
   static const String roleAdmin = 'admin';
+  static const String adminBlockMarker = '__admin_blocked__';
 
   // Message Types
   static const String messageText = 'text';
@@ -105,10 +133,26 @@ class AppConstants {
   static const String currencyIQD = 'IQD';
 
   // Stripe
-  static const String stripePublishableKey =
-      'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY';
-  static const bool enablePayments = false;
-  static const bool enableAppCheck = true;
+  static const String stripePublishableKey = String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+    defaultValue: 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY',
+  );
+  static const bool enablePayments = bool.fromEnvironment(
+    'ENABLE_PAYMENTS',
+    defaultValue: false,
+  );
+  static const bool enableAppCheck = bool.fromEnvironment(
+    'ENABLE_APP_CHECK',
+    defaultValue: true,
+  );
+  static const bool forceDebugAppCheck = bool.fromEnvironment(
+    'FORCE_DEBUG_APP_CHECK',
+    defaultValue: false,
+  );
+  static const bool useFirebaseEmulators = bool.fromEnvironment(
+    'USE_FIREBASE_EMULATORS',
+    defaultValue: false,
+  );
 
   // Limits
   static const int maxPortfolioImages = 20;
@@ -140,9 +184,14 @@ class AppConstants {
   static const String notifNewMessage = 'NEW_MESSAGE';
   static const String notifPaymentSucceeded = 'PAYMENT_SUCCEEDED';
   static const String notifNewOffer = 'NEW_OFFER';
+  static const String notifRequestCreated = 'REQUEST_CREATED';
+  static const String notifOfferAccepted = 'OFFER_ACCEPTED';
+  static const String notifDeliverySubmitted = 'DELIVERY_SUBMITTED';
+  static const String notifRevisionRequested = 'REVISION_REQUESTED';
+  static const String notifBookingCompleted = 'BOOKING_COMPLETED';
+  static const String notifDisputeOpened = 'DISPUTE_OPENED';
 
   // SharedPreferences Keys
-  static const String keyOnboardingSeen = 'onboardingSeen';
   static const String keyLanguage = 'language';
   static const String keyReduceMotion = 'reduceMotion';
   static const String keyNotificationsEnabled = 'notificationsEnabled';

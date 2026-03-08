@@ -9,5 +9,7 @@ abstract class BookingRemoteDataSource {
 
   Future<void> updateBookingStatus(String bookingId, String status);
 
+  Future<void> updateBooking(String bookingId, Map<String, dynamic> updates);
+
   String generateBookingId();
 }

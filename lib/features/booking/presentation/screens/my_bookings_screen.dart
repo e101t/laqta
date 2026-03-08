@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/booking_model.dart';
 import 'package:luqta/core/router/app_router.dart';
@@ -82,6 +81,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         final isPast =
             bookingDateTime.isBefore(now) ||
             booking.status == 'done' ||
+            booking.status == 'completed' ||
             booking.status == 'canceled';
 
         if (isPast) {
@@ -103,20 +103,23 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _cancelBooking(String bookingId) async {
+    final localizations = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: const Text('Are you sure you want to cancel this booking?'),
+        title: Text(localizations.cancelBooking),
+        content: Text(localizations.bookingCancelPrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
+            child: Text(localizations.no),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Yes, Cancel'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(localizations.confirm),
           ),
         ],
       ),
@@ -134,14 +137,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Booking cancelled successfully')),
+            SnackBar(content: Text(localizations.bookingCancelSuccess)),
           );
           _loadBookings();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to cancel booking')),
+            SnackBar(content: Text(localizations.bookingCancelFailed)),
           );
         }
       }
@@ -149,6 +152,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _navigateToChat(BookingModel booking) async {
+    final localizations = AppLocalizations.of(context);
     try {
       // Get current user
       final userResult = await AuthDependencies.getCurrentUser().call();
@@ -194,7 +198,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to open chat')));
+        ).showSnackBar(SnackBar(content: Text(localizations.error)));
       }
     }
   }
@@ -204,14 +208,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(localizations.myBookings),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Active'),
-            Tab(text: 'Past'),
+          tabs: [
+            Tab(text: localizations.active),
+            Tab(text: localizations.past),
           ],
         ),
       ),
@@ -236,11 +239,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     List<BookingModel> bookings, {
     required bool isActive,
   }) {
+    final localizations = AppLocalizations.of(context);
     if (bookings.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.event_busy,
-        title: 'No Bookings',
-        message: 'You have no bookings yet',
+        title: localizations.noBookings,
+        message: localizations.noBookingsMessage,
       );
     }
 
@@ -316,19 +320,52 @@ class _BookingCardState extends State<_BookingCard> {
   }
 
   Color _getStatusColor() {
+    final scheme = Theme.of(context).colorScheme;
     switch (widget.booking.status) {
       case 'confirmed':
-        return AppColors.confirmed;
+        return scheme.tertiary;
       case 'pending':
-        return AppColors.pending;
+        return scheme.secondary;
+      case 'in_progress':
+        return scheme.secondary;
+      case 'delivered':
+        return scheme.primary;
+      case 'revision_requested':
+        return scheme.secondary;
+      case 'completed':
+        return scheme.primary;
       case 'rejected':
-        return AppColors.rejected;
+        return scheme.error;
       case 'done':
-        return AppColors.done;
+        return scheme.primary;
       case 'canceled':
-        return AppColors.canceled;
+        return scheme.outline;
       default:
-        return AppColors.textSecondary;
+        return scheme.onSurfaceVariant;
+    }
+  }
+
+  String _localizedStatus(AppLocalizations localizations, String status) {
+    switch (status) {
+      case 'confirmed':
+        return localizations.bookingConfirmed;
+      case 'pending':
+        return localizations.bookingPending;
+      case 'in_progress':
+        return localizations.bookingInProgress;
+      case 'delivered':
+        return localizations.bookingDelivered;
+      case 'revision_requested':
+        return localizations.bookingRevisionRequested;
+      case 'completed':
+      case 'done':
+        return localizations.bookingCompleted;
+      case 'rejected':
+        return localizations.bookingRejected;
+      case 'canceled':
+        return localizations.bookingCanceledMessage;
+      default:
+        return status.replaceAll('_', ' ').toUpperCase();
     }
   }
 
@@ -343,6 +380,11 @@ class _BookingCardState extends State<_BookingCard> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final statusColor = _getStatusColor();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -359,8 +401,8 @@ class _BookingCardState extends State<_BookingCard> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.person, color: AppColors.primary),
+                    backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                    child: Icon(Icons.person, color: scheme.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -369,15 +411,15 @@ class _BookingCardState extends State<_BookingCard> {
                       children: [
                         Text(
                           _isLoadingPhotographer
-                              ? 'Loading...'
+                              ? localizations.loading
                               : _photographerUser?.name ??
-                                    'Unknown Photographer',
-                          style: AppTypography.h4,
+                                    localizations.photographer,
+                          style: textTheme.titleMedium,
                         ),
                         Text(
                           widget.booking.type,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -389,14 +431,14 @@ class _BookingCardState extends State<_BookingCard> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor().withValues(alpha: 0.1),
+                      color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _getStatusColor()),
+                      border: Border.all(color: statusColor),
                     ),
                     child: Text(
-                      widget.booking.status.toUpperCase(),
-                      style: AppTypography.caption.copyWith(
-                        color: _getStatusColor(),
+                      _localizedStatus(localizations, widget.booking.status),
+                      style: textTheme.labelSmall?.copyWith(
+                        color: statusColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -412,18 +454,18 @@ class _BookingCardState extends State<_BookingCard> {
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(widget.booking.date),
-                    style: AppTypography.bodySmall,
+                    style: textTheme.bodySmall,
                   ),
                   const SizedBox(width: 16),
                   const Icon(Icons.access_time, size: 16),
                   const SizedBox(width: 4),
-                  Text(widget.booking.time, style: AppTypography.bodySmall),
+                  Text(widget.booking.time, style: textTheme.bodySmall),
                   const Spacer(),
                   Text(
                     '${widget.booking.price.toStringAsFixed(0)} ${widget.booking.currency}',
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: scheme.primary,
                     ),
                   ),
                 ],
@@ -434,42 +476,45 @@ class _BookingCardState extends State<_BookingCard> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (widget.booking.status == 'confirmed' ||
-                        widget.booking.status == 'pending') ...[
+                    if (widget.booking.status != 'canceled' &&
+                        widget.booking.status != 'completed' &&
+                        widget.booking.status != 'done') ...[
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: widget.onChat,
                           icon: const Icon(Icons.message, size: 16),
-                          label: const Text('Chat'),
+                          label: Text(localizations.chat),
                         ),
                       ),
                       const SizedBox(width: 8),
                     ],
                     if (widget.booking.status == 'pending' ||
-                        widget.booking.status == 'confirmed') ...[
+                        widget.booking.status == 'confirmed' ||
+                        widget.booking.status == 'in_progress') ...[
                       Expanded(
                         child: OutlinedButton(
                           onPressed: widget.onCancel,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.error,
-                            side: const BorderSide(color: AppColors.error),
+                            foregroundColor: scheme.error,
+                            side: BorderSide(color: scheme.error),
                           ),
-                          child: const Text('Cancel'),
+                          child: Text(localizations.cancel),
                         ),
                       ),
                     ],
                   ],
                 ),
-              ] else if (widget.booking.status == 'done') ...[
+              ] else if (widget.booking.status == 'done' ||
+                  widget.booking.status == 'completed') ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => widget.onReview(
-                      _photographerUser?.name ?? 'Unknown Photographer',
+                      _photographerUser?.name ?? localizations.photographer,
                     ),
                     icon: const Icon(Icons.star, size: 16),
-                    label: const Text('Leave Review'),
+                    label: Text(localizations.leaveReview),
                   ),
                 ),
               ],

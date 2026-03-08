@@ -6,6 +6,8 @@ class BookingModel {
   final String id;
   final String customerId;
   final String photographerId;
+  final String? requestId;
+  final String? offerId;
   final String date; // YYYY-MM-DD
   final String time; // HH:mm
   final int duration; // minutes
@@ -15,8 +17,14 @@ class BookingModel {
   final String status; // pending, confirmed, rejected, done, canceled
   final PaymentInfo payment;
   final LocationInfo location;
+  final DeliverablesInfo deliverables;
   final String? notes;
   final String? chatId;
+  final String? deliveryId;
+  final String? disputeId;
+  final int revisionCount;
+  final String? canceledBy;
+  final BookingTimeline timeline;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -24,6 +32,8 @@ class BookingModel {
     required this.id,
     required this.customerId,
     required this.photographerId,
+    this.requestId,
+    this.offerId,
     required this.date,
     required this.time,
     required this.duration,
@@ -33,8 +43,14 @@ class BookingModel {
     required this.status,
     required this.payment,
     required this.location,
+    required this.deliverables,
     this.notes,
     this.chatId,
+    this.deliveryId,
+    this.disputeId,
+    this.revisionCount = 0,
+    this.canceledBy,
+    required this.timeline,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -43,10 +59,15 @@ class BookingModel {
     final data = firestoreMap(doc.data());
     final paymentMap = readMapOrNull(data, 'payment') ?? <String, dynamic>{};
     final locationMap = readMapOrNull(data, 'location') ?? <String, dynamic>{};
+    final deliverablesMap =
+        readMapOrNull(data, 'deliverables') ?? <String, dynamic>{};
+    final timelineMap = readMapOrNull(data, 'timeline') ?? <String, dynamic>{};
     return BookingModel(
       id: doc.id,
       customerId: readString(data, 'customerId'),
       photographerId: readString(data, 'photographerId'),
+      requestId: readNullableString(data, 'requestId'),
+      offerId: readNullableString(data, 'offerId'),
       date: readString(data, 'date'),
       time: readString(data, 'time'),
       duration: readInt(data, 'duration', defaultValue: 60),
@@ -56,8 +77,14 @@ class BookingModel {
       status: readString(data, 'status', defaultValue: 'pending'),
       payment: PaymentInfo.fromMap(paymentMap),
       location: LocationInfo.fromMap(locationMap),
+      deliverables: DeliverablesInfo.fromMap(deliverablesMap),
       notes: readNullableString(data, 'notes'),
       chatId: readNullableString(data, 'chatId'),
+      deliveryId: readNullableString(data, 'deliveryId'),
+      disputeId: readNullableString(data, 'disputeId'),
+      revisionCount: readInt(data, 'revisionCount', defaultValue: 0),
+      canceledBy: readNullableString(data, 'canceledBy'),
+      timeline: BookingTimeline.fromMap(timelineMap),
       createdAt: readDateTime(data, 'createdAt'),
       updatedAt: readDateTime(data, 'updatedAt'),
     );
@@ -67,6 +94,8 @@ class BookingModel {
     return {
       'customerId': customerId,
       'photographerId': photographerId,
+      'requestId': requestId,
+      'offerId': offerId,
       'date': date,
       'time': time,
       'duration': duration,
@@ -76,8 +105,14 @@ class BookingModel {
       'status': status,
       'payment': payment.toMap(),
       'location': location.toMap(),
+      'deliverables': deliverables.toMap(),
       'notes': notes,
       'chatId': chatId,
+      'deliveryId': deliveryId,
+      'disputeId': disputeId,
+      'revisionCount': revisionCount,
+      'canceledBy': canceledBy,
+      'timeline': timeline.toMap(),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -87,12 +122,19 @@ class BookingModel {
     String? status,
     PaymentInfo? payment,
     String? chatId,
+    String? deliveryId,
+    String? disputeId,
+    int? revisionCount,
+    String? canceledBy,
+    BookingTimeline? timeline,
     DateTime? updatedAt,
   }) {
     return BookingModel(
       id: id,
       customerId: customerId,
       photographerId: photographerId,
+      requestId: requestId,
+      offerId: offerId,
       date: date,
       time: time,
       duration: duration,
@@ -102,8 +144,14 @@ class BookingModel {
       status: status ?? this.status,
       payment: payment ?? this.payment,
       location: location,
+      deliverables: deliverables,
       notes: notes,
       chatId: chatId ?? this.chatId,
+      deliveryId: deliveryId ?? this.deliveryId,
+      disputeId: disputeId ?? this.disputeId,
+      revisionCount: revisionCount ?? this.revisionCount,
+      canceledBy: canceledBy ?? this.canceledBy,
+      timeline: timeline ?? this.timeline,
       createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
@@ -173,5 +221,83 @@ class LocationInfo {
 
   Map<String, dynamic> toMap() {
     return {'lat': lat, 'lng': lng, 'text': text};
+  }
+}
+
+class DeliverablesInfo {
+  final int? photosCount;
+  final int? videoMinutes;
+  final bool includesEditing;
+  final bool includesVideo;
+  final String? notes;
+
+  DeliverablesInfo({
+    this.photosCount,
+    this.videoMinutes,
+    this.includesEditing = false,
+    this.includesVideo = false,
+    this.notes,
+  });
+
+  factory DeliverablesInfo.fromMap(Map<String, dynamic> map) {
+    return DeliverablesInfo(
+      photosCount: readNullableInt(map, 'photosCount'),
+      videoMinutes: readNullableInt(map, 'videoMinutes'),
+      includesEditing: readBool(map, 'includesEditing'),
+      includesVideo: readBool(map, 'includesVideo'),
+      notes: readNullableString(map, 'notes'),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'photosCount': photosCount,
+      'videoMinutes': videoMinutes,
+      'includesEditing': includesEditing,
+      'includesVideo': includesVideo,
+      'notes': notes,
+    };
+  }
+}
+
+class BookingTimeline {
+  final DateTime? confirmedAt;
+  final DateTime? inProgressAt;
+  final DateTime? deliveredAt;
+  final DateTime? revisionRequestedAt;
+  final DateTime? completedAt;
+  final DateTime? canceledAt;
+
+  BookingTimeline({
+    this.confirmedAt,
+    this.inProgressAt,
+    this.deliveredAt,
+    this.revisionRequestedAt,
+    this.completedAt,
+    this.canceledAt,
+  });
+
+  factory BookingTimeline.fromMap(Map<String, dynamic> map) {
+    return BookingTimeline(
+      confirmedAt: readDate(map['confirmedAt']),
+      inProgressAt: readDate(map['inProgressAt']),
+      deliveredAt: readDate(map['deliveredAt']),
+      revisionRequestedAt: readDate(map['revisionRequestedAt']),
+      completedAt: readDate(map['completedAt']),
+      canceledAt: readDate(map['canceledAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'confirmedAt': confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
+      'inProgressAt': inProgressAt != null ? Timestamp.fromDate(inProgressAt!) : null,
+      'deliveredAt': deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
+      'revisionRequestedAt': revisionRequestedAt != null
+          ? Timestamp.fromDate(revisionRequestedAt!)
+          : null,
+      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'canceledAt': canceledAt != null ? Timestamp.fromDate(canceledAt!) : null,
+    };
   }
 }

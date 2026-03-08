@@ -13,5 +13,10 @@ abstract class BookingRepository {
     required String status,
   });
 
+  Future<Result<void>> updateBooking({
+    required String bookingId,
+    required Map<String, dynamic> updates,
+  });
+
   String generateBookingId();
 }

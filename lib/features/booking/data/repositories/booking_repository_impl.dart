@@ -58,6 +58,21 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Future<Result<void>> updateBooking({
+    required String bookingId,
+    required Map<String, dynamic> updates,
+  }) async {
+    try {
+      await _remoteDataSource.updateBooking(bookingId, updates);
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to update booking'),
+      );
+    }
+  }
+
+  @override
   String generateBookingId() {
     return _remoteDataSource.generateBookingId();
   }
