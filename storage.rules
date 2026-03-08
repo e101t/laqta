@@ -1,97 +1,220 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    
-    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
+
+    function isAdmin() {
+      return isSignedIn() &&
+        request.auth.token != null &&
+        request.auth.token.keys().hasAny(['admin']) &&
+        request.auth.token.admin == true;
+    }
+
+    function allowPublicProfileMedia() {
+      // Set true to allow unauthenticated reads of profile/portfolio media.
+      return false;
+    }
+
     function isValidImage() {
-      return request.resource.size < 5 * 1024 * 1024 && // 5MB max
-             request.resource.contentType.matches('image/.*');
+      return request.resource != null &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType != null &&
+        request.resource.contentType.matches('image/.*');
     }
-    
+
     function isValidVideo() {
-      return request.resource.size < 50 * 1024 * 1024 && // 50MB max
-             request.resource.contentType.matches('video/.*');
+      return request.resource != null &&
+        request.resource.size < 50 * 1024 * 1024 &&
+        request.resource.contentType != null &&
+        request.resource.contentType.matches('video/.*');
     }
-    
+
     function isValidDocument() {
-      return request.resource.size < 20 * 1024 * 1024 && // 20MB max
-             (
-               request.resource.contentType.matches('application/pdf') ||
-               request.resource.contentType.matches('application/msword') ||
-               request.resource.contentType.matches('application/vnd\\.openxmlformats-officedocument\\..*') ||
-               request.resource.contentType.matches('application/vnd\\.ms-powerpoint.*') ||
-               request.resource.contentType.matches('application/vnd\\.ms-excel.*') ||
-               request.resource.contentType.matches('text/plain')
-             );
+      return request.resource != null &&
+        request.resource.size < 20 * 1024 * 1024 &&
+        request.resource.contentType != null &&
+        (
+          request.resource.contentType.matches('application/pdf') ||
+          request.resource.contentType.matches('application/msword') ||
+          request.resource.contentType.matches(
+            'application/vnd\\.openxmlformats-officedocument\\..*'
+          ) ||
+          request.resource.contentType.matches('application/vnd\\.ms-powerpoint.*') ||
+          request.resource.contentType.matches('application/vnd\\.ms-excel.*') ||
+          request.resource.contentType.matches('text/plain')
+        );
     }
-    
+
     function isBookingParticipant(bookingId) {
-      let booking = firestore.get(/databases/$(database)/documents/bookings/$(bookingId));
+      let booking = firestore.get(/databases/(default)/documents/bookings/$(bookingId));
       return isSignedIn() &&
-             booking != null &&
-             booking.data != null &&
-             (
-               request.auth.uid == booking.data.customerId ||
-               request.auth.uid == booking.data.photographerId
-             );
+        booking != null &&
+        booking.data != null &&
+        (
+          request.auth.uid == booking.data.customerId ||
+          request.auth.uid == booking.data.photographerId
+        );
     }
-    
+
+    function isBookingPhotographer(bookingId) {
+      let booking = firestore.get(/databases/(default)/documents/bookings/$(bookingId));
+      return isSignedIn() &&
+        booking != null &&
+        booking.data != null &&
+        request.auth.uid == booking.data.photographerId;
+    }
+
     function isChatParticipant(chatId) {
-      let chat = firestore.get(/databases/$(database)/documents/chats/$(chatId));
+      let chat = firestore.get(/databases/(default)/documents/chats/$(chatId));
       return isSignedIn() &&
-             chat != null &&
-             chat.data != null &&
-             request.auth.uid in chat.data.participants;
+        chat != null &&
+        chat.data != null &&
+        request.auth.uid in chat.data.participants;
     }
-    
-    // User profile photos
+
+    function isRequestOwner(requestId) {
+      let requestDoc = firestore.get(/databases/(default)/documents/requests/$(requestId));
+      return isSignedIn() &&
+        requestDoc != null &&
+        requestDoc.data != null &&
+        requestDoc.data.clientId == request.auth.uid;
+    }
+
+    function isRequestParticipant(requestId) {
+      let requestDoc = firestore.get(/databases/(default)/documents/requests/$(requestId));
+      return isSignedIn() &&
+        requestDoc != null &&
+        requestDoc.data != null &&
+        (
+          requestDoc.data.clientId == request.auth.uid ||
+          requestDoc.data.selectedPhotographerId == request.auth.uid
+        );
+    }
+
+    function getUserPublic(userId) {
+      return firestore.get(/databases/(default)/documents/users_public/$(userId));
+    }
+
+    function currentUserPublic() {
+      return isSignedIn() ? getUserPublic(request.auth.uid) : null;
+    }
+
+    function currentUserRole() {
+      let doc = currentUserPublic();
+      return doc != null && doc.data != null
+        ? doc.data.role
+        : '';
+    }
+
+    function currentUserGovernorate() {
+      let doc = currentUserPublic();
+      return doc != null && doc.data != null
+        ? doc.data.governorate
+        : '';
+    }
+
+    function isPhotographerUser() {
+      return isSignedIn() && currentUserRole() == 'photographer';
+    }
+
+    function canReadRequestReferences(requestId) {
+      let requestDoc = firestore.get(/databases/(default)/documents/requests/$(requestId));
+      return isSignedIn() &&
+        requestDoc != null &&
+        requestDoc.data != null &&
+        (
+          requestDoc.data.clientId == request.auth.uid ||
+          requestDoc.data.selectedPhotographerId == request.auth.uid ||
+          isMatchingGovernoratePhotographerForRequest(requestId)
+        );
+    }
+
+    function isMatchingGovernoratePhotographerForRequest(requestId) {
+      let requestDoc = firestore.get(/databases/(default)/documents/requests/$(requestId));
+      let userDoc = firestore.get(/databases/(default)/documents/users_public/$(request.auth.uid));
+      return isSignedIn() &&
+        requestDoc != null &&
+        requestDoc.data != null &&
+        userDoc != null &&
+        userDoc.data != null &&
+        userDoc.data.role == 'photographer' &&
+        userDoc.data.governorate != '' &&
+        (
+          requestDoc.data.status == 'published' ||
+          requestDoc.data.status == 'awaiting_offers'
+        ) &&
+        requestDoc.data.selectedPhotographerId == null &&
+        requestDoc.data.governorate == userDoc.data.governorate;
+    }
+
     match /users/{userId}/profile/{fileName} {
-      allow read: if true; // Public read
+      allow read: if allowPublicProfileMedia() || isSignedIn();
       allow write: if isOwner(userId) && isValidImage();
       allow delete: if isOwner(userId);
     }
-    
-    // Photographer portfolios
+
     match /photographers/{photographerId}/portfolio/{fileName} {
-      allow read: if true; // Public read
+      allow read: if allowPublicProfileMedia() || isSignedIn();
       allow write: if isOwner(photographerId) && isValidImage();
       allow delete: if isOwner(photographerId);
     }
-    
-    // Booking attachments
+
     match /bookings/{bookingId}/attachments/{fileName} {
       allow read: if isBookingParticipant(bookingId);
       allow write: if isBookingParticipant(bookingId) && isValidImage();
       allow delete: if isBookingParticipant(bookingId);
     }
-    
-    // Chat images
+
+    match /requests/{requestId}/references/{fileName} {
+      allow read: if isAdmin() || canReadRequestReferences(requestId);
+      allow write: if isRequestOwner(requestId) && isValidImage();
+      allow delete: if isRequestOwner(requestId);
+    }
+
+    match /deliveries/{bookingId}/{deliveryId}/{fileName} {
+      allow read: if isBookingParticipant(bookingId);
+      allow write: if bookingId == deliveryId &&
+        isBookingPhotographer(bookingId) &&
+        (isValidImage() || isValidVideo() || isValidDocument());
+      allow delete: if bookingId == deliveryId &&
+        (isBookingPhotographer(bookingId) || isAdmin());
+    }
+
     match /chat_images/{chatId}/{fileName} {
       allow read: if isChatParticipant(chatId);
       allow write: if isChatParticipant(chatId) && isValidImage();
       allow delete: if isChatParticipant(chatId);
     }
-    
-    // Chat videos
+
     match /chat_videos/{chatId}/{fileName} {
       allow read: if isChatParticipant(chatId);
       allow write: if isChatParticipant(chatId) && isValidVideo();
       allow delete: if isChatParticipant(chatId);
     }
-    
-    // Chat documents
+
     match /chat_documents/{chatId}/{fileName} {
       allow read: if isChatParticipant(chatId);
       allow write: if isChatParticipant(chatId) && isValidDocument();
       allow delete: if isChatParticipant(chatId);
+    }
+
+    match /stories/{photographerId}/{storyId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(photographerId) && isValidImage();
+      allow delete: if isOwner(photographerId);
+    }
+
+    match /reels/{photographerId}/{reelId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(photographerId) &&
+        (isValidImage() || isValidVideo());
+      allow delete: if isOwner(photographerId);
     }
 
     match /{allPaths=**} {
