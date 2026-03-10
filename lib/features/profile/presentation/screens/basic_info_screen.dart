@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/utils/debouncer.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';

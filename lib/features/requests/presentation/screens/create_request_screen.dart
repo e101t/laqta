@@ -5,7 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';

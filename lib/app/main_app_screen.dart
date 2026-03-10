@@ -15,8 +15,8 @@ import 'package:luqta/features/profile/profile_dependencies.dart';
 import 'package:luqta/features/booking/presentation/screens/photographer_bookings_screen.dart';
 import 'package:luqta/features/requests/presentation/screens/photographer_requests_screen.dart';
 import 'package:luqta/features/store/presentation/screens/store_screen.dart';
-import 'package:luqta/screens/chat/chat_list_screen.dart';
-import 'package:luqta/screens/profile/profile_screen.dart';
+import 'package:luqta/features/chat/presentation/screens/chat_list_screen.dart';
+import 'package:luqta/features/profile/presentation/screens/profile_screen.dart';
 import 'package:luqta/features/explore/presentation/screens/explore_screen.dart';
 
 class MainAppScreen extends StatefulWidget {

@@ -9,7 +9,8 @@ flutter test
 ```
 
 If your Windows path contains spaces and `flutter test` fails due native-assets hooks,
-use the helper script (it maps a temporary drive letter and runs tests there):
+use the helper script. It prefers the repo short-path and falls back to a
+temporary no-spaces junction when needed:
 
 ```bash
 run_flutter_tests.cmd
@@ -24,7 +25,7 @@ flutter test integration_test
 ```
 
 On Windows, the two integration files are more reliable when run one by one on
-the target device. Use:
+the target device through the same no-spaces helper. Use:
 
 ```bash
 run_integration_tests.cmd emulator-5554

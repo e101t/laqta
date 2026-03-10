@@ -4,7 +4,7 @@ import 'package:luqta/core/models/photographer_model.dart';
 import 'package:luqta/core/models/portfolio_model.dart';
 import 'package:luqta/core/models/review_model.dart';
 import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';

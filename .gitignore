@@ -33,6 +33,7 @@ migrate_working_dir/
 .pub/
 .packages
 /build/
+/android/build/
 /coverage/
 
 # Symbolication related
@@ -71,4 +72,6 @@ functions/.runtimeconfig.json
 # Local helper outputs
 repo_tree.txt
 patch.diff
+artifacts/
+.tools/
 

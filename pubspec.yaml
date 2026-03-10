@@ -20,9 +20,6 @@ dependencies:
   firebase_auth: ^6.1.2
   cloud_firestore: ^6.1.0
   firebase_storage: ^13.0.4
-  firebase_messaging: ^16.0.4
-  firebase_analytics: ^12.0.4
-  firebase_crashlytics: ^5.0.5
   cloud_functions: ^6.0.4
   
   # Authentication
@@ -39,10 +36,7 @@ dependencies:
   cached_network_image: ^3.3.1
   image_picker: ^1.0.7
   file_picker: ^10.3.6
-  photo_view: ^0.15.0
-  lottie: ^3.0.0
   shimmer: ^3.0.0
-  flutter_staggered_animations: ^1.1.1
   video_player: ^2.8.2
   
   # Utilities
@@ -52,14 +46,12 @@ dependencies:
   share_plus: ^12.0.1
   image: ^4.1.7
   uuid: ^4.3.3
-  connectivity_plus: ^7.0.0
   logger: ^2.0.2
   
   # Routing
   go_router: ^17.0.0
   
   # Motion & Icons
-  animations: ^2.0.11
   fluentui_system_icons: ^1.1.232
 
   # Icons
@@ -83,15 +75,6 @@ flutter_launcher_icons:
   adaptive_icon_foreground: assets/icons/app_icon.png
   android: true
   ios: true
-  web:
-    generate: true
-    background_color: "#0A1F2E"
-    theme_color: "#4DB6E5"
-  macos:
-    generate: true
-  windows:
-    generate: true
-    icon_size: 256
   min_sdk_android: 23
 
 flutter:
@@ -100,7 +83,6 @@ flutter:
   assets:
     - assets/images/
     - assets/images/offers/
-    - assets/lottie/
     - assets/icons/
 
   fonts:

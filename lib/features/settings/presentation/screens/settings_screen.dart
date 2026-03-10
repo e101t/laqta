@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/providers/theme_provider.dart';
 import 'package:luqta/core/providers/locale_provider.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
 import 'package:luqta/features/settings/presentation/screens/policies_screen.dart';
 import 'package:provider/provider.dart';

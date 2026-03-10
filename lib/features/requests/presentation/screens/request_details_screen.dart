@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';

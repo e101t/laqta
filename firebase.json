@@ -23,10 +23,7 @@
           "projectId": "laqta-16406",
           "configurations": {
             "android": "1:1002424043359:android:8a8f655d7a5d49a61218ea",
-            "ios": "1:1002424043359:ios:af42e23c1321b64a1218ea",
-            "macos": "1:1002424043359:ios:af42e23c1321b64a1218ea",
-            "web": "1:1002424043359:web:efcd069505c2a0781218ea",
-            "windows": "1:1002424043359:web:9042b3870ceebe871218ea"
+            "ios": "1:1002424043359:ios:af42e23c1321b64a1218ea"
           }
         }
       }

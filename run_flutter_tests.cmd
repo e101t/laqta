@@ -3,15 +3,25 @@ setlocal
 
 set "REPO_DIR=%~dp0"
 if "%REPO_DIR:~-1%"=="\" set "REPO_DIR=%REPO_DIR:~0,-1%"
+set "WORK_DIR="
+set "LINK_DIR="
 
-subst X: /d >nul 2>&1
-subst X: "%REPO_DIR%"
-if errorlevel 1 (
-  echo Failed to map X: to "%REPO_DIR%"
-  exit /b 1
+for %%I in ("%REPO_DIR%") do set "WORK_DIR=%%~fsI"
+if not defined WORK_DIR set "WORK_DIR=%REPO_DIR%"
+
+echo %WORK_DIR%| find " " >nul
+if not errorlevel 1 (
+  set "LINK_DIR=%TEMP%\laqta_repo_no_spaces"
+  if exist "%LINK_DIR%" rmdir "%LINK_DIR%" >nul 2>&1
+  mklink /J "%LINK_DIR%" "%REPO_DIR%" >nul
+  if errorlevel 1 (
+    echo Failed to prepare a no-spaces path for "%REPO_DIR%"
+    exit /b 1
+  )
+  set "WORK_DIR=%LINK_DIR%"
 )
 
-pushd X:
+pushd "%WORK_DIR%"
 if exist ".tools\flutter\bin\flutter.bat" (
   call ".tools\flutter\bin\flutter.bat" test %*
 ) else (
@@ -20,5 +30,5 @@ if exist ".tools\flutter\bin\flutter.bat" (
 set "EXIT_CODE=%ERRORLEVEL%"
 popd
 
-subst X: /d >nul 2>&1
+if defined LINK_DIR rmdir "%LINK_DIR%" >nul 2>&1
 exit /b %EXIT_CODE%

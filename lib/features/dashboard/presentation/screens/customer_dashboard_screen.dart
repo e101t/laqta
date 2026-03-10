@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/models/booking_model.dart';
 import 'package:luqta/core/services/story_service.dart';
 import 'package:luqta/core/theme/laqta_tokens.dart';

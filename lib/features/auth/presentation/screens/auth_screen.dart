@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/utils/responsive.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
@@ -92,13 +92,9 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!GoogleSignIn.instance.supportsAuthenticate()) {
       return false;
     }
-    if (kIsWeb) {
-      return true;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
         return true;
       default:
         return false;
