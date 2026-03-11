@@ -195,6 +195,8 @@ class AppConstants {
   static const String keyLanguage = 'language';
   static const String keyReduceMotion = 'reduceMotion';
   static const String keyNotificationsEnabled = 'notificationsEnabled';
+  static const String keyBackendJwt = 'backendJwt';
+  static const String keyBackendUserId = 'backendUserId';
 
   // Default Language
   static const String defaultLanguage = 'ar';

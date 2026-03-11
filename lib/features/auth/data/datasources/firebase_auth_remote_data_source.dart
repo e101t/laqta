@@ -2,15 +2,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:luqta/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:luqta/features/auth/data/dtos/auth_user_dto.dart';
+import 'package:luqta/features/auth/data/services/backend_auth_exchange_service.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
+  final BackendAuthExchangeService _backendAuthExchangeService;
 
-  FirebaseAuthRemoteDataSource({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
+  FirebaseAuthRemoteDataSource({
+    FirebaseAuth? auth,
+    GoogleSignIn? googleSignIn,
+    BackendAuthExchangeService? backendAuthExchangeService,
+  })
     : _auth = auth ?? FirebaseAuth.instance,
-      _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
+      _googleSignIn = googleSignIn ?? GoogleSignIn.instance,
+      _backendAuthExchangeService =
+          backendAuthExchangeService ?? BackendAuthExchangeService();
 
   @override
   AuthUserDto? getCurrentUser() {
@@ -124,6 +132,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     if (user == null) {
       throw StateError('Phone sign-in returned no user');
     }
+    await _backendAuthExchangeService.exchangeCurrentFirebaseUser();
     return AuthUserDto.fromFirebaseUser(user);
   }
 
@@ -144,6 +153,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
           if (user == null) {
             throw StateError('Phone sign-in returned no user');
           }
+          await _backendAuthExchangeService.exchangeCurrentFirebaseUser();
           onVerificationCompleted(AuthUserDto.fromFirebaseUser(user));
         } catch (e) {
           onVerificationFailed(e);
@@ -165,6 +175,7 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();
+    await _backendAuthExchangeService.clearSession();
   }
 
   @override
@@ -174,5 +185,6 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
       throw StateError('No authenticated user');
     }
     await user.delete();
+    await _backendAuthExchangeService.clearSession();
   }
 }

@@ -43,6 +43,21 @@ class NotificationDto {
     );
   }
 
+  factory NotificationDto.fromJson(Map<String, dynamic> json) {
+    return NotificationDto(
+      id: _readString(json, 'id'),
+      userId: _readString(json, 'userId'),
+      title: _readString(json, 'title'),
+      body: _readString(json, 'body'),
+      type: _readString(json, 'type', fallback: 'system'),
+      data: _readMapOrNull(json['data']),
+      isRead: _readBool(json, 'isRead'),
+      createdAt: _readDateTime(json['createdAt']),
+      imageUrl: _readNullableString(json, 'imageUrl'),
+      actionUrl: _readNullableString(json, 'actionUrl'),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
@@ -91,6 +106,9 @@ class NotificationDto {
     }
     if (value is DateTime) {
       return value;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
     }
     return DateTime.now();
   }

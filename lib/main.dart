@@ -13,8 +13,11 @@ import 'package:luqta/firebase_options.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:luqta/core/services/backend_notification_sync_service.dart';
+import 'package:luqta/features/auth/data/services/backend_auth_exchange_service.dart';
 import 'package:provider/provider.dart';
 import 'package:luqta/features/downloads/downloads_dependencies.dart';
 import 'package:luqta/features/downloads/presentation/providers/download_provider.dart';
@@ -53,6 +56,16 @@ void main() async {
   } catch (e) {
     if (kDebugMode) {
       debugPrint('Firebase initialization error: $e');
+    }
+  }
+
+  try {
+    await BackendAuthExchangeService().ensureBackendSession();
+    await FirebaseMessaging.instance.setAutoInitEnabled(true);
+    await BackendNotificationSyncService.instance.initialize();
+  } catch (e) {
+    if (kDebugMode) {
+      debugPrint('Notification sync initialization error: $e');
     }
   }
 

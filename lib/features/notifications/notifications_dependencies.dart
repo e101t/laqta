@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:luqta/features/notifications/data/datasources/firestore_notifications_remote_data_source.dart';
+import 'package:luqta/features/notifications/data/datasources/backend_notifications_remote_data_source.dart';
 import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
 import 'package:luqta/features/notifications/data/repositories/notifications_repository_impl.dart';
 import 'package:luqta/features/notifications/domain/repositories/notifications_repository.dart';
@@ -11,7 +11,7 @@ import 'package:luqta/features/notifications/domain/usecases/mark_notification_r
 
 class NotificationsDependencies {
   static final NotificationsRemoteDataSource _remoteDataSource =
-      FirestoreNotificationsRemoteDataSource();
+      BackendNotificationsRemoteDataSource();
   static NotificationsRepository? _repositoryOverride;
 
   @visibleForTesting
