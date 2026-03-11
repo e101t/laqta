@@ -92,9 +92,13 @@ class _AuthScreenState extends State<AuthScreen> {
     if (!GoogleSignIn.instance.supportsAuthenticate()) {
       return false;
     }
+    if (kIsWeb) {
+      return true;
+    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
         return true;
       default:
         return false;
