@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:luqta/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:luqta/features/auth/data/dtos/auth_user_dto.dart';
 import 'package:luqta/features/auth/data/services/backend_auth_exchange_service.dart';
+import 'package:luqta/features/auth/data/utils/phone_number_utils.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
@@ -144,8 +145,9 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
     required AuthPhoneCodeSent onCodeSent,
     required AuthPhoneCodeAutoRetrievalTimeout onCodeAutoRetrievalTimeout,
   }) async {
+    final normalizedPhoneNumber = normalizePhoneNumberForFirebase(phoneNumber);
     await _auth.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
+      phoneNumber: normalizedPhoneNumber,
       verificationCompleted: (PhoneAuthCredential credential) async {
         try {
           final userCredential = await _auth.signInWithCredential(credential);
