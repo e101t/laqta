@@ -82,311 +82,316 @@ class AppRouter {
 
   static GoRouter createRouter({FirebaseAuth? authOverride}) {
     final auth = authOverride ?? _auth;
-    const devStart = String.fromEnvironment('LAQTA_DEV_START', defaultValue: '');
-    final devStartPath =
-        devStart.isEmpty ? '' : (devStart.startsWith('/') ? devStart : '/$devStart');
+    const devStart = String.fromEnvironment(
+      'LAQTA_DEV_START',
+      defaultValue: '',
+    );
+    final devStartPath = devStart.isEmpty
+        ? ''
+        : (devStart.startsWith('/') ? devStart : '/$devStart');
     return GoRouter(
       initialLocation: devStartPath.isNotEmpty ? devStartPath : Routes.splash,
-      refreshListenable: GoRouterRefreshStream(
-        auth.authStateChanges(),
-      ),
+      refreshListenable: GoRouterRefreshStream(auth.authStateChanges()),
       redirect: _guardRedirect,
       routes: [
-      GoRoute(
-        path: Routes.splash,
-        name: Routes.nSplash,
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: Routes.language,
-        name: Routes.nLanguage,
-        builder: (context, state) => const LanguageSelectScreen(),
-      ),
-      GoRoute(
-        path: Routes.auth,
-        name: Routes.nAuth,
-        builder: (context, state) => const AuthScreen(),
-      ),
-      GoRoute(
-        path: Routes.signUpDetails,
-        name: Routes.nSignUpDetails,
-        builder: (context, state) => const SignUpDetailsScreen(),
-      ),
-      GoRoute(
-        path: Routes.blocked,
-        name: Routes.nBlocked,
-        builder: (context, state) => const AccountBlockedScreen(),
-      ),
+        GoRoute(
+          path: Routes.splash,
+          name: Routes.nSplash,
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: Routes.language,
+          name: Routes.nLanguage,
+          builder: (context, state) => const LanguageSelectScreen(),
+        ),
+        GoRoute(
+          path: Routes.auth,
+          name: Routes.nAuth,
+          builder: (context, state) => const AuthScreen(),
+        ),
+        GoRoute(
+          path: Routes.signUpDetails,
+          name: Routes.nSignUpDetails,
+          builder: (context, state) => const SignUpDetailsScreen(),
+        ),
+        GoRoute(
+          path: Routes.blocked,
+          name: Routes.nBlocked,
+          builder: (context, state) => const AccountBlockedScreen(),
+        ),
 
-      // profile completion flow
-      GoRoute(
-        path: Routes.role,
-        name: Routes.nRole,
-        builder: (context, state) => const RolePickerScreen(),
-      ),
-      GoRoute(
-        path: Routes.basicInfo,
-        name: Routes.nBasicInfo,
-        builder: (context, state) {
-          final role = (state.uri.queryParameters['role'] ?? '').trim();
-          final normalizedRole =
-              (role == AppConstants.roleCustomer ||
-                      role == AppConstants.rolePhotographer ||
-                      role == AppConstants.roleAdmin)
-                  ? role
-                  : '';
-          return BasicInfoScreen(userRole: normalizedRole);
-        },
-      ),
-      GoRoute(
-        path: Routes.portfolioEditor,
-        name: Routes.nPortfolioEditor,
-        builder: (context, state) => const PortfolioEditorScreen(),
-      ),
+        // profile completion flow
+        GoRoute(
+          path: Routes.role,
+          name: Routes.nRole,
+          builder: (context, state) => const RolePickerScreen(),
+        ),
+        GoRoute(
+          path: Routes.basicInfo,
+          name: Routes.nBasicInfo,
+          builder: (context, state) {
+            final role = (state.uri.queryParameters['role'] ?? '').trim();
+            final normalizedRole =
+                (role == AppConstants.roleCustomer ||
+                    role == AppConstants.rolePhotographer ||
+                    role == AppConstants.roleAdmin)
+                ? role
+                : '';
+            return BasicInfoScreen(userRole: normalizedRole);
+          },
+        ),
+        GoRoute(
+          path: Routes.portfolioEditor,
+          name: Routes.nPortfolioEditor,
+          builder: (context, state) => const PortfolioEditorScreen(),
+        ),
 
-      // shell
-      GoRoute(
-        path: Routes.main,
-        name: Routes.nMain,
-        builder: (context, state) => const MainAppScreen(),
-      ),
+        // shell
+        GoRoute(
+          path: Routes.main,
+          name: Routes.nMain,
+          builder: (context, state) => const MainAppScreen(),
+        ),
 
-      // core routes
-      GoRoute(
-        path: Routes.bookings,
-        name: Routes.nBookings,
-        builder: (context, state) => const MyBookingsScreen(),
-      ),
-      GoRoute(
-        path: Routes.booking,
-        name: Routes.nBooking,
-        builder: (context, state) {
-          final bookingId = state.pathParameters['id'];
-          if (bookingId == null || bookingId.isEmpty) {
-            return const Scaffold(
-              body: Center(child: Text('Missing booking id')),
+        // core routes
+        GoRoute(
+          path: Routes.bookings,
+          name: Routes.nBookings,
+          builder: (context, state) => const MyBookingsScreen(),
+        ),
+        GoRoute(
+          path: Routes.booking,
+          name: Routes.nBooking,
+          builder: (context, state) {
+            final bookingId = state.pathParameters['id'];
+            if (bookingId == null || bookingId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing booking id')),
+              );
+            }
+            return BookingDetailsScreen(bookingId: bookingId);
+          },
+        ),
+        GoRoute(
+          path: Routes.requests,
+          name: Routes.nRequests,
+          builder: (context, state) => const MyRequestsScreen(),
+        ),
+        GoRoute(
+          path: Routes.shop,
+          name: Routes.nShop,
+          builder: (context, state) => const StoreScreen(),
+        ),
+        GoRoute(
+          path: Routes.requestCreate,
+          name: Routes.nRequestCreate,
+          builder: (context, state) => const CreateRequestScreen(),
+        ),
+        GoRoute(
+          path: Routes.requestDetails,
+          name: Routes.nRequestDetails,
+          builder: (context, state) {
+            final requestId = state.pathParameters['id'];
+            if (requestId == null || requestId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing request id')),
+              );
+            }
+            return RequestDetailsScreen(requestId: requestId);
+          },
+        ),
+        GoRoute(
+          path: Routes.offerSubmit,
+          name: Routes.nOfferSubmit,
+          builder: (context, state) {
+            final requestId = state.pathParameters['id'];
+            if (requestId == null || requestId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing request id')),
+              );
+            }
+            return OfferSubmitScreen(requestId: requestId);
+          },
+        ),
+        GoRoute(
+          path: Routes.chat,
+          name: Routes.nChat,
+          builder: (context, state) {
+            final chatId = state.pathParameters['id'];
+            if (chatId == null || chatId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing chat id')),
+              );
+            }
+            final otherUserName =
+                state.uri.queryParameters['name'] ?? 'Unknown';
+            return ChatScreen(chatId: chatId, otherUserName: otherUserName);
+          },
+        ),
+        GoRoute(
+          path: Routes.photographer,
+          name: Routes.nPhotographer,
+          builder: (context, state) {
+            final photographerId = state.pathParameters['id'];
+            if (photographerId == null || photographerId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing photographer id')),
+              );
+            }
+            return PhotographerProfileScreen(photographerId: photographerId);
+          },
+        ),
+
+        // misc
+        GoRoute(
+          path: Routes.search,
+          name: Routes.nSearch,
+          builder: (context, state) => const SearchScreen(),
+        ),
+        GoRoute(
+          path: Routes.explore,
+          name: Routes.nExplore,
+          builder: (context, state) => const ExploreScreen(),
+        ),
+        GoRoute(
+          path: Routes.profile,
+          name: Routes.nProfile,
+          builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: Routes.dashboard,
+          name: Routes.nDashboard,
+          builder: (context, state) => const PhotographerDashboardScreen(),
+        ),
+        GoRoute(
+          path: Routes.notifications,
+          name: Routes.nNotifications,
+          builder: (context, state) => const NotificationsScreen(),
+        ),
+        GoRoute(
+          path: Routes.favorites,
+          name: Routes.nFavorites,
+          builder: (context, state) => const FavoritesScreen(),
+        ),
+        GoRoute(
+          path: Routes.settings,
+          name: Routes.nSettings,
+          builder: (context, state) => const SettingsScreen(),
+        ),
+
+        // legal
+        GoRoute(
+          path: Routes.policy,
+          name: Routes.nPolicy,
+          builder: (context, state) =>
+              const PolicyTermsScreen(type: PolicyType.privacy),
+        ),
+        GoRoute(
+          path: Routes.terms,
+          name: Routes.nTerms,
+          builder: (context, state) =>
+              const PolicyTermsScreen(type: PolicyType.terms),
+        ),
+        GoRoute(
+          path: Routes.bookingPolicies,
+          name: Routes.nBookingPolicies,
+          builder: (context, state) => const BookingPoliciesScreen(),
+        ),
+
+        // extras
+        GoRoute(
+          path: Routes.loyalty,
+          name: Routes.nLoyalty,
+          builder: (context, state) => const LoyaltyPointsScreen(),
+        ),
+        GoRoute(
+          path: Routes.analytics,
+          name: Routes.nAnalytics,
+          builder: (context, state) => const AnalyticsDashboardScreen(),
+        ),
+        GoRoute(
+          path: Routes.achievements,
+          name: Routes.nAchievements,
+          builder: (context, state) => const AchievementsScreen(),
+        ),
+        GoRoute(
+          path: Routes.availability,
+          name: Routes.nAvailability,
+          builder: (context, state) => const AvailabilityScreen(),
+        ),
+        GoRoute(
+          path: Routes.payment,
+          name: Routes.nPayment,
+          builder: (context, state) {
+            final bookingId = state.uri.queryParameters['bookingId'];
+            final amount = double.tryParse(
+              state.uri.queryParameters['amount'] ?? '',
             );
-          }
-          return BookingDetailsScreen(bookingId: bookingId);
-        },
-      ),
-      GoRoute(
-        path: Routes.requests,
-        name: Routes.nRequests,
-        builder: (context, state) => const MyRequestsScreen(),
-      ),
-      GoRoute(
-        path: Routes.shop,
-        name: Routes.nShop,
-        builder: (context, state) => const StoreScreen(),
-      ),
-      GoRoute(
-        path: Routes.requestCreate,
-        name: Routes.nRequestCreate,
-        builder: (context, state) => const CreateRequestScreen(),
-      ),
-      GoRoute(
-        path: Routes.requestDetails,
-        name: Routes.nRequestDetails,
-        builder: (context, state) {
-          final requestId = state.pathParameters['id'];
-          if (requestId == null || requestId.isEmpty) {
-            return const Scaffold(
-              body: Center(child: Text('Missing request id')),
+            final photographerName =
+                state.uri.queryParameters['photographerName'] ?? '';
+            final sessionType = state.uri.queryParameters['sessionType'] ?? '';
+
+            if (bookingId == null || amount == null) {
+              return const Scaffold(
+                body: Center(child: Text('Missing payment information')),
+              );
+            }
+
+            return PaymentScreen(
+              bookingId: bookingId,
+              amount: amount,
+              photographerName: photographerName,
+              sessionType: sessionType,
             );
-          }
-          return RequestDetailsScreen(requestId: requestId);
-        },
-      ),
-      GoRoute(
-        path: Routes.offerSubmit,
-        name: Routes.nOfferSubmit,
-        builder: (context, state) {
-          final requestId = state.pathParameters['id'];
-          if (requestId == null || requestId.isEmpty) {
-            return const Scaffold(
-              body: Center(child: Text('Missing request id')),
-            );
-          }
-          return OfferSubmitScreen(requestId: requestId);
-        },
-      ),
-      GoRoute(
-        path: Routes.chat,
-        name: Routes.nChat,
-        builder: (context, state) {
-          final chatId = state.pathParameters['id'];
-          if (chatId == null || chatId.isEmpty) {
-            return const Scaffold(body: Center(child: Text('Missing chat id')));
-          }
-          final otherUserName = state.uri.queryParameters['name'] ?? 'Unknown';
-          return ChatScreen(chatId: chatId, otherUserName: otherUserName);
-        },
-      ),
-      GoRoute(
-        path: Routes.photographer,
-        name: Routes.nPhotographer,
-        builder: (context, state) {
-          final photographerId = state.pathParameters['id'];
-          if (photographerId == null || photographerId.isEmpty) {
-            return const Scaffold(
-              body: Center(child: Text('Missing photographer id')),
-            );
-          }
-          return PhotographerProfileScreen(photographerId: photographerId);
-        },
-      ),
+          },
+        ),
+        GoRoute(
+          path: Routes.writeReview,
+          name: Routes.nWriteReview,
+          builder: (context, state) {
+            final bookingId = state.uri.queryParameters['bookingId'];
+            final photographerId = state.uri.queryParameters['photographerId'];
+            final photographerName =
+                state.uri.queryParameters['photographerName'];
 
-      // misc
-      GoRoute(
-        path: Routes.search,
-        name: Routes.nSearch,
-        builder: (context, state) => const SearchScreen(),
-      ),
-      GoRoute(
-        path: Routes.explore,
-        name: Routes.nExplore,
-        builder: (context, state) => const ExploreScreen(),
-      ),
-      GoRoute(
-        path: Routes.profile,
-        name: Routes.nProfile,
-        builder: (context, state) => const ProfileScreen(),
-      ),
-      GoRoute(
-        path: Routes.dashboard,
-        name: Routes.nDashboard,
-        builder: (context, state) => const PhotographerDashboardScreen(),
-      ),
-      GoRoute(
-        path: Routes.notifications,
-        name: Routes.nNotifications,
-        builder: (context, state) => const NotificationsScreen(),
-      ),
-      GoRoute(
-        path: Routes.favorites,
-        name: Routes.nFavorites,
-        builder: (context, state) => const FavoritesScreen(),
-      ),
-      GoRoute(
-        path: Routes.settings,
-        name: Routes.nSettings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
-
-      // legal
-      GoRoute(
-        path: Routes.policy,
-        name: Routes.nPolicy,
-        builder: (context, state) =>
-            const PolicyTermsScreen(type: PolicyType.privacy),
-      ),
-      GoRoute(
-        path: Routes.terms,
-        name: Routes.nTerms,
-        builder: (context, state) =>
-            const PolicyTermsScreen(type: PolicyType.terms),
-      ),
-      GoRoute(
-        path: Routes.bookingPolicies,
-        name: Routes.nBookingPolicies,
-        builder: (context, state) => const BookingPoliciesScreen(),
-      ),
-
-      // extras
-      GoRoute(
-        path: Routes.loyalty,
-        name: Routes.nLoyalty,
-        builder: (context, state) => const LoyaltyPointsScreen(),
-      ),
-      GoRoute(
-        path: Routes.analytics,
-        name: Routes.nAnalytics,
-        builder: (context, state) => const AnalyticsDashboardScreen(),
-      ),
-      GoRoute(
-        path: Routes.achievements,
-        name: Routes.nAchievements,
-        builder: (context, state) => const AchievementsScreen(),
-      ),
-      GoRoute(
-        path: Routes.availability,
-        name: Routes.nAvailability,
-        builder: (context, state) => const AvailabilityScreen(),
-      ),
-      GoRoute(
-        path: Routes.payment,
-        name: Routes.nPayment,
-        builder: (context, state) {
-          final bookingId = state.uri.queryParameters['bookingId'];
-          final amount = double.tryParse(
-            state.uri.queryParameters['amount'] ?? '',
-          );
-          final photographerName =
-              state.uri.queryParameters['photographerName'] ?? '';
-          final sessionType = state.uri.queryParameters['sessionType'] ?? '';
-
-          if (bookingId == null || amount == null) {
-            return const Scaffold(
-              body: Center(child: Text('Missing payment information')),
-            );
-          }
-
-          return PaymentScreen(
-            bookingId: bookingId,
-            amount: amount,
-            photographerName: photographerName,
-            sessionType: sessionType,
-          );
-        },
-      ),
-      GoRoute(
-        path: Routes.writeReview,
-        name: Routes.nWriteReview,
-        builder: (context, state) {
-          final bookingId = state.uri.queryParameters['bookingId'];
-          final photographerId = state.uri.queryParameters['photographerId'];
-          final photographerName =
-              state.uri.queryParameters['photographerName'];
-
-          if (bookingId == null ||
-              photographerId == null ||
-              photographerName == null) {
-            final localizations = AppLocalizations.of(context);
-            return Scaffold(
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    localizations.missingReviewInfo,
-                    textAlign: TextAlign.center,
+            if (bookingId == null ||
+                photographerId == null ||
+                photographerName == null) {
+              final localizations = AppLocalizations.of(context);
+              return Scaffold(
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      localizations.missingReviewInfo,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }
+              );
+            }
 
-          return WriteReviewScreen(
-            bookingId: bookingId,
-            photographerId: photographerId,
-            photographerName: photographerName,
-          );
-        },
+            return WriteReviewScreen(
+              bookingId: bookingId,
+              photographerId: photographerId,
+              photographerName: photographerName,
+            );
+          },
+        ),
+        GoRoute(
+          path: Routes.createPost,
+          name: Routes.nCreatePost,
+          builder: (context, state) => const CreatePostScreen(),
+        ),
+        GoRoute(
+          path: Routes.createStory,
+          name: Routes.nCreateStory,
+          builder: (context, state) => const CreateStoryScreen(),
+        ),
+      ],
+      errorBuilder: (context, state) => Scaffold(
+        body: Center(child: Text('Page not found: ${state.uri.path}')),
       ),
-      GoRoute(
-        path: Routes.createPost,
-        name: Routes.nCreatePost,
-        builder: (context, state) => const CreatePostScreen(),
-      ),
-      GoRoute(
-        path: Routes.createStory,
-        name: Routes.nCreateStory,
-        builder: (context, state) => const CreateStoryScreen(),
-      ),
-    ],
-    errorBuilder: (context, state) => Scaffold(
-      body: Center(child: Text('Page not found: ${state.uri.path}')),
-    ),
     );
   }
 
@@ -397,12 +402,18 @@ class AppRouter {
     GoRouterState state,
   ) async {
     final path = state.uri.path;
-    const devStart = String.fromEnvironment('LAQTA_DEV_START', defaultValue: '');
-    final devStartPath =
-        devStart.isEmpty ? '' : (devStart.startsWith('/') ? devStart : '/$devStart');
+    const devStart = String.fromEnvironment(
+      'LAQTA_DEV_START',
+      defaultValue: '',
+    );
+    final devStartPath = devStart.isEmpty
+        ? ''
+        : (devStart.startsWith('/') ? devStart : '/$devStart');
     const devLock = bool.fromEnvironment('LAQTA_DEV_LOCK', defaultValue: false);
-    const devBypassAuth =
-        bool.fromEnvironment('LAQTA_DEV_BYPASS_AUTH', defaultValue: false);
+    const devBypassAuth = bool.fromEnvironment(
+      'LAQTA_DEV_BYPASS_AUTH',
+      defaultValue: false,
+    );
     if (kDebugMode && devLock && devStartPath.isNotEmpty) {
       return path == devStartPath ? null : devStartPath;
     }
@@ -426,7 +437,8 @@ class AppRouter {
     final prefs = await SharedPreferences.getInstance();
     final languageSelected = prefs.containsKey(AppConstants.keyLanguage);
     final shouldBypassLanguage =
-        kDebugMode && devStartPath.isNotEmpty; // dev-only: allow deep-linking screens
+        kDebugMode &&
+        devStartPath.isNotEmpty; // dev-only: allow deep-linking screens
     if (!languageSelected && !isLanguage && !shouldBypassLanguage) {
       return Routes.language;
     }
@@ -439,7 +451,9 @@ class AppRouter {
       _cachedProfileCompleted = null;
 
       if (kDebugMode && devBypassAuth) {
-        if (isSplash) return devStartPath.isNotEmpty ? devStartPath : Routes.main;
+        if (isSplash) {
+          return devStartPath.isNotEmpty ? devStartPath : Routes.main;
+        }
         return null;
       }
 
@@ -506,11 +520,7 @@ class AppRouter {
       _cachedProfileCompleted = false;
       _cachedProfileRole = '';
       _cachedProfileBlocked = false;
-      return const _ProfileStatus(
-        completed: false,
-        role: '',
-        isBlocked: false,
-      );
+      return const _ProfileStatus(completed: false, role: '', isBlocked: false);
     }
 
     final user = result.valueOrNull;
@@ -548,22 +558,23 @@ class AppRouter {
   static void goToLanguage(BuildContext context) => context.go(Routes.language);
   static void goToAuth(BuildContext context) => context.go(Routes.auth);
   static void goToSignUpDetails(BuildContext context) =>
-      context.go(Routes.signUpDetails);
+      context.push(Routes.signUpDetails);
   static void goToRole(BuildContext context) => context.go(Routes.role);
   static void goToProfileSetup(BuildContext context) =>
       context.go(Routes.basicInfo);
 
-  static void goToBookings(BuildContext context) => context.go(Routes.bookings);
+  static void goToBookings(BuildContext context) =>
+      context.push(Routes.bookings);
   static void goToMyRequests(BuildContext context) =>
-      context.go(Routes.requests);
-  static void goToShop(BuildContext context) => context.go(Routes.shop);
+      context.push(Routes.requests);
+  static void goToShop(BuildContext context) => context.push(Routes.shop);
   static void goToCreateRequest(BuildContext context) =>
-      context.go(Routes.requestCreate);
+      context.push(Routes.requestCreate);
   static void goToExplore(BuildContext context) => context.go(Routes.explore);
-  static void goToPolicy(BuildContext context) => context.go(Routes.policy);
-  static void goToTerms(BuildContext context) => context.go(Routes.terms);
+  static void goToPolicy(BuildContext context) => context.push(Routes.policy);
+  static void goToTerms(BuildContext context) => context.push(Routes.terms);
   static void goToBookingPolicies(BuildContext context) =>
-      context.go(Routes.bookingPolicies);
+      context.push(Routes.bookingPolicies);
   static void goToProfile(BuildContext context) => context.go(Routes.profile);
 
   static void goToBasicInfo(BuildContext context, String role) {
@@ -573,9 +584,10 @@ class AppRouter {
   }
 
   static void goToPortfolioEditor(BuildContext context) =>
-      context.go(Routes.portfolioEditor);
+      context.push(Routes.portfolioEditor);
 
-  static void goToSettings(BuildContext context) => context.go(Routes.settings);
+  static void goToSettings(BuildContext context) =>
+      context.push(Routes.settings);
 
   static void goToChat(
     BuildContext context,
@@ -585,22 +597,22 @@ class AppRouter {
     assert(chatId.isNotEmpty, 'chatId is required');
     final path = _resolvePath(Routes.chat, {'id': chatId});
     final encodedName = Uri.encodeComponent(otherUserName);
-    context.go('$path?name=$encodedName');
+    context.push('$path?name=$encodedName');
   }
 
   static void goToBookingDetails(BuildContext context, String bookingId) {
     assert(bookingId.isNotEmpty, 'bookingId is required');
-    context.go(_resolvePath(Routes.booking, {'id': bookingId}));
+    context.push(_resolvePath(Routes.booking, {'id': bookingId}));
   }
 
   static void goToRequestDetails(BuildContext context, String requestId) {
     assert(requestId.isNotEmpty, 'requestId is required');
-    context.go(_resolvePath(Routes.requestDetails, {'id': requestId}));
+    context.push(_resolvePath(Routes.requestDetails, {'id': requestId}));
   }
 
   static void goToOfferSubmit(BuildContext context, String requestId) {
     assert(requestId.isNotEmpty, 'requestId is required');
-    context.go(_resolvePath(Routes.offerSubmit, {'id': requestId}));
+    context.push(_resolvePath(Routes.offerSubmit, {'id': requestId}));
   }
 
   static void goToPhotographerProfile(
@@ -608,22 +620,22 @@ class AppRouter {
     String photographerId,
   ) {
     assert(photographerId.isNotEmpty, 'photographerId is required');
-    context.go(_resolvePath(Routes.photographer, {'id': photographerId}));
+    context.push(_resolvePath(Routes.photographer, {'id': photographerId}));
   }
 
   static void goToFavorites(BuildContext context) =>
-      context.go(Routes.favorites);
+      context.push(Routes.favorites);
   static void goToNotifications(BuildContext context) =>
-      context.go(Routes.notifications);
+      context.push(Routes.notifications);
   static void goToDashboard(BuildContext context) =>
-      context.go(Routes.dashboard);
-  static void goToSearch(BuildContext context) => context.go(Routes.search);
+      context.push(Routes.dashboard);
+  static void goToSearch(BuildContext context) => context.push(Routes.search);
   static void goToLoyaltyPoints(BuildContext context) =>
-      context.go(Routes.loyalty);
+      context.push(Routes.loyalty);
   static void goToAchievements(BuildContext context) =>
-      context.go(Routes.achievements);
+      context.push(Routes.achievements);
   static void goToAvailability(BuildContext context) =>
-      context.go(Routes.availability);
+      context.push(Routes.availability);
 
   static void goToWriteReview(
     BuildContext context,
@@ -641,7 +653,7 @@ class AppRouter {
         'photographerName': photographerName,
       },
     ).query;
-    context.go('${Routes.writeReview}?$query');
+    context.push('${Routes.writeReview}?$query');
   }
 
   static void goToPayment(
@@ -661,14 +673,14 @@ class AppRouter {
         'sessionType': sessionType,
       },
     ).query;
-    context.go('${Routes.payment}?$query');
+    context.push('${Routes.payment}?$query');
   }
 
   static void goToCreatePost(BuildContext context) =>
-      context.go(Routes.createPost);
+      context.push(Routes.createPost);
 
   static void goToCreateStory(BuildContext context) =>
-      context.go(Routes.createStory);
+      context.push(Routes.createStory);
 
   static String _resolvePath(String template, Map<String, String> params) {
     var resolved = template;

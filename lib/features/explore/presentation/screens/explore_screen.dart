@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -75,7 +77,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.initState();
     _followService = widget.followService;
     _reportService = widget.reportService;
-    _initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_initialize());
+    });
   }
 
   @override
@@ -84,9 +89,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _initialize() async {
-    await _loadUser();
-    _loadPosts();
-    _loadPhotographers();
+    await Future.wait<void>([_loadUser(), _loadPosts(), _loadPhotographers()]);
   }
 
   Future<void> _loadUser() async {
@@ -121,7 +124,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (mounted) setState(() {});
     }
   }
-
 
   Future<void> _loadPosts() async {
     setState(() {
@@ -171,8 +173,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       final data = result.valueOrNull ?? [];
       if (!mounted) return;
       setState(() {
-        final list =
-            data.isEmpty && _useDemoContent ? _buildDemoPhotographers() : data;
+        final list = data.isEmpty && _useDemoContent
+            ? _buildDemoPhotographers()
+            : data;
         _photographers = list.take(12).toList();
         _photographersLoading = false;
       });
@@ -192,7 +195,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       }
     }
   }
-
 
   List<SearchResultPhotographer> _buildDemoPhotographers() {
     return const [
@@ -490,8 +492,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-
-
   void _openCreateRequestFromPost(ReelModel reel) {
     if (!_isCustomer) return;
     final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
@@ -514,8 +514,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_userId.isEmpty) return;
     final isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
-    final reasons =
-        isArabic ? AppConstants.reportReasonsAr : AppConstants.reportReasonsEn;
+    final reasons = isArabic
+        ? AppConstants.reportReasonsAr
+        : AppConstants.reportReasonsEn;
 
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -617,16 +618,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ),
     );
   }
+
   Widget _buildCreateSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Create',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
         Row(
@@ -653,8 +654,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-
-
   Widget _buildPhotographersSection() {
     if (_photographersLoading) {
       return Column(
@@ -662,10 +661,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           Text(
             'Photographers',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           const LoadingIndicator(),
@@ -693,45 +691,43 @@ class _ExploreScreenState extends State<ExploreScreen> {
       children: [
         Text(
           'Photographers',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
-        ..._photographers.map(
-          (photographer) {
-            final isFollowing = _followingIds.contains(photographer.id);
-            final canFollow = photographer.id != _userId;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                children: [
-                  PhotographerCard(
-                    name: photographer.name,
-                    location: photographer.governorate,
-                    rating: photographer.rating,
-                    price: photographer.startingPrice.toString(),
-                    avatarUrl:
-                        photographer.image.isNotEmpty ? photographer.image : null,
-                    onTap: () => AppRouter.goToPhotographerProfile(
-                      context,
-                      photographer.id,
+        ..._photographers.map((photographer) {
+          final isFollowing = _followingIds.contains(photographer.id);
+          final canFollow = photographer.id != _userId;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              children: [
+                PhotographerCard(
+                  name: photographer.name,
+                  location: photographer.governorate,
+                  rating: photographer.rating,
+                  price: photographer.startingPrice.toString(),
+                  avatarUrl: photographer.image.isNotEmpty
+                      ? photographer.image
+                      : null,
+                  onTap: () => AppRouter.goToPhotographerProfile(
+                    context,
+                    photographer.id,
+                  ),
+                ),
+                if (canFollow)
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton(
+                      onPressed: () => _toggleFollow(photographer.id),
+                      child: Text(isFollowing ? 'إلغاء المتابعة' : 'متابعة'),
                     ),
                   ),
-                  if (canFollow)
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: TextButton(
-                        onPressed: () => _toggleFollow(photographer.id),
-                        child: Text(isFollowing ? 'إلغاء المتابعة' : 'متابعة'),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        ),
+              ],
+            ),
+          );
+        }),
       ],
     );
   }
@@ -743,10 +739,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           Text(
             'Posts',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           const LoadingIndicator(),
@@ -755,10 +750,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
 
     if (_postsError != null) {
-      return EmptyStates.error(
-        message: _postsError,
-        onRetry: _loadPosts,
-      );
+      return EmptyStates.error(message: _postsError, onRetry: _loadPosts);
     }
 
     if (_posts.isEmpty) {
@@ -786,10 +778,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
       children: [
         Text(
           'Posts',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
         ...sections.map(
@@ -799,10 +790,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
               if (sections.length > 1) ...[
                 Text(
                   section.title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -820,7 +810,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       context,
                       reel.photographerId,
                     ),
-                    onShare: () => _showSnackBar('ميزة المشاركة غير مفعلة حالياً'),
+                    onShare: () =>
+                        _showSnackBar('ميزة المشاركة غير مفعلة حالياً'),
                     onReport: () => _reportContent(
                       targetId: reel.reelId,
                       targetType: 'reel',
@@ -839,8 +830,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 }
-
-
 
 class _PostSection {
   final String title;
@@ -897,15 +886,9 @@ class _ExplorePostCard extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            Text(
-              '${reel.likes} إعجاب',
-              style: textTheme.bodySmall,
-            ),
+            Text('${reel.likes} إعجاب', style: textTheme.bodySmall),
             const SizedBox(width: 12),
-            Text(
-              '${reel.comments} تعليق',
-              style: textTheme.bodySmall,
-            ),
+            Text('${reel.comments} تعليق', style: textTheme.bodySmall),
             const Spacer(),
             if (canFollow)
               TextButton(
@@ -1090,10 +1073,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             const SizedBox(height: 12),
             Text(
               'التعليقات',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             Expanded(

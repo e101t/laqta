@@ -27,12 +27,15 @@ class CustomerDashboardScreen extends StatefulWidget {
   const CustomerDashboardScreen({super.key});
 
   @override
-  State<CustomerDashboardScreen> createState() => _CustomerDashboardScreenState();
+  State<CustomerDashboardScreen> createState() =>
+      _CustomerDashboardScreenState();
 }
 
 class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   StoryService? _storyService;
-  final PageController _offersController = PageController(viewportFraction: 0.9);
+  final PageController _offersController = PageController(
+    viewportFraction: 0.9,
+  );
   Timer? _offersTimer;
   int _offersIndex = 0;
 
@@ -98,9 +101,12 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDashboard();
-    _loadStories();
-    _startOffersAutoScroll();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_loadDashboard());
+      unawaited(_loadStories());
+      _startOffersAutoScroll();
+    });
   }
 
   void _startOffersAutoScroll() {
@@ -137,7 +143,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           'project=${app.name}:${app.options.projectId}',
         );
       } else {
-        debugPrint('CustomerDashboardScreen:_loadDashboard Firebase not initialized');
+        debugPrint(
+          'CustomerDashboardScreen:_loadDashboard Firebase not initialized',
+        );
       }
     }
 
@@ -198,56 +206,54 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
     _upcomingBookings
       ..clear()
-      ..addAll(
-        [
-          BookingModel(
-            id: 'demo_booking_1',
-            customerId: 'demo_client',
-            photographerId: 'demo_ph_1',
-            date: '2026-02-10',
-            time: '06:30 PM',
-            duration: 120,
-            type: 'جلسة عائلية',
-            price: 150000,
-            status: 'confirmed',
-            payment: PaymentInfo(
-              status: 'deposit_paid',
-              amount: 50000,
-              paidAt: now.subtract(const Duration(days: 1)),
-            ),
-            location: LocationInfo(text: 'بغداد - المنصور'),
-            deliverables: DeliverablesInfo(
-              photosCount: 25,
-              includesEditing: true,
-            ),
-            timeline: BookingTimeline(
-              confirmedAt: now.subtract(const Duration(days: 1)),
-            ),
-            createdAt: now.subtract(const Duration(days: 2)),
-            updatedAt: now,
+      ..addAll([
+        BookingModel(
+          id: 'demo_booking_1',
+          customerId: 'demo_client',
+          photographerId: 'demo_ph_1',
+          date: '2026-02-10',
+          time: '06:30 PM',
+          duration: 120,
+          type: 'جلسة عائلية',
+          price: 150000,
+          status: 'confirmed',
+          payment: PaymentInfo(
+            status: 'deposit_paid',
+            amount: 50000,
+            paidAt: now.subtract(const Duration(days: 1)),
           ),
-          BookingModel(
-            id: 'demo_booking_2',
-            customerId: 'demo_client',
-            photographerId: 'demo_ph_3',
-            date: '2026-02-20',
-            time: '05:00 PM',
-            duration: 90,
-            type: 'تصوير مناسبات',
-            price: 220000,
-            status: 'pending',
-            payment: PaymentInfo(status: 'pending', amount: 0),
-            location: LocationInfo(text: 'أربيل - عينكاوا'),
-            deliverables: DeliverablesInfo(
-              photosCount: 40,
-              includesEditing: true,
-            ),
-            timeline: BookingTimeline(),
-            createdAt: now.subtract(const Duration(days: 1)),
-            updatedAt: now,
+          location: LocationInfo(text: 'بغداد - المنصور'),
+          deliverables: DeliverablesInfo(
+            photosCount: 25,
+            includesEditing: true,
           ),
-        ],
-      );
+          timeline: BookingTimeline(
+            confirmedAt: now.subtract(const Duration(days: 1)),
+          ),
+          createdAt: now.subtract(const Duration(days: 2)),
+          updatedAt: now,
+        ),
+        BookingModel(
+          id: 'demo_booking_2',
+          customerId: 'demo_client',
+          photographerId: 'demo_ph_3',
+          date: '2026-02-20',
+          time: '05:00 PM',
+          duration: 90,
+          type: 'تصوير مناسبات',
+          price: 220000,
+          status: 'pending',
+          payment: PaymentInfo(status: 'pending', amount: 0),
+          location: LocationInfo(text: 'أربيل - عينكاوا'),
+          deliverables: DeliverablesInfo(
+            photosCount: 40,
+            includesEditing: true,
+          ),
+          timeline: BookingTimeline(),
+          createdAt: now.subtract(const Duration(days: 1)),
+          updatedAt: now,
+        ),
+      ]);
   }
 
   List<_FeaturedProduct> _visibleProducts() =>
@@ -424,22 +430,19 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            _offerSlides.length,
-            (index) {
-              final isActive = index == _offersIndex;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                height: 6,
-                width: isActive ? 22 : 8,
-                decoration: BoxDecoration(
-                  color: isActive ? LaqtaColors.accent : LaqtaColors.border,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              );
-            },
-          ),
+          children: List.generate(_offerSlides.length, (index) {
+            final isActive = index == _offersIndex;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              height: 6,
+              width: isActive ? 22 : 8,
+              decoration: BoxDecoration(
+                color: isActive ? LaqtaColors.accent : LaqtaColors.border,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            );
+          }),
         ),
       ],
     );
@@ -452,10 +455,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         children: [
           Text(
             'القصص',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -478,10 +480,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
     }
 
     if (_storiesError != null) {
-      return EmptyStates.error(
-        message: _storiesError,
-        onRetry: _loadStories,
-      );
+      return EmptyStates.error(message: _storiesError, onRetry: _loadStories);
     }
 
     if (_stories.isEmpty) {
@@ -493,10 +492,9 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       children: [
         Text(
           'القصص',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
         SizedBox(
@@ -623,7 +621,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                             const SizedBox(width: 12),
                         itemBuilder: (context, index) => _FeaturedProductCard(
                           product: _visibleProducts()[index],
-                          priceLabel: _formatIQD(context, _visibleProducts()[index].priceIQD),
+                          priceLabel: _formatIQD(
+                            context,
+                            _visibleProducts()[index].priceIQD,
+                          ),
                           onTap: () => AppRouter.goToShop(context),
                         ),
                       ),
@@ -729,7 +730,9 @@ class _FeaturedProductCard extends StatelessWidget {
           child: Ink(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: scheme.onSurface.withValues(alpha: 0.10)),
+              border: Border.all(
+                color: scheme.onSurface.withValues(alpha: 0.10),
+              ),
               boxShadow: LaqtaShadows.soft,
             ),
             child: ClipRRect(
@@ -889,10 +892,7 @@ class _OfferSlideCard extends StatelessWidget {
   final _OfferSlide slide;
   final VoidCallback? onTap;
 
-  const _OfferSlideCard({
-    required this.slide,
-    this.onTap,
-  });
+  const _OfferSlideCard({required this.slide, this.onTap});
 
   @override
   Widget build(BuildContext context) {

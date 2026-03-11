@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
@@ -33,6 +34,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
   String _userRole = '';
   bool _isLoadingRole = true;
   final List<int> _tabHistory = [];
+  final Set<int> _loadedTabs = <int>{0};
+  final Map<int, Widget> _screenCache = <int, Widget>{};
+  DateTime? _lastBackPress;
 
   @override
   void initState() {
@@ -60,38 +64,47 @@ class _MainAppScreenState extends State<MainAppScreen> {
       setState(() {
         _userRole = role;
         _isLoadingRole = false;
+        _currentIndex = 0;
+        _tabHistory.clear();
+        _loadedTabs
+          ..clear()
+          ..add(0);
+        _screenCache.clear();
       });
     }
   }
 
-  List<Widget> _screensForRole() {
-    final exploreScreen = widget.exploreScreenOverride ?? const ExploreScreen();
+  List<WidgetBuilder> _screenBuildersForRole() {
+    Widget buildExploreScreen(BuildContext context) {
+      return widget.exploreScreenOverride ?? const ExploreScreen();
+    }
+
     if (_userRole == AppConstants.roleAdmin) {
-      return const [
-        AdminDashboardScreen(),
-        AdminDisputesScreen(),
-        AdminReportsScreen(),
-        AdminUsersScreen(),
-        ProfileScreen(),
+      return [
+        (context) => const AdminDashboardScreen(),
+        (context) => const AdminDisputesScreen(),
+        (context) => const AdminReportsScreen(),
+        (context) => const AdminUsersScreen(),
+        (context) => const ProfileScreen(),
       ];
     }
     if (_userRole == AppConstants.rolePhotographer) {
       return [
-        const PhotographerDashboardScreen(),
-        exploreScreen,
-        const PhotographerRequestsScreen(),
-        const PhotographerBookingsScreen(),
-        const ChatListScreen(),
-        const ProfileScreen(),
+        (context) => const PhotographerDashboardScreen(),
+        buildExploreScreen,
+        (context) => const PhotographerRequestsScreen(),
+        (context) => const PhotographerBookingsScreen(),
+        (context) => const ChatListScreen(),
+        (context) => const ProfileScreen(),
       ];
     }
     return [
-      const CustomerDashboardScreen(),
-      exploreScreen,
-      const StoreScreen(),
-      const MyBookingsScreen(),
-      const ChatListScreen(),
-      const ProfileScreen(),
+      (context) => const CustomerDashboardScreen(),
+      buildExploreScreen,
+      (context) => const StoreScreen(),
+      (context) => const MyBookingsScreen(),
+      (context) => const ChatListScreen(),
+      (context) => const ProfileScreen(),
     ];
   }
 
@@ -207,18 +220,16 @@ class _MainAppScreenState extends State<MainAppScreen> {
       );
     }
 
-    final screens = _screensForRole();
+    final screenBuilders = _screenBuildersForRole();
     final navItems = _navItemsForRole(localizations);
-    if (_currentIndex >= screens.length) {
+    if (_currentIndex >= screenBuilders.length) {
       _currentIndex = 0;
     }
 
     final navigator = Navigator.of(context);
-    final allowExit =
-        _currentIndex == 0 && _tabHistory.isEmpty && !navigator.canPop();
 
     return PopScope(
-      canPop: allowExit,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         if (navigator.canPop()) {
@@ -234,35 +245,64 @@ class _MainAppScreenState extends State<MainAppScreen> {
           setState(() => _currentIndex = 0);
           return;
         }
+        final now = DateTime.now();
+        if (_lastBackPress == null ||
+            now.difference(_lastBackPress!) > const Duration(seconds: 2)) {
+          _lastBackPress = now;
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(localizations.pressBackAgainToExit),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          return;
+        }
+        SystemNavigator.pop();
       },
       child: isWideLayout
-          ? _buildWideLayout(screens, navItems)
-          : _buildNarrowLayout(screens, navItems),
+          ? _buildWideLayout(screenBuilders, navItems)
+          : _buildNarrowLayout(screenBuilders, navItems),
     );
   }
 
   void _setTab(int index) {
     if (index == _currentIndex) return;
-    _tabHistory.add(_currentIndex);
-    setState(() => _currentIndex = index);
+    setState(() {
+      _tabHistory.add(_currentIndex);
+      _currentIndex = index;
+      _loadedTabs.add(index);
+    });
   }
 
-  Widget _buildContent(List<Widget> screens) {
-    return IndexedStack(index: _currentIndex, children: screens);
+  Widget _buildContent(List<WidgetBuilder> screenBuilders) {
+    return IndexedStack(
+      index: _currentIndex,
+      children: List<Widget>.generate(screenBuilders.length, (index) {
+        if (!_loadedTabs.contains(index)) {
+          return const SizedBox.shrink();
+        }
+        return _screenCache.putIfAbsent(
+          index,
+          () => screenBuilders[index](context),
+        );
+      }),
+    );
   }
 
   Widget _buildNarrowLayout(
-    List<Widget> screens,
+    List<WidgetBuilder> screenBuilders,
     List<BottomNavItem> navItems,
   ) {
     return Scaffold(
-      body: _buildContent(screens),
+      body: _buildContent(screenBuilders),
       bottomNavigationBar: _buildBottomNav(navItems),
     );
   }
 
   Widget _buildWideLayout(
-    List<Widget> screens,
+    List<WidgetBuilder> screenBuilders,
     List<BottomNavItem> navItems,
   ) {
     final isExtended = Responsive.isDesktop(context);
@@ -276,23 +316,23 @@ class _MainAppScreenState extends State<MainAppScreen> {
               selectedIndex: _currentIndex,
               onDestinationSelected: _setTab,
               extended: isExtended,
-                labelType: isExtended
-                    ? NavigationRailLabelType.none
-                    : NavigationRailLabelType.all,
-                minWidth: 72,
-                minExtendedWidth: 220,
-                backgroundColor: colorScheme.surface,
-                destinations: navItems.map((item) {
-                  return NavigationRailDestination(
-                    icon: _buildRailIcon(item, false),
-                    selectedIcon: _buildRailIcon(item, true),
+              labelType: isExtended
+                  ? NavigationRailLabelType.none
+                  : NavigationRailLabelType.all,
+              minWidth: 72,
+              minExtendedWidth: 220,
+              backgroundColor: colorScheme.surface,
+              destinations: navItems.map((item) {
+                return NavigationRailDestination(
+                  icon: _buildRailIcon(item, false),
+                  selectedIcon: _buildRailIcon(item, true),
                   label: Text(item.label),
                 );
               }).toList(),
             ),
           ),
           const VerticalDivider(width: 1, thickness: 1),
-          Expanded(child: _buildContent(screens)),
+          Expanded(child: _buildContent(screenBuilders)),
         ],
       ),
     );
@@ -330,8 +370,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
     final isActive = _currentIndex == index;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final iconColor =
-        isActive ? colorScheme.primary : colorScheme.onSurfaceVariant;
+    final iconColor = isActive
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant;
 
     return SizedBox(
       height: 50,
@@ -430,10 +471,12 @@ class _MainAppScreenState extends State<MainAppScreen> {
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(colors: [
-                colorScheme.error,
-                colorScheme.error.withValues(alpha: 0.85),
-              ]),
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.error,
+                  colorScheme.error.withValues(alpha: 0.85),
+                ],
+              ),
             ),
             constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
             child: Text(
