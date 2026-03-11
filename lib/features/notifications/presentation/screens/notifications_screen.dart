@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:luqta/core/services/notification_navigation_service.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/skeleton_loaders.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
@@ -154,6 +155,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Future<void> _openNotification(NotificationModel notification) async {
+    await _markAsRead(notification);
+    if (!mounted) return;
+    NotificationNavigationService.instance.openNotificationModel(notification);
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
@@ -237,7 +244,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   final notification = _notifications[index];
                   return _NotificationCard(
                     notification: notification,
-                    onTap: () => _markAsRead(notification),
+                    onTap: () => _openNotification(notification),
                     onDelete: () => _deleteNotification(notification),
                   );
                 },
