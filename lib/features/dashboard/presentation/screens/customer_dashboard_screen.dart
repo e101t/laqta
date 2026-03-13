@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/models/story_model.dart';
 import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/models/booking_model.dart';
@@ -96,7 +97,8 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       assetPath: 'assets/images/offers/offer_3.png',
     ),
   ];
-  bool get _useDemoContent => kDebugMode && !isFlutterTestEnv();
+  bool get _useDemoContent =>
+      AppConstants.enableDemoContent && kDebugMode && !isFlutterTestEnv();
 
   @override
   void initState() {

@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/services/follow_service.dart';
 import 'package:luqta/core/services/report_service.dart';
+import 'package:luqta/core/utils/runtime_env.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
 import 'package:luqta/core/widgets/post_card.dart';
@@ -70,7 +72,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   bool get _isCustomer => _userRole == AppConstants.roleCustomer;
   bool get _isPhotographer => _userRole == AppConstants.rolePhotographer;
-  bool get _useDemoContent => kDebugMode;
+  bool get _useDemoContent =>
+      AppConstants.enableDemoContent && kDebugMode && !isFlutterTestEnv();
 
   @override
   void initState() {
@@ -200,83 +203,83 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return const [
       SearchResultPhotographer(
         id: 'demo_ph_1',
-        name: 'مروة الحربي',
+        name: 'Ù…Ø±ÙˆØ© Ø§Ù„Ø­Ø±Ø¨ÙŠ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['بورتريه', 'موضة'],
+        specialties: ['Ø¨ÙˆØ±ØªØ±ÙŠÙ‡', 'Ù…ÙˆØ¶Ø©'],
         rating: 4.8,
         reviewCount: 124,
         startingPrice: 120000,
-        governorate: 'بغداد',
+        governorate: 'Ø¨ØºØ¯Ø§Ø¯',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_2',
-        name: 'سيف الكعبي',
+        name: 'Ø³ÙŠÙ Ø§Ù„ÙƒØ¹Ø¨ÙŠ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['مناسبات', 'زفاف'],
+        specialties: ['Ù…Ù†Ø§Ø³Ø¨Ø§Øª', 'Ø²ÙØ§Ù'],
         rating: 4.6,
         reviewCount: 89,
         startingPrice: 150000,
-        governorate: 'البصرة',
+        governorate: 'Ø§Ù„Ø¨ØµØ±Ø©',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_3',
-        name: 'نور الهادي',
+        name: 'Ù†ÙˆØ± Ø§Ù„Ù‡Ø§Ø¯ÙŠ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['منتجات', 'تجاري'],
+        specialties: ['Ù…Ù†ØªØ¬Ø§Øª', 'ØªØ¬Ø§Ø±ÙŠ'],
         rating: 4.9,
         reviewCount: 156,
         startingPrice: 90000,
-        governorate: 'أربيل',
+        governorate: 'Ø£Ø±Ø¨ÙŠÙ„',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_4',
-        name: 'رنيم البغدادي',
+        name: 'Ø±Ù†ÙŠÙ… Ø§Ù„Ø¨ØºØ¯Ø§Ø¯ÙŠ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['جلسات عائلية', 'أسلوب طبيعي'],
+        specialties: ['Ø¬Ù„Ø³Ø§Øª Ø¹Ø§Ø¦Ù„ÙŠØ©', 'Ø£Ø³Ù„ÙˆØ¨ Ø·Ø¨ÙŠØ¹ÙŠ'],
         rating: 4.7,
         reviewCount: 72,
         startingPrice: 105000,
-        governorate: 'كربلاء',
+        governorate: 'ÙƒØ±Ø¨Ù„Ø§Ø¡',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_5',
-        name: 'عمر السعدي',
+        name: 'Ø¹Ù…Ø± Ø§Ù„Ø³Ø¹Ø¯ÙŠ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['طعام', 'إعلاني'],
+        specialties: ['Ø·Ø¹Ø§Ù…', 'Ø¥Ø¹Ù„Ø§Ù†ÙŠ'],
         rating: 4.5,
         reviewCount: 58,
         startingPrice: 98000,
-        governorate: 'النجف',
+        governorate: 'Ø§Ù„Ù†Ø¬Ù',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_6',
-        name: 'زهراء سالم',
+        name: 'Ø²Ù‡Ø±Ø§Ø¡ Ø³Ø§Ù„Ù…',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['أطفال', 'مواليد'],
+        specialties: ['Ø£Ø·ÙØ§Ù„', 'Ù…ÙˆØ§Ù„ÙŠØ¯'],
         rating: 4.8,
         reviewCount: 143,
         startingPrice: 115000,
-        governorate: 'نينوى',
+        governorate: 'Ù†ÙŠÙ†ÙˆÙ‰',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_7',
-        name: 'علي شاكر',
+        name: 'Ø¹Ù„ÙŠ Ø´Ø§ÙƒØ±',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['معماري', 'عقارات'],
+        specialties: ['Ù…Ø¹Ù…Ø§Ø±ÙŠ', 'Ø¹Ù‚Ø§Ø±Ø§Øª'],
         rating: 4.6,
         reviewCount: 81,
         startingPrice: 130000,
-        governorate: 'السليمانية',
+        governorate: 'Ø§Ù„Ø³Ù„ÙŠÙ…Ø§Ù†ÙŠØ©',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_8',
-        name: 'هدى جابر',
+        name: 'Ù‡Ø¯Ù‰ Ø¬Ø§Ø¨Ø±',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['أزياء', 'تحريري'],
+        specialties: ['Ø£Ø²ÙŠØ§Ø¡', 'ØªØ­Ø±ÙŠØ±ÙŠ'],
         rating: 4.9,
         reviewCount: 167,
         startingPrice: 160000,
-        governorate: 'بابل',
+        governorate: 'Ø¨Ø§Ø¨Ù„',
       ),
     ];
   }
@@ -287,11 +290,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_1',
         photographerId: 'demo_ph_1',
-        photographerName: 'مروة الحربي',
+        photographerName: 'Ù…Ø±ÙˆØ© Ø§Ù„Ø­Ø±Ø¨ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_auth.png',
         thumbnailUrl: 'assets/images/hero_auth.png',
-        caption: 'إضاءة دافئة ولقطة قريبة تُبرز التفاصيل.',
+        caption:
+            'Ø¥Ø¶Ø§Ø¡Ø© Ø¯Ø§ÙØ¦Ø© ÙˆÙ„Ù‚Ø·Ø© Ù‚Ø±ÙŠØ¨Ø© ØªÙØ¨Ø±Ø² Ø§Ù„ØªÙØ§ØµÙŠÙ„.',
         tags: const ['portrait', 'golden'],
         views: 1240,
         likes: 320,
@@ -303,11 +307,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_2',
         photographerId: 'demo_ph_2',
-        photographerName: 'سيف الكعبي',
+        photographerName: 'Ø³ÙŠÙ Ø§Ù„ÙƒØ¹Ø¨ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_role.png',
         thumbnailUrl: 'assets/images/hero_role.png',
-        caption: 'مناسبات بأسلوب سينمائي متوازن.',
+        caption: 'Ù…Ù†Ø§Ø³Ø¨Ø§Øª Ø¨Ø£Ø³Ù„ÙˆØ¨ Ø³ÙŠÙ†Ù…Ø§Ø¦ÙŠ Ù…ØªÙˆØ§Ø²Ù†.',
         tags: const ['event', 'cinematic'],
         views: 980,
         likes: 210,
@@ -318,11 +322,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_3',
         photographerId: 'demo_ph_3',
-        photographerName: 'نور الهادي',
+        photographerName: 'Ù†ÙˆØ± Ø§Ù„Ù‡Ø§Ø¯ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_welcome.png',
         thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'منتجات بخلفية نظيفة ولمسة فاخرة.',
+        caption: 'Ù…Ù†ØªØ¬Ø§Øª Ø¨Ø®Ù„ÙÙŠØ© Ù†Ø¸ÙŠÙØ© ÙˆÙ„Ù…Ø³Ø© ÙØ§Ø®Ø±Ø©.',
         tags: const ['product', 'premium'],
         views: 1560,
         likes: 402,
@@ -333,11 +337,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_4',
         photographerId: 'demo_ph_4',
-        photographerName: 'رنيم البغدادي',
+        photographerName: 'Ø±Ù†ÙŠÙ… Ø§Ù„Ø¨ØºØ¯Ø§Ø¯ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_auth.png',
         thumbnailUrl: 'assets/images/hero_auth.png',
-        caption: 'جلسة عائلية بدفء ألوان هادئ.',
+        caption: 'Ø¬Ù„Ø³Ø© Ø¹Ø§Ø¦Ù„ÙŠØ© Ø¨Ø¯ÙØ¡ Ø£Ù„ÙˆØ§Ù† Ù‡Ø§Ø¯Ø¦.',
         tags: const ['family', 'warm'],
         views: 820,
         likes: 188,
@@ -348,11 +352,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_5',
         photographerId: 'demo_ph_5',
-        photographerName: 'عمر السعدي',
+        photographerName: 'Ø¹Ù…Ø± Ø§Ù„Ø³Ø¹Ø¯ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_role.png',
         thumbnailUrl: 'assets/images/hero_role.png',
-        caption: 'تصوير طعام بتباين لطيف وتفاصيل واضحة.',
+        caption:
+            'ØªØµÙˆÙŠØ± Ø·Ø¹Ø§Ù… Ø¨ØªØ¨Ø§ÙŠÙ† Ù„Ø·ÙŠÙ ÙˆØªÙØ§ØµÙŠÙ„ ÙˆØ§Ø¶Ø­Ø©.',
         tags: const ['food', 'studio'],
         views: 1340,
         likes: 276,
@@ -363,11 +368,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_6',
         photographerId: 'demo_ph_6',
-        photographerName: 'زهراء سالم',
+        photographerName: 'Ø²Ù‡Ø±Ø§Ø¡ Ø³Ø§Ù„Ù…',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_welcome.png',
         thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'لقطات أطفال طبيعية بإضاءة لطيفة.',
+        caption: 'Ù„Ù‚Ø·Ø§Øª Ø£Ø·ÙØ§Ù„ Ø·Ø¨ÙŠØ¹ÙŠØ© Ø¨Ø¥Ø¶Ø§Ø¡Ø© Ù„Ø·ÙŠÙØ©.',
         tags: const ['kids', 'soft'],
         views: 1120,
         likes: 310,
@@ -406,7 +411,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _followingIds.remove(photographerId);
         }
       });
-      _showSnackBar('تعذر تحديث المتابعة');
+      _showSnackBar('ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…ØªØ§Ø¨Ø¹Ø©');
     }
   }
 
@@ -455,13 +460,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             )
             .toList();
       });
-      _showSnackBar('تعذر تحديث الإعجاب');
+      _showSnackBar('ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¥Ø¹Ø¬Ø§Ø¨');
     }
   }
 
   Future<void> _openComments(ReelModel reel) async {
     if (_userId.isEmpty) {
-      _showSnackBar('يجب تسجيل الدخول أولاً');
+      _showSnackBar('ÙŠØ¬Ø¨ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø£ÙˆÙ„Ø§Ù‹');
       return;
     }
 
@@ -498,12 +503,25 @@ class _ExploreScreenState extends State<ExploreScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CreateRequestScreen(
-          prefillNotes: 'مرجع من منشور المصور ${reel.photographerName}',
+          prefillNotes:
+              'Ù…Ø±Ø¬Ø¹ Ù…Ù† Ù…Ù†Ø´ÙˆØ± Ø§Ù„Ù…ØµÙˆØ± ${reel.photographerName}',
           prefillReferenceImages: imageUrl.isNotEmpty ? [imageUrl] : const [],
           prefillSelectedPhotographerId: reel.photographerId,
         ),
       ),
     );
+  }
+
+  Future<void> _shareReel(ReelModel reel) async {
+    final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
+    final buffer = StringBuffer()
+      ..writeln('LAQTA')
+      ..writeln(reel.photographerName)
+      ..writeln(reel.caption);
+    if (imageUrl.isNotEmpty) {
+      buffer.writeln(imageUrl);
+    }
+    await SharePlus.instance.share(ShareParams(text: buffer.toString().trim()));
   }
 
   Future<void> _reportContent({
@@ -574,9 +592,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           reason: selected,
         );
       }
-      _showSnackBar('تم إرسال البلاغ');
+      _showSnackBar('ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº');
     } catch (_) {
-      _showSnackBar('تعذر إرسال البلاغ');
+      _showSnackBar('ØªØ¹Ø°Ø± Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº');
     }
   }
 
@@ -681,8 +699,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_photographers.isEmpty) {
       return EmptyState(
         icon: Icons.photo_camera_outlined,
-        title: 'لا يوجد مصورين',
-        message: 'جرّب لاحقاً',
+        title: 'Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…ØµÙˆØ±ÙŠÙ†',
+        message: 'Ø¬Ø±Ù‘Ø¨ Ù„Ø§Ø­Ù‚Ø§Ù‹',
       );
     }
 
@@ -721,7 +739,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     alignment: AlignmentDirectional.centerEnd,
                     child: TextButton(
                       onPressed: () => _toggleFollow(photographer.id),
-                      child: Text(isFollowing ? 'إلغاء المتابعة' : 'متابعة'),
+                      child: Text(
+                        isFollowing
+                            ? 'Ø¥Ù„ØºØ§Ø¡ Ø§Ù„Ù…ØªØ§Ø¨Ø¹Ø©'
+                            : 'Ù…ØªØ§Ø¨Ø¹Ø©',
+                      ),
                     ),
                   ),
               ],
@@ -756,8 +778,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_posts.isEmpty) {
       return EmptyState(
         icon: Icons.photo_library_outlined,
-        title: 'لا توجد منشورات',
-        message: 'تابع المصورين لمشاهدة منشوراتهم.',
+        title: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù†Ø´ÙˆØ±Ø§Øª',
+        message: 'ØªØ§Ø¨Ø¹ Ø§Ù„Ù…ØµÙˆØ±ÙŠÙ† Ù„Ù…Ø´Ø§Ù‡Ø¯Ø© Ù…Ù†Ø´ÙˆØ±Ø§ØªÙ‡Ù….',
       );
     }
 
@@ -810,8 +832,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       context,
                       reel.photographerId,
                     ),
-                    onShare: () =>
-                        _showSnackBar('ميزة المشاركة غير مفعلة حالياً'),
+                    onShare: () => _shareReel(reel),
                     onReport: () => _reportContent(
                       targetId: reel.reelId,
                       targetType: 'reel',
@@ -886,36 +907,42 @@ class _ExplorePostCard extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            Text('${reel.likes} إعجاب', style: textTheme.bodySmall),
+            Text('${reel.likes} Ø¥Ø¹Ø¬Ø§Ø¨', style: textTheme.bodySmall),
             const SizedBox(width: 12),
-            Text('${reel.comments} تعليق', style: textTheme.bodySmall),
+            Text('${reel.comments} ØªØ¹Ù„ÙŠÙ‚', style: textTheme.bodySmall),
             const Spacer(),
             if (canFollow)
               TextButton(
                 onPressed: onFollow,
-                child: Text(isFollowing ? 'متابعة ✓' : 'متابعة'),
+                child: Text(isFollowing ? 'Ù…ØªØ§Ø¨Ø¹Ø© âœ“' : 'Ù…ØªØ§Ø¨Ø¹Ø©'),
               ),
           ],
         ),
         const SizedBox(height: 8),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            OutlinedButton(
-              onPressed: onViewPhotographer,
-              child: const Text('عرض المصور'),
-            ),
-            if (isCustomer) ...[
-              const SizedBox(width: 12),
-              ElevatedButton(
-                onPressed: onCreateRequest,
-                child: const Text('طلب نفس الأسلوب'),
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton(
+                    onPressed: onViewPhotographer,
+                    child: const Text('Ø¹Ø±Ø¶ Ø§Ù„Ù…ØµÙˆØ±'),
+                  ),
+                  if (isCustomer)
+                    ElevatedButton(
+                      onPressed: onCreateRequest,
+                      child: const Text('Ø·Ù„Ø¨ Ù†ÙØ³ Ø§Ù„Ø£Ø³Ù„ÙˆØ¨'),
+                    ),
+                ],
               ),
-            ],
-            const Spacer(),
+            ),
             IconButton(
               onPressed: onReport,
               icon: const Icon(Icons.flag_outlined),
-              tooltip: 'إبلاغ',
+              tooltip: 'Ø¥Ø¨Ù„Ø§Øº',
             ),
           ],
         ),
@@ -951,8 +978,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   DateTime? _lastCommentAt;
 
   static const List<String> _blockedWords = [
-    'رقم',
-    'واتساب',
+    'Ø±Ù‚Ù…',
+    'ÙˆØ§ØªØ³Ø§Ø¨',
     'whatsapp',
     'telegram',
     'tel',
@@ -991,14 +1018,18 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     if (text.isEmpty) return;
 
     if (_containsPhone(text) || _containsUrl(text) || _containsBlocked(text)) {
-      _showSnackBar('يمنع مشاركة أرقام أو روابط أو محتوى مخالف.');
+      _showSnackBar(
+        'ÙŠÙ…Ù†Ø¹ Ù…Ø´Ø§Ø±ÙƒØ© Ø£Ø±Ù‚Ø§Ù… Ø£Ùˆ Ø±ÙˆØ§Ø¨Ø· Ø£Ùˆ Ù…Ø­ØªÙˆÙ‰ Ù…Ø®Ø§Ù„Ù.',
+      );
       return;
     }
 
     final now = DateTime.now();
     if (_lastCommentAt != null &&
         now.difference(_lastCommentAt!).inSeconds < 3) {
-      _showSnackBar('الرجاء الانتظار قبل إرسال تعليق آخر.');
+      _showSnackBar(
+        'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ù‚Ø¨Ù„ Ø¥Ø±Ø³Ø§Ù„ ØªØ¹Ù„ÙŠÙ‚ Ø¢Ø®Ø±.',
+      );
       return;
     }
 
@@ -1023,7 +1054,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       setState(() => _comments.insert(0, comment));
       widget.onCommentAdded();
     } else {
-      _showSnackBar('تعذر إرسال التعليق.');
+      _showSnackBar('ØªØ¹Ø°Ø± Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªØ¹Ù„ÙŠÙ‚.');
     }
 
     if (mounted) {
@@ -1072,7 +1103,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'التعليقات',
+              'Ø§Ù„ØªØ¹Ù„ÙŠÙ‚Ø§Øª',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -1113,7 +1144,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     child: TextField(
                       controller: _controller,
                       decoration: const InputDecoration(
-                        hintText: 'اكتب تعليقاً...',
+                        hintText: 'Ø§ÙƒØªØ¨ ØªØ¹Ù„ÙŠÙ‚Ø§Ù‹...',
                       ),
                       minLines: 1,
                       maxLines: 3,

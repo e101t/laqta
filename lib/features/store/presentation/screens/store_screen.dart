@@ -6,6 +6,7 @@ import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/theme/laqta_tokens.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
 
 class StoreScreen extends StatelessWidget {
   const StoreScreen({super.key});
@@ -13,27 +14,28 @@ class StoreScreen extends StatelessWidget {
   static const List<_StoreProduct> _demoProducts = [
     _StoreProduct(
       id: 'demo_product_1',
-      title: 'إطار صور فاخر',
-      subtitle: 'خشب طبيعي + زجاج مقاوم للخدش',
+      title: 'Ø¥Ø·Ø§Ø± ØµÙˆØ± ÙØ§Ø®Ø±',
+      subtitle: 'Ø®Ø´Ø¨ Ø·Ø¨ÙŠØ¹ÙŠ + Ø²Ø¬Ø§Ø¬ Ù…Ù‚Ø§ÙˆÙ… Ù„Ù„Ø®Ø¯Ø´',
       priceIQD: 35000,
       imageAssetPath: 'assets/images/offers/offer_1.png',
-      badge: 'جديد',
+      badge: 'Ø¬Ø¯ÙŠØ¯',
     ),
     _StoreProduct(
       id: 'demo_product_2',
-      title: 'ألبوم مطبوع',
-      subtitle: 'ورق عالي الجودة + تصميم أنيق',
+      title: 'Ø£Ù„Ø¨ÙˆÙ… Ù…Ø·Ø¨ÙˆØ¹',
+      subtitle: 'ÙˆØ±Ù‚ Ø¹Ø§Ù„ÙŠ Ø§Ù„Ø¬ÙˆØ¯Ø© + ØªØµÙ…ÙŠÙ… Ø£Ù†ÙŠÙ‚',
       priceIQD: 65000,
       imageAssetPath: 'assets/images/offers/offer_2.png',
-      badge: 'الأكثر مبيعًا',
+      badge: 'Ø§Ù„Ø£ÙƒØ«Ø± Ù…Ø¨ÙŠØ¹Ù‹Ø§',
     ),
     _StoreProduct(
       id: 'demo_product_3',
-      title: 'جلسة تصوير منتجات',
-      subtitle: 'باقة مناسبة للمتاجر والمتاجر الإلكترونية',
+      title: 'Ø¬Ù„Ø³Ø© ØªØµÙˆÙŠØ± Ù…Ù†ØªØ¬Ø§Øª',
+      subtitle:
+          'Ø¨Ø§Ù‚Ø© Ù…Ù†Ø§Ø³Ø¨Ø© Ù„Ù„Ù…ØªØ§Ø¬Ø± ÙˆØ§Ù„Ù…ØªØ§Ø¬Ø± Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ©',
       priceIQD: 120000,
       imageAssetPath: 'assets/images/offers/offer_3.png',
-      badge: 'عرض',
+      badge: 'Ø¹Ø±Ø¶',
     ),
   ];
 
@@ -45,9 +47,7 @@ class StoreScreen extends StatelessWidget {
     final products = _demoProducts;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(localizations.shop),
-      ),
+      appBar: AppBar(title: Text(localizations.shop)),
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: RadialGradient(
@@ -64,35 +64,36 @@ class StoreScreen extends StatelessWidget {
                 icon: Icons.storefront_outlined,
                 title: localizations.noProducts,
                 message: localizations.productsEmptyMessage,
-                emoji: '🛍️',
+                emoji: 'ðŸ›ï¸',
               )
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
                   _StoreHeroCard(
                     title: localizations.featuredProducts,
-                    subtitle: 'منتجات مختارة بعناية لتكمل تجربة التصوير.',
-                    onTap: () => _showComingSoonSnackBar(context),
+                    subtitle:
+                        'Ù…Ù†ØªØ¬Ø§Øª Ù…Ø®ØªØ§Ø±Ø© Ø¨Ø¹Ù†Ø§ÙŠØ© Ù„ØªÙƒÙ…Ù„ ØªØ¬Ø±Ø¨Ø© Ø§Ù„ØªØµÙˆÙŠØ±.',
+                    onTap: () => _showCatalogGuidanceSnackBar(context),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     localizations.featuredProducts,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: products.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.82,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
                     itemBuilder: (context, index) => _ProductCard(
                       product: products[index],
                       priceLabel: _formatIQD(products[index].priceIQD, locale),
@@ -101,7 +102,8 @@ class StoreScreen extends StatelessWidget {
                         products[index],
                         locale,
                       ),
-                      onOrder: () => _showComingSoonSnackBar(context),
+                      onOrder: () =>
+                          _openProductInquiry(context, products[index], locale),
                     ),
                   ),
                 ],
@@ -112,14 +114,53 @@ class StoreScreen extends StatelessWidget {
 
   static String _formatIQD(int amount, String locale) {
     final formatted = NumberFormat.decimalPattern(locale).format(amount);
-    return '$formatted د.ع';
+    return '$formatted Ø¯.Ø¹';
   }
 
-  static void _showComingSoonSnackBar(BuildContext context) {
+  static void _showCatalogGuidanceSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('قريبًا'),
+      SnackBar(
+        content: Text(
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'اختر منتجًا ثم أرسل طلبك من داخل التطبيق.'
+              : 'Choose a product, then send your request from inside the app.',
+        ),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  static String _buildInquiryNotes(
+    BuildContext context,
+    _StoreProduct product,
+    String locale,
+  ) {
+    final priceLabel = _formatIQD(product.priceIQD, locale);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    if (isArabic) {
+      return 'مهتم بهذا المنتج من المتجر:\n'
+          'الاسم: ${product.title}\n'
+          'التفاصيل: ${product.subtitle}\n'
+          'السعر: $priceLabel\n'
+          'أحتاج متابعة لإتمام الطلب.';
+    }
+    return 'I am interested in this store item:\n'
+        'Name: ${product.title}\n'
+        'Details: ${product.subtitle}\n'
+        'Price: $priceLabel\n'
+        'Please contact me to complete the order.';
+  }
+
+  static Future<void> _openProductInquiry(
+    BuildContext context,
+    _StoreProduct product,
+    String locale,
+  ) {
+    return Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CreateRequestScreen(
+          prefillNotes: _buildInquiryNotes(context, product, locale),
+        ),
       ),
     );
   }
@@ -129,6 +170,7 @@ class StoreScreen extends StatelessWidget {
     _StoreProduct product,
     String locale,
   ) {
+    final parentContext = context;
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -143,7 +185,9 @@ class StoreScreen extends StatelessWidget {
             children: [
               Text(
                 product.title,
-                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -167,7 +211,7 @@ class StoreScreen extends StatelessWidget {
                 color: LaqtaColors.accent,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  _showComingSoonSnackBar(context);
+                  _openProductInquiry(parentContext, product, locale);
                 },
               ),
             ],
@@ -433,8 +477,9 @@ class _ProductCard extends StatelessWidget {
                             height: 36,
                           ),
                           style: IconButton.styleFrom(
-                            backgroundColor:
-                                scheme.onSurface.withValues(alpha: 0.06),
+                            backgroundColor: scheme.onSurface.withValues(
+                              alpha: 0.06,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

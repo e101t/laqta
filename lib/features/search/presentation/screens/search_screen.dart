@@ -57,11 +57,6 @@ class _SearchScreenState extends State<SearchScreen>
         _recentSearches.clear();
         _recentSearches.addAll(decoded.cast<String>());
       });
-    } else {
-      // Default demo data if no saved searches
-      setState(() {
-        _recentSearches.addAll(['Wedding', 'Sara Ali', 'Baghdad']);
-      });
     }
   }
 
@@ -285,7 +280,9 @@ class _SearchScreenState extends State<SearchScreen>
             children: [
               Text(
                 localizations.recentSearches,
-                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               TextButton(
                 onPressed: () {

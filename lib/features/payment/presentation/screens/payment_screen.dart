@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
@@ -196,19 +197,86 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (!_paymentsConfigured) {
       return Scaffold(
         appBar: AppBar(title: Text(localizations.payment)),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              localizations.paymentsUnavailable,
-              style: textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: scheme.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: scheme.error.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline, color: scheme.error),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            localizations.paymentsUnavailable,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Booking ID: ${widget.bookingId}',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      Icons.camera_alt,
+                      'Photographer',
+                      widget.photographerName,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      Icons.event,
+                      'Session Type',
+                      widget.sessionType,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                      Icons.attach_money,
+                      'Amount',
+                      '${widget.amount.toStringAsFixed(0)} IQD',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'This build does not include a live payment gateway yet. You can return to the booking and continue the booking flow normally.',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              CTAButton(
+                text: 'Back to booking',
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => AppRouter.goToBookingPolicies(context),
+                icon: const Icon(Icons.policy_outlined),
+                label: const Text('Review booking policies'),
+              ),
+            ],
           ),
         ),
       );
     }
-
     return Scaffold(
       appBar: AppBar(title: Text(localizations.payment)),
       body: SingleChildScrollView(
@@ -272,7 +340,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // Payment methods
             Text(
               'Choose Payment Method',
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -287,7 +357,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildPaymentMethod(
               Icons.account_balance,
               'Bank Transfer',
-              'Direct bank transfer (Coming soon)',
+              'Direct bank transfer is not enabled in this build',
               enabled: false,
             ),
             const SizedBox(height: 8),
@@ -295,16 +365,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildPaymentMethod(
               Icons.wallet,
               'Wallet',
-              'Pay from your LAQTA wallet (Coming soon)',
+              'Wallet payments are not enabled in this build',
               enabled: false,
             ),
 
             // Error message if any
             if (_error != null) ...[
               const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
                   color: scheme.error.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: scheme.error),
@@ -316,7 +386,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     Expanded(
                       child: Text(
                         _error!,
-                        style: textTheme.bodyMedium?.copyWith(color: scheme.error),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.error,
+                        ),
                       ),
                     ),
                   ],
@@ -352,7 +424,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   Expanded(
                     child: Text(
                       'Your payment information is secured with bank-level encryption.',
-                      style: textTheme.bodySmall?.copyWith(color: scheme.primary),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -384,7 +458,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -412,9 +488,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       decoration: BoxDecoration(
         color: effectiveSurface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: effectiveOutline,
-        ),
+        border: Border.all(color: effectiveOutline),
       ),
       child: ListTile(
         leading: Container(
@@ -438,14 +512,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
             color: enabled ? scheme.onSurface : scheme.onSurfaceVariant,
           ),
         ),
-          subtitle: Text(
-            subtitle,
-            style: textTheme.bodySmall?.copyWith(
-              color: enabled
-                  ? scheme.onSurfaceVariant
-                  : scheme.onSurfaceVariant.withValues(alpha: 0.6),
-            ),
+        subtitle: Text(
+          subtitle,
+          style: textTheme.bodySmall?.copyWith(
+            color: enabled
+                ? scheme.onSurfaceVariant
+                : scheme.onSurfaceVariant.withValues(alpha: 0.6),
           ),
+        ),
         trailing: enabled
             ? const Icon(Icons.arrow_forward_ios, size: 16)
             : null,

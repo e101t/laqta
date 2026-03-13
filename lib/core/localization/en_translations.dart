@@ -190,7 +190,8 @@ class EnTranslations {
   static const String payFull = 'Pay Full';
   static const String paymentSuccessful = 'Payment Successful';
   static const String paymentFailed = 'Payment Failed';
-  static const String paymentsUnavailable = 'Payments are coming soon';
+  static const String paymentsUnavailable =
+      'Online payments are currently unavailable';
 
   // Content
   static const String createPost = 'Create Post';

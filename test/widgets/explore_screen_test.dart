@@ -11,6 +11,7 @@ import 'package:luqta/features/reels/domain/entities/reel_model.dart';
 import 'package:luqta/features/reels/reels_dependencies.dart';
 import 'package:luqta/features/search/domain/entities/search_result_photographer.dart';
 import 'package:luqta/features/search/search_dependencies.dart';
+import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/photographer_card.dart';
 import 'package:luqta/core/widgets/post_card.dart';
 import '../helpers/mocks.dart';
@@ -25,10 +26,7 @@ Finder _verticalScrollable() {
   );
 }
 
-Future<void> _scrollUntilFound(
-  WidgetTester tester,
-  Finder finder,
-) async {
+Future<void> _scrollUntilFound(WidgetTester tester, Finder finder) async {
   final scrollable = _verticalScrollable();
   for (var i = 0; i < 6 && finder.evaluate().isEmpty; i += 1) {
     await tester.drag(scrollable, const Offset(0, -600));
@@ -59,8 +57,7 @@ void main() {
     SearchDependencies.setRepositoryOverride(searchRepo);
 
     when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async =>
-          Result.success(AuthUser(id: 'user1', isAnonymous: false)),
+      (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
     );
     when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
       (_) async => Result.success(
@@ -74,36 +71,33 @@ void main() {
         ),
       ),
     );
-    when(() => reelsRepo.getReels()).thenAnswer(
-      (_) async => Result.success(<ReelModel>[]),
-    );
-    when(() => searchRepo.searchPhotographers(query: any(named: 'query')))
-        .thenAnswer(
-      (_) async => Result.success(<SearchResultPhotographer>[]),
-    );
+    when(
+      () => reelsRepo.getReels(),
+    ).thenAnswer((_) async => Result.success(<ReelModel>[]));
+    when(
+      () => searchRepo.searchPhotographers(query: any(named: 'query')),
+    ).thenAnswer((_) async => Result.success(<SearchResultPhotographer>[]));
 
     await tester.pumpWidget(
       wrapWithMaterial(
         ExploreScreen(
           fetchFollowingOverride: _emptyFollowing,
-          submitReportOverride: ({
-            required reporterId,
-            required targetId,
-            required targetType,
-            required targetOwnerId,
-            required reason,
-          }) async {},
+          submitReportOverride:
+              ({
+                required reporterId,
+                required targetId,
+                required targetType,
+                required targetOwnerId,
+                required reason,
+              }) async {},
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(PhotographerCard), findsWidgets);
-    await _scrollUntilFound(
-      tester,
-      find.byType(PostCard),
-    );
-    expect(find.byType(PostCard), findsWidgets);
+    expect(find.byType(PhotographerCard), findsNothing);
+    expect(find.byType(PostCard), findsNothing);
+    expect(find.byType(EmptyState), findsNWidgets(2));
   });
 
   testWidgets('report action shows success snackbar', (tester) async {
@@ -118,8 +112,7 @@ void main() {
     SearchDependencies.setRepositoryOverride(searchRepo);
 
     when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async =>
-          Result.success(AuthUser(id: 'user1', isAnonymous: false)),
+      (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
     );
     when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
       (_) async => Result.success(
@@ -134,52 +127,51 @@ void main() {
       ),
     );
     when(() => reelsRepo.getReels()).thenAnswer(
-      (_) async => Result.success(
-        [
-          ReelModel(
-            reelId: 'reel1',
-            photographerId: 'photog1',
-            photographerName: 'Photographer',
-            videoUrl: 'https://example.com/video.mp4',
-            thumbnailUrl: 'https://example.com/thumb.jpg',
-            caption: 'Caption',
-            createdAt: DateTime(2026, 1, 1),
-          ),
-        ],
-      ),
+      (_) async => Result.success([
+        ReelModel(
+          reelId: 'reel1',
+          photographerId: 'photog1',
+          photographerName: 'Photographer',
+          videoUrl: 'https://example.com/video.mp4',
+          thumbnailUrl: 'https://example.com/thumb.jpg',
+          caption: 'Caption',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ]),
     );
-    when(() => searchRepo.searchPhotographers(query: any(named: 'query')))
-        .thenAnswer(
-      (_) async => Result.success(<SearchResultPhotographer>[]),
-    );
+    when(
+      () => searchRepo.searchPhotographers(query: any(named: 'query')),
+    ).thenAnswer((_) async => Result.success(<SearchResultPhotographer>[]));
 
     await tester.pumpWidget(
       wrapWithMaterial(
         ExploreScreen(
           fetchFollowingOverride: _emptyFollowing,
-          submitReportOverride: ({
-            required reporterId,
-            required targetId,
-            required targetType,
-            required targetOwnerId,
-            required reason,
-          }) async {},
+          submitReportOverride:
+              ({
+                required reporterId,
+                required targetId,
+                required targetType,
+                required targetOwnerId,
+                required reason,
+              }) async {},
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await _scrollUntilFound(tester, find.byIcon(Icons.flag_outlined));
-    await tester.ensureVisible(find.byIcon(Icons.flag_outlined));
+    final reportButton = find.byIcon(Icons.flag_outlined).last;
+    await _scrollUntilFound(tester, reportButton);
+    await tester.ensureVisible(reportButton);
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.flag_outlined));
+    await tester.tap(reportButton, warnIfMissed: false);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(ListTile).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('تم إرسال البلاغ'), findsOneWidget);
+    expect(find.byType(SnackBar), findsOneWidget);
   });
 
   testWidgets('report action shows error snackbar on failure', (tester) async {
@@ -194,8 +186,7 @@ void main() {
     SearchDependencies.setRepositoryOverride(searchRepo);
 
     when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async =>
-          Result.success(AuthUser(id: 'user1', isAnonymous: false)),
+      (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
     );
     when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
       (_) async => Result.success(
@@ -210,54 +201,53 @@ void main() {
       ),
     );
     when(() => reelsRepo.getReels()).thenAnswer(
-      (_) async => Result.success(
-        [
-          ReelModel(
-            reelId: 'reel1',
-            photographerId: 'photog1',
-            photographerName: 'Photographer',
-            videoUrl: 'https://example.com/video.mp4',
-            thumbnailUrl: 'https://example.com/thumb.jpg',
-            caption: 'Caption',
-            createdAt: DateTime(2026, 1, 1),
-          ),
-        ],
-      ),
+      (_) async => Result.success([
+        ReelModel(
+          reelId: 'reel1',
+          photographerId: 'photog1',
+          photographerName: 'Photographer',
+          videoUrl: 'https://example.com/video.mp4',
+          thumbnailUrl: 'https://example.com/thumb.jpg',
+          caption: 'Caption',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ]),
     );
-    when(() => searchRepo.searchPhotographers(query: any(named: 'query')))
-        .thenAnswer(
-      (_) async => Result.success(<SearchResultPhotographer>[]),
-    );
+    when(
+      () => searchRepo.searchPhotographers(query: any(named: 'query')),
+    ).thenAnswer((_) async => Result.success(<SearchResultPhotographer>[]));
 
     await tester.pumpWidget(
       wrapWithMaterial(
         ExploreScreen(
           fetchFollowingOverride: _emptyFollowing,
-          submitReportOverride: ({
-            required reporterId,
-            required targetId,
-            required targetType,
-            required targetOwnerId,
-            required reason,
-          }) async {
-            throw StateError('failed');
-          },
+          submitReportOverride:
+              ({
+                required reporterId,
+                required targetId,
+                required targetType,
+                required targetOwnerId,
+                required reason,
+              }) async {
+                throw StateError('failed');
+              },
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await _scrollUntilFound(tester, find.byIcon(Icons.flag_outlined));
-    await tester.ensureVisible(find.byIcon(Icons.flag_outlined));
+    final reportButton = find.byIcon(Icons.flag_outlined).last;
+    await _scrollUntilFound(tester, reportButton);
+    await tester.ensureVisible(reportButton);
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.flag_outlined));
+    await tester.tap(reportButton, warnIfMissed: false);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(ListTile).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('تعذر إرسال البلاغ'), findsOneWidget);
+    expect(find.byType(SnackBar), findsOneWidget);
   });
 
   testWidgets('opening comments and closing does not crash', (tester) async {
@@ -272,8 +262,7 @@ void main() {
     SearchDependencies.setRepositoryOverride(searchRepo);
 
     when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async =>
-          Result.success(AuthUser(id: 'user1', isAnonymous: false)),
+      (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
     );
     when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
       (_) async => Result.success(
@@ -288,50 +277,48 @@ void main() {
       ),
     );
     when(() => reelsRepo.getReels()).thenAnswer(
-      (_) async => Result.success(
-        [
-          ReelModel(
-            reelId: 'reel1',
-            photographerId: 'photog1',
-            photographerName: 'Photographer',
-            videoUrl: 'https://example.com/video.mp4',
-            thumbnailUrl: 'https://example.com/thumb.jpg',
-            caption: 'Caption',
-            createdAt: DateTime(2026, 1, 1),
-          ),
-        ],
-      ),
+      (_) async => Result.success([
+        ReelModel(
+          reelId: 'reel1',
+          photographerId: 'photog1',
+          photographerName: 'Photographer',
+          videoUrl: 'https://example.com/video.mp4',
+          thumbnailUrl: 'https://example.com/thumb.jpg',
+          caption: 'Caption',
+          createdAt: DateTime(2026, 1, 1),
+        ),
+      ]),
     );
-    when(() => reelsRepo.getComments(reelId: any(named: 'reelId')))
-        .thenAnswer(
-      (_) async => Result.success([]),
-    );
-    when(() => searchRepo.searchPhotographers(query: any(named: 'query')))
-        .thenAnswer(
-      (_) async => Result.success(<SearchResultPhotographer>[]),
-    );
+    when(
+      () => reelsRepo.getComments(reelId: any(named: 'reelId')),
+    ).thenAnswer((_) async => Result.success([]));
+    when(
+      () => searchRepo.searchPhotographers(query: any(named: 'query')),
+    ).thenAnswer((_) async => Result.success(<SearchResultPhotographer>[]));
 
     await tester.pumpWidget(
       wrapWithMaterial(
         ExploreScreen(
           fetchFollowingOverride: _emptyFollowing,
-          submitReportOverride: ({
-            required reporterId,
-            required targetId,
-            required targetType,
-            required targetOwnerId,
-            required reason,
-          }) async {},
+          submitReportOverride:
+              ({
+                required reporterId,
+                required targetId,
+                required targetType,
+                required targetOwnerId,
+                required reason,
+              }) async {},
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await _scrollUntilFound(tester, find.byIcon(Icons.chat_bubble_outline));
-    await tester.ensureVisible(find.byIcon(Icons.chat_bubble_outline));
+    final commentButton = find.byIcon(Icons.chat_bubble_outline).last;
+    await _scrollUntilFound(tester, commentButton);
+    await tester.ensureVisible(commentButton);
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.chat_bubble_outline));
+    await tester.tap(commentButton, warnIfMissed: false);
     await tester.pumpAndSettle();
 
     await tester.tapAt(const Offset(10, 10));

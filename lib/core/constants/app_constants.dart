@@ -141,6 +141,10 @@ class AppConstants {
     'ENABLE_PAYMENTS',
     defaultValue: false,
   );
+  static const bool enableDemoContent = bool.fromEnvironment(
+    'ENABLE_DEMO_CONTENT',
+    defaultValue: false,
+  );
   static const bool enableAppCheck = bool.fromEnvironment(
     'ENABLE_APP_CHECK',
     defaultValue: true,

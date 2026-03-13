@@ -19,6 +19,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Payments are coming soon'), findsOneWidget);
+    expect(
+      find.text('Online payments are currently unavailable'),
+      findsOneWidget,
+    );
+    expect(find.text('Back to booking'), findsOneWidget);
   });
 }
