@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +16,7 @@ class AvailabilityScreen extends StatefulWidget {
 
 class _AvailabilityScreenState extends State<AvailabilityScreen> {
   static const String _prefsKey = 'photographer_availability_v1';
+  static const String _profileField = 'availabilitySettings';
 
   final List<_DayAvailability> _days = _defaultDays();
   bool _allowSameDayBookings = false;
@@ -21,6 +25,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   double _deliveryDays = 3;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isSyncedToProfile = false;
 
   @override
   void initState() {
@@ -29,38 +34,14 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   Future<void> _loadAvailability() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_prefsKey);
+    final profilePayload = await _loadProfileAvailability();
+    final cachedPayload = await _loadCachedAvailability();
+    final payload = profilePayload ?? cachedPayload;
 
-    if (raw != null && raw.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(raw);
-        if (decoded is Map<String, dynamic>) {
-          _allowSameDayBookings =
-              decoded['allowSameDayBookings'] as bool? ?? _allowSameDayBookings;
-          _travelRadiusKm =
-              (decoded['travelRadiusKm'] as num?)?.toDouble() ?? _travelRadiusKm;
-          _minBookingPrice =
-              (decoded['minBookingPrice'] as num?)?.toDouble() ?? _minBookingPrice;
-          _deliveryDays =
-              (decoded['deliveryDays'] as num?)?.toDouble() ?? _deliveryDays;
-
-          final days = decoded['days'];
-          if (days is List) {
-            for (var index = 0; index < days.length && index < _days.length; index++) {
-              final item = days[index];
-              if (item is Map) {
-                _days[index] = _DayAvailability.fromJson(
-                  Map<String, dynamic>.from(item),
-                );
-              }
-            }
-          }
-        }
-      } catch (_) {
-        // Ignore malformed cached settings and fall back to defaults.
-      }
+    if (payload != null) {
+      _applyPayload(payload);
     }
+    _isSyncedToProfile = profilePayload != null;
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -69,29 +50,135 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   Future<void> _saveAvailability() async {
     setState(() => _isSaving = true);
 
-    final prefs = await SharedPreferences.getInstance();
-    final payload = jsonEncode({
+    final payload = <String, dynamic>{
       'allowSameDayBookings': _allowSameDayBookings,
       'travelRadiusKm': _travelRadiusKm.round(),
       'minBookingPrice': _minBookingPrice.round(),
       'deliveryDays': _deliveryDays.round(),
       'days': _days.map((day) => day.toJson()).toList(),
-    });
-    await prefs.setString(_prefsKey, payload);
+    };
+    await _saveCachedAvailability(payload);
+    final syncedToProfile = await _saveProfileAvailability(payload);
 
     if (!mounted) return;
-    setState(() => _isSaving = false);
+    setState(() {
+      _isSaving = false;
+      _isSyncedToProfile = syncedToProfile;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _localizedText(
-            ar: 'تم حفظ إعدادات التوفر محليًا',
-            en: 'Availability saved locally',
-          ),
+          syncedToProfile
+              ? _localizedText(
+                  ar: 'تم حفظ إعدادات التوفر ومزامنتها مع ملفك الشخصي',
+                  en: 'Availability saved and synced to your profile',
+                )
+              : _localizedText(
+                  ar: 'تم حفظ إعدادات التوفر على هذا الجهاز',
+                  en: 'Availability saved on this device',
+                ),
         ),
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<Map<String, dynamic>?> _loadCachedAvailability() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
+    } catch (_) {
+      // Ignore malformed cached settings and fall back to defaults.
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _loadProfileAvailability() async {
+    final userId = _firebaseUserId;
+    if (userId == null) {
+      return null;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      final data = doc.data();
+      final payload = data?[_profileField];
+      if (payload is Map<String, dynamic>) {
+        return payload;
+      }
+      if (payload is Map) {
+        return Map<String, dynamic>.from(payload);
+      }
+    } catch (_) {
+      // Keep using local cache when cloud sync is unavailable.
+    }
+    return null;
+  }
+
+  Future<void> _saveCachedAvailability(Map<String, dynamic> payload) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, jsonEncode(payload));
+  }
+
+  Future<bool> _saveProfileAvailability(Map<String, dynamic> payload) async {
+    final userId = _firebaseUserId;
+    if (userId == null) {
+      return false;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        _profileField: payload,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _applyPayload(Map<String, dynamic> decoded) {
+    _allowSameDayBookings =
+        decoded['allowSameDayBookings'] as bool? ?? _allowSameDayBookings;
+    _travelRadiusKm =
+        (decoded['travelRadiusKm'] as num?)?.toDouble() ?? _travelRadiusKm;
+    _minBookingPrice =
+        (decoded['minBookingPrice'] as num?)?.toDouble() ?? _minBookingPrice;
+    _deliveryDays =
+        (decoded['deliveryDays'] as num?)?.toDouble() ?? _deliveryDays;
+
+    final days = decoded['days'];
+    if (days is List) {
+      for (var index = 0; index < days.length && index < _days.length; index++) {
+        final item = days[index];
+        if (item is Map) {
+          _days[index] = _DayAvailability.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+        }
+      }
+    }
+  }
+
+  String? get _firebaseUserId {
+    if (Firebase.apps.isEmpty) {
+      return null;
+    }
+    return FirebaseAuth.instance.currentUser?.uid;
   }
 
   Future<void> _pickTime({
@@ -314,8 +401,16 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             ),
             Text(
               _localizedText(
-                ar: 'هذه الإعدادات محفوظة محليًا حاليًا إلى حين ربطها بالباكند.',
-                en: 'These settings are currently saved locally until the backend is wired.',
+                ar: _isSyncedToProfile
+                    ? 'هذه الإعدادات مرتبطة الآن بملفك الشخصي وتبقى محفوظة على هذا الجهاز أيضًا.'
+                    : _firebaseUserId != null
+                    ? 'سيتم حفظ هذه الإعدادات على جهازك ومزامنتها مع ملفك الشخصي عند نجاح الاتصال.'
+                    : 'سيتم حفظ هذه الإعدادات على هذا الجهاز إلى حين تسجيل الدخول.',
+                en: _isSyncedToProfile
+                    ? 'These settings are synced to your profile and also cached on this device.'
+                    : _firebaseUserId != null
+                    ? 'These settings are saved on this device and sync to your profile when the connection succeeds.'
+                    : 'These settings stay on this device until you sign in.',
               ),
               style: textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
@@ -514,3 +609,4 @@ List<_DayAvailability> _defaultDays() {
     _DayAvailability(isEnabled: false, startMinutes: 540, endMinutes: 1020),
   ];
 }
+

@@ -253,13 +253,35 @@ class EnTranslations {
 
   // Settings
   static const String settings = 'Settings';
+  static const String notificationsSection = 'Notifications';
+  static const String appearanceSection = 'Appearance';
+  static const String accessibilitySection = 'Accessibility';
+  static const String legalSection = 'Legal';
   static const String language = 'Language';
+  static const String darkMode = 'Dark Mode';
+  static const String darkModeSubtitle =
+      'Use the dark color theme throughout the app.';
   static const String enableNotifications = 'Enable Notifications';
+  static const String notificationsSubtitle =
+      'Receive updates for bookings and messages';
   static const String reduceMotion = 'Reduce Motion';
+  static const String reduceMotionSubtitle =
+      'Limit non-essential motion effects in the interface.';
+  static const String languageChanged = 'Language updated successfully';
   static const String privacy = 'Privacy Policy';
   static const String terms = 'Terms & Conditions';
+  static const String policiesSubtitle = 'Read platform policies & terms';
+  static const String bookingPoliciesSubtitle =
+      'Guarantees, revisions, and dispute handling';
   static const String logout = 'Logout';
+  static const String logoutSuccess = 'Logged out successfully';
+  static const String logoutFailed = 'Failed to logout';
   static const String deleteAccount = 'Delete Account';
+  static const String deleteAccountConfirm =
+      'Are you sure you want to delete your account? This action cannot be undone.';
+  static const String deleteAccountSuccess = 'Account deleted successfully';
+  static const String deleteAccountFailed = 'Failed to delete account';
+  static const String noUserLoggedIn = 'No user is currently signed in';
 
   // Dashboard (Photographer)
   static const String dashboard = 'Dashboard';

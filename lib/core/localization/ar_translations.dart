@@ -219,13 +219,35 @@ class ArTranslations {
 
   // Settings
   static const String settings = 'الإعدادات';
+  static const String notificationsSection = 'الإشعارات';
+  static const String appearanceSection = 'المظهر';
+  static const String accessibilitySection = 'إمكانية الوصول';
+  static const String legalSection = 'الجوانب القانونية';
   static const String language = 'اللغة';
+  static const String darkMode = 'الوضع الداكن';
+  static const String darkModeSubtitle =
+      'استخدم نسق الألوان الداكنة في جميع أجزاء التطبيق.';
   static const String enableNotifications = 'تفعيل الإشعارات';
+  static const String notificationsSubtitle =
+      'استلام تحديثات الحجوزات والرسائل';
   static const String reduceMotion = 'تقليل الحركة';
+  static const String reduceMotionSubtitle =
+      'تقليل الحركات البصرية غير الأساسية في الواجهة.';
+  static const String languageChanged = 'تم تحديث اللغة بنجاح';
   static const String privacy = 'سياسة الخصوصية';
   static const String terms = 'الشروط والأحكام';
+  static const String policiesSubtitle = 'اطلع على سياسات المنصة وشروطها';
+  static const String bookingPoliciesSubtitle =
+      'الضمانات والتعديلات وإدارة النزاعات';
   static const String logout = 'تسجيل الخروج';
+  static const String logoutSuccess = 'تم تسجيل الخروج بنجاح';
+  static const String logoutFailed = 'تعذر تسجيل الخروج';
   static const String deleteAccount = 'حذف الحساب';
+  static const String deleteAccountConfirm =
+      'هل أنت متأكد من حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء.';
+  static const String deleteAccountSuccess = 'تم حذف الحساب بنجاح';
+  static const String deleteAccountFailed = 'تعذر حذف الحساب';
+  static const String noUserLoggedIn = 'لا يوجد مستخدم مسجل حاليًا';
 
   // Dashboard (Photographer)
   static const String dashboard = 'لوحة التحكم';

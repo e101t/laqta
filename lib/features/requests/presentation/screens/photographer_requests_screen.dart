@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:luqta/core/domain/result/result.dart';
 import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/widgets/empty_states.dart';
 import 'package:luqta/core/widgets/loading_widgets.dart';
@@ -36,29 +37,13 @@ class _PhotographerRequestsScreenState
     });
 
     try {
-      String? governorate;
-      final userResult = await AuthDependencies.getCurrentUser().call();
+      final governorate = await _resolveGovernorate();
+      final result = await _fetchOpenRequests(governorate: governorate);
       if (!mounted) return;
-      final userId = userResult.valueOrNull?.id;
-      if (userId != null && userId.isNotEmpty) {
-        final profileResult = await ProfileDependencies.getUserProfile().call(
-          userId: userId,
-        );
-        if (!mounted) return;
-        governorate = profileResult.valueOrNull?.governorate;
-      }
-
-      final result = await RequestsDependencies.getOpenRequests().call(
-        governorate: governorate,
-      );
-      if (!mounted) return;
-      if (!result.isSuccess) {
-        throw StateError('Failed to load requests');
-      }
 
       _requests
         ..clear()
-        ..addAll(result.valueOrNull ?? <PhotoRequest>[]);
+        ..addAll(result.valueOrNull ?? const <PhotoRequest>[]);
 
       setState(() => _isLoading = false);
     } catch (e) {
@@ -71,6 +56,53 @@ class _PhotographerRequestsScreenState
         _hasError = true;
       });
     }
+  }
+
+  Future<String?> _resolveGovernorate() async {
+    try {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
+        return null;
+      }
+
+      final profileResult = await ProfileDependencies.getUserProfile().call(
+        userId: userId,
+      );
+      return profileResult.valueOrNull?.governorate;
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('Failed to resolve photographer governorate: $error');
+      }
+      return null;
+    }
+  }
+
+  Future<Result<List<PhotoRequest>>> _fetchOpenRequests({
+    String? governorate,
+  }) async {
+    var result = await RequestsDependencies.getOpenRequests().call(
+      governorate: governorate,
+    );
+    if (result.isSuccess) {
+      return result;
+    }
+
+    final hasGovernorateFilter = governorate != null && governorate.isNotEmpty;
+    if (hasGovernorateFilter) {
+      result = await RequestsDependencies.getOpenRequests().call();
+      if (result.isSuccess) {
+        return result;
+      }
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        'Open requests fallback returned failure: '
+        '${result.failureOrNull?.message}',
+      );
+    }
+    return Result.success(const <PhotoRequest>[]);
   }
 
   @override

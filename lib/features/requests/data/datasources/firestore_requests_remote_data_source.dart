@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:luqta/core/constants/app_constants.dart';
+import 'package:luqta/core/security/secure_exceptions.dart';
 import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/core/security/secure_storage.dart';
 import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
@@ -71,23 +72,27 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
 
   @override
   Future<List<RequestDto>> getOpenRequests({String? governorate}) async {
-    Query<Map<String, dynamic>> query = _requestsCollection.where(
+    final baseQuery = _requestsCollection.where(
       'status',
       whereIn: const ['published', 'awaiting_offers'],
     );
 
-    if (governorate != null && governorate.isNotEmpty) {
-      query = query.where('governorate', isEqualTo: governorate);
-    }
-
-    if (!kDebugMode) {
-      query = query.orderBy('createdAt', descending: true);
-    }
-    final snapshot = await _secure.guard(
-      () => query.limit(AppConstants.queryLimit).get(),
+    final snapshot = await _getOpenRequestsSnapshot(
+      baseQuery: baseQuery,
+      governorate: governorate,
     );
+    final docs = snapshot.docs.where((doc) {
+      if (governorate == null || governorate.isEmpty) {
+        return true;
+      }
+      return doc.data()['governorate'] == governorate;
+    }).toList()
+      ..sort((a, b) => _compareCreatedAtDesc(a.data()['createdAt'], b.data()['createdAt']));
 
-    return snapshot.docs.map(RequestDto.fromFirestore).toList();
+    return docs
+        .take(AppConstants.queryLimit)
+        .map(RequestDto.fromFirestore)
+        .toList();
   }
 
   @override
@@ -205,6 +210,59 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
 
   @override
   String generateOfferId() => _offersCollection.doc().id;
+
+  Future<QuerySnapshot<Map<String, dynamic>>> _getOpenRequestsSnapshot({
+    required Query<Map<String, dynamic>> baseQuery,
+    required String? governorate,
+  }) async {
+    Query<Map<String, dynamic>> query = baseQuery;
+    if (governorate != null && governorate.isNotEmpty) {
+      query = query.where('governorate', isEqualTo: governorate);
+    }
+    if (!kDebugMode) {
+      query = query.orderBy('createdAt', descending: true);
+    }
+
+    try {
+      return await _secure.guard(
+        () => query.limit(AppConstants.queryLimit).get(),
+      );
+    } on SecureException catch (error) {
+      final shouldFallback =
+          governorate != null &&
+          governorate.isNotEmpty &&
+          (error.code == 'failed-precondition' ||
+              error.code == 'permission-denied' ||
+              error.code == 'unavailable');
+      if (!shouldFallback) {
+        rethrow;
+      }
+    }
+
+    var fallbackQuery = baseQuery;
+    if (!kDebugMode) {
+      fallbackQuery = fallbackQuery.orderBy('createdAt', descending: true);
+    }
+    return _secure.guard(
+      () => fallbackQuery.limit(AppConstants.queryLimit * 4).get(),
+    );
+  }
+
+  int _compareCreatedAtDesc(dynamic left, dynamic right) {
+    final leftDate = _toDateTime(left);
+    final rightDate = _toDateTime(right);
+    return rightDate.compareTo(leftDate);
+  }
+
+  DateTime _toDateTime(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
 
   String _fileExtension(String filePath) {
     final lower = filePath.toLowerCase();

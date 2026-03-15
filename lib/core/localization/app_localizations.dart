@@ -147,11 +147,26 @@ class AppLocalizations {
       'notifications': EnTranslations.notifications,
       'noNotifications': EnTranslations.noNotifications,
       'settings': EnTranslations.settings,
+      'notificationsSection': EnTranslations.notificationsSection,
+      'appearanceSection': EnTranslations.appearanceSection,
+      'accessibilitySection': EnTranslations.accessibilitySection,
+      'legalSection': EnTranslations.legalSection,
       'language': EnTranslations.language,
+      'darkMode': EnTranslations.darkMode,
+      'darkModeSubtitle': EnTranslations.darkModeSubtitle,
       'logout': EnTranslations.logout,
+      'logoutSuccess': EnTranslations.logoutSuccess,
+      'logoutFailed': EnTranslations.logoutFailed,
       'deleteAccount': EnTranslations.deleteAccount,
+      'deleteAccountConfirm': EnTranslations.deleteAccountConfirm,
+      'deleteAccountSuccess': EnTranslations.deleteAccountSuccess,
+      'deleteAccountFailed': EnTranslations.deleteAccountFailed,
+      'noUserLoggedIn': EnTranslations.noUserLoggedIn,
       'enableNotifications': EnTranslations.enableNotifications,
+      'notificationsSubtitle': EnTranslations.notificationsSubtitle,
       'reduceMotion': EnTranslations.reduceMotion,
+      'reduceMotionSubtitle': EnTranslations.reduceMotionSubtitle,
+      'languageChanged': EnTranslations.languageChanged,
       'privacy': EnTranslations.privacy,
       'terms': EnTranslations.terms,
       'accept': EnTranslations.accept,
@@ -352,6 +367,8 @@ class AppLocalizations {
       'signOut': EnTranslations.signOut,
       'policies': EnTranslations.policies,
       'bookingPolicies': EnTranslations.bookingPolicies,
+      'policiesSubtitle': EnTranslations.policiesSubtitle,
+      'bookingPoliciesSubtitle': EnTranslations.bookingPoliciesSubtitle,
       'readPolicies': EnTranslations.readPolicies,
       'agreeToTerms': EnTranslations.agreeToTerms,
       'iUnderstand': EnTranslations.iUnderstand,
@@ -580,11 +597,26 @@ class AppLocalizations {
       'notifications': ArTranslations.notifications,
       'noNotifications': ArTranslations.noNotifications,
       'settings': ArTranslations.settings,
+      'notificationsSection': ArTranslations.notificationsSection,
+      'appearanceSection': ArTranslations.appearanceSection,
+      'accessibilitySection': ArTranslations.accessibilitySection,
+      'legalSection': ArTranslations.legalSection,
       'language': ArTranslations.language,
+      'darkMode': ArTranslations.darkMode,
+      'darkModeSubtitle': ArTranslations.darkModeSubtitle,
       'logout': ArTranslations.logout,
+      'logoutSuccess': ArTranslations.logoutSuccess,
+      'logoutFailed': ArTranslations.logoutFailed,
       'deleteAccount': ArTranslations.deleteAccount,
+      'deleteAccountConfirm': ArTranslations.deleteAccountConfirm,
+      'deleteAccountSuccess': ArTranslations.deleteAccountSuccess,
+      'deleteAccountFailed': ArTranslations.deleteAccountFailed,
+      'noUserLoggedIn': ArTranslations.noUserLoggedIn,
       'enableNotifications': ArTranslations.enableNotifications,
+      'notificationsSubtitle': ArTranslations.notificationsSubtitle,
       'reduceMotion': ArTranslations.reduceMotion,
+      'reduceMotionSubtitle': ArTranslations.reduceMotionSubtitle,
+      'languageChanged': ArTranslations.languageChanged,
       'privacy': ArTranslations.privacy,
       'terms': ArTranslations.terms,
       'accept': ArTranslations.accept,
@@ -779,6 +811,8 @@ class AppLocalizations {
       'signOut': ArTranslations.signOut,
       'policies': ArTranslations.policies,
       'bookingPolicies': ArTranslations.bookingPolicies,
+      'policiesSubtitle': ArTranslations.policiesSubtitle,
+      'bookingPoliciesSubtitle': ArTranslations.bookingPoliciesSubtitle,
       'readPolicies': ArTranslations.readPolicies,
       'agreeToTerms': ArTranslations.agreeToTerms,
       'iUnderstand': ArTranslations.iUnderstand,
@@ -1012,8 +1046,15 @@ class AppLocalizations {
   String get settings => translate('settings');
   String get language => translate('language');
   String get logout => translate('logout');
+  String get logoutSuccess => translate('logoutSuccess');
+  String get logoutFailed => translate('logoutFailed');
   String get deleteAccount => translate('deleteAccount');
+  String get deleteAccountConfirm => translate('deleteAccountConfirm');
+  String get deleteAccountSuccess => translate('deleteAccountSuccess');
+  String get deleteAccountFailed => translate('deleteAccountFailed');
+  String get noUserLoggedIn => translate('noUserLoggedIn');
   String get enableNotifications => translate('enableNotifications');
+  String get notificationsSubtitle => translate('notificationsSubtitle');
   String get reduceMotion => translate('reduceMotion');
   String get privacy => translate('privacy');
   String get terms => translate('terms');
@@ -1221,10 +1262,12 @@ class AppLocalizations {
 
   // Policies
   String get policies => translate('policies');
+  String get policiesSubtitle => translate('policiesSubtitle');
   String get readPolicies => translate('readPolicies');
   String get agreeToTerms => translate('agreeToTerms');
   String get iUnderstand => translate('iUnderstand');
   String get bookingPolicies => translate('bookingPolicies');
+  String get bookingPoliciesSubtitle => translate('bookingPoliciesSubtitle');
 
   // Escrow Policy
   String get escrowPolicy => translate('escrowPolicy');

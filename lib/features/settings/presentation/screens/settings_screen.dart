@@ -75,9 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(localizations.deleteAccount),
-        content: const Text(
-          'Are you sure you want to delete your account? This action cannot be undone.',
-        ),
+        content: Text(localizations.deleteAccountConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -103,7 +101,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+        ).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).noUserLoggedIn)),
+        );
         return;
       }
 
@@ -138,13 +138,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account deleted successfully')),
+        SnackBar(content: Text(AppLocalizations.of(context).deleteAccountSuccess)),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete account')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).deleteAccountFailed)));
     }
   }
 
@@ -155,7 +155,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to logout: ${result.failureOrNull?.message}'),
+            content: Text(
+              '${AppLocalizations.of(context).logoutFailed}: ${result.failureOrNull?.message}',
+            ),
           ),
         );
         return;
@@ -172,12 +174,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Logged out successfully')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).logoutSuccess)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to logout')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).logoutFailed)));
     }
   }
 
@@ -193,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader(localizations.notificationsSection),
           SwitchListTile(
             title: Text(localizations.enableNotifications),
-            subtitle: const Text('استلام تحديثات الحجوزات والرسائل'),
+            subtitle: Text(localizations.notificationsSubtitle),
             value: _notificationsEnabled,
             onChanged: _toggleNotifications,
             activeThumbColor: Theme.of(context).colorScheme.primary,
@@ -201,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
 
           // Appearance Section
-          _buildSectionHeader('${localizations.appearanceSection} 🎨'),
+          _buildSectionHeader(localizations.appearanceSection),
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, child) {
               return SwitchListTile(
@@ -260,7 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.gavel_outlined),
             title: Text(localizations.policies),
-            subtitle: const Text('Read platform policies & terms'),
+            subtitle: Text(localizations.policiesSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.push(
               context,
@@ -270,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.shield_outlined),
             title: Text(localizations.bookingPolicies),
-            subtitle: const Text('ضمان الحجز، التعديلات، النزاعات'),
+            subtitle: Text(localizations.bookingPoliciesSubtitle),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => AppRouter.goToBookingPolicies(context),
           ),
@@ -343,3 +345,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
+

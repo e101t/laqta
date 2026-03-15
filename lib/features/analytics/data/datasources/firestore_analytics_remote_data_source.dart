@@ -34,78 +34,69 @@ class FirestoreAnalyticsRemoteDataSource implements AnalyticsRemoteDataSource {
     final periodStart = _periodStart(period);
     final periodTimestamp = Timestamp.fromDate(periodStart);
 
-    final snapshots = await Future.wait<QuerySnapshot<Map<String, dynamic>>>([
-      _secure.guard(
-        () => _bookingsCollection
-            .where('photographerId', isEqualTo: photographerId)
-            .where('createdAt', isGreaterThanOrEqualTo: periodTimestamp)
-            .get(),
-      ),
-      _secure.guard(
-        () => _offersCollection
-            .where('photographerId', isEqualTo: photographerId)
-            .where('createdAt', isGreaterThanOrEqualTo: periodTimestamp)
-            .get(),
-      ),
-      _secure.guard(
-        () => _reviewsCollection
-            .where('targetId', isEqualTo: photographerId)
-            .where('createdAt', isGreaterThanOrEqualTo: periodTimestamp)
-            .get(),
-      ),
-      _secure.guard(
-        () => _reelsCollection
-            .where('photographerId', isEqualTo: photographerId)
-            .where('createdAt', isGreaterThanOrEqualTo: periodTimestamp)
-            .get(),
-      ),
-      _secure.guard(
-        () => _storiesCollection
-            .where('photographerId', isEqualTo: photographerId)
-            .where('createdAt', isGreaterThanOrEqualTo: periodTimestamp)
-            .get(),
-      ),
-    ]);
+    final bookingsDocs = await _loadDocsForPeriod(
+      collection: _bookingsCollection,
+      field: 'photographerId',
+      value: photographerId,
+      periodTimestamp: periodTimestamp,
+    );
+    final offersDocs = await _loadDocsForPeriod(
+      collection: _offersCollection,
+      field: 'photographerId',
+      value: photographerId,
+      periodTimestamp: periodTimestamp,
+    );
+    final reviewsDocs = await _loadDocsForPeriod(
+      collection: _reviewsCollection,
+      field: 'targetId',
+      value: photographerId,
+      periodTimestamp: periodTimestamp,
+    );
+    final reelsDocs = await _loadDocsForPeriod(
+      collection: _reelsCollection,
+      field: 'photographerId',
+      value: photographerId,
+      periodTimestamp: periodTimestamp,
+    );
+    final storiesDocs = await _loadDocsForPeriod(
+      collection: _storiesCollection,
+      field: 'photographerId',
+      value: photographerId,
+      periodTimestamp: periodTimestamp,
+    );
 
-    final bookingsSnapshot = snapshots[0];
-    final offersSnapshot = snapshots[1];
-    final reviewsSnapshot = snapshots[2];
-    final reelsSnapshot = snapshots[3];
-    final storiesSnapshot = snapshots[4];
-
-    final completedBookingsDocs = bookingsSnapshot.docs.where((doc) {
-      final status = doc.data()['status'];
+    final completedBookingsDocs = bookingsDocs.where((data) {
+      final status = data['status'];
       return status == 'completed' || status == 'done';
     }).toList();
 
-    final revenue = completedBookingsDocs.fold<double>(0, (total, doc) {
-      return total + _toDouble(doc.data()['price']);
+    final revenue = completedBookingsDocs.fold<double>(0, (total, data) {
+      return total + _toDouble(data['price']);
     });
 
-    final ratingSum = reviewsSnapshot.docs.fold<double>(0, (total, doc) {
-      return total + _toDouble(doc.data()['rating']);
+    final ratingSum = reviewsDocs.fold<double>(0, (total, data) {
+      return total + _toDouble(data['rating']);
     });
-    final avgRating = reviewsSnapshot.docs.isEmpty
+    final avgRating = reviewsDocs.isEmpty
         ? 0.0
-        : ratingSum / reviewsSnapshot.docs.length;
+        : ratingSum / reviewsDocs.length;
 
-    final reelViews = reelsSnapshot.docs.fold<int>(0, (total, doc) {
-      return total + _toInt(doc.data()['views']);
+    final reelViews = reelsDocs.fold<int>(0, (total, data) {
+      return total + _toInt(data['views']);
     });
-    final reelEngagement = reelsSnapshot.docs.fold<int>(0, (total, doc) {
-      final data = doc.data();
+    final reelEngagement = reelsDocs.fold<int>(0, (total, data) {
       return total +
           _toInt(data['likes']) +
           _toInt(data['comments']) +
           _toInt(data['shares']);
     });
 
-    final storyViews = storiesSnapshot.docs.length;
+    final storyViews = storiesDocs.length;
 
     return AnalyticsMetrics(
       totalViews: reelViews + storyViews,
       profileClicks: reelEngagement,
-      bookingRequests: offersSnapshot.docs.length,
+      bookingRequests: offersDocs.length,
       completedBookings: completedBookingsDocs.length,
       revenue: revenue,
       newFollowers: 0,
@@ -138,5 +129,51 @@ class FirestoreAnalyticsRemoteDataSource implements AnalyticsRemoteDataSource {
     if (value is double) return value;
     if (value is num) return value.toDouble();
     return 0;
+  }
+
+  Future<List<Map<String, dynamic>>> _loadDocsForPeriod({
+    required CollectionReference<Map<String, dynamic>> collection,
+    required String field,
+    required String value,
+    required Timestamp periodTimestamp,
+  }) async {
+    final periodQuery = await _safeQuery(
+      () => collection
+          .where(field, isEqualTo: value)
+          .where('createdAt', isGreaterThanOrEqualTo: periodTimestamp)
+          .get(),
+    );
+    final snapshot =
+        periodQuery ??
+        await _safeQuery(() => collection.where(field, isEqualTo: value).get());
+    if (snapshot == null) {
+      return const [];
+    }
+
+    return snapshot.docs
+        .map((doc) => doc.data())
+        .where((data) => _isWithinPeriod(data['createdAt'], periodTimestamp))
+        .toList();
+  }
+
+  Future<QuerySnapshot<Map<String, dynamic>>?> _safeQuery(
+    Future<QuerySnapshot<Map<String, dynamic>>> Function() query,
+  ) async {
+    try {
+      return await _secure.guard(query);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _isWithinPeriod(dynamic value, Timestamp periodTimestamp) {
+    if (value is Timestamp) {
+      return value.compareTo(periodTimestamp) >= 0;
+    }
+    if (value is DateTime) {
+      return value.isAfter(periodTimestamp.toDate()) ||
+          value.isAtSameMomentAs(periodTimestamp.toDate());
+    }
+    return true;
   }
 }

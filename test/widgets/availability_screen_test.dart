@@ -23,7 +23,7 @@ void main() {
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('Availability saved locally'), findsOneWidget);
+    expect(find.text('Availability saved on this device'), findsOneWidget);
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('photographer_availability_v1'), isNotNull);
