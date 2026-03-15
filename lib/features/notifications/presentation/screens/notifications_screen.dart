@@ -39,7 +39,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (userId == null || userId.isEmpty) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'User not authenticated';
+          _errorMessage = AppLocalizations.of(context).userNotAuthenticated;
         });
         return;
       }
@@ -50,7 +50,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
-          result.failureOrNull?.message ?? 'Failed to load notifications',
+          result.failureOrNull?.message ??
+              AppLocalizations.of(context).loadNotificationsFailed,
         );
       }
       final notifications = result.valueOrNull ?? <NotificationModel>[];
@@ -64,7 +65,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load notifications';
+        _errorMessage = AppLocalizations.of(context).loadNotificationsFailed;
       });
     }
   }
@@ -79,7 +80,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ??
-              'Failed to mark notification as read',
+              AppLocalizations.of(context).markNotificationReadFailed,
         );
       }
 
@@ -91,7 +92,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Failed to mark notification as read';
+        _errorMessage = AppLocalizations.of(context).markNotificationReadFailed;
       });
     }
   }
@@ -113,7 +114,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ??
-              'Failed to mark all notifications as read',
+              AppLocalizations.of(context).markAllNotificationsReadFailed,
         );
       }
 
@@ -126,7 +127,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Failed to mark all notifications as read';
+        _errorMessage = AppLocalizations.of(
+          context,
+        ).markAllNotificationsReadFailed;
       });
     }
   }
@@ -139,7 +142,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
-          result.failureOrNull?.message ?? 'Failed to delete notification',
+          result.failureOrNull?.message ??
+              AppLocalizations.of(context).deleteNotificationFailed,
         );
       }
 
@@ -150,7 +154,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Failed to delete notification';
+        _errorMessage = AppLocalizations.of(context).deleteNotificationFailed;
       });
     }
   }
@@ -197,7 +201,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (_unreadCount > 0)
             TextButton(
               onPressed: _markAllAsRead,
-              child: const Text('قراءة الكل'),
+              child: Text(localizations.readAllNotifications),
             ),
         ],
       ),
@@ -213,16 +217,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: scheme.error,
-                    ),
+                    Icon(Icons.error_outline, size: 48, color: scheme.error),
                     const SizedBox(height: 16),
                     Text(
                       _errorMessage!,
                       textAlign: TextAlign.center,
-                      style: textTheme.bodyMedium?.copyWith(color: scheme.error),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: scheme.error,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -341,7 +343,9 @@ class _NotificationCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 notification.getTimeAgo(),
-                style: textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

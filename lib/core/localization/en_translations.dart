@@ -281,6 +281,15 @@ class EnTranslations {
   // Notifications
   static const String notifications = 'Notifications';
   static const String noNotifications = 'No Notifications';
+  static const String readAllNotifications = 'Read all';
+  static const String userNotAuthenticated = 'User not authenticated';
+  static const String loadNotificationsFailed = 'Failed to load notifications';
+  static const String markNotificationReadFailed =
+      'Failed to mark notification as read';
+  static const String markAllNotificationsReadFailed =
+      'Failed to mark all notifications as read';
+  static const String deleteNotificationFailed =
+      'Failed to delete notification';
 
   // Settings
   static const String settings = 'Settings';

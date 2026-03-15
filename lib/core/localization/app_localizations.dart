@@ -174,6 +174,13 @@ class AppLocalizations {
       'offerBadge': EnTranslations.offerBadge,
       'notifications': EnTranslations.notifications,
       'noNotifications': EnTranslations.noNotifications,
+      'readAllNotifications': EnTranslations.readAllNotifications,
+      'userNotAuthenticated': EnTranslations.userNotAuthenticated,
+      'loadNotificationsFailed': EnTranslations.loadNotificationsFailed,
+      'markNotificationReadFailed': EnTranslations.markNotificationReadFailed,
+      'markAllNotificationsReadFailed':
+          EnTranslations.markAllNotificationsReadFailed,
+      'deleteNotificationFailed': EnTranslations.deleteNotificationFailed,
       'settings': EnTranslations.settings,
       'notificationsSection': EnTranslations.notificationsSection,
       'appearanceSection': EnTranslations.appearanceSection,
@@ -652,6 +659,13 @@ class AppLocalizations {
       'offerBadge': ArTranslations.offerBadge,
       'notifications': ArTranslations.notifications,
       'noNotifications': ArTranslations.noNotifications,
+      'readAllNotifications': ArTranslations.readAllNotifications,
+      'userNotAuthenticated': ArTranslations.userNotAuthenticated,
+      'loadNotificationsFailed': ArTranslations.loadNotificationsFailed,
+      'markNotificationReadFailed': ArTranslations.markNotificationReadFailed,
+      'markAllNotificationsReadFailed':
+          ArTranslations.markAllNotificationsReadFailed,
+      'deleteNotificationFailed': ArTranslations.deleteNotificationFailed,
       'settings': ArTranslations.settings,
       'notificationsSection': ArTranslations.notificationsSection,
       'appearanceSection': ArTranslations.appearanceSection,
@@ -1128,6 +1142,14 @@ class AppLocalizations {
   String yearsOld(int age) => '$age ${translate('yearsOldSuffix')}';
   String get notifications => translate('notifications');
   String get noNotifications => translate('noNotifications');
+  String get readAllNotifications => translate('readAllNotifications');
+  String get userNotAuthenticated => translate('userNotAuthenticated');
+  String get loadNotificationsFailed => translate('loadNotificationsFailed');
+  String get markNotificationReadFailed =>
+      translate('markNotificationReadFailed');
+  String get markAllNotificationsReadFailed =>
+      translate('markAllNotificationsReadFailed');
+  String get deleteNotificationFailed => translate('deleteNotificationFailed');
   String get settings => translate('settings');
   String get language => translate('language');
   String get logout => translate('logout');

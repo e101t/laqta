@@ -246,6 +246,13 @@ class ArTranslations {
   // Notifications
   static const String notifications = 'الإشعارات';
   static const String noNotifications = 'لا توجد إشعارات';
+  static const String readAllNotifications = 'قراءة الكل';
+  static const String userNotAuthenticated = 'المستخدم غير مسجل الدخول';
+  static const String loadNotificationsFailed = 'تعذر تحميل الإشعارات';
+  static const String markNotificationReadFailed = 'تعذر تحديد الإشعار كمقروء';
+  static const String markAllNotificationsReadFailed =
+      'تعذر تحديد كل الإشعارات كمقروءة';
+  static const String deleteNotificationFailed = 'تعذر حذف الإشعار';
 
   // Settings
   static const String settings = 'الإعدادات';
