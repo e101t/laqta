@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:luqta/core/utils/governorate_utils.dart';
 import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
@@ -111,7 +112,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       _requestId = initial.id;
       _selectedType = initial.type;
       _selectedStyle = initial.style;
-      _selectedGovernorate = initial.governorate;
+      _selectedGovernorate = normalizeGovernorateToArabic(initial.governorate);
       _selectedDate = DateTime.tryParse(initial.date);
       _selectedTime = _parseTime(initial.time);
       _durationHours = initial.durationHours;
@@ -135,7 +136,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
       _requestId = RequestsDependencies.generateRequestId().call();
       _selectedType = widget.prefillType;
       _selectedStyle = widget.prefillStyle;
-      _selectedGovernorate = widget.prefillGovernorate;
+      _selectedGovernorate = normalizeGovernorateToArabic(
+        widget.prefillGovernorate,
+      );
       _selectedDate = widget.prefillDate;
       _selectedTime = widget.prefillTime;
       if (widget.prefillNotes != null && widget.prefillNotes!.isNotEmpty) {
@@ -337,6 +340,9 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
           '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
       final formattedTime =
           '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+      final canonicalGovernorate =
+          normalizeGovernorateToArabic(_selectedGovernorate) ??
+          _selectedGovernorate!;
       final address = _addressController.text.trim().isEmpty
           ? null
           : _addressController.text.trim();
@@ -353,7 +359,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
           'type': _selectedType!,
           'date': formattedDate,
           'time': formattedTime,
-          'governorate': _selectedGovernorate!,
+          'governorate': canonicalGovernorate,
           'address': address,
           'budgetMin': budgetMin,
           'budgetMax': budgetMax,
@@ -391,7 +397,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
           type: _selectedType!,
           date: formattedDate,
           time: formattedTime,
-          governorate: _selectedGovernorate!,
+          governorate: canonicalGovernorate,
           address: address,
           budgetMin: budgetMin,
           budgetMax: budgetMax,
@@ -424,7 +430,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
         await _notifyPhotographers(
           requestId: _requestId,
           requestType: _selectedType!,
-          governorate: _selectedGovernorate!,
+          governorate: canonicalGovernorate,
         );
       }
 
@@ -562,7 +568,7 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
             AppDropdownField<String>(
               label: localizations.governorate,
               initialValue: _selectedGovernorate,
-              items: AppConstants.iraqiGovernoratesEn
+              items: AppConstants.iraqiGovernoratesAr
                   .map(
                     (gov) =>
                         DropdownMenuItem<String>(value: gov, child: Text(gov)),

@@ -339,6 +339,59 @@ test('requests read allows owner and matching-governorate photographer', async (
   await assertSucceeds(photographerDb.collection('requests').doc('req-own').get());
 });
 
+test('requests query allows photographer to fetch open requests with matching rule filters', async () => {
+  const customerDb = authedDb('clientBaghdad');
+  const photographerDb = authedDb('photogBaghdad');
+
+  await assertSucceeds(
+    photographerDb.collection('users_public').doc('photogBaghdad').set(
+      publicUserDocData({
+        name: 'Photographer',
+        role: 'photographer',
+        governorate: 'Baghdad',
+      }),
+    ),
+  );
+
+  const publicRequest = requestDocData({
+    clientId: 'clientBaghdad',
+    withLocation: false,
+  });
+  publicRequest.status = 'published';
+  publicRequest.selectedPhotographerId = null;
+
+  const targetedRequest = requestDocData({
+    clientId: 'clientBaghdad',
+    withLocation: false,
+  });
+  targetedRequest.status = 'awaiting_offers';
+  targetedRequest.selectedPhotographerId = 'photogBaghdad';
+
+  await assertSucceeds(
+    customerDb.collection('requests').doc('req-public').set(publicRequest),
+  );
+  await assertSucceeds(
+    customerDb.collection('requests').doc('req-targeted').set(targetedRequest),
+  );
+
+  await assertSucceeds(
+    photographerDb
+      .collection('requests')
+      .where('status', 'in', ['published', 'awaiting_offers'])
+      .where('governorate', '==', 'Baghdad')
+      .where('selectedPhotographerId', '==', null)
+      .get(),
+  );
+
+  await assertSucceeds(
+    photographerDb
+      .collection('requests')
+      .where('status', 'in', ['published', 'awaiting_offers'])
+      .where('selectedPhotographerId', '==', 'photogBaghdad')
+      .get(),
+  );
+});
+
 test('booking payment fields cannot be updated by customer', async () => {
   const adminDb = authedDb('admin1', { admin: true });
   const userDb = authedDb('userClient');

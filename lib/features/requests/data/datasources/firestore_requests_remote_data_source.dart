@@ -6,9 +6,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_exceptions.dart';
 import 'package:luqta/core/security/secure_firestore.dart';
 import 'package:luqta/core/security/secure_storage.dart';
+import 'package:luqta/core/utils/governorate_utils.dart';
 import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
 import 'package:luqta/features/requests/data/datasources/requests_remote_data_source.dart';
 import 'package:luqta/features/requests/data/dtos/request_dto.dart';
@@ -72,22 +72,70 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
 
   @override
   Future<List<RequestDto>> getOpenRequests({String? governorate}) async {
-    final baseQuery = _requestsCollection.where(
-      'status',
-      whereIn: const ['published', 'awaiting_offers'],
-    );
+    final currentUser = Firebase.apps.isEmpty
+        ? null
+        : FirebaseAuth.instance.currentUser;
+    final docsById = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
 
-    final snapshot = await _getOpenRequestsSnapshot(
-      baseQuery: baseQuery,
-      governorate: governorate,
-    );
-    final docs = snapshot.docs.where((doc) {
-      if (governorate == null || governorate.isEmpty) {
-        return true;
+    Future<void> collect(
+      Query<Map<String, dynamic>> query, {
+      required String label,
+    }) async {
+      try {
+        final snapshot = await _secure.guard(
+          () => query
+              .limit(AppConstants.queryLimit)
+              .get(const GetOptions(source: Source.server)),
+        );
+        if (kDebugMode) {
+          debugPrint(
+            'FirestoreRequestsRemoteDataSource:getOpenRequests '
+            '$label count=${snapshot.docs.length}',
+          );
+        }
+        for (final doc in snapshot.docs) {
+          docsById[doc.id] = doc;
+        }
+      } catch (error) {
+        if (kDebugMode) {
+          debugPrint(
+            'FirestoreRequestsRemoteDataSource:getOpenRequests '
+            '$label failed: $error',
+          );
+        }
       }
-      return doc.data()['governorate'] == governorate;
-    }).toList()
-      ..sort((a, b) => _compareCreatedAtDesc(a.data()['createdAt'], b.data()['createdAt']));
+    }
+
+    for (final status in const ['published', 'awaiting_offers']) {
+      for (final variant in governorateVariants(governorate)) {
+        await collect(
+          _requestsCollection
+              .where('status', isEqualTo: status)
+              .where('governorate', isEqualTo: variant)
+              .where('selectedPhotographerId', isNull: true),
+          label: 'status=$status governorate=$variant unassigned',
+        );
+      }
+    }
+
+    if (currentUser != null) {
+      for (final status in const ['published', 'awaiting_offers']) {
+        await collect(
+          _requestsCollection
+              .where('status', isEqualTo: status)
+              .where('selectedPhotographerId', isEqualTo: currentUser.uid),
+          label: 'status=$status photographer=${currentUser.uid}',
+        );
+      }
+    }
+
+    final docs = docsById.values.toList()
+      ..sort(
+        (a, b) => _compareCreatedAtDesc(
+          a.data()['createdAt'],
+          b.data()['createdAt'],
+        ),
+      );
 
     return docs
         .take(AppConstants.queryLimit)
@@ -210,43 +258,6 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
 
   @override
   String generateOfferId() => _offersCollection.doc().id;
-
-  Future<QuerySnapshot<Map<String, dynamic>>> _getOpenRequestsSnapshot({
-    required Query<Map<String, dynamic>> baseQuery,
-    required String? governorate,
-  }) async {
-    Query<Map<String, dynamic>> query = baseQuery;
-    if (governorate != null && governorate.isNotEmpty) {
-      query = query.where('governorate', isEqualTo: governorate);
-    }
-    if (!kDebugMode) {
-      query = query.orderBy('createdAt', descending: true);
-    }
-
-    try {
-      return await _secure.guard(
-        () => query.limit(AppConstants.queryLimit).get(),
-      );
-    } on SecureException catch (error) {
-      final shouldFallback =
-          governorate != null &&
-          governorate.isNotEmpty &&
-          (error.code == 'failed-precondition' ||
-              error.code == 'permission-denied' ||
-              error.code == 'unavailable');
-      if (!shouldFallback) {
-        rethrow;
-      }
-    }
-
-    var fallbackQuery = baseQuery;
-    if (!kDebugMode) {
-      fallbackQuery = fallbackQuery.orderBy('createdAt', descending: true);
-    }
-    return _secure.guard(
-      () => fallbackQuery.limit(AppConstants.queryLimit * 4).get(),
-    );
-  }
 
   int _compareCreatedAtDesc(dynamic left, dynamic right) {
     final leftDate = _toDateTime(left);
