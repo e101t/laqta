@@ -104,6 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _blockUser() async {
     final currentUserId = _currentUserId;
     if (currentUserId.isEmpty) return;
+    final localizations = AppLocalizations.of(context);
 
     try {
       final result = await ChatDependencies.toggleBlockUser().call(
@@ -113,7 +114,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!result.isSuccess) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Unable to determine user.')),
+            SnackBar(content: Text(localizations.unableToDetermineUser)),
           );
         }
         return;
@@ -123,7 +124,11 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isBlocked ? 'User blocked' : 'User unblocked'),
+            content: Text(
+              isBlocked
+                  ? localizations.userBlocked
+                  : localizations.userUnblocked,
+            ),
           ),
         );
         Navigator.of(context).pop();
@@ -138,23 +143,25 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _deleteChat() async {
     final currentUserId = _currentUserId;
     if (currentUserId.isEmpty) return;
+    final localizations = AppLocalizations.of(context);
 
     // Show confirmation dialog
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: const Text(
-          'Are you sure you want to delete this chat? This action cannot be undone.',
-        ),
+        title: Text(localizations.deleteChatTitle),
+        content: Text(localizations.deleteChatPrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(localizations.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              localizations.delete,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -172,9 +179,9 @@ class _ChatScreenState extends State<ChatScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chat deleted successfully')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(localizations.chatDeleted)));
         Navigator.of(context).pop(); // Go back to chat list
       }
     } catch (e) {
@@ -184,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to delete chat')));
+        ).showSnackBar(SnackBar(content: Text(localizations.chatDeleteFailed)));
       }
     }
   }
@@ -192,6 +199,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _reportUser() async {
     final currentUserId = _currentUserId;
     if (currentUserId.isEmpty) return;
+    final localizations = AppLocalizations.of(context);
 
     final result = await ChatDependencies.getOtherParticipantId().call(
       chatId: widget.chatId,
@@ -202,7 +210,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!result.isSuccess || otherUserId == null || otherUserId.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to determine user.')),
+          SnackBar(content: Text(localizations.unableToDetermineUser)),
         );
       }
       return;
@@ -222,6 +230,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showChatOptions() {
+    final localizations = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       builder: (context) => Column(
@@ -229,7 +238,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.block),
-            title: const Text('Block User'),
+            title: Text(localizations.blockUser),
             onTap: () {
               Navigator.pop(context);
               _blockUser();
@@ -237,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.report),
-            title: const Text('Report User'),
+            title: Text(localizations.reportUser),
             onTap: () {
               Navigator.pop(context);
               _reportUser();
@@ -245,7 +254,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: const Text('Delete Chat'),
+            title: Text(localizations.deleteChatTitle),
             onTap: () {
               Navigator.pop(context);
               _deleteChat();
@@ -257,6 +266,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showAttachmentOptions() {
+    final localizations = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       builder: (context) => Column(
@@ -264,7 +274,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.image),
-            title: const Text('Send Image'),
+            title: Text(localizations.sendImage),
             onTap: () {
               Navigator.pop(context);
               _sendImage();
@@ -272,7 +282,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.video_file),
-            title: const Text('Send Video'),
+            title: Text(localizations.sendVideo),
             onTap: () {
               Navigator.pop(context);
               _sendVideo();
@@ -280,7 +290,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.insert_drive_file),
-            title: const Text('Send Document'),
+            title: Text(localizations.sendDocument),
             onTap: () {
               Navigator.pop(context);
               _sendDocument();
@@ -337,6 +347,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendImage() async {
+    final localizations = AppLocalizations.of(context);
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (!mounted) return;
@@ -354,7 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
       id: messageId,
       chatId: widget.chatId,
       senderId: currentUserId,
-      content: 'Uploading image...',
+      content: localizations.uploadingImage,
       createdAt: DateTime.now(),
       type: 'image',
     );
@@ -394,7 +405,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to send image')));
+        ).showSnackBar(SnackBar(content: Text(localizations.sendImageFailed)));
       }
     }
 
@@ -402,6 +413,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendVideo() async {
+    final localizations = AppLocalizations.of(context);
     final picker = ImagePicker();
     final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
     if (!mounted) return;
@@ -419,7 +431,7 @@ class _ChatScreenState extends State<ChatScreen> {
       id: messageId,
       chatId: widget.chatId,
       senderId: currentUserId,
-      content: 'Uploading video...',
+      content: localizations.uploadingVideo,
       createdAt: DateTime.now(),
       type: 'video',
     );
@@ -459,7 +471,7 @@ class _ChatScreenState extends State<ChatScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to send video')));
+        ).showSnackBar(SnackBar(content: Text(localizations.sendVideoFailed)));
       }
     }
 
@@ -467,6 +479,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendDocument() async {
+    final localizations = AppLocalizations.of(context);
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: [
@@ -497,7 +510,7 @@ class _ChatScreenState extends State<ChatScreen> {
       id: messageId,
       chatId: widget.chatId,
       senderId: currentUserId,
-      content: 'Uploading document...',
+      content: localizations.uploadingDocument,
       createdAt: DateTime.now(),
       type: 'document',
     );
@@ -538,7 +551,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send document')),
+          SnackBar(content: Text(localizations.sendDocumentFailed)),
         );
       }
     }
@@ -565,8 +578,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Text(widget.otherUserName, style: textTheme.titleMedium),
                   Text(
-                    'Online',
-                    style: textTheme.labelSmall?.copyWith(color: scheme.tertiary),
+                    localizations.onlineNow,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: scheme.tertiary,
+                    ),
                   ),
                 ],
               ),
@@ -591,10 +606,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 : _hasError
                 ? EmptyStates.error(onRetry: _loadMessages)
                 : _messages.isEmpty
-                ? const EmptyState(
+                ? EmptyState(
                     icon: Icons.chat_bubble_outline,
-                    title: 'No messages yet',
-                    message: 'Start the conversation by sending a message.',
+                    title: localizations.noMessagesYet,
+                    message: localizations.startConversationPrompt,
                   )
                 : ListView.builder(
                     controller: _scrollController,
@@ -657,7 +672,10 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
                       icon: const Icon(Icons.send, color: Colors.white),
                       onPressed: _sendMessage,
@@ -713,6 +731,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 
   Widget _buildDocumentWidget(ChatMessage message) {
+    final localizations = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final parts = message.content.split('|');
@@ -726,9 +745,11 @@ class _MessageBubbleState extends State<_MessageBubble> {
           await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
         } else {
           if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text('Cannot open $fileName')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${localizations.cannotOpenFile} $fileName'),
+              ),
+            );
           }
         }
       },
@@ -887,9 +908,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
                     Text(
                       widget.message.content,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: widget.isMe
-                            ? Colors.white
-                            : scheme.onSurface,
+                        color: widget.isMe ? Colors.white : scheme.onSurface,
                       ),
                     ),
                   ],

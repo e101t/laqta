@@ -87,24 +87,23 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _deleteChat(String chatId) async {
+    final localizations = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: const Text(
-          'Are you sure you want to delete this conversation?',
-        ),
+        title: Text(localizations.deleteChatTitle),
+        content: Text(localizations.deleteConversationPrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(localizations.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Delete'),
+            child: Text(localizations.delete),
           ),
         ],
       ),
@@ -128,12 +127,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Chat deleted')));
+          ).showSnackBar(SnackBar(content: Text(localizations.chatDeleted)));
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to delete chat')),
+            SnackBar(content: Text(localizations.chatDeleteFailed)),
           );
         }
       }
@@ -191,11 +190,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           child: EmptyState(
                             icon: Icons.chat_bubble_outline,
                             title: _chats.isEmpty
-                                ? 'No Messages'
-                                : 'No Results',
+                                ? localizations.noMessagesTitle
+                                : localizations.noChatResults,
                             message: _chats.isEmpty
-                                ? 'Start a conversation with a photographer'
-                                : 'Try another name or keyword',
+                                ? localizations
+                                      .startConversationWithPhotographer
+                                : localizations.tryAnotherNameOrKeyword,
                           ),
                         )
                       : RefreshIndicator(
@@ -326,7 +326,10 @@ class _ChatListItem extends StatelessWidget {
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: scheme.primary, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                shape: BoxShape.circle,
+              ),
               constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               child: Text(
                 chat.unreadCount.toString(),

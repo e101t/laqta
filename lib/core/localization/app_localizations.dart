@@ -134,6 +134,34 @@ class AppLocalizations {
       'chat': EnTranslations.chat,
       'typeMessage': EnTranslations.typeMessage,
       'send': EnTranslations.send,
+      'deleteChatTitle': EnTranslations.deleteChatTitle,
+      'deleteConversationPrompt': EnTranslations.deleteConversationPrompt,
+      'deleteChatPrompt': EnTranslations.deleteChatPrompt,
+      'chatDeleted': EnTranslations.chatDeleted,
+      'chatDeleteFailed': EnTranslations.chatDeleteFailed,
+      'noMessagesTitle': EnTranslations.noMessagesTitle,
+      'noChatResults': EnTranslations.noChatResults,
+      'startConversationWithPhotographer':
+          EnTranslations.startConversationWithPhotographer,
+      'tryAnotherNameOrKeyword': EnTranslations.tryAnotherNameOrKeyword,
+      'unableToDetermineUser': EnTranslations.unableToDetermineUser,
+      'userBlocked': EnTranslations.userBlocked,
+      'userUnblocked': EnTranslations.userUnblocked,
+      'blockUser': EnTranslations.blockUser,
+      'reportUser': EnTranslations.reportUser,
+      'sendImage': EnTranslations.sendImage,
+      'sendVideo': EnTranslations.sendVideo,
+      'sendDocument': EnTranslations.sendDocument,
+      'uploadingImage': EnTranslations.uploadingImage,
+      'uploadingVideo': EnTranslations.uploadingVideo,
+      'uploadingDocument': EnTranslations.uploadingDocument,
+      'sendImageFailed': EnTranslations.sendImageFailed,
+      'sendVideoFailed': EnTranslations.sendVideoFailed,
+      'sendDocumentFailed': EnTranslations.sendDocumentFailed,
+      'onlineNow': EnTranslations.onlineNow,
+      'noMessagesYet': EnTranslations.noMessagesYet,
+      'startConversationPrompt': EnTranslations.startConversationPrompt,
+      'cannotOpenFile': EnTranslations.cannotOpenFile,
       'reviews': EnTranslations.reviews,
       'male': EnTranslations.male,
       'female': EnTranslations.female,
@@ -464,7 +492,7 @@ class AppLocalizations {
       'total': EnTranslations.total,
       'typing': EnTranslations.typing,
       'writeComment': EnTranslations.writeComment,
-},
+    },
     'ar': {
       'appName': ArTranslations.appName,
       'cancel': ArTranslations.cancel,
@@ -584,6 +612,34 @@ class AppLocalizations {
       'chat': ArTranslations.chat,
       'typeMessage': ArTranslations.typeMessage,
       'send': ArTranslations.send,
+      'deleteChatTitle': ArTranslations.deleteChatTitle,
+      'deleteConversationPrompt': ArTranslations.deleteConversationPrompt,
+      'deleteChatPrompt': ArTranslations.deleteChatPrompt,
+      'chatDeleted': ArTranslations.chatDeleted,
+      'chatDeleteFailed': ArTranslations.chatDeleteFailed,
+      'noMessagesTitle': ArTranslations.noMessagesTitle,
+      'noChatResults': ArTranslations.noChatResults,
+      'startConversationWithPhotographer':
+          ArTranslations.startConversationWithPhotographer,
+      'tryAnotherNameOrKeyword': ArTranslations.tryAnotherNameOrKeyword,
+      'unableToDetermineUser': ArTranslations.unableToDetermineUser,
+      'userBlocked': ArTranslations.userBlocked,
+      'userUnblocked': ArTranslations.userUnblocked,
+      'blockUser': ArTranslations.blockUser,
+      'reportUser': ArTranslations.reportUser,
+      'sendImage': ArTranslations.sendImage,
+      'sendVideo': ArTranslations.sendVideo,
+      'sendDocument': ArTranslations.sendDocument,
+      'uploadingImage': ArTranslations.uploadingImage,
+      'uploadingVideo': ArTranslations.uploadingVideo,
+      'uploadingDocument': ArTranslations.uploadingDocument,
+      'sendImageFailed': ArTranslations.sendImageFailed,
+      'sendVideoFailed': ArTranslations.sendVideoFailed,
+      'sendDocumentFailed': ArTranslations.sendDocumentFailed,
+      'onlineNow': ArTranslations.onlineNow,
+      'noMessagesYet': ArTranslations.noMessagesYet,
+      'startConversationPrompt': ArTranslations.startConversationPrompt,
+      'cannotOpenFile': ArTranslations.cannotOpenFile,
       'reviews': ArTranslations.reviews,
       'male': ArTranslations.male,
       'female': ArTranslations.female,
@@ -908,7 +964,8 @@ class AppLocalizations {
       'total': ArTranslations.total,
       'typing': ArTranslations.typing,
       'writeComment': ArTranslations.writeComment,
-},  };
+    },
+  };
 
   String translate(String key) {
     return _localizedValues[locale.languageCode]?[key] ?? key;
@@ -1029,6 +1086,34 @@ class AppLocalizations {
   String get confirmBooking => translate('confirmBooking');
   String get chat => translate('chat');
   String get typeMessage => translate('typeMessage');
+  String get deleteChatTitle => translate('deleteChatTitle');
+  String get deleteConversationPrompt => translate('deleteConversationPrompt');
+  String get deleteChatPrompt => translate('deleteChatPrompt');
+  String get chatDeleted => translate('chatDeleted');
+  String get chatDeleteFailed => translate('chatDeleteFailed');
+  String get noMessagesTitle => translate('noMessagesTitle');
+  String get noChatResults => translate('noChatResults');
+  String get startConversationWithPhotographer =>
+      translate('startConversationWithPhotographer');
+  String get tryAnotherNameOrKeyword => translate('tryAnotherNameOrKeyword');
+  String get unableToDetermineUser => translate('unableToDetermineUser');
+  String get userBlocked => translate('userBlocked');
+  String get userUnblocked => translate('userUnblocked');
+  String get blockUser => translate('blockUser');
+  String get reportUser => translate('reportUser');
+  String get sendImage => translate('sendImage');
+  String get sendVideo => translate('sendVideo');
+  String get sendDocument => translate('sendDocument');
+  String get uploadingImage => translate('uploadingImage');
+  String get uploadingVideo => translate('uploadingVideo');
+  String get uploadingDocument => translate('uploadingDocument');
+  String get sendImageFailed => translate('sendImageFailed');
+  String get sendVideoFailed => translate('sendVideoFailed');
+  String get sendDocumentFailed => translate('sendDocumentFailed');
+  String get onlineNow => translate('onlineNow');
+  String get noMessagesYet => translate('noMessagesYet');
+  String get startConversationPrompt => translate('startConversationPrompt');
+  String get cannotOpenFile => translate('cannotOpenFile');
   String get send => translate('send');
   String get reviews => translate('reviews');
   String get male => translate('male');
@@ -1152,8 +1237,10 @@ class AppLocalizations {
   String get noActiveRequests => translate('noActiveRequests');
   String get noClosedRequests => translate('noClosedRequests');
   String get requestStatusDraft => translate('requestStatusDraft');
-  String get requestStatusAwaitingOffers => translate('requestStatusAwaitingOffers');
-  String get requestStatusOfferSelected => translate('requestStatusOfferSelected');
+  String get requestStatusAwaitingOffers =>
+      translate('requestStatusAwaitingOffers');
+  String get requestStatusOfferSelected =>
+      translate('requestStatusOfferSelected');
   String get requestStatusClosed => translate('requestStatusClosed');
   String get requestStatusCanceled => translate('requestStatusCanceled');
   String get requestStatusExpired => translate('requestStatusExpired');

@@ -212,6 +212,37 @@ class EnTranslations {
   static const String typeMessage = 'Type a message...';
   static const String typing = 'Typing...';
   static const String send = 'Send';
+  static const String deleteChatTitle = 'Delete Chat';
+  static const String deleteConversationPrompt =
+      'Are you sure you want to delete this conversation?';
+  static const String deleteChatPrompt =
+      'Are you sure you want to delete this chat? This action cannot be undone.';
+  static const String chatDeleted = 'Chat deleted';
+  static const String chatDeleteFailed = 'Failed to delete chat';
+  static const String noMessagesTitle = 'No Messages';
+  static const String noChatResults = 'No Results';
+  static const String startConversationWithPhotographer =
+      'Start a conversation with a photographer';
+  static const String tryAnotherNameOrKeyword = 'Try another name or keyword';
+  static const String unableToDetermineUser = 'Unable to determine user.';
+  static const String userBlocked = 'User blocked';
+  static const String userUnblocked = 'User unblocked';
+  static const String blockUser = 'Block User';
+  static const String reportUser = 'Report User';
+  static const String sendImage = 'Send Image';
+  static const String sendVideo = 'Send Video';
+  static const String sendDocument = 'Send Document';
+  static const String uploadingImage = 'Uploading image...';
+  static const String uploadingVideo = 'Uploading video...';
+  static const String uploadingDocument = 'Uploading document...';
+  static const String sendImageFailed = 'Failed to send image';
+  static const String sendVideoFailed = 'Failed to send video';
+  static const String sendDocumentFailed = 'Failed to send document';
+  static const String onlineNow = 'Online';
+  static const String noMessagesYet = 'No messages yet';
+  static const String startConversationPrompt =
+      'Start the conversation by sending a message.';
+  static const String cannotOpenFile = 'Cannot open';
 
   // Reviews
   static const String reviews = 'Reviews';

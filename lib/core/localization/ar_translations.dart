@@ -179,6 +179,35 @@ class ArTranslations {
   static const String typeMessage = 'اكتب رسالة...';
   static const String typing = 'يكتب الآن...';
   static const String send = 'إرسال';
+  static const String deleteChatTitle = 'حذف المحادثة';
+  static const String deleteConversationPrompt = 'هل تريد حذف هذه المحادثة؟';
+  static const String deleteChatPrompt =
+      'هل تريد حذف هذه الدردشة؟ لا يمكن التراجع عن هذا الإجراء.';
+  static const String chatDeleted = 'تم حذف المحادثة';
+  static const String chatDeleteFailed = 'تعذر حذف المحادثة';
+  static const String noMessagesTitle = 'لا توجد رسائل';
+  static const String noChatResults = 'لا توجد نتائج';
+  static const String startConversationWithPhotographer = 'ابدأ محادثة مع مصور';
+  static const String tryAnotherNameOrKeyword =
+      'جرّب اسمًا أو كلمة مفتاحية أخرى';
+  static const String unableToDetermineUser = 'تعذر تحديد المستخدم.';
+  static const String userBlocked = 'تم حظر المستخدم';
+  static const String userUnblocked = 'تم إلغاء حظر المستخدم';
+  static const String blockUser = 'حظر المستخدم';
+  static const String reportUser = 'الإبلاغ عن المستخدم';
+  static const String sendImage = 'إرسال صورة';
+  static const String sendVideo = 'إرسال فيديو';
+  static const String sendDocument = 'إرسال ملف';
+  static const String uploadingImage = 'جارٍ رفع الصورة...';
+  static const String uploadingVideo = 'جارٍ رفع الفيديو...';
+  static const String uploadingDocument = 'جارٍ رفع الملف...';
+  static const String sendImageFailed = 'تعذر إرسال الصورة';
+  static const String sendVideoFailed = 'تعذر إرسال الفيديو';
+  static const String sendDocumentFailed = 'تعذر إرسال الملف';
+  static const String onlineNow = 'متصل الآن';
+  static const String noMessagesYet = 'لا توجد رسائل بعد';
+  static const String startConversationPrompt = 'ابدأ المحادثة بإرسال رسالة.';
+  static const String cannotOpenFile = 'تعذر فتح';
 
   // Reviews
   static const String reviews = 'التقييمات';
@@ -187,7 +216,8 @@ class ArTranslations {
   static const String writeComment = 'اكتب تعليق (اختياري)';
   static const String submitReview = 'إرسال التقييم';
   static const String smartReview = 'تقييم ذكي';
-  static const String smartReviewSubtitle = 'قيّم بناءً على مؤشرات قابلة للقياس';
+  static const String smartReviewSubtitle =
+      'قيّم بناءً على مؤشرات قابلة للقياس';
   static const String onTimeDelivery = 'الالتزام بالموعد';
   static const String communication = 'التواصل';
   static const String quality = 'الجودة';
