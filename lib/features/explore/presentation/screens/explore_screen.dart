@@ -203,83 +203,83 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return const [
       SearchResultPhotographer(
         id: 'demo_ph_1',
-        name: 'Ã™â€¦Ã˜Â±Ã™Ë†Ã˜Â© Ã˜Â§Ã™â€žÃ˜Â­Ã˜Â±Ã˜Â¨Ã™Å ',
+        name: 'مروة الحربي',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã˜Â¨Ã™Ë†Ã˜Â±Ã˜ÂªÃ˜Â±Ã™Å Ã™â€¡', 'Ã™â€¦Ã™Ë†Ã˜Â¶Ã˜Â©'],
+        specialties: ['بورتريه', 'موضة'],
         rating: 4.8,
         reviewCount: 124,
         startingPrice: 120000,
-        governorate: 'Ã˜Â¨Ã˜ÂºÃ˜Â¯Ã˜Â§Ã˜Â¯',
+        governorate: 'بغداد',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_2',
-        name: 'Ã˜Â³Ã™Å Ã™Â Ã˜Â§Ã™â€žÃ™Æ’Ã˜Â¹Ã˜Â¨Ã™Å ',
+        name: 'سيف الكعبي',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã™â€¦Ã™â€ Ã˜Â§Ã˜Â³Ã˜Â¨Ã˜Â§Ã˜Âª', 'Ã˜Â²Ã™ÂÃ˜Â§Ã™Â'],
+        specialties: ['مناسبات', 'زفاف'],
         rating: 4.6,
         reviewCount: 89,
         startingPrice: 150000,
-        governorate: 'Ã˜Â§Ã™â€žÃ˜Â¨Ã˜ÂµÃ˜Â±Ã˜Â©',
+        governorate: 'البصرة',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_3',
-        name: 'Ã™â€ Ã™Ë†Ã˜Â± Ã˜Â§Ã™â€žÃ™â€¡Ã˜Â§Ã˜Â¯Ã™Å ',
+        name: 'نور الهادي',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã™â€¦Ã™â€ Ã˜ÂªÃ˜Â¬Ã˜Â§Ã˜Âª', 'Ã˜ÂªÃ˜Â¬Ã˜Â§Ã˜Â±Ã™Å '],
+        specialties: ['منتجات', 'تجاري'],
         rating: 4.9,
         reviewCount: 156,
         startingPrice: 90000,
-        governorate: 'Ã˜Â£Ã˜Â±Ã˜Â¨Ã™Å Ã™â€ž',
+        governorate: 'أربيل',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_4',
-        name: 'Ã˜Â±Ã™â€ Ã™Å Ã™â€¦ Ã˜Â§Ã™â€žÃ˜Â¨Ã˜ÂºÃ˜Â¯Ã˜Â§Ã˜Â¯Ã™Å ',
+        name: 'رنيم البغدادي',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã˜Â¬Ã™â€žÃ˜Â³Ã˜Â§Ã˜Âª Ã˜Â¹Ã˜Â§Ã˜Â¦Ã™â€žÃ™Å Ã˜Â©', 'Ã˜Â£Ã˜Â³Ã™â€žÃ™Ë†Ã˜Â¨ Ã˜Â·Ã˜Â¨Ã™Å Ã˜Â¹Ã™Å '],
+        specialties: ['جلسات عائلية', 'أسلوب طبيعي'],
         rating: 4.7,
         reviewCount: 72,
         startingPrice: 105000,
-        governorate: 'Ã™Æ’Ã˜Â±Ã˜Â¨Ã™â€žÃ˜Â§Ã˜Â¡',
+        governorate: 'كربلاء',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_5',
-        name: 'Ã˜Â¹Ã™â€¦Ã˜Â± Ã˜Â§Ã™â€žÃ˜Â³Ã˜Â¹Ã˜Â¯Ã™Å ',
+        name: 'عمر السعدي',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã˜Â·Ã˜Â¹Ã˜Â§Ã™â€¦', 'Ã˜Â¥Ã˜Â¹Ã™â€žÃ˜Â§Ã™â€ Ã™Å '],
+        specialties: ['طعام', 'إعلاني'],
         rating: 4.5,
         reviewCount: 58,
         startingPrice: 98000,
-        governorate: 'Ã˜Â§Ã™â€žÃ™â€ Ã˜Â¬Ã™Â',
+        governorate: 'النجف',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_6',
-        name: 'Ã˜Â²Ã™â€¡Ã˜Â±Ã˜Â§Ã˜Â¡ Ã˜Â³Ã˜Â§Ã™â€žÃ™â€¦',
+        name: 'زهراء سالم',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã˜Â£Ã˜Â·Ã™ÂÃ˜Â§Ã™â€ž', 'Ã™â€¦Ã™Ë†Ã˜Â§Ã™â€žÃ™Å Ã˜Â¯'],
+        specialties: ['أطفال', 'مواليد'],
         rating: 4.8,
         reviewCount: 143,
         startingPrice: 115000,
-        governorate: 'Ã™â€ Ã™Å Ã™â€ Ã™Ë†Ã™â€°',
+        governorate: 'نينوى',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_7',
-        name: 'Ã˜Â¹Ã™â€žÃ™Å  Ã˜Â´Ã˜Â§Ã™Æ’Ã˜Â±',
+        name: 'علي شاكر',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã™â€¦Ã˜Â¹Ã™â€¦Ã˜Â§Ã˜Â±Ã™Å ', 'Ã˜Â¹Ã™â€šÃ˜Â§Ã˜Â±Ã˜Â§Ã˜Âª'],
+        specialties: ['معماري', 'عقارات'],
         rating: 4.6,
         reviewCount: 81,
         startingPrice: 130000,
-        governorate: 'Ã˜Â§Ã™â€žÃ˜Â³Ã™â€žÃ™Å Ã™â€¦Ã˜Â§Ã™â€ Ã™Å Ã˜Â©',
+        governorate: 'السليمانية',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_8',
-        name: 'Ã™â€¡Ã˜Â¯Ã™â€° Ã˜Â¬Ã˜Â§Ã˜Â¨Ã˜Â±',
+        name: 'هدى جابر',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ã˜Â£Ã˜Â²Ã™Å Ã˜Â§Ã˜Â¡', 'Ã˜ÂªÃ˜Â­Ã˜Â±Ã™Å Ã˜Â±Ã™Å '],
+        specialties: ['أزياء', 'تحريري'],
         rating: 4.9,
         reviewCount: 167,
         startingPrice: 160000,
-        governorate: 'Ã˜Â¨Ã˜Â§Ã˜Â¨Ã™â€ž',
+        governorate: 'بابل',
       ),
     ];
   }
@@ -290,12 +290,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_1',
         photographerId: 'demo_ph_1',
-        photographerName: 'Ã™â€¦Ã˜Â±Ã™Ë†Ã˜Â© Ã˜Â§Ã™â€žÃ˜Â­Ã˜Â±Ã˜Â¨Ã™Å ',
+        photographerName: 'مروة الحربي',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_auth.png',
         thumbnailUrl: 'assets/images/hero_auth.png',
-        caption:
-            'Ã˜Â¥Ã˜Â¶Ã˜Â§Ã˜Â¡Ã˜Â© Ã˜Â¯Ã˜Â§Ã™ÂÃ˜Â¦Ã˜Â© Ã™Ë†Ã™â€žÃ™â€šÃ˜Â·Ã˜Â© Ã™â€šÃ˜Â±Ã™Å Ã˜Â¨Ã˜Â© Ã˜ÂªÃ™ÂÃ˜Â¨Ã˜Â±Ã˜Â² Ã˜Â§Ã™â€žÃ˜ÂªÃ™ÂÃ˜Â§Ã˜ÂµÃ™Å Ã™â€ž.',
+        caption: 'إضاءة دافئة ولقطة قريبة تُبرز التفاصيل.',
         tags: const ['portrait', 'golden'],
         views: 1240,
         likes: 320,
@@ -307,11 +306,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_2',
         photographerId: 'demo_ph_2',
-        photographerName: 'Ã˜Â³Ã™Å Ã™Â Ã˜Â§Ã™â€žÃ™Æ’Ã˜Â¹Ã˜Â¨Ã™Å ',
+        photographerName: 'سيف الكعبي',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_role.png',
         thumbnailUrl: 'assets/images/hero_role.png',
-        caption: 'Ã™â€¦Ã™â€ Ã˜Â§Ã˜Â³Ã˜Â¨Ã˜Â§Ã˜Âª Ã˜Â¨Ã˜Â£Ã˜Â³Ã™â€žÃ™Ë†Ã˜Â¨ Ã˜Â³Ã™Å Ã™â€ Ã™â€¦Ã˜Â§Ã˜Â¦Ã™Å  Ã™â€¦Ã˜ÂªÃ™Ë†Ã˜Â§Ã˜Â²Ã™â€ .',
+        caption: 'مناسبات بأسلوب سينمائي متوازن.',
         tags: const ['event', 'cinematic'],
         views: 980,
         likes: 210,
@@ -322,11 +321,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_3',
         photographerId: 'demo_ph_3',
-        photographerName: 'Ã™â€ Ã™Ë†Ã˜Â± Ã˜Â§Ã™â€žÃ™â€¡Ã˜Â§Ã˜Â¯Ã™Å ',
+        photographerName: 'نور الهادي',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_welcome.png',
         thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'Ã™â€¦Ã™â€ Ã˜ÂªÃ˜Â¬Ã˜Â§Ã˜Âª Ã˜Â¨Ã˜Â®Ã™â€žÃ™ÂÃ™Å Ã˜Â© Ã™â€ Ã˜Â¸Ã™Å Ã™ÂÃ˜Â© Ã™Ë†Ã™â€žÃ™â€¦Ã˜Â³Ã˜Â© Ã™ÂÃ˜Â§Ã˜Â®Ã˜Â±Ã˜Â©.',
+        caption: 'منتجات بخلفية نظيفة ولمسة فاخرة.',
         tags: const ['product', 'premium'],
         views: 1560,
         likes: 402,
@@ -337,11 +336,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_4',
         photographerId: 'demo_ph_4',
-        photographerName: 'Ã˜Â±Ã™â€ Ã™Å Ã™â€¦ Ã˜Â§Ã™â€žÃ˜Â¨Ã˜ÂºÃ˜Â¯Ã˜Â§Ã˜Â¯Ã™Å ',
+        photographerName: 'رنيم البغدادي',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_auth.png',
         thumbnailUrl: 'assets/images/hero_auth.png',
-        caption: 'Ã˜Â¬Ã™â€žÃ˜Â³Ã˜Â© Ã˜Â¹Ã˜Â§Ã˜Â¦Ã™â€žÃ™Å Ã˜Â© Ã˜Â¨Ã˜Â¯Ã™ÂÃ˜Â¡ Ã˜Â£Ã™â€žÃ™Ë†Ã˜Â§Ã™â€  Ã™â€¡Ã˜Â§Ã˜Â¯Ã˜Â¦.',
+        caption: 'جلسة عائلية بدفء ألوان هادئ.',
         tags: const ['family', 'warm'],
         views: 820,
         likes: 188,
@@ -352,12 +351,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_5',
         photographerId: 'demo_ph_5',
-        photographerName: 'Ã˜Â¹Ã™â€¦Ã˜Â± Ã˜Â§Ã™â€žÃ˜Â³Ã˜Â¹Ã˜Â¯Ã™Å ',
+        photographerName: 'عمر السعدي',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_role.png',
         thumbnailUrl: 'assets/images/hero_role.png',
-        caption:
-            'Ã˜ÂªÃ˜ÂµÃ™Ë†Ã™Å Ã˜Â± Ã˜Â·Ã˜Â¹Ã˜Â§Ã™â€¦ Ã˜Â¨Ã˜ÂªÃ˜Â¨Ã˜Â§Ã™Å Ã™â€  Ã™â€žÃ˜Â·Ã™Å Ã™Â Ã™Ë†Ã˜ÂªÃ™ÂÃ˜Â§Ã˜ÂµÃ™Å Ã™â€ž Ã™Ë†Ã˜Â§Ã˜Â¶Ã˜Â­Ã˜Â©.',
+        caption: 'تصوير طعام بتباين لطيف وتفاصيل واضحة.',
         tags: const ['food', 'studio'],
         views: 1340,
         likes: 276,
@@ -368,11 +366,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_6',
         photographerId: 'demo_ph_6',
-        photographerName: 'Ã˜Â²Ã™â€¡Ã˜Â±Ã˜Â§Ã˜Â¡ Ã˜Â³Ã˜Â§Ã™â€žÃ™â€¦',
+        photographerName: 'زهراء سالم',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_welcome.png',
         thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'Ã™â€žÃ™â€šÃ˜Â·Ã˜Â§Ã˜Âª Ã˜Â£Ã˜Â·Ã™ÂÃ˜Â§Ã™â€ž Ã˜Â·Ã˜Â¨Ã™Å Ã˜Â¹Ã™Å Ã˜Â© Ã˜Â¨Ã˜Â¥Ã˜Â¶Ã˜Â§Ã˜Â¡Ã˜Â© Ã™â€žÃ˜Â·Ã™Å Ã™ÂÃ˜Â©.',
+        caption: 'لقطات أطفال طبيعية بإضاءة لطيفة.',
         tags: const ['kids', 'soft'],
         views: 1120,
         likes: 310,
@@ -411,7 +409,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _followingIds.remove(photographerId);
         }
       });
-      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜ÂªÃ˜Â­Ã˜Â¯Ã™Å Ã˜Â« Ã˜Â§Ã™â€žÃ™â€¦Ã˜ÂªÃ˜Â§Ã˜Â¨Ã˜Â¹Ã˜Â©');
+      _showSnackBar('تعذر تحديث المتابعة');
     }
   }
 
@@ -460,13 +458,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             )
             .toList();
       });
-      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜ÂªÃ˜Â­Ã˜Â¯Ã™Å Ã˜Â« Ã˜Â§Ã™â€žÃ˜Â¥Ã˜Â¹Ã˜Â¬Ã˜Â§Ã˜Â¨');
+      _showSnackBar('تعذر تحديث الإعجاب');
     }
   }
 
   Future<void> _openComments(ReelModel reel) async {
     if (_userId.isEmpty) {
-      _showSnackBar('Ã™Å Ã˜Â¬Ã˜Â¨ Ã˜ÂªÃ˜Â³Ã˜Â¬Ã™Å Ã™â€ž Ã˜Â§Ã™â€žÃ˜Â¯Ã˜Â®Ã™Ë†Ã™â€ž Ã˜Â£Ã™Ë†Ã™â€žÃ˜Â§Ã™â€¹');
+      _showSnackBar('يجب تسجيل الدخول أولاً');
       return;
     }
 
@@ -503,8 +501,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => CreateRequestScreen(
-          prefillNotes:
-              'Ã™â€¦Ã˜Â±Ã˜Â¬Ã˜Â¹ Ã™â€¦Ã™â€  Ã™â€¦Ã™â€ Ã˜Â´Ã™Ë†Ã˜Â± Ã˜Â§Ã™â€žÃ™â€¦Ã˜ÂµÃ™Ë†Ã˜Â± ${reel.photographerName}',
+          prefillNotes: 'مرجع من منشور المصور ${reel.photographerName}',
           prefillReferenceImages: imageUrl.isNotEmpty ? [imageUrl] : const [],
           prefillSelectedPhotographerId: reel.photographerId,
         ),
@@ -592,9 +589,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           reason: selected,
         );
       }
-      _showSnackBar('Ã˜ÂªÃ™â€¦ Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜Â§Ã™â€žÃ˜Â¨Ã™â€žÃ˜Â§Ã˜Âº');
+      _showSnackBar('تم إرسال البلاغ');
     } catch (_) {
-      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜Â§Ã™â€žÃ˜Â¨Ã™â€žÃ˜Â§Ã˜Âº');
+      _showSnackBar('تعذر إرسال البلاغ');
     }
   }
 
@@ -739,9 +736,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     alignment: AlignmentDirectional.centerEnd,
                     child: TextButton(
                       onPressed: () => _toggleFollow(photographer.id),
-                      child: Text(
-                        isFollowing ? 'Unfollow' : 'Follow',
-                      ),
+                      child: Text(isFollowing ? 'Unfollow' : 'Follow'),
                     ),
                   ),
               ],
@@ -977,8 +972,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   DateTime? _lastCommentAt;
 
   static const List<String> _blockedWords = [
-    'Ã˜Â±Ã™â€šÃ™â€¦',
-    'Ã™Ë†Ã˜Â§Ã˜ÂªÃ˜Â³Ã˜Â§Ã˜Â¨',
+    'رقم',
+    'واتساب',
     'whatsapp',
     'telegram',
     'tel',
@@ -1017,18 +1012,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     if (text.isEmpty) return;
 
     if (_containsPhone(text) || _containsUrl(text) || _containsBlocked(text)) {
-      _showSnackBar(
-        'Ã™Å Ã™â€¦Ã™â€ Ã˜Â¹ Ã™â€¦Ã˜Â´Ã˜Â§Ã˜Â±Ã™Æ’Ã˜Â© Ã˜Â£Ã˜Â±Ã™â€šÃ˜Â§Ã™â€¦ Ã˜Â£Ã™Ë† Ã˜Â±Ã™Ë†Ã˜Â§Ã˜Â¨Ã˜Â· Ã˜Â£Ã™Ë† Ã™â€¦Ã˜Â­Ã˜ÂªÃ™Ë†Ã™â€° Ã™â€¦Ã˜Â®Ã˜Â§Ã™â€žÃ™Â.',
-      );
+      _showSnackBar('يمنع مشاركة أرقام أو روابط أو محتوى مخالف.');
       return;
     }
 
     final now = DateTime.now();
     if (_lastCommentAt != null &&
         now.difference(_lastCommentAt!).inSeconds < 3) {
-      _showSnackBar(
-        'Ã˜Â§Ã™â€žÃ˜Â±Ã˜Â¬Ã˜Â§Ã˜Â¡ Ã˜Â§Ã™â€žÃ˜Â§Ã™â€ Ã˜ÂªÃ˜Â¸Ã˜Â§Ã˜Â± Ã™â€šÃ˜Â¨Ã™â€ž Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€š Ã˜Â¢Ã˜Â®Ã˜Â±.',
-      );
+      _showSnackBar('الرجاء الانتظار قبل إرسال تعليق آخر.');
       return;
     }
 
@@ -1053,7 +1044,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       setState(() => _comments.insert(0, comment));
       widget.onCommentAdded();
     } else {
-      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜Â§Ã™â€žÃ˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€š.');
+      _showSnackBar('تعذر إرسال التعليق.');
     }
 
     if (mounted) {
@@ -1102,7 +1093,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Ã˜Â§Ã™â€žÃ˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€šÃ˜Â§Ã˜Âª',
+              'التعليقات',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -1143,7 +1134,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     child: TextField(
                       controller: _controller,
                       decoration: const InputDecoration(
-                        hintText: 'Ã˜Â§Ã™Æ’Ã˜ÂªÃ˜Â¨ Ã˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€šÃ˜Â§Ã™â€¹...',
+                        hintText: 'اكتب تعليقاً...',
                       ),
                       minLines: 1,
                       maxLines: 3,

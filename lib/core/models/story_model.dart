@@ -79,11 +79,11 @@ class StoryModel {
     final difference = now.difference(createdAt);
 
     if (difference.inHours > 0) {
-      return 'Ù…Ù†Ø° ${difference.inHours} Ø³Ø§Ø¹Ø©';
+      return 'منذ ${difference.inHours} ساعة';
     } else if (difference.inMinutes > 0) {
-      return 'Ù…Ù†Ø° ${difference.inMinutes} Ø¯Ù‚ÙŠÙ‚Ø©';
+      return 'منذ ${difference.inMinutes} دقيقة';
     } else {
-      return 'Ø§Ù„Ø¢Ù†';
+      return 'الآن';
     }
   }
 
@@ -92,11 +92,11 @@ class StoryModel {
     final remaining = expiresAt.difference(now);
 
     if (remaining.inHours > 0) {
-      return 'Ø¨Ø§Ù‚ÙŠ ${remaining.inHours} Ø³Ø§Ø¹Ø©';
+      return 'باقي ${remaining.inHours} ساعة';
     } else if (remaining.inMinutes > 0) {
-      return 'Ø¨Ø§Ù‚ÙŠ ${remaining.inMinutes} Ø¯Ù‚ÙŠÙ‚Ø©';
+      return 'باقي ${remaining.inMinutes} دقيقة';
     } else {
-      return 'ØªÙ†ØªÙ‡ÙŠ Ù‚Ø±ÙŠØ¨Ø§Ù‹';
+      return 'تنتهي قريباً';
     }
   }
 }

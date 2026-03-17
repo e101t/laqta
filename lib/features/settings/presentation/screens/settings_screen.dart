@@ -99,9 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).noUserLoggedIn)),
         );
         return;
@@ -138,13 +136,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).deleteAccountSuccess)),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).deleteAccountSuccess),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).deleteAccountFailed)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).deleteAccountFailed),
+        ),
+      );
     }
   }
 
@@ -172,14 +174,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       AppRouter.goToAuth(context);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).logoutSuccess)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).logoutSuccess)),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).logoutFailed)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).logoutFailed)),
+      );
     }
   }
 
@@ -240,14 +242,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text(localizations.language),
                 subtitle: Text(
                   localeProvider.locale.languageCode == 'ar'
-                      ? 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©'
+                      ? 'العربية'
                       : 'English',
                 ),
                 trailing: DropdownButton<String>(
                   value: localeProvider.locale.languageCode,
                   underline: const SizedBox(),
                   items: const [
-                    DropdownMenuItem(value: 'ar', child: Text('Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©')),
+                    DropdownMenuItem(value: 'ar', child: Text('العربية')),
                     DropdownMenuItem(value: 'en', child: Text('English')),
                   ],
                   onChanged: _changeLanguage,
@@ -345,4 +347,3 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 }
-

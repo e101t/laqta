@@ -106,7 +106,9 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                           ),
                           child: Text(
                             story.caption!,
-                            style: textTheme.bodyMedium?.copyWith(color: Colors.white),
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: Colors.white,
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -156,16 +158,17 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                         context,
                         widget.stories[_currentIndex].photographerId,
                       ),
-                      child: const Text('Ø¹Ø±Ø¶ Ø§Ù„Ù…ØµÙˆØ±'),
+                      child: const Text('عرض المصور'),
                     ),
                   ),
                   if (widget.isCustomer) ...[
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () =>
-                            widget.onCreateRequest(widget.stories[_currentIndex]),
-                        child: const Text('Ø·Ù„Ø¨ Ù†ÙØ³ Ø§Ù„Ø£Ø³Ù„ÙˆØ¨'),
+                        onPressed: () => widget.onCreateRequest(
+                          widget.stories[_currentIndex],
+                        ),
+                        child: const Text('طلب نفس الأسلوب'),
                       ),
                     ),
                   ],

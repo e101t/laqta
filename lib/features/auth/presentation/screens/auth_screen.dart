@@ -39,8 +39,10 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
-    const devAuthMode =
-        String.fromEnvironment('LAQTA_DEV_AUTH_MODE', defaultValue: '');
+    const devAuthMode = String.fromEnvironment(
+      'LAQTA_DEV_AUTH_MODE',
+      defaultValue: '',
+    );
     final normalized = devAuthMode.trim().toLowerCase();
     _mode = kDebugMode && (normalized == 'signup' || normalized == 'sign_up')
         ? AuthMode.signUp
@@ -213,18 +215,18 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = _passwordController.text;
 
     if (identifier.isEmpty) {
-      _showSnackBar('Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ');
+      _showSnackBar('الرجاء إدخال اسم المستخدم أو البريد الإلكتروني');
       return;
     }
     if (password.isEmpty) {
-      _showSnackBar('Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±');
+      _showSnackBar('الرجاء إدخال كلمة المرور');
       return;
     }
 
     final normalized = identifier.replaceAll(' ', '');
     final looksLikePhone = RegExp(r'^\\+?\\d{7,}$').hasMatch(normalized);
     if (looksLikePhone && !normalized.contains('@')) {
-      _showSnackBar('Ù„Ù„Ø¯Ø®ÙˆÙ„ Ø¨Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ Ø§Ø³ØªØ®Ø¯Ù… Ø§Ù„ØªØ­Ù‚Ù‚ Ø¨Ø§Ù„Ø±Ù…Ø² (OTP)');
+      _showSnackBar('للدخول برقم الهاتف استخدم التحقق بالرمز (OTP)');
       setState(() {
         _showPhoneAuth = true;
         _showOTPVerification = false;
@@ -250,7 +252,10 @@ class _AuthScreenState extends State<AuthScreen> {
           debugPrint('Password sign-in failed: ${failure?.code ?? 'unknown'}');
         }
         _showSnackBar(
-          _formatErrorMessage(localizations.somethingWentWrong, failure?.message),
+          _formatErrorMessage(
+            localizations.somethingWentWrong,
+            failure?.message,
+          ),
         );
         return;
       }
@@ -530,8 +535,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
                       child: Center(
                         child: SizedBox(
                           width: Responsive.isWideLayout(context)
@@ -545,7 +551,8 @@ class _AuthScreenState extends State<AuthScreen> {
                               _AuthGlassCard(
                                 padding: const EdgeInsets.all(18),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     _buildModeToggle(localizations),
                                     const SizedBox(height: 20),
@@ -573,8 +580,9 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final title =
-        _isSignUp ? localizations.signUpTitle : localizations.signInTitle;
+    final title = _isSignUp
+        ? localizations.signUpTitle
+        : localizations.signInTitle;
 
     return Column(
       children: [
@@ -594,11 +602,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ],
           ),
-          child: const Icon(
-            Icons.camera_alt,
-            size: 32,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.camera_alt, size: 32, color: Colors.white),
         ),
         const SizedBox(height: 16),
         AnimatedSwitcher(
@@ -615,9 +619,7 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 8),
         Text(
           localizations.authSubtitle,
-          style: textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant,
-          ),
+          style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
       ],
@@ -677,10 +679,13 @@ class _AuthScreenState extends State<AuthScreen> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
-        final slide = Tween<Offset>(
-          begin: const Offset(0, 0.04),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+        final slide =
+            Tween<Offset>(
+              begin: const Offset(0, 0.04),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
 
         return FadeTransition(
           opacity: animation,
@@ -714,13 +719,17 @@ class _AuthScreenState extends State<AuthScreen> {
         CTAButton(
           text: localizations.signUpTitle,
           icon: Icons.person_add_alt_1_rounded,
-          onPressed: _isLoading ? null : () => AppRouter.goToSignUpDetails(context),
+          onPressed: _isLoading
+              ? null
+              : () => AppRouter.goToSignUpDetails(context),
         ),
         const SizedBox(height: 18),
         Row(
           children: [
             Expanded(
-              child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+              child: Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.7),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -732,7 +741,9 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
             Expanded(
-              child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+              child: Divider(
+                color: scheme.outlineVariant.withValues(alpha: 0.7),
+              ),
             ),
           ],
         ),
@@ -744,8 +755,8 @@ class _AuthScreenState extends State<AuthScreen> {
     return [
       AppTextField(
         controller: _identifierController,
-        label: 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… / Ø§Ù„Ø¨Ø±ÙŠØ¯',
-        hint: 'Ù…Ø«Ø§Ù„: ahmedphoto23',
+        label: 'اسم المستخدم / البريد',
+        hint: 'مثال: ahmedphoto23',
         prefixIcon: Icons.person_outline,
         enabled: !_isLoading,
         textInputAction: TextInputAction.next,
@@ -753,16 +764,15 @@ class _AuthScreenState extends State<AuthScreen> {
       const SizedBox(height: 12),
       AppTextField(
         controller: _passwordController,
-        label: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
-        hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
+        label: 'كلمة المرور',
+        hint: '••••••••',
         prefixIcon: Icons.lock_outline,
         enabled: !_isLoading,
         obscureText: _obscurePassword,
         suffixIcon: _obscurePassword
             ? Icons.visibility_outlined
             : Icons.visibility_off_outlined,
-        onSuffixTap: () =>
-            setState(() => _obscurePassword = !_obscurePassword),
+        onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
         textInputAction: TextInputAction.done,
         onFieldSubmitted: (_) => _signInWithPassword(),
       ),
@@ -802,12 +812,15 @@ class _AuthScreenState extends State<AuthScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
-    final googleLabel =
-        _isSignUp ? localizations.signUpWithGoogle : localizations.signInWithGoogle;
-    final appleLabel =
-        _isSignUp ? localizations.signUpWithApple : localizations.signInWithApple;
-    final phoneLabel =
-        _isSignUp ? localizations.signUpWithPhone : localizations.signInWithPhone;
+    final googleLabel = _isSignUp
+        ? localizations.signUpWithGoogle
+        : localizations.signInWithGoogle;
+    final appleLabel = _isSignUp
+        ? localizations.signUpWithApple
+        : localizations.signInWithApple;
+    final phoneLabel = _isSignUp
+        ? localizations.signUpWithPhone
+        : localizations.signInWithPhone;
 
     return [
       _AuthProviderButton(
@@ -855,17 +868,16 @@ class _AuthScreenState extends State<AuthScreen> {
                     _showOTPVerification = false;
                   });
                 },
-           backgroundColor: scheme.primary,
-           foregroundColor: scheme.onPrimary,
-           icon: const _AuthBadge(
-             backgroundColor: Colors.black,
-             child: Icon(Icons.phone_iphone_rounded, color: Colors.white),
-           ),
-           label: phoneLabel,
-           textStyle:
-               textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w800),
-         )
-       else
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
+          icon: const _AuthBadge(
+            backgroundColor: Colors.black,
+            child: Icon(Icons.phone_iphone_rounded, color: Colors.white),
+          ),
+          label: phoneLabel,
+          textStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w800),
+        )
+      else
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -944,10 +956,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
       Text(
         _phoneController.text,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(color: Theme.of(context).colorScheme.primary),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+        ),
         textAlign: TextAlign.center,
       ),
 
@@ -1031,7 +1042,8 @@ class _ModeChip extends StatelessWidget {
           child: Center(
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
-              style: textTheme.labelLarge?.copyWith(
+              style:
+                  textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: isActive ? scheme.onPrimary : scheme.onSurface,
                   ) ??
@@ -1118,9 +1130,7 @@ class _SoftGlow extends StatelessWidget {
       width: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0)],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }
@@ -1210,8 +1220,10 @@ class _AuthProviderButton extends StatelessWidget {
     final effectiveForeground = onPressed == null
         ? foregroundColor.withValues(alpha: 0.55)
         : foregroundColor;
-    final resolvedTextStyle = (textStyle ?? Theme.of(context).textTheme.bodyLarge)
-        ?.copyWith(color: effectiveForeground);
+    final resolvedTextStyle =
+        (textStyle ?? Theme.of(context).textTheme.bodyLarge)?.copyWith(
+          color: effectiveForeground,
+        );
 
     return SizedBox(
       height: 52,

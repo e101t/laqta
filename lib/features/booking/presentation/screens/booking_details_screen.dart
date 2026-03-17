@@ -1006,7 +1006,7 @@ class _ContactCard extends StatelessWidget {
                   Text(
                     contactAllowed
                         ? (phone ?? 'No phone number available')
-                        : 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ ÙŠØ¸Ù‡Ø± Ø¨Ø¹Ø¯ ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø­Ø¬Ø²',
+                        : 'رقم الهاتف يظهر بعد تأكيد الحجز',
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: contactAllowed
                           ? FontWeight.w600
@@ -1015,7 +1015,7 @@ class _ContactCard extends StatelessWidget {
                   ),
                   if (!contactAllowed)
                     Text(
-                      'Ù‡Ø°Ø§ Ø¬Ø²Ø¡ Ù…Ù† Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ© Ù„Ø¶Ù…Ø§Ù† Ø§Ù„ØªÙˆØ§ØµÙ„ Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ©.',
+                      'هذا جزء من سياسة الخصوصية لضمان التواصل داخل المنصة.',
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -1029,7 +1029,7 @@ class _ContactCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: scheme.primary,
                 ),
-                child: const Text('Ø§ØªØµØ§Ù„'),
+                child: const Text('اتصال'),
               ),
           ],
         ),
@@ -1234,7 +1234,7 @@ String _buildDistanceLabel(
   if (distance == null) {
     return '${localizations.photographerInGov} $photographerGov';
   }
-  return '${localizations.photographerInGov} $photographerGov â€¢ ${localizations.estimatedDistance} ${distance.toStringAsFixed(0)} ${localizations.distanceUnit}';
+  return '${localizations.photographerInGov} $photographerGov • ${localizations.estimatedDistance} ${distance.toStringAsFixed(0)} ${localizations.distanceUnit}';
 }
 
 double? _estimateDistanceKm(String? requestGov, String photographerGov) {
@@ -1443,7 +1443,7 @@ class _PolicyCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('â€¢ ', style: TextStyle(fontSize: 18)),
+                    const Text('• ', style: TextStyle(fontSize: 18)),
                     Expanded(child: Text(item, style: textTheme.bodyMedium)),
                   ],
                 ),

@@ -107,7 +107,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø­Ø¬ÙˆØ²';
+        _usernameError = 'اسم المستخدم محجوز';
       });
       return;
     }
@@ -116,8 +116,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError =
-            'ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ø­Ø±Ù ÙˆÙŠØ­ØªÙˆÙŠ Ø­Ø±ÙˆÙ/Ø£Ø±Ù‚Ø§Ù… ÙÙ‚Ø· Ø¨Ø¯ÙˆÙ† Ù…Ø³Ø§ÙØ§Øª';
+        _usernameError = 'يجب أن يبدأ بحرف ويحتوي حروف/أرقام فقط بدون مسافات';
       });
       return;
     }
@@ -134,13 +133,13 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = result.valueOrNull ?? false;
-        _usernameError = _usernameAvailable ? null : 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­';
+        _usernameError = _usernameAvailable ? null : 'اسم المستخدم غير متاح';
       });
     } catch (e) {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'ØªØ¹Ø°Ù‘Ø± Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…';
+        _usernameError = 'تعذّر التحقق من اسم المستخدم';
       });
     }
   }
@@ -155,9 +154,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
 
     final role = (_selectedRole ?? '').trim();
     if (role.isEmpty) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(localizations.chooseRole)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(localizations.chooseRole)));
       return;
     }
 
@@ -168,19 +165,19 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
     }
     if (_selectedGender == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Ø§Ø®ØªØ± Ù†ÙˆØ¹ Ø§Ù„Ø¬Ù†Ø³ Ù…Ù† ÙØ¶Ù„Ùƒ')),
+        const SnackBar(content: Text('اختر نوع الجنس من فضلك')),
       );
       return;
     }
     if (_selectedGovernorate == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Ø§Ø®ØªØ± Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø© Ù…Ù† ÙØ¶Ù„Ùƒ')),
+        const SnackBar(content: Text('اختر المحافظة من فضلك')),
       );
       return;
     }
     if (!_over18Confirmed) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('ÙŠØ¬Ø¨ ØªØ£ÙƒÙŠØ¯ Ø£Ù†Ùƒ ÙÙˆÙ‚ 18 Ø³Ù†Ø©')),
+        const SnackBar(content: Text('يجب تأكيد أنك فوق 18 سنة')),
       );
       return;
     }
@@ -189,13 +186,15 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
     final confirm = _confirmPasswordController.text;
     if (password.length < 6) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† 6 Ø£Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„')),
+        const SnackBar(
+          content: Text('كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
+        ),
       );
       return;
     }
     if (password != confirm) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('ØªØ£ÙƒÙŠØ¯ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ØºÙŠØ± Ù…Ø·Ø§Ø¨Ù‚')),
+        const SnackBar(content: Text('تأكيد كلمة المرور غير مطابق')),
       );
       return;
     }
@@ -217,9 +216,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
         }
         messenger.showSnackBar(
           SnackBar(
-            content: Text(
-              failure?.message ?? localizations.somethingWentWrong,
-            ),
+            content: Text(failure?.message ?? localizations.somethingWentWrong),
           ),
         );
         return;
@@ -306,331 +303,338 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed:
-                                    _isLoading ? null : () => AppRouter.goToAuth(context),
-                                icon: const Icon(Icons.arrow_back),
-                              ),
-                              const Spacer(),
-                              Text(
-                                localizations.signUpTitle,
-                                style: textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const Spacer(),
-                              const SizedBox(width: 48),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          Text(
-                            localizations.chooseRole,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _OptionCard(
-                                  icon: Icons.person,
-                                  label: localizations.customer,
-                                  isSelected:
-                                      _selectedRole == AppConstants.roleCustomer,
-                                  onTap: () => setState(
-                                    () => _selectedRole = AppConstants.roleCustomer,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _OptionCard(
-                                  icon: Icons.camera_alt,
-                                  label: localizations.photographer,
-                                  isSelected: _selectedRole ==
-                                      AppConstants.rolePhotographer,
-                                  onTap: () => setState(
-                                    () => _selectedRole =
-                                        AppConstants.rolePhotographer,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 22),
-                          AppTextField(
-                            controller: _fullNameController,
-                            label: localizations.fullName,
-                            hint: 'Ù…Ø«Ø§Ù„: Ø£Ø­Ù…Ø¯ Ù…Ø­Ù…Ø¯',
-                            prefixIcon: Icons.badge_outlined,
-                            enabled: !_isLoading,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ù„Ø§Ø³Ù…';
-                              }
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _usernameController,
-                            label: 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… (Username)',
-                            hint: 'Ù…Ø«Ø§Ù„: ahmedphoto23',
-                            prefixIcon: Icons.person_outline,
-                            enabled: !_isLoading,
-                            suffixIcon: _isCheckingUsername
-                                ? null
-                                : _usernameAvailable
-                                    ? Icons.check_circle
-                                    : null,
-                            onChanged: (value) {
-                              final normalized = value.trim().toLowerCase();
-                              if (normalized != value) {
-                                _usernameController
-                                  ..text = normalized
-                                  ..selection = TextSelection.collapsed(
-                                    offset: normalized.length,
-                                  );
-                              }
-                              setState(() => _usernameError = null);
-                              _usernameDebouncer(
-                                () => _checkUsernameAvailability(normalized),
-                              );
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…';
-                              }
-                              final normalized = value.trim().toLowerCase();
-                              if (_isUsernameForbidden(normalized)) {
-                                return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø­Ø¬ÙˆØ²';
-                              }
-                              if (!_isUsernameFormatValid(normalized)) {
-                                return 'ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ø­Ø±Ù ÙˆÙŠØ­ØªÙˆÙŠ Ø­Ø±ÙˆÙ/Ø£Ø±Ù‚Ø§Ù… ÙÙ‚Ø·';
-                              }
-                              if (!_usernameAvailable && !_isCheckingUsername) {
-                                return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­';
-                              }
-                              if (_usernameError != null &&
-                                  _usernameError!.isNotEmpty) {
-                                return _usernameError;
-                              }
-                              return null;
-                            },
-                          ),
-                          if (_isCheckingUsername)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                'Ø¬Ø§Ø±Ù Ø§Ù„ØªØ­Ù‚Ù‚...',
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _phoneController,
-                            label: localizations.phoneNumber,
-                            hint: '+964 XXX XXX XXXX',
-                            prefixIcon: Icons.phone,
-                            keyboardType: TextInputType.phone,
-                            enabled: !_isLoading,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ';
-                              }
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _emailController,
-                            label: 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)',
-                            hint: 'example@email.com',
-                            prefixIcon: Icons.email_outlined,
-                            keyboardType: TextInputType.emailAddress,
-                            enabled: !_isLoading,
-                          ),
-
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _birthYearController,
-                            label: 'Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯',
-                            hint: 'Ù…Ø«Ø§Ù„: 1995',
-                            prefixIcon: Icons.cake_outlined,
-                            keyboardType: TextInputType.number,
-                            enabled: !_isLoading,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯';
-                              }
-                              final year = int.tryParse(value);
-                              if (year == null ||
-                                  year < 1900 ||
-                                  year > DateTime.now().year - 18) {
-                                return 'ÙŠØ¬Ø¨ Ø£Ù† ØªØ´ÙŠØ± Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯ Ø¥Ù„Ù‰ Ø¹Ù…Ø± 18+';
-                              }
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 18),
-                          Text(
-                            localizations.governorate,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          AppDropdownField<String>(
-                            initialValue: _selectedGovernorate,
-                            hint: localizations.selectGovernorate,
-                            prefixIcon: Icons.location_on_outlined,
-                            items: governorates.map((gov) {
-                              return DropdownMenuItem(
-                                value: gov,
-                                child: Text(gov),
-                              );
-                            }).toList(),
-                            onChanged: _isLoading
-                                ? null
-                                : (value) => setState(
-                                      () => _selectedGovernorate = value,
-                                    ),
-                          ),
-
-                          const SizedBox(height: 18),
-                          Text(
-                            'Ù†ÙˆØ¹ Ø§Ù„Ø¬Ù†Ø³',
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _OptionCard(
-                                  icon: Icons.male,
-                                  label: localizations.male,
-                                  isSelected: _selectedGender == 'male',
-                                  onTap: () => setState(
-                                    () => _selectedGender = 'male',
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _OptionCard(
-                                  icon: Icons.female,
-                                  label: localizations.female,
-                                  isSelected: _selectedGender == 'female',
-                                  onTap: () => setState(
-                                    () => _selectedGender = 'female',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 18),
-                          AppTextField(
-                            controller: _passwordController,
-                            label: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
-                            hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
-                            prefixIcon: Icons.lock_outline,
-                            enabled: !_isLoading,
-                            obscureText: _obscurePassword,
-                            suffixIcon: _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            onSuffixTap: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±';
-                              }
-                              if (value.length < 6) {
-                                return 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† 6 Ø£Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„';
-                              }
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 16),
-                          AppTextField(
-                            controller: _confirmPasswordController,
-                            label: 'ØªØ£ÙƒÙŠØ¯ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
-                            hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
-                            prefixIcon: Icons.lock_outline,
-                            enabled: !_isLoading,
-                            obscureText: _obscureConfirmPassword,
-                            suffixIcon: _obscureConfirmPassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            onSuffixTap: () => setState(
-                              () => _obscureConfirmPassword =
-                                  !_obscureConfirmPassword,
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ ØªØ£ÙƒÙŠØ¯ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±';
-                              }
-                              if (value != _passwordController.text) {
-                                return 'ÙƒÙ„Ù…ØªØ§ Ø§Ù„Ù…Ø±ÙˆØ± ØºÙŠØ± Ù…ØªØ·Ø§Ø¨Ù‚ØªÙŠÙ†';
-                              }
-                              return null;
-                            },
-                          ),
-
-                          const SizedBox(height: 18),
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: scheme.primary.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: scheme.primary.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
+                            Row(
                               children: [
-                                Checkbox(
-                                  value: _over18Confirmed,
-                                  onChanged: _isLoading
+                                IconButton(
+                                  onPressed: _isLoading
                                       ? null
-                                      : (value) => setState(
-                                            () => _over18Confirmed =
-                                                value ?? false,
-                                          ),
+                                      : () => AppRouter.goToAuth(context),
+                                  icon: const Icon(Icons.arrow_back),
                                 ),
-                                const SizedBox(width: 8),
-                                const Expanded(
-                                  child: Text(
-                                    'Ø£Ø¤ÙƒØ¯ Ø£Ù† Ø¹Ù…Ø±ÙŠ ÙÙˆÙ‚ 18 Ø³Ù†Ø©',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
+                                const Spacer(),
+                                Text(
+                                  localizations.signUpTitle,
+                                  style: textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const SizedBox(width: 48),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            Text(
+                              localizations.chooseRole,
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _OptionCard(
+                                    icon: Icons.person,
+                                    label: localizations.customer,
+                                    isSelected:
+                                        _selectedRole ==
+                                        AppConstants.roleCustomer,
+                                    onTap: () => setState(
+                                      () => _selectedRole =
+                                          AppConstants.roleCustomer,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _OptionCard(
+                                    icon: Icons.camera_alt,
+                                    label: localizations.photographer,
+                                    isSelected:
+                                        _selectedRole ==
+                                        AppConstants.rolePhotographer,
+                                    onTap: () => setState(
+                                      () => _selectedRole =
+                                          AppConstants.rolePhotographer,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
 
-                          const SizedBox(height: 24),
-                          CTAButton(
-                            text: localizations.signUpTitle,
-                            onPressed: _isLoading ? null : _submit,
-                            isLoading: _isLoading,
-                          ),
+                            const SizedBox(height: 22),
+                            AppTextField(
+                              controller: _fullNameController,
+                              label: localizations.fullName,
+                              hint: 'مثال: أحمد محمد',
+                              prefixIcon: Icons.badge_outlined,
+                              enabled: !_isLoading,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'الرجاء إدخال الاسم';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 16),
+                            AppTextField(
+                              controller: _usernameController,
+                              label: 'اسم المستخدم (Username)',
+                              hint: 'مثال: ahmedphoto23',
+                              prefixIcon: Icons.person_outline,
+                              enabled: !_isLoading,
+                              suffixIcon: _isCheckingUsername
+                                  ? null
+                                  : _usernameAvailable
+                                  ? Icons.check_circle
+                                  : null,
+                              onChanged: (value) {
+                                final normalized = value.trim().toLowerCase();
+                                if (normalized != value) {
+                                  _usernameController
+                                    ..text = normalized
+                                    ..selection = TextSelection.collapsed(
+                                      offset: normalized.length,
+                                    );
+                                }
+                                setState(() => _usernameError = null);
+                                _usernameDebouncer(
+                                  () => _checkUsernameAvailability(normalized),
+                                );
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال اسم المستخدم';
+                                }
+                                final normalized = value.trim().toLowerCase();
+                                if (_isUsernameForbidden(normalized)) {
+                                  return 'اسم المستخدم محجوز';
+                                }
+                                if (!_isUsernameFormatValid(normalized)) {
+                                  return 'يجب أن يبدأ بحرف ويحتوي حروف/أرقام فقط';
+                                }
+                                if (!_usernameAvailable &&
+                                    !_isCheckingUsername) {
+                                  return 'اسم المستخدم غير متاح';
+                                }
+                                if (_usernameError != null &&
+                                    _usernameError!.isNotEmpty) {
+                                  return _usernameError;
+                                }
+                                return null;
+                              },
+                            ),
+                            if (_isCheckingUsername)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'جارٍ التحقق...',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+
+                            const SizedBox(height: 16),
+                            AppTextField(
+                              controller: _phoneController,
+                              label: localizations.phoneNumber,
+                              hint: '+964 XXX XXX XXXX',
+                              prefixIcon: Icons.phone,
+                              keyboardType: TextInputType.phone,
+                              enabled: !_isLoading,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'الرجاء إدخال رقم الهاتف';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 16),
+                            AppTextField(
+                              controller: _emailController,
+                              label: 'البريد الإلكتروني (اختياري)',
+                              hint: 'example@email.com',
+                              prefixIcon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              enabled: !_isLoading,
+                            ),
+
+                            const SizedBox(height: 16),
+                            AppTextField(
+                              controller: _birthYearController,
+                              label: 'سنة الميلاد',
+                              hint: 'مثال: 1995',
+                              prefixIcon: Icons.cake_outlined,
+                              keyboardType: TextInputType.number,
+                              enabled: !_isLoading,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال سنة الميلاد';
+                                }
+                                final year = int.tryParse(value);
+                                if (year == null ||
+                                    year < 1900 ||
+                                    year > DateTime.now().year - 18) {
+                                  return 'يجب أن تشير سنة الميلاد إلى عمر 18+';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 18),
+                            Text(
+                              localizations.governorate,
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            AppDropdownField<String>(
+                              initialValue: _selectedGovernorate,
+                              hint: localizations.selectGovernorate,
+                              prefixIcon: Icons.location_on_outlined,
+                              items: governorates.map((gov) {
+                                return DropdownMenuItem(
+                                  value: gov,
+                                  child: Text(gov),
+                                );
+                              }).toList(),
+                              onChanged: _isLoading
+                                  ? null
+                                  : (value) => setState(
+                                      () => _selectedGovernorate = value,
+                                    ),
+                            ),
+
+                            const SizedBox(height: 18),
+                            Text(
+                              'نوع الجنس',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _OptionCard(
+                                    icon: Icons.male,
+                                    label: localizations.male,
+                                    isSelected: _selectedGender == 'male',
+                                    onTap: () => setState(
+                                      () => _selectedGender = 'male',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _OptionCard(
+                                    icon: Icons.female,
+                                    label: localizations.female,
+                                    isSelected: _selectedGender == 'female',
+                                    onTap: () => setState(
+                                      () => _selectedGender = 'female',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 18),
+                            AppTextField(
+                              controller: _passwordController,
+                              label: 'كلمة المرور',
+                              hint: '••••••••',
+                              prefixIcon: Icons.lock_outline,
+                              enabled: !_isLoading,
+                              obscureText: _obscurePassword,
+                              suffixIcon: _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              onSuffixTap: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء إدخال كلمة المرور';
+                                }
+                                if (value.length < 6) {
+                                  return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 16),
+                            AppTextField(
+                              controller: _confirmPasswordController,
+                              label: 'تأكيد كلمة المرور',
+                              hint: '••••••••',
+                              prefixIcon: Icons.lock_outline,
+                              enabled: !_isLoading,
+                              obscureText: _obscureConfirmPassword,
+                              suffixIcon: _obscureConfirmPassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              onSuffixTap: () => setState(
+                                () => _obscureConfirmPassword =
+                                    !_obscureConfirmPassword,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'الرجاء تأكيد كلمة المرور';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'كلمتا المرور غير متطابقتين';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 18),
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: scheme.primary.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: scheme.primary.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: _over18Confirmed,
+                                    onChanged: _isLoading
+                                        ? null
+                                        : (value) => setState(
+                                            () => _over18Confirmed =
+                                                value ?? false,
+                                          ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'أؤكد أن عمري فوق 18 سنة',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+                            CTAButton(
+                              text: localizations.signUpTitle,
+                              onPressed: _isLoading ? null : _submit,
+                              isLoading: _isLoading,
+                            ),
                           ],
                         ),
                       ),
@@ -679,7 +683,9 @@ class _OptionCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? scheme.primary.withValues(alpha: 0.1) : scheme.surface,
+          color: isSelected
+              ? scheme.primary.withValues(alpha: 0.1)
+              : scheme.surface,
           border: Border.all(
             color: isSelected ? scheme.primary : scheme.outlineVariant,
             width: isSelected ? 2 : 1,
@@ -779,9 +785,7 @@ class _SoftGlow extends StatelessWidget {
       width: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0)],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }

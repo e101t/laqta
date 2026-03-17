@@ -23,9 +23,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Featured Products'), findsNWidgets(2));
-    expect(find.text('Ø£Ù„Ø¨ÙˆÙ… Ù…Ø·Ø¨ÙˆØ¹'), findsOneWidget);
+    expect(find.byIcon(Icons.shopping_bag_outlined), findsNWidgets(3));
     expect(find.byType(EmptyState), findsNothing);
-    expect(find.byIcon(Icons.shopping_bag_outlined), findsWidgets);
   });
 
   testWidgets('store order action opens create request flow', (tester) async {

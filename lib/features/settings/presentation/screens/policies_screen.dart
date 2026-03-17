@@ -30,11 +30,13 @@ class PoliciesScreen extends StatelessWidget {
                 children: [
                   Text(
                     localizations.readPolicies,
-                    style: textTheme.titleLarge?.copyWith(color: scheme.primary),
+                    style: textTheme.titleLarge?.copyWith(
+                      color: scheme.primary,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'ÙÙ‡Ù… ÙˆØ§Ø¶Ø­ Ù„Ù„Ø­Ù‚ÙˆÙ‚ ÙˆØ§Ù„ÙˆØ§Ø¬Ø¨Ø§Øª Ø¹Ù„Ù‰ Ù…Ù†ØµØ© Ù„Ù‚Ø·Ø©',
+                    'فهم واضح للحقوق والواجبات على منصة لقطة',
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -47,7 +49,7 @@ class PoliciesScreen extends StatelessWidget {
             // 1. Escrow Policy
             _PolicySection(
               title: localizations.escrowPolicy,
-              icon: 'ðŸ”’',
+              icon: '🔒',
               children: [
                 Text(
                   localizations.escrowPolicyDesc,
@@ -65,7 +67,7 @@ class PoliciesScreen extends StatelessWidget {
             // 2. Revision Policy
             _PolicySection(
               title: localizations.revisionPolicy,
-              icon: 'âœï¸',
+              icon: '✏️',
               children: [
                 Text(
                   localizations.revisionPolicyDesc,
@@ -86,23 +88,23 @@ class PoliciesScreen extends StatelessWidget {
             // 3. Cancellation Policy
             _PolicySection(
               title: localizations.cancellationPolicy,
-              icon: 'ðŸš«',
+              icon: '🚫',
               children: [
                 _CancellationRow(
-                  icon: 'â°',
-                  title: 'Ù‚Ø¨Ù„ 48 Ø³Ø§Ø¹Ø©',
+                  icon: '⏰',
+                  title: 'قبل 48 ساعة',
                   desc: localizations.cancellation48Hours,
                 ),
                 const SizedBox(height: 8),
                 _CancellationRow(
-                  icon: 'â³',
-                  title: 'Ø®Ù„Ø§Ù„ 48 Ø³Ø§Ø¹Ø©',
+                  icon: '⏳',
+                  title: 'خلال 48 ساعة',
                   desc: localizations.cancellation48HoursAfter,
                 ),
                 const SizedBox(height: 8),
                 _CancellationRow(
-                  icon: 'âš ï¸',
-                  title: 'Ø¹Ø¯Ù… Ø§Ù„Ø­Ø¶ÙˆØ±',
+                  icon: '⚠️',
+                  title: 'عدم الحضور',
                   desc: localizations.cancellationPhotographer,
                 ),
               ],
@@ -112,24 +114,24 @@ class PoliciesScreen extends StatelessWidget {
             // 4. Dispute Policy
             _PolicySection(
               title: localizations.disputePolicy,
-              icon: 'âš–ï¸',
+              icon: '⚖️',
               children: [
                 Text(
                   localizations.disputePolicyDesc,
                   style: textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: scheme.secondary.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: scheme.secondary.withValues(alpha: 0.25),
-                      ),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: scheme.secondary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: scheme.secondary.withValues(alpha: 0.25),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         localizations.disputeProcess,
@@ -164,12 +166,9 @@ class PoliciesScreen extends StatelessWidget {
             // 5. Trust Score
             _PolicySection(
               title: localizations.trustScorePolicy,
-              icon: 'â­',
+              icon: '⭐',
               children: [
-                Text(
-                  localizations.trustScoreDesc,
-                  style: textTheme.bodyMedium,
-                ),
+                Text(localizations.trustScoreDesc, style: textTheme.bodyMedium),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -195,18 +194,18 @@ class PoliciesScreen extends StatelessWidget {
             // 6. Privacy Policy
             _PolicySection(
               title: localizations.privacyPolicy,
-              icon: 'ðŸ›¡ï¸',
+              icon: '🛡️',
               children: [
                 _PrivacyItem(
-                  icon: 'ðŸ”’',
+                  icon: '🔒',
                   text: localizations.privacyPhoneNumber,
                 ),
                 const SizedBox(height: 8),
-                _PrivacyItem(icon: 'ðŸ“', text: localizations.privacyFiles),
+                _PrivacyItem(icon: '📁', text: localizations.privacyFiles),
                 const SizedBox(height: 8),
-                _PrivacyItem(icon: 'ðŸ’¬', text: localizations.privacyContact),
+                _PrivacyItem(icon: '💬', text: localizations.privacyContact),
                 const SizedBox(height: 8),
-                _PrivacyItem(icon: 'â°', text: localizations.privacyLinks),
+                _PrivacyItem(icon: '⏰', text: localizations.privacyLinks),
               ],
             ),
             const SizedBox(height: 16),
@@ -214,7 +213,7 @@ class PoliciesScreen extends StatelessWidget {
             // 7. Payment Policy
             _PolicySection(
               title: localizations.paymentPolicy,
-              icon: 'ðŸ’³',
+              icon: '💳',
               children: [
                 _PaymentItem(localizations.paymentDeposit),
                 const SizedBox(height: 8),
@@ -233,7 +232,9 @@ class PoliciesScreen extends StatelessWidget {
               ),
               child: Text(
                 localizations.iUnderstand,
-                style: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 16),

@@ -70,11 +70,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         content: Text(
           syncedToProfile
               ? _localizedText(
-                  ar: 'ØªÙ… Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„ØªÙˆÙØ± ÙˆÙ…Ø²Ø§Ù…Ù†ØªÙ‡Ø§ Ù…Ø¹ Ù…Ù„ÙÙƒ Ø§Ù„Ø´Ø®ØµÙŠ',
+                  ar: 'تم حفظ إعدادات التوفر ومزامنتها مع ملفك الشخصي',
                   en: 'Availability saved and synced to your profile',
                 )
               : _localizedText(
-                  ar: 'ØªÙ… Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„ØªÙˆÙØ± Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ù‡Ø§Ø²',
+                  ar: 'تم حفظ إعدادات التوفر على هذا الجهاز',
                   en: 'Availability saved on this device',
                 ),
         ),
@@ -163,7 +163,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
     final days = decoded['days'];
     if (days is List) {
-      for (var index = 0; index < days.length && index < _days.length; index++) {
+      for (
+        var index = 0;
+        index < days.length && index < _days.length;
+        index++
+      ) {
         final item = days[index];
         if (item is Map) {
           _days[index] = _DayAvailability.fromJson(
@@ -181,10 +185,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     return FirebaseAuth.instance.currentUser?.uid;
   }
 
-  Future<void> _pickTime({
-    required int dayIndex,
-    required bool isStart,
-  }) async {
+  Future<void> _pickTime({required int dayIndex, required bool isStart}) async {
     final day = _days[dayIndex];
     final initialMinutes = isStart ? day.startMinutes : day.endMinutes;
     final picked = await showTimePicker(
@@ -199,34 +200,33 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       if (isStart) {
         day.startMinutes = pickedMinutes;
         if (day.endMinutes <= day.startMinutes + 30) {
-          day.endMinutes = ((day.startMinutes + 60).clamp(60, 1439) as num).toInt();
+          day.endMinutes = ((day.startMinutes + 60).clamp(60, 1439) as num)
+              .toInt();
         }
       } else {
         day.endMinutes = pickedMinutes;
         if (day.endMinutes <= day.startMinutes + 30) {
-          day.startMinutes = ((day.endMinutes - 60).clamp(0, 1379) as num).toInt();
+          day.startMinutes = ((day.endMinutes - 60).clamp(0, 1379) as num)
+              .toInt();
         }
       }
     });
   }
 
-  String _localizedText({
-    required String ar,
-    required String en,
-  }) {
+  String _localizedText({required String ar, required String en}) {
     final languageCode = Localizations.localeOf(context).languageCode;
     return languageCode == 'ar' ? ar : en;
   }
 
   String _dayLabel(int index) {
     const arabicDays = <String>[
-      'Ø§Ù„Ø£Ø­Ø¯',
-      'Ø§Ù„Ø§Ø«Ù†ÙŠÙ†',
-      'Ø§Ù„Ø«Ù„Ø§Ø«Ø§Ø¡',
-      'Ø§Ù„Ø£Ø±Ø¨Ø¹Ø§Ø¡',
-      'Ø§Ù„Ø®Ù…ÙŠØ³',
-      'Ø§Ù„Ø¬Ù…Ø¹Ø©',
-      'Ø§Ù„Ø³Ø¨Øª',
+      'الأحد',
+      'الاثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت',
     ];
     const englishDays = <String>[
       'Sunday',
@@ -253,16 +253,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   TimeOfDay _timeFromMinutes(int minutes) {
-    return TimeOfDay(
-      hour: minutes ~/ 60,
-      minute: minutes % 60,
-    );
+    return TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60);
   }
 
   String _todaySummary() {
     final today = _days[_todayIndex];
     if (!today.isEnabled) {
-      return _localizedText(ar: 'Ù…ØºÙ„Ù‚ Ø§Ù„ÙŠÙˆÙ…', en: 'Closed today');
+      return _localizedText(ar: 'مغلق اليوم', en: 'Closed today');
     }
 
     return '${_formatMinutes(today.startMinutes)} - ${_formatMinutes(today.endMinutes)}';
@@ -315,7 +312,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  Widget _buildPreferencesCard(ThemeData theme, AppLocalizations localizations) {
+  Widget _buildPreferencesCard(
+    ThemeData theme,
+    AppLocalizations localizations,
+  ) {
     final textTheme = theme.textTheme;
     final scheme = theme.colorScheme;
 
@@ -339,13 +339,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
               value: _allowSameDayBookings,
               title: Text(
                 _localizedText(
-                  ar: 'Ø§Ù„Ø³Ù…Ø§Ø­ Ø¨Ø§Ù„Ø­Ø¬Ø² ÙÙŠ Ù†ÙØ³ Ø§Ù„ÙŠÙˆÙ…',
+                  ar: 'السماح بالحجز في نفس اليوم',
                   en: 'Allow same-day bookings',
                 ),
               ),
               subtitle: Text(
                 _localizedText(
-                  ar: 'Ù…ÙÙŠØ¯ Ù„Ù„Ø­Ø¬ÙˆØ²Ø§Øª Ø§Ù„Ø³Ø±ÙŠØ¹Ø© ÙˆØ§Ù„Ø·Ø§Ø±Ø¦Ø©',
+                  ar: 'مفيد للحجوزات السريعة والطارئة',
                   en: 'Useful for urgent and last-minute bookings',
                 ),
               ),
@@ -356,7 +356,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             const SizedBox(height: 8),
             Text(
               '${localizations.minPrice}: ${_minBookingPrice.round()} IQD',
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             Slider(
               value: _minBookingPrice,
@@ -370,7 +372,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             ),
             Text(
               '${localizations.deliveryDays}: ${_deliveryDays.round()}',
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             Slider(
               value: _deliveryDays,
@@ -384,10 +388,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             ),
             Text(
               _localizedText(
-                ar: 'Ù†Ø·Ø§Ù‚ Ø§Ù„ØªÙ†Ù‚Ù„: ${_travelRadiusKm.round()} ÙƒÙ…',
+                ar: 'نطاق التنقل: ${_travelRadiusKm.round()} كم',
                 en: 'Travel radius: ${_travelRadiusKm.round()} km',
               ),
-              style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             Slider(
               value: _travelRadiusKm,
@@ -402,10 +408,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             Text(
               _localizedText(
                 ar: _isSyncedToProfile
-                    ? 'Ù‡Ø°Ù‡ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ù…Ø±ØªØ¨Ø·Ø© Ø§Ù„Ø¢Ù† Ø¨Ù…Ù„ÙÙƒ Ø§Ù„Ø´Ø®ØµÙŠ ÙˆØªØ¨Ù‚Ù‰ Ù…Ø­ÙÙˆØ¸Ø© Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ù‡Ø§Ø² Ø£ÙŠØ¶Ù‹Ø§.'
+                    ? 'هذه الإعدادات مرتبطة الآن بملفك الشخصي وتبقى محفوظة على هذا الجهاز أيضًا.'
                     : _firebaseUserId != null
-                    ? 'Ø³ÙŠØªÙ… Ø­ÙØ¸ Ù‡Ø°Ù‡ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø¹Ù„Ù‰ Ø¬Ù‡Ø§Ø²Ùƒ ÙˆÙ…Ø²Ø§Ù…Ù†ØªÙ‡Ø§ Ù…Ø¹ Ù…Ù„ÙÙƒ Ø§Ù„Ø´Ø®ØµÙŠ Ø¹Ù†Ø¯ Ù†Ø¬Ø§Ø­ Ø§Ù„Ø§ØªØµØ§Ù„.'
-                    : 'Ø³ÙŠØªÙ… Ø­ÙØ¸ Ù‡Ø°Ù‡ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ù‡Ø§Ø² Ø¥Ù„Ù‰ Ø­ÙŠÙ† ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„.',
+                    ? 'سيتم حفظ هذه الإعدادات على جهازك ومزامنتها مع ملفك الشخصي عند نجاح الاتصال.'
+                    : 'سيتم حفظ هذه الإعدادات على هذا الجهاز إلى حين تسجيل الدخول.',
                 en: _isSyncedToProfile
                     ? 'These settings are synced to your profile and also cached on this device.'
                     : _firebaseUserId != null
@@ -451,7 +457,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                       Text(
                         day.isEnabled
                             ? '${_formatMinutes(day.startMinutes)} - ${_formatMinutes(day.endMinutes)}'
-                            : _localizedText(ar: 'Ù…ØºÙ„Ù‚', en: 'Closed'),
+                            : _localizedText(ar: 'مغلق', en: 'Closed'),
                         style: textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -474,11 +480,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _pickTime(dayIndex: index, isStart: true),
+                      onPressed: () =>
+                          _pickTime(dayIndex: index, isStart: true),
                       icon: const Icon(Icons.schedule_outlined),
                       label: Text(
                         _localizedText(
-                          ar: 'Ù…Ù† ${_formatMinutes(day.startMinutes)}',
+                          ar: 'من ${_formatMinutes(day.startMinutes)}',
                           en: 'From ${_formatMinutes(day.startMinutes)}',
                         ),
                       ),
@@ -487,11 +494,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _pickTime(dayIndex: index, isStart: false),
+                      onPressed: () =>
+                          _pickTime(dayIndex: index, isStart: false),
                       icon: const Icon(Icons.schedule_send_outlined),
                       label: Text(
                         _localizedText(
-                          ar: 'Ø¥Ù„Ù‰ ${_formatMinutes(day.endMinutes)}',
+                          ar: 'إلى ${_formatMinutes(day.endMinutes)}',
                           en: 'To ${_formatMinutes(day.endMinutes)}',
                         ),
                       ),
@@ -609,4 +617,3 @@ List<_DayAvailability> _defaultDays() {
     _DayAvailability(isEnabled: false, startMinutes: 540, endMinutes: 1020),
   ];
 }
-

@@ -34,10 +34,14 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
         return;
       }
 
-      final result = await LoyaltyDependencies.getLoyaltyPoints().call(userId: userId);
+      final result = await LoyaltyDependencies.getLoyaltyPoints().call(
+        userId: userId,
+      );
       if (!mounted) return;
       if (!result.isSuccess || result.valueOrNull == null) {
-        throw StateError(result.failureOrNull?.message ?? 'Failed to load loyalty points');
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load loyalty points',
+        );
       }
       _loyaltyPoints = result.valueOrNull!;
     } catch (e) {
@@ -63,9 +67,14 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ù†Ù‚Ø§Ø· Ø§Ù„ÙˆÙ„Ø§Ø¡ ðŸŽ'),
+        title: const Text('نقاط الولاء 🎁'),
         centerTitle: true,
-        actions: [IconButton(icon: const Icon(Icons.info_outline), onPressed: _showPointsInfo)],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: _showPointsInfo,
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -86,8 +95,8 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Ø§Ù„Ø³Ø¬Ù„', style: textTheme.titleLarge),
-              TextButton(onPressed: () {}, child: const Text('Ø¹Ø±Ø¶ Ø§Ù„ÙƒÙ„')),
+              Text('السجل', style: textTheme.titleLarge),
+              TextButton(onPressed: () {}, child: const Text('عرض الكل')),
             ],
           ),
           const SizedBox(height: 12),
@@ -123,8 +132,10 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Ù†Ù‚Ø§Ø·Ùƒ Ø§Ù„Ù…ØªØ§Ø­Ø©',
-                style: textTheme.titleMedium?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+                'نقاطك المتاحة',
+                style: textTheme.titleMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
               ),
               Text(
                 _loyaltyPoints.getTierName(),
@@ -135,12 +146,18 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           const SizedBox(height: 16),
           Text(
             '${_loyaltyPoints.availablePoints}',
-            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white),
+            style: const TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Ù†Ù‚Ø·Ø©',
-            style: textTheme.bodyLarge?.copyWith(color: Colors.white.withValues(alpha: 0.8)),
+            'نقطة',
+            style: textTheme.bodyLarge?.copyWith(
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
           ),
           const SizedBox(height: 20),
           Container(
@@ -152,11 +169,22 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildPointsStat('Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹', '${_loyaltyPoints.totalPoints}'),
-                Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.3)),
-                _buildPointsStat('Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…', '${_loyaltyPoints.usedPoints}'),
-                Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.3)),
-                _buildPointsStat('Ø§Ù„Ø®ØµÙ…', '${_loyaltyPoints.getDiscountPercentage()}%'),
+                _buildPointsStat('المجموع', '${_loyaltyPoints.totalPoints}'),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                _buildPointsStat('المستخدم', '${_loyaltyPoints.usedPoints}'),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                _buildPointsStat(
+                  'الخصم',
+                  '${_loyaltyPoints.getDiscountPercentage()}%',
+                ),
               ],
             ),
           ),
@@ -170,10 +198,20 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
       children: [
         Text(
           value,
-          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12)),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 12,
+          ),
+        ),
       ],
     );
   }
@@ -197,10 +235,10 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Ø§Ù„ØªÙ‚Ø¯Ù… Ù„Ù„Ù…Ø³ØªÙˆÙ‰ Ø§Ù„ØªØ§Ù„ÙŠ', style: textTheme.titleMedium),
+              Text('التقدم للمستوى التالي', style: textTheme.titleMedium),
               if (nextTierPoints > 0)
                 Text(
-                  'Ø¨Ø§Ù‚ÙŠ $nextTierPoints Ù†Ù‚Ø·Ø©',
+                  'باقي $nextTierPoints نقطة',
                   style: textTheme.bodySmall?.copyWith(
                     color: scheme.primary,
                     fontWeight: FontWeight.bold,
@@ -222,10 +260,10 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('ðŸ¥‰ Ø¨Ø±ÙˆÙ†Ø²ÙŠ', style: textTheme.bodySmall),
-              Text('ðŸ¥ˆ ÙØ¶ÙŠ', style: textTheme.bodySmall),
-              Text('ðŸ¥‡ Ø°Ù‡Ø¨ÙŠ', style: textTheme.bodySmall),
-              Text('ðŸ’Ž Ø¨Ù„Ø§ØªÙŠÙ†ÙŠÙˆÙ…', style: textTheme.bodySmall),
+              Text('🥉 برونزي', style: textTheme.bodySmall),
+              Text('🥈 فضي', style: textTheme.bodySmall),
+              Text('🥇 ذهبي', style: textTheme.bodySmall),
+              Text('💎 بلاتينيوم', style: textTheme.bodySmall),
             ],
           ),
         ],
@@ -246,12 +284,28 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ÙƒÙŠÙ ØªÙƒØ³Ø¨ Ø§Ù„Ù†Ù‚Ø§Ø·ØŸ', style: textTheme.titleMedium),
+          Text('كيف تكسب النقاط؟', style: textTheme.titleMedium),
           const SizedBox(height: 16),
-          _buildEarnMethod('ðŸ“…', 'Ø¥ØªÙ…Ø§Ù… Ø­Ø¬Ø²', '+${PointsRules.bookingCompleted} Ù†Ù‚Ø·Ø©'),
-          _buildEarnMethod('ðŸ‘¥', 'Ø¯Ø¹ÙˆØ© ØµØ¯ÙŠÙ‚', '+${PointsRules.referralSuccess} Ù†Ù‚Ø·Ø©'),
-          _buildEarnMethod('â­', 'ÙƒØªØ§Ø¨Ø© ØªÙ‚ÙŠÙŠÙ…', '+${PointsRules.reviewWritten} Ù†Ù‚Ø·Ø©'),
-          _buildEarnMethod('ðŸŽ‰', 'Ø£ÙˆÙ„ Ø­Ø¬Ø²', '+${PointsRules.firstBooking} Ù†Ù‚Ø·Ø©'),
+          _buildEarnMethod(
+            '📅',
+            'إتمام حجز',
+            '+${PointsRules.bookingCompleted} نقطة',
+          ),
+          _buildEarnMethod(
+            '👥',
+            'دعوة صديق',
+            '+${PointsRules.referralSuccess} نقطة',
+          ),
+          _buildEarnMethod(
+            '⭐',
+            'كتابة تقييم',
+            '+${PointsRules.reviewWritten} نقطة',
+          ),
+          _buildEarnMethod(
+            '🎉',
+            'أول حجز',
+            '+${PointsRules.firstBooking} نقطة',
+          ),
         ],
       ),
     );
@@ -302,7 +356,12 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
               color: accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Center(child: Text(transaction.getIcon(), style: const TextStyle(fontSize: 24))),
+            child: Center(
+              child: Text(
+                transaction.getIcon(),
+                style: const TextStyle(fontSize: 24),
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -313,7 +372,9 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
                 if (transaction.description != null)
                   Text(
                     transaction.description!,
-                    style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
               ],
             ),
@@ -327,7 +388,9 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
               ),
               Text(
                 _formatDate(transaction.createdAt),
-                style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -340,9 +403,9 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inDays == 0) return 'Ø§Ù„ÙŠÙˆÙ…';
-    if (diff.inDays == 1) return 'Ø£Ù…Ø³';
-    if (diff.inDays < 7) return 'Ù…Ù†Ø° ${diff.inDays} Ø£ÙŠØ§Ù…';
+    if (diff.inDays == 0) return 'اليوم';
+    if (diff.inDays == 1) return 'أمس';
+    if (diff.inDays < 7) return 'منذ ${diff.inDays} أيام';
     return '${date.day}/${date.month}/${date.year}';
   }
 
@@ -360,15 +423,20 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ù†Ù‚Ø§Ø·', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'معلومات النقاط',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Text(
-              'â€¢ ÙƒÙ„ ${PointsRules.pointsToIQD} Ù†Ù‚Ø·Ø© = 1,000 Ø¯ÙŠÙ†Ø§Ø± Ø¹Ø±Ø§Ù‚ÙŠ\n'
-              'â€¢ ÙŠÙ…ÙƒÙ† Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù†Ù‚Ø§Ø· ÙƒØ®ØµÙ… Ø¹Ù„Ù‰ Ø§Ù„Ø­Ø¬ÙˆØ²Ø§Øª\n'
-              'â€¢ Ø§Ù„Ù†Ù‚Ø§Ø· Ù„Ø§ ØªÙ†ØªÙ‡ÙŠ ØµÙ„Ø§Ø­ÙŠØªÙ‡Ø§\n'
-              'â€¢ ÙƒÙ„Ù…Ø§ Ø§Ø±ØªÙØ¹ Ù…Ø³ØªÙˆØ§ÙƒØŒ Ø²Ø§Ø¯Øª Ø§Ù„Ø®ØµÙˆÙ…Ø§Øª\n'
-              'â€¢ Ø´Ø§Ø±Ùƒ Ø±Ù…Ø² Ø§Ù„Ø¥Ø­Ø§Ù„Ø© ÙˆØ§ÙƒØ³Ø¨ Ù†Ù‚Ø§Ø· Ø¥Ø¶Ø§ÙÙŠØ©',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.8),
+              '• كل ${PointsRules.pointsToIQD} نقطة = 1,000 دينار عراقي\n'
+              '• يمكن استخدام النقاط كخصم على الحجوزات\n'
+              '• النقاط لا تنتهي صلاحيتها\n'
+              '• كلما ارتفع مستواك، زادت الخصومات\n'
+              '• شارك رمز الإحالة واكسب نقاط إضافية',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.8),
             ),
             const SizedBox(height: 16),
           ],

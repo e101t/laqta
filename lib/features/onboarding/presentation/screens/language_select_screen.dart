@@ -74,7 +74,10 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
     super.dispose();
   }
 
-  Future<void> _selectLanguage(BuildContext context, String languageCode) async {
+  Future<void> _selectLanguage(
+    BuildContext context,
+    String languageCode,
+  ) async {
     final localeProvider = context.read<LocaleProvider>();
     await localeProvider.setLocale(languageCode);
     if (!context.mounted) return;
@@ -153,7 +156,9 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: scheme.primary.withValues(alpha: 0.25),
+                                    color: scheme.primary.withValues(
+                                      alpha: 0.25,
+                                    ),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -199,7 +204,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                             child: SlideTransition(
                               position: _cardSlideOne,
                               child: _LanguageCard(
-                                title: 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©',
+                                title: 'العربية',
                                 subtitle: 'Arabic',
                                 isSelected: currentCode == 'ar',
                                 onTap: () => _selectLanguage(context, 'ar'),
@@ -213,7 +218,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                               position: _cardSlideTwo,
                               child: _LanguageCard(
                                 title: 'English',
-                                subtitle: 'Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ©',
+                                subtitle: 'الإنجليزية',
                                 isSelected: currentCode == 'en',
                                 onTap: () => _selectLanguage(context, 'en'),
                               ),
@@ -344,9 +349,7 @@ class _SoftOrb extends StatelessWidget {
       width: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0)],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }

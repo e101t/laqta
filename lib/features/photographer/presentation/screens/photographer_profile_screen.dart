@@ -274,10 +274,10 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     if (_trustStats != null && _trustStats!.reviewCount > 0) {
       average =
           (_trustStats!.avgQuality +
-                  _trustStats!.avgCommunication +
-                  _trustStats!.avgOnTime +
-                  _trustStats!.avgDelivery) /
-              4;
+              _trustStats!.avgCommunication +
+              _trustStats!.avgOnTime +
+              _trustStats!.avgDelivery) /
+          4;
       count = _trustStats!.reviewCount;
     } else if (_reviews.isNotEmpty) {
       final total = _reviews.fold<double>(0, (sum, review) {
@@ -310,18 +310,14 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
 
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ø­Ø³Ø§Ø¨ÙŠ')),
+        appBar: AppBar(title: const Text('حسابي')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: scheme.error,
-                ),
+                Icon(Icons.error_outline, size: 64, color: scheme.error),
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage!,
@@ -330,7 +326,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                 ),
                 const SizedBox(height: 16),
                 CTAButton(
-                  text: 'Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø©',
+                  text: 'إعادة المحاولة',
                   onPressed: _loadPhotographerData,
                 ),
               ],
@@ -345,11 +341,11 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     }
 
     final genderLabel = _userData!.gender == 'female'
-        ? 'Ø£Ù†Ø«Ù‰'
+        ? 'أنثى'
         : _userData!.gender == 'male'
-        ? 'Ø°ÙƒØ±'
+        ? 'ذكر'
         : null;
-    final ageLabel = _userData!.age != null ? '${_userData!.age} Ø³Ù†Ø©' : null;
+    final ageLabel = _userData!.age != null ? '${_userData!.age} سنة' : null;
 
     return Scaffold(
       body: CustomScrollView(
@@ -455,11 +451,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                       // Trust Score
                       Row(
                         children: [
-                          Icon(
-                            Icons.verified,
-                            color: scheme.primary,
-                            size: 20,
-                          ),
+                          Icon(Icons.verified, color: scheme.primary, size: 20),
                           const SizedBox(width: 4),
                           Text(
                             'Trust: ${_trustLabel()}',
@@ -542,10 +534,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                       const SizedBox(height: 16),
 
                       // Bio
-                      Text(
-                        _photographerData!.bio,
-                        style: textTheme.bodyMedium,
-                      ),
+                      Text(_photographerData!.bio, style: textTheme.bodyMedium),
                       const SizedBox(height: 16),
 
                       // Social Links
@@ -599,9 +588,9 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                   unselectedLabelColor: scheme.onSurfaceVariant,
                   indicatorColor: scheme.primary,
                   tabs: [
-                    const Tab(text: 'Ø§Ù„Ù…Ù„Ø®Øµ'),
+                    const Tab(text: 'الملخص'),
                     Tab(text: localizations.reviews),
-                    const Tab(text: 'Ø§Ù„Ù…Ø¹Ø±Ø¶'),
+                    const Tab(text: 'المعرض'),
                   ],
                 ),
 
@@ -645,7 +634,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
   Widget _buildPortfolioTab() {
     final images = _portfolioData?.images ?? [];
     if (images.isEmpty) {
-      return const Center(child: Text('Ù„Ø§ ØªÙˆØ¬Ø¯ ØµÙˆØ± ÙÙŠ Ø§Ù„Ù…Ø¹Ø±Ø¶ Ø­Ø§Ù„ÙŠØ§Ù‹'));
+      return const Center(child: Text('لا توجد صور في المعرض حالياً'));
     }
 
     return GridView.builder(
@@ -753,7 +742,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
         ListTile(
           leading: Icon(Icons.place, color: scheme.primary),
           title: Text(_userData?.governorate ?? ''),
-          subtitle: const Text('Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©'),
+          subtitle: const Text('المحافظة'),
         ),
         ListTile(
           leading: Icon(Icons.price_change, color: scheme.primary),
@@ -768,7 +757,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
         ),
         if (_photographerData!.specialties.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text('Ø§Ù„ØªØ®ØµØµØ§Øª', style: textTheme.titleMedium),
+          Text('التخصصات', style: textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

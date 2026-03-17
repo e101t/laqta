@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (authUser == null) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Ø§Ù„Ø±Ø¬Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù„Ø¹Ø±Ø¶ Ø§Ù„Ø­Ø³Ø§Ø¨';
+        _errorMessage = 'الرجاء تسجيل الدخول لعرض الحساب';
         _isLoading = false;
       });
       return;
@@ -58,7 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'ØªØ¹Ø°Ù‘Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ';
+        _errorMessage = 'تعذّر تحميل الملف الشخصي';
         _isLoading = false;
       });
     }
@@ -132,13 +132,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _isUploading = false);
 
         messenger.showSnackBar(
-          const SnackBar(content: Text('ØªÙ… ØªØ­Ø¯ÙŠØ« ØµÙˆØ±Ø© Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ')),
+          const SnackBar(content: Text('تم تحديث صورة الملف الشخصي')),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isUploading = false);
-      messenger.showSnackBar(const SnackBar(content: Text('ÙØ´Ù„ Ø±ÙØ¹ Ø§Ù„ØµÙˆØ±Ø©')));
+      messenger.showSnackBar(const SnackBar(content: Text('فشل رفع الصورة')));
     }
   }
 
@@ -153,10 +153,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final newValue = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('ØªØ¹Ø¯ÙŠÙ„ $title'),
+        title: Text('تعديل $title'),
         content: AppTextField(
           controller: controller,
-          hint: 'Ø§ÙƒØªØ¨ $title',
+          hint: 'اكتب $title',
           label: title,
           keyboardType: fieldKey == 'phone'
               ? TextInputType.phone
@@ -167,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final value = controller.text.trim();
             if (value.isEmpty) {
               messenger.showSnackBar(
-                SnackBar(content: Text('$title Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø£Ù† ÙŠÙƒÙˆÙ† ÙØ§Ø±ØºØ§Ù‹')),
+                SnackBar(content: Text('$title لا يمكن أن يكون فارغاً')),
               );
               return;
             }
@@ -177,20 +177,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Ø¥Ù„ØºØ§Ø¡'),
+            child: const Text('إلغاء'),
           ),
           TextButton(
             onPressed: () {
               final value = controller.text.trim();
               if (value.isEmpty) {
                 messenger.showSnackBar(
-                  SnackBar(content: Text('$title Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø£Ù† ÙŠÙƒÙˆÙ† ÙØ§Ø±ØºØ§Ù‹')),
+                  SnackBar(content: Text('$title لا يمكن أن يكون فارغاً')),
                 );
                 return;
               }
               Navigator.of(context).pop(value);
             },
-            child: const Text('Ø­ÙØ¸'),
+            child: const Text('حفظ'),
           ),
         ],
       ),
@@ -200,10 +200,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await _updateUser({fieldKey: newValue});
         messenger.showSnackBar(
-          SnackBar(content: Text('ØªÙ… ØªØ­Ø¯ÙŠØ« $title Ø¨Ù†Ø¬Ø§Ø­')),
+          SnackBar(content: Text('تم تحديث $title بنجاح')),
         );
       } catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text('ØªØ¹Ø°Ù‘Ø± ØªØ­Ø¯ÙŠØ« $title')));
+        messenger.showSnackBar(SnackBar(content: Text('تعذّر تحديث $title')));
       }
     }
   }
@@ -221,18 +221,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ø­Ø³Ø§Ø¨ÙŠ')),
+        appBar: AppBar(title: const Text('حسابي')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: scheme.error,
-                ),
+                Icon(Icons.error_outline, size: 64, color: scheme.error),
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage!,
@@ -240,10 +236,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                CTAButton(text: 'Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø©', onPressed: _loadUser),
+                CTAButton(text: 'إعادة المحاولة', onPressed: _loadUser),
                 const SizedBox(height: 8),
                 SecondaryButton(
-                  text: 'Ø¥ÙƒÙ…Ø§Ù„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ©',
+                  text: 'إكمال البيانات الأساسية',
                   onPressed: () => AppRouter.goToBasicInfo(
                     context,
                     AppConstants.roleCustomer,
@@ -258,15 +254,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final user = _user!;
     final genderLabel = user.gender == 'female'
-        ? 'Ø£Ù†Ø«Ù‰'
+        ? 'أنثى'
         : user.gender == 'male'
-        ? 'Ø°ÙƒØ±'
+        ? 'ذكر'
         : null;
-    final ageLabel = user.age != null ? '${user.age} Ø³Ù†Ø©' : null;
+    final ageLabel = user.age != null ? '${user.age} سنة' : null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ø­Ø³Ø§Ø¨ÙŠ'),
+        title: const Text('حسابي'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -329,14 +325,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             Text(
               user.name,
-              style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 4),
             if (user.username != null && user.username!.isNotEmpty)
               Text(
                 '@${user.username}',
-                style: textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             const SizedBox(height: 8),
 
@@ -379,21 +379,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoCard(
               icon: Icons.email,
               title: 'Email',
-              value: user.email ?? 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
+              value: user.email ?? 'غير مضاف',
               fieldKey: 'email',
             ),
             const SizedBox(height: 12),
             _buildInfoCard(
               icon: Icons.phone,
               title: localizations.phoneNumber,
-              value: user.phone ?? 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
+              value: user.phone ?? 'غير مضاف',
               fieldKey: 'phone',
             ),
             const SizedBox(height: 12),
             _buildInfoCard(
               icon: Icons.person_outline,
-              title: 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…',
-              value: user.username ?? 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
+              title: 'اسم المستخدم',
+              value: user.username ?? 'غير مضاف',
               fieldKey: 'username',
               editable: false,
             ),
@@ -403,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: localizations.governorate,
               value: user.governorate.isNotEmpty
                   ? user.governorate
-                  : 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
+                  : 'غير مضاف',
               fieldKey: 'governorate',
             ),
             const SizedBox(height: 24),
@@ -492,7 +492,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

@@ -58,9 +58,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizations.warningFailed)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(localizations.warningFailed)));
       }
     }
   }
@@ -103,8 +103,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data();
-              final name =
-                  (data['name'] ?? localizations.notSpecified).toString();
+              final name = (data['name'] ?? localizations.notSpecified)
+                  .toString();
               final role = (data['role'] ?? '').toString();
               final governorate = (data['governorate'] ?? '').toString();
               final blockedUsers = data['blockedUsers'] as List<dynamic>?;
@@ -113,7 +113,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   title: Text(name, style: textTheme.titleMedium),
-                  subtitle: Text('$role â€¢ $governorate'),
+                  subtitle: Text('$role • $governorate'),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'toggleBlock') {

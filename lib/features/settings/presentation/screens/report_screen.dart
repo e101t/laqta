@@ -32,38 +32,38 @@ class _ReportScreenState extends State<ReportScreen> {
     ReportReason(
       id: 'inappropriate',
       icon: Icons.report,
-      title: 'Ù…Ø­ØªÙˆÙ‰ ØºÙŠØ± Ù„Ø§Ø¦Ù‚',
-      emoji: 'âš ï¸',
+      title: 'محتوى غير لائق',
+      emoji: '⚠️',
     ),
     ReportReason(
       id: 'spam',
       icon: Icons.mail_outline,
-      title: 'Ø¨Ø±ÙŠØ¯ Ù…Ø²Ø¹Ø¬',
-      emoji: 'ðŸ“§',
+      title: 'بريد مزعج',
+      emoji: '📧',
     ),
     ReportReason(
       id: 'scam',
       icon: Icons.warning,
-      title: 'Ø§Ø­ØªÙŠØ§Ù„ Ø£Ùˆ Ù†ØµØ¨',
-      emoji: 'ðŸš¨',
+      title: 'احتيال أو نصب',
+      emoji: '🚨',
     ),
     ReportReason(
       id: 'harassment',
       icon: Icons.block,
-      title: 'ØªØ­Ø±Ø´ Ø£Ùˆ Ù…Ø¶Ø§ÙŠÙ‚Ø©',
-      emoji: 'ðŸš«',
+      title: 'تحرش أو مضايقة',
+      emoji: '🚫',
     ),
     ReportReason(
       id: 'copyright',
       icon: Icons.copyright,
-      title: 'Ø§Ù†ØªÙ‡Ø§Ùƒ Ø­Ù‚ÙˆÙ‚ Ø§Ù„Ù†Ø´Ø±',
-      emoji: 'Â©ï¸',
+      title: 'انتهاك حقوق النشر',
+      emoji: '©️',
     ),
     ReportReason(
       id: 'other',
       icon: Icons.more_horiz,
-      title: 'Ø£Ø®Ø±Ù‰',
-      emoji: 'ðŸ“',
+      title: 'أخرى',
+      emoji: '📝',
     ),
   ];
 
@@ -78,7 +78,7 @@ class _ReportScreenState extends State<ReportScreen> {
     if (_selectedReason == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø§Ø®ØªÙŠØ§Ø± Ø³Ø¨Ø¨ Ø§Ù„Ø¨Ù„Ø§Øº')));
+      ).showSnackBar(const SnackBar(content: Text('الرجاء اختيار سبب البلاغ')));
       return;
     }
 
@@ -112,7 +112,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº')),
+        const SnackBar(content: Text('حدث خطأ أثناء إرسال البلاغ')),
       );
       return;
     }
@@ -127,51 +127,53 @@ class _ReportScreenState extends State<ReportScreen> {
         final scheme = Theme.of(context).colorScheme;
         final textTheme = Theme.of(context).textTheme;
         return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: scheme.tertiary.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: scheme.tertiary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle,
+                  size: 50,
+                  color: scheme.tertiary,
+                ),
               ),
-              child: Icon(
-                Icons.check_circle,
-                size: 50,
-                color: scheme.tertiary,
+              const SizedBox(height: 20),
+              const Text(
+                'تم إرسال البلاغ بنجاح',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº Ø¨Ù†Ø¬Ø§Ø­',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Ø´ÙƒØ±Ø§Ù‹ Ù„Ùƒ! Ø³Ù†Ù‚ÙˆÙ… Ø¨Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¨Ù„Ø§Øº ÙÙŠ Ø£Ù‚Ø±Ø¨ ÙˆÙ‚Øª.',
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
+              const SizedBox(height: 12),
+              Text(
+                'شكراً لك! سنقوم بمراجعة البلاغ في أقرب وقت.',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: CTAButton(
-                text: 'ØªÙ…',
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: CTAButton(
+                  text: 'تم',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
       },
     );
   }
@@ -182,7 +184,7 @@ class _ReportScreenState extends State<ReportScreen> {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Ø¥Ø±Ø³Ø§Ù„ Ø¨Ù„Ø§Øº ðŸš¨'), centerTitle: true),
+      appBar: AppBar(title: const Text('إرسال بلاغ 🚨'), centerTitle: true),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -229,7 +231,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Ø§Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù†:',
+                            'الإبلاغ عن:',
                             style: textTheme.labelSmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -248,7 +250,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ],
 
             // Title
-            Text('Ø³Ø¨Ø¨ Ø§Ù„Ø¨Ù„Ø§Øº âš ï¸', style: textTheme.titleLarge),
+            Text('سبب البلاغ ⚠️', style: textTheme.titleLarge),
             const SizedBox(height: 16),
 
             // Report Reasons Grid
@@ -279,7 +281,9 @@ class _ReportScreenState extends State<ReportScreen> {
                           ? scheme.error.withValues(alpha: 0.12)
                           : scheme.surface,
                       border: Border.all(
-                        color: isSelected ? scheme.error : scheme.outlineVariant,
+                        color: isSelected
+                            ? scheme.error
+                            : scheme.outlineVariant,
                         width: isSelected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -295,9 +299,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         Text(
                           reason.title,
                           style: textTheme.bodySmall?.copyWith(
-                            color: isSelected
-                                ? scheme.error
-                                : scheme.onSurface,
+                            color: isSelected ? scheme.error : scheme.onSurface,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -313,19 +315,19 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 24),
 
             // Details
-            Text('ØªÙØ§ØµÙŠÙ„ Ø¥Ø¶Ø§ÙÙŠØ© ðŸ“‹', style: textTheme.titleLarge),
+            Text('تفاصيل إضافية 📋', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             AppTextField(
               controller: _detailsController,
-              hint: 'Ø§Ù„Ø±Ø¬Ø§Ø¡ ÙˆØµÙ Ø§Ù„Ù…Ø´ÙƒÙ„Ø© Ø¨Ø§Ù„ØªÙØµÙŠÙ„...',
+              hint: 'الرجاء وصف المشكلة بالتفصيل...',
               maxLines: 5,
               maxLength: 500,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¶Ø§ÙØ© ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø¨Ù„Ø§Øº';
+                  return 'الرجاء إضافة تفاصيل البلاغ';
                 }
                 if (value.trim().length < 20) {
-                  return 'ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† Ø§Ù„ØªÙØ§ØµÙŠÙ„ 20 Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„';
+                  return 'يجب أن تكون التفاصيل 20 حرف على الأقل';
                 }
                 return null;
               },
@@ -349,8 +351,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Ø³ÙŠØªÙ… Ù…Ø±Ø§Ø¬Ø¹Ø© Ø¨Ù„Ø§ØºÙƒ Ù…Ù† Ù‚Ø¨Ù„ ÙØ±ÙŠÙ‚Ù†Ø§ Ø®Ù„Ø§Ù„ 24-48 Ø³Ø§Ø¹Ø©. '
-                      'Ù†Ø­Ù† Ù†Ø£Ø®Ø° Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¨Ù„Ø§ØºØ§Øª Ø¹Ù„Ù‰ Ù…Ø­Ù…Ù„ Ø§Ù„Ø¬Ø¯ ÙˆÙ†Ø¹Ù…Ù„ Ø¹Ù„Ù‰ ØªÙˆÙÙŠØ± Ø¨ÙŠØ¦Ø© Ø¢Ù…Ù†Ø© Ù„Ù„Ø¬Ù…ÙŠØ¹.',
+                      'سيتم مراجعة بلاغك من قبل فريقنا خلال 24-48 ساعة. '
+                      'نحن نأخذ جميع البلاغات على محمل الجد ونعمل على توفير بيئة آمنة للجميع.',
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.primary,
                         height: 1.5,
@@ -364,7 +366,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
             // Submit Button
             CTAButton(
-              text: 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº âœ…',
+              text: 'إرسال البلاغ ✅',
               onPressed: _submitReport,
               isLoading: _isSubmitting,
             ),
