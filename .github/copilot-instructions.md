@@ -1,8 +1,8 @@
-# LAQTA Codebase Guide for AI Agents
+# Laqta Codebase Guide for AI Agents
 
 ## Project Snapshot
 
-LAQTA is a Flutter + Firebase photography marketplace. The current codebase is organized by feature and follows a pragmatic clean-architecture split:
+Laqta is a Flutter + Firebase photography marketplace. The current codebase is organized by feature and follows a pragmatic clean-architecture split:
 - `domain/` for entities, repository contracts, and use cases
 - `data/` for Firebase/local data sources, DTOs, mappers, and repository implementations
 - `presentation/` for screens, providers, and UI widgets

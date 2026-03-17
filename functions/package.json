@@ -1,6 +1,6 @@
 {
   "name": "laqta-functions",
-  "description": "Firebase Cloud Functions for LAQTA",
+  "description": "Firebase Cloud Functions for Laqta",
   "main": "index.js",
   "engines": {
     "node": "18"

@@ -30,7 +30,7 @@ void main() {
 
   testWidgets('App loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const LuqtaApp());
+    await tester.pumpWidget(const LaqtaApp());
 
     // Verify that the splash screen loads
     expect(find.byType(MaterialApp), findsOneWidget);

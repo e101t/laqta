@@ -192,7 +192,7 @@ class PolicyTermsScreen extends StatelessWidget {
     return const [
       _PolicySection(
         '1) Service nature',
-        'Luqta is an operations and guarantee platform for photography services; it does not employ photographers directly.',
+        'Laqta is an operations and guarantee platform for photography services; it does not employ photographers directly.',
       ),
       _PolicySection(
         '2) Accounts & responsibility',

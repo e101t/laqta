@@ -56,7 +56,7 @@ class AppLocalizations {
       'selectLanguageSubtitle': EnTranslations.selectLanguageSubtitle,
       'languageHint': EnTranslations.languageHint,
       'welcomeBack': EnTranslations.welcomeBack,
-      'welcomeToLuqta': EnTranslations.welcomeToLuqta,
+      'welcomeToLaqta': EnTranslations.welcomeToLaqta,
       'authSubtitle': EnTranslations.authSubtitle,
       'signInTitle': EnTranslations.signInTitle,
       'signUpTitle': EnTranslations.signUpTitle,
@@ -541,7 +541,7 @@ class AppLocalizations {
       'selectLanguageSubtitle': ArTranslations.selectLanguageSubtitle,
       'languageHint': ArTranslations.languageHint,
       'welcomeBack': ArTranslations.welcomeBack,
-      'welcomeToLuqta': ArTranslations.welcomeToLuqta,
+      'welcomeToLaqta': ArTranslations.welcomeToLaqta,
       'authSubtitle': ArTranslations.authSubtitle,
       'signInTitle': ArTranslations.signInTitle,
       'signUpTitle': ArTranslations.signUpTitle,
@@ -1026,7 +1026,7 @@ class AppLocalizations {
   String get selectLanguageSubtitle => translate('selectLanguageSubtitle');
   String get languageHint => translate('languageHint');
   String get welcomeBack => translate('welcomeBack');
-  String get welcomeToLuqta => translate('welcomeToLuqta');
+  String get welcomeToLaqta => translate('welcomeToLaqta');
   String get authSubtitle => translate('authSubtitle');
   String get signInTitle => translate('signInTitle');
   String get signUpTitle => translate('signUpTitle');

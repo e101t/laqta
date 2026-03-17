@@ -1,4 +1,4 @@
-# LAQTA Product Spec + UI Auto Design (Phase 1)
+# Laqta Product Spec + UI Auto Design (Phase 1)
 
 ## ملخص المنتج (10 أسطر)
 1) المشكلة: سوق التصوير غير منظم، والمستخدم لا يعرف من يثق به ولا كيف يقارن الأسعار والجودة.

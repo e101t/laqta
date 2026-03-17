@@ -1,7 +1,7 @@
 /// App-wide constants
 class AppConstants {
   // App Info
-  static const String appName = 'LAQTA';
+  static const String appName = 'Laqta';
   static const String appVersion = '1.0.0';
 
   // Iraqi Governorates

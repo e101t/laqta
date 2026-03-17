@@ -1,6 +1,6 @@
-# luqta
+# Laqta
 
-LAQTA is a Flutter mobile app for connecting customers with photographers in Iraq.
+Laqta is a Flutter mobile app for connecting customers with photographers in Iraq.
 
 Supported app targets in this repository:
 

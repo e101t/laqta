@@ -136,7 +136,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: paymentIntent.clientSecret,
-          merchantDisplayName: 'LAQTA',
+          merchantDisplayName: 'Laqta',
           customerId: paymentIntent.customerId,
           customerEphemeralKeySecret: paymentIntent.ephemeralKey,
           // Add UI customizations

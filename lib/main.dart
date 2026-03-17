@@ -71,7 +71,7 @@ void main() async {
     }
   }
 
-  runApp(const LuqtaApp());
+  runApp(const LaqtaApp());
   WidgetsBinding.instance.addPostFrameCallback((_) {
     NotificationNavigationService.instance.flushPendingLaunchMessage();
   });
@@ -88,8 +88,8 @@ Future<void> _connectFirebaseEmulators() async {
   );
 }
 
-class LuqtaApp extends StatelessWidget {
-  const LuqtaApp({super.key});
+class LaqtaApp extends StatelessWidget {
+  const LaqtaApp({super.key});
 
   @override
   Widget build(BuildContext context) {

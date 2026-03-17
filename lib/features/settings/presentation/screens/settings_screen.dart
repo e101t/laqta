@@ -320,7 +320,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // App Version
           Center(
             child: Text(
-              'Luqta v1.0.0',
+              'Laqta v1.0.0',
               style: Theme.of(context).textTheme.labelSmall,
             ),
           ),

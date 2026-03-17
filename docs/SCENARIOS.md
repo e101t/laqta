@@ -1,4 +1,4 @@
-# LAQTA Scenarios
+# Laqta Scenarios
 
 Date: 2026-03-08
 Purpose: Current executable scenarios aligned with the migrated app shell and routing flow

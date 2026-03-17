@@ -515,7 +515,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Future<void> _shareReel(ReelModel reel) async {
     final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
     final buffer = StringBuffer()
-      ..writeln('LAQTA')
+      ..writeln('Laqta')
       ..writeln(reel.photographerName)
       ..writeln(reel.caption);
     if (imageUrl.isNotEmpty) {

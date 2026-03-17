@@ -1,7 +1,7 @@
 /// Arabic translations
 class ArTranslations {
   // Common
-  static const String appName = 'لقطة';
+  static const String appName = 'Laqta';
   static const String cancel = 'إلغاء';
   static const String confirm = 'تأكيد';
   static const String save = 'حفظ';
@@ -310,7 +310,7 @@ class ArTranslations {
   static const String submitReport = 'إرسال البلاغ';
 
   // Additional Auth Strings
-  static const String welcomeToLuqta = 'مرحبا بك في لقطة';
+  static const String welcomeToLaqta = 'مرحبا بك في Laqta';
   static const String authSubtitle =
       'منصة تربط العملاء مع أفضل المصورين في العراق';
   static const String signInTitle = 'تسجيل الدخول';

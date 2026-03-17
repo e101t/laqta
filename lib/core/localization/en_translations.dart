@@ -1,7 +1,7 @@
 /// English translations
 class EnTranslations {
   // Common
-  static const String appName = 'LAQTA';
+  static const String appName = 'Laqta';
   static const String cancel = 'Cancel';
   static const String confirm = 'Confirm';
   static const String save = 'Save';
@@ -45,7 +45,7 @@ class EnTranslations {
 
   // Auth
   static const String welcomeBack = 'Welcome Back';
-  static const String welcomeToLuqta = 'Welcome to LAQTA';
+  static const String welcomeToLaqta = 'Welcome to Laqta';
   static const String authSubtitle =
       'Connect with professional photographers across Iraq';
   static const String signInTitle = 'Sign in';
