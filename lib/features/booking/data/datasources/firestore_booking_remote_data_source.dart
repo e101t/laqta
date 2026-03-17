@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/booking/data/datasources/booking_remote_data_source.dart';
-import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/booking/data/datasources/booking_remote_data_source.dart';
+import 'package:laqta/features/booking/data/dtos/booking_dto.dart';
 
 class FirestoreBookingRemoteDataSource implements BookingRemoteDataSource {
   final FirebaseFirestore _firestore;

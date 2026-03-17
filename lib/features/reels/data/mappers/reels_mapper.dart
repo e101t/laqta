@@ -1,7 +1,7 @@
-import 'package:luqta/features/reels/data/dtos/comment_dto.dart';
-import 'package:luqta/features/reels/data/dtos/reel_dto.dart';
-import 'package:luqta/features/reels/domain/entities/comment_model.dart';
-import 'package:luqta/features/reels/domain/entities/reel_model.dart';
+import 'package:laqta/features/reels/data/dtos/comment_dto.dart';
+import 'package:laqta/features/reels/data/dtos/reel_dto.dart';
+import 'package:laqta/features/reels/domain/entities/comment_model.dart';
+import 'package:laqta/features/reels/domain/entities/reel_model.dart';
 
 class ReelsMapper {
   static ReelModel toReel(ReelDto dto) {

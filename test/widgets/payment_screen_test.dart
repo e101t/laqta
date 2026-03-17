@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/features/payment/presentation/screens/payment_screen.dart';
+import 'package:laqta/features/payment/presentation/screens/payment_screen.dart';
 
 import '../helpers/test_app.dart';
 

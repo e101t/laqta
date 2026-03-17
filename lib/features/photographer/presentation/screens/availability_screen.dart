@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AvailabilityScreen extends StatefulWidget {
@@ -70,11 +70,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         content: Text(
           syncedToProfile
               ? _localizedText(
-                  ar: 'تم حفظ إعدادات التوفر ومزامنتها مع ملفك الشخصي',
+                  ar: 'ØªÙ… Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„ØªÙˆÙØ± ÙˆÙ…Ø²Ø§Ù…Ù†ØªÙ‡Ø§ Ù…Ø¹ Ù…Ù„ÙÙƒ Ø§Ù„Ø´Ø®ØµÙŠ',
                   en: 'Availability saved and synced to your profile',
                 )
               : _localizedText(
-                  ar: 'تم حفظ إعدادات التوفر على هذا الجهاز',
+                  ar: 'ØªÙ… Ø­ÙØ¸ Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø§Ù„ØªÙˆÙØ± Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ù‡Ø§Ø²',
                   en: 'Availability saved on this device',
                 ),
         ),
@@ -220,13 +220,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   String _dayLabel(int index) {
     const arabicDays = <String>[
-      'الأحد',
-      'الاثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
+      'Ø§Ù„Ø£Ø­Ø¯',
+      'Ø§Ù„Ø§Ø«Ù†ÙŠÙ†',
+      'Ø§Ù„Ø«Ù„Ø§Ø«Ø§Ø¡',
+      'Ø§Ù„Ø£Ø±Ø¨Ø¹Ø§Ø¡',
+      'Ø§Ù„Ø®Ù…ÙŠØ³',
+      'Ø§Ù„Ø¬Ù…Ø¹Ø©',
+      'Ø§Ù„Ø³Ø¨Øª',
     ];
     const englishDays = <String>[
       'Sunday',
@@ -262,7 +262,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   String _todaySummary() {
     final today = _days[_todayIndex];
     if (!today.isEnabled) {
-      return _localizedText(ar: 'مغلق اليوم', en: 'Closed today');
+      return _localizedText(ar: 'Ù…ØºÙ„Ù‚ Ø§Ù„ÙŠÙˆÙ…', en: 'Closed today');
     }
 
     return '${_formatMinutes(today.startMinutes)} - ${_formatMinutes(today.endMinutes)}';
@@ -339,13 +339,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
               value: _allowSameDayBookings,
               title: Text(
                 _localizedText(
-                  ar: 'السماح بالحجز في نفس اليوم',
+                  ar: 'Ø§Ù„Ø³Ù…Ø§Ø­ Ø¨Ø§Ù„Ø­Ø¬Ø² ÙÙŠ Ù†ÙØ³ Ø§Ù„ÙŠÙˆÙ…',
                   en: 'Allow same-day bookings',
                 ),
               ),
               subtitle: Text(
                 _localizedText(
-                  ar: 'مفيد للحجوزات السريعة والطارئة',
+                  ar: 'Ù…ÙÙŠØ¯ Ù„Ù„Ø­Ø¬ÙˆØ²Ø§Øª Ø§Ù„Ø³Ø±ÙŠØ¹Ø© ÙˆØ§Ù„Ø·Ø§Ø±Ø¦Ø©',
                   en: 'Useful for urgent and last-minute bookings',
                 ),
               ),
@@ -384,7 +384,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             ),
             Text(
               _localizedText(
-                ar: 'نطاق التنقل: ${_travelRadiusKm.round()} كم',
+                ar: 'Ù†Ø·Ø§Ù‚ Ø§Ù„ØªÙ†Ù‚Ù„: ${_travelRadiusKm.round()} ÙƒÙ…',
                 en: 'Travel radius: ${_travelRadiusKm.round()} km',
               ),
               style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -402,10 +402,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             Text(
               _localizedText(
                 ar: _isSyncedToProfile
-                    ? 'هذه الإعدادات مرتبطة الآن بملفك الشخصي وتبقى محفوظة على هذا الجهاز أيضًا.'
+                    ? 'Ù‡Ø°Ù‡ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ù…Ø±ØªØ¨Ø·Ø© Ø§Ù„Ø¢Ù† Ø¨Ù…Ù„ÙÙƒ Ø§Ù„Ø´Ø®ØµÙŠ ÙˆØªØ¨Ù‚Ù‰ Ù…Ø­ÙÙˆØ¸Ø© Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ù‡Ø§Ø² Ø£ÙŠØ¶Ù‹Ø§.'
                     : _firebaseUserId != null
-                    ? 'سيتم حفظ هذه الإعدادات على جهازك ومزامنتها مع ملفك الشخصي عند نجاح الاتصال.'
-                    : 'سيتم حفظ هذه الإعدادات على هذا الجهاز إلى حين تسجيل الدخول.',
+                    ? 'Ø³ÙŠØªÙ… Ø­ÙØ¸ Ù‡Ø°Ù‡ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø¹Ù„Ù‰ Ø¬Ù‡Ø§Ø²Ùƒ ÙˆÙ…Ø²Ø§Ù…Ù†ØªÙ‡Ø§ Ù…Ø¹ Ù…Ù„ÙÙƒ Ø§Ù„Ø´Ø®ØµÙŠ Ø¹Ù†Ø¯ Ù†Ø¬Ø§Ø­ Ø§Ù„Ø§ØªØµØ§Ù„.'
+                    : 'Ø³ÙŠØªÙ… Ø­ÙØ¸ Ù‡Ø°Ù‡ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¬Ù‡Ø§Ø² Ø¥Ù„Ù‰ Ø­ÙŠÙ† ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„.',
                 en: _isSyncedToProfile
                     ? 'These settings are synced to your profile and also cached on this device.'
                     : _firebaseUserId != null
@@ -451,7 +451,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                       Text(
                         day.isEnabled
                             ? '${_formatMinutes(day.startMinutes)} - ${_formatMinutes(day.endMinutes)}'
-                            : _localizedText(ar: 'مغلق', en: 'Closed'),
+                            : _localizedText(ar: 'Ù…ØºÙ„Ù‚', en: 'Closed'),
                         style: textTheme.bodyMedium?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -478,7 +478,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                       icon: const Icon(Icons.schedule_outlined),
                       label: Text(
                         _localizedText(
-                          ar: 'من ${_formatMinutes(day.startMinutes)}',
+                          ar: 'Ù…Ù† ${_formatMinutes(day.startMinutes)}',
                           en: 'From ${_formatMinutes(day.startMinutes)}',
                         ),
                       ),
@@ -491,7 +491,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                       icon: const Icon(Icons.schedule_send_outlined),
                       label: Text(
                         _localizedText(
-                          ar: 'إلى ${_formatMinutes(day.endMinutes)}',
+                          ar: 'Ø¥Ù„Ù‰ ${_formatMinutes(day.endMinutes)}',
                           en: 'To ${_formatMinutes(day.endMinutes)}',
                         ),
                       ),

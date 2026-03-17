@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Custom Card Widget
 class AppCard extends StatelessWidget {

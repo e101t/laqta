@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/features/downloads/data/datasources/downloads_remote_data_source.dart';
-import 'package:luqta/features/downloads/domain/entities/download_link_entity.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/features/downloads/data/datasources/downloads_remote_data_source.dart';
+import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
 
 class FirestoreDownloadsRemoteDataSource implements DownloadsRemoteDataSource {
   final FirebaseFirestore _firestore;

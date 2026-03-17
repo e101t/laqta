@@ -2,15 +2,15 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/utils/debouncer.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile_update.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/utils/debouncer.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
 
 class SignUpDetailsScreen extends StatefulWidget {
   const SignUpDetailsScreen({super.key});
@@ -43,7 +43,6 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
     'owner',
     'official',
     'laqta',
-    'luqta',
     'photographer',
     'customer',
     'help',
@@ -108,7 +107,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'اسم المستخدم محجوز';
+        _usernameError = 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø­Ø¬ÙˆØ²';
       });
       return;
     }
@@ -118,7 +117,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
         _isCheckingUsername = false;
         _usernameAvailable = false;
         _usernameError =
-            'يجب أن يبدأ بحرف ويحتوي حروف/أرقام فقط بدون مسافات';
+            'ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ø­Ø±Ù ÙˆÙŠØ­ØªÙˆÙŠ Ø­Ø±ÙˆÙ/Ø£Ø±Ù‚Ø§Ù… ÙÙ‚Ø· Ø¨Ø¯ÙˆÙ† Ù…Ø³Ø§ÙØ§Øª';
       });
       return;
     }
@@ -135,13 +134,13 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = result.valueOrNull ?? false;
-        _usernameError = _usernameAvailable ? null : 'اسم المستخدم غير متاح';
+        _usernameError = _usernameAvailable ? null : 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­';
       });
     } catch (e) {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'تعذّر التحقق من اسم المستخدم';
+        _usernameError = 'ØªØ¹Ø°Ù‘Ø± Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…';
       });
     }
   }
@@ -169,19 +168,19 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
     }
     if (_selectedGender == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('اختر نوع الجنس من فضلك')),
+        const SnackBar(content: Text('Ø§Ø®ØªØ± Ù†ÙˆØ¹ Ø§Ù„Ø¬Ù†Ø³ Ù…Ù† ÙØ¶Ù„Ùƒ')),
       );
       return;
     }
     if (_selectedGovernorate == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('اختر المحافظة من فضلك')),
+        const SnackBar(content: Text('Ø§Ø®ØªØ± Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø© Ù…Ù† ÙØ¶Ù„Ùƒ')),
       );
       return;
     }
     if (!_over18Confirmed) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('يجب تأكيد أنك فوق 18 سنة')),
+        const SnackBar(content: Text('ÙŠØ¬Ø¨ ØªØ£ÙƒÙŠØ¯ Ø£Ù†Ùƒ ÙÙˆÙ‚ 18 Ø³Ù†Ø©')),
       );
       return;
     }
@@ -190,13 +189,13 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
     final confirm = _confirmPasswordController.text;
     if (password.length < 6) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('كلمة المرور يجب أن تكون 6 أحرف على الأقل')),
+        const SnackBar(content: Text('ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† 6 Ø£Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„')),
       );
       return;
     }
     if (password != confirm) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('تأكيد كلمة المرور غير مطابق')),
+        const SnackBar(content: Text('ØªØ£ÙƒÙŠØ¯ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ØºÙŠØ± Ù…Ø·Ø§Ø¨Ù‚')),
       );
       return;
     }
@@ -367,12 +366,12 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                           AppTextField(
                             controller: _fullNameController,
                             label: localizations.fullName,
-                            hint: 'مثال: أحمد محمد',
+                            hint: 'Ù…Ø«Ø§Ù„: Ø£Ø­Ù…Ø¯ Ù…Ø­Ù…Ø¯',
                             prefixIcon: Icons.badge_outlined,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'الرجاء إدخال الاسم';
+                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ù„Ø§Ø³Ù…';
                               }
                               return null;
                             },
@@ -381,8 +380,8 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                           const SizedBox(height: 16),
                           AppTextField(
                             controller: _usernameController,
-                            label: 'اسم المستخدم (Username)',
-                            hint: 'مثال: ahmedphoto23',
+                            label: 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… (Username)',
+                            hint: 'Ù…Ø«Ø§Ù„: ahmedphoto23',
                             prefixIcon: Icons.person_outline,
                             enabled: !_isLoading,
                             suffixIcon: _isCheckingUsername
@@ -406,17 +405,17 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             },
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'الرجاء إدخال اسم المستخدم';
+                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…';
                               }
                               final normalized = value.trim().toLowerCase();
                               if (_isUsernameForbidden(normalized)) {
-                                return 'اسم المستخدم محجوز';
+                                return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø­Ø¬ÙˆØ²';
                               }
                               if (!_isUsernameFormatValid(normalized)) {
-                                return 'يجب أن يبدأ بحرف ويحتوي حروف/أرقام فقط';
+                                return 'ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ø­Ø±Ù ÙˆÙŠØ­ØªÙˆÙŠ Ø­Ø±ÙˆÙ/Ø£Ø±Ù‚Ø§Ù… ÙÙ‚Ø·';
                               }
                               if (!_usernameAvailable && !_isCheckingUsername) {
-                                return 'اسم المستخدم غير متاح';
+                                return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­';
                               }
                               if (_usernameError != null &&
                                   _usernameError!.isNotEmpty) {
@@ -429,7 +428,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                'جارٍ التحقق...',
+                                'Ø¬Ø§Ø±Ù Ø§Ù„ØªØ­Ù‚Ù‚...',
                                 style: textTheme.bodySmall?.copyWith(
                                   color: scheme.onSurfaceVariant,
                                 ),
@@ -446,7 +445,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'الرجاء إدخال رقم الهاتف';
+                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ';
                               }
                               return null;
                             },
@@ -455,7 +454,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                           const SizedBox(height: 16),
                           AppTextField(
                             controller: _emailController,
-                            label: 'البريد الإلكتروني (اختياري)',
+                            label: 'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)',
                             hint: 'example@email.com',
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
@@ -465,20 +464,20 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                           const SizedBox(height: 16),
                           AppTextField(
                             controller: _birthYearController,
-                            label: 'سنة الميلاد',
-                            hint: 'مثال: 1995',
+                            label: 'Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯',
+                            hint: 'Ù…Ø«Ø§Ù„: 1995',
                             prefixIcon: Icons.cake_outlined,
                             keyboardType: TextInputType.number,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'الرجاء إدخال سنة الميلاد';
+                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯';
                               }
                               final year = int.tryParse(value);
                               if (year == null ||
                                   year < 1900 ||
                                   year > DateTime.now().year - 18) {
-                                return 'يجب أن تشير سنة الميلاد إلى عمر 18+';
+                                return 'ÙŠØ¬Ø¨ Ø£Ù† ØªØ´ÙŠØ± Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯ Ø¥Ù„Ù‰ Ø¹Ù…Ø± 18+';
                               }
                               return null;
                             },
@@ -511,7 +510,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
 
                           const SizedBox(height: 18),
                           Text(
-                            'نوع الجنس',
+                            'Ù†ÙˆØ¹ Ø§Ù„Ø¬Ù†Ø³',
                             style: textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
@@ -546,8 +545,8 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                           const SizedBox(height: 18),
                           AppTextField(
                             controller: _passwordController,
-                            label: 'كلمة المرور',
-                            hint: '••••••••',
+                            label: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
+                            hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
                             prefixIcon: Icons.lock_outline,
                             enabled: !_isLoading,
                             obscureText: _obscurePassword,
@@ -559,10 +558,10 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'الرجاء إدخال كلمة المرور';
+                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±';
                               }
                               if (value.length < 6) {
-                                return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                                return 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ± ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† 6 Ø£Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„';
                               }
                               return null;
                             },
@@ -571,8 +570,8 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                           const SizedBox(height: 16),
                           AppTextField(
                             controller: _confirmPasswordController,
-                            label: 'تأكيد كلمة المرور',
-                            hint: '••••••••',
+                            label: 'ØªØ£ÙƒÙŠØ¯ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
+                            hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
                             prefixIcon: Icons.lock_outline,
                             enabled: !_isLoading,
                             obscureText: _obscureConfirmPassword,
@@ -585,10 +584,10 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'الرجاء تأكيد كلمة المرور';
+                                return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ ØªØ£ÙƒÙŠØ¯ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±';
                               }
                               if (value != _passwordController.text) {
-                                return 'كلمتا المرور غير متطابقتين';
+                                return 'ÙƒÙ„Ù…ØªØ§ Ø§Ù„Ù…Ø±ÙˆØ± ØºÙŠØ± Ù…ØªØ·Ø§Ø¨Ù‚ØªÙŠÙ†';
                               }
                               return null;
                             },
@@ -618,7 +617,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                                 const SizedBox(width: 8),
                                 const Expanded(
                                   child: Text(
-                                    'أؤكد أن عمري فوق 18 سنة',
+                                    'Ø£Ø¤ÙƒØ¯ Ø£Ù† Ø¹Ù…Ø±ÙŠ ÙÙˆÙ‚ 18 Ø³Ù†Ø©',
                                     style: TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                 ),

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
 
 class ReportService {
   ReportService({FirebaseFirestore? firestore})

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/app/router/routes.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/app/router/routes.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
 
 class NotificationNavigationService {
   NotificationNavigationService._();

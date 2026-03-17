@@ -1,5 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:luqta/features/payment/data/datasources/payment_remote_data_source.dart';
+import 'package:laqta/features/payment/data/datasources/payment_remote_data_source.dart';
 
 class FirestorePaymentRemoteDataSource implements PaymentRemoteDataSource {
   final FirebaseFunctions _functions;

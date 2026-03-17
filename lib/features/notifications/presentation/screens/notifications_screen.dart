@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/services/notification_navigation_service.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/skeleton_loaders.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/notification_navigation_service.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/skeleton_loaders.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

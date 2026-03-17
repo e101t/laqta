@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/features/requests/data/dtos/request_dto.dart';
+import 'package:laqta/features/requests/data/dtos/request_dto.dart';
 
 void main() {
   test('RequestDto.toMap includes location fields', () {

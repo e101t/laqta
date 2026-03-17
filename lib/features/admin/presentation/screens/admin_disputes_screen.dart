@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/features/admin/presentation/screens/admin_dispute_details_screen.dart';
-import 'package:luqta/features/disputes/disputes_dependencies.dart';
-import 'package:luqta/features/disputes/domain/entities/dispute.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/admin/presentation/screens/admin_dispute_details_screen.dart';
+import 'package:laqta/features/disputes/disputes_dependencies.dart';
+import 'package:laqta/features/disputes/domain/entities/dispute.dart';
 
 class AdminDisputesScreen extends StatefulWidget {
   const AdminDisputesScreen({super.key});

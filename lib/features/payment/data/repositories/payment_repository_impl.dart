@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/payment/data/datasources/payment_gateway_remote_data_source.dart';
-import 'package:luqta/features/payment/data/datasources/payment_remote_data_source.dart';
-import 'package:luqta/features/payment/domain/entities/payment_intent.dart';
-import 'package:luqta/features/payment/domain/repositories/payment_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/payment/data/datasources/payment_gateway_remote_data_source.dart';
+import 'package:laqta/features/payment/data/datasources/payment_remote_data_source.dart';
+import 'package:laqta/features/payment/domain/entities/payment_intent.dart';
+import 'package:laqta/features/payment/domain/repositories/payment_repository.dart';
 
 class PaymentRepositoryImpl implements PaymentRepository {
   final PaymentRemoteDataSource _remoteDataSource;

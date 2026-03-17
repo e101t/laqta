@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/providers/locale_provider.dart';
-import 'package:luqta/core/providers/theme_provider.dart';
-import 'package:luqta/features/settings/presentation/screens/settings_screen.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/providers/locale_provider.dart';
+import 'package:laqta/core/providers/theme_provider.dart';
+import 'package:laqta/features/settings/presentation/screens/settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

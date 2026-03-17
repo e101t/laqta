@@ -3,14 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/story/story_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/story/story_dependencies.dart';
 
 class CreateStoryScreen extends StatefulWidget {
   final Future<XFile?> Function(ImageSource source)? imagePicker;

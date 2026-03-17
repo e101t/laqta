@@ -5,14 +5,14 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/auth/domain/entities/auth_user.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/profile/presentation/screens/basic_info_screen.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/domain/entities/auth_user.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/profile/presentation/screens/basic_info_screen.dart';
 
 import '../helpers/mocks.dart';
 

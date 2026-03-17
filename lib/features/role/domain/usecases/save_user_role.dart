@@ -1,5 +1,5 @@
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
 import '../repositories/role_repository.dart';
 
 class SaveUserRole {

@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/disputes/data/datasources/disputes_remote_data_source.dart';
-import 'package:luqta/features/disputes/data/mappers/dispute_mapper.dart';
-import 'package:luqta/features/disputes/domain/entities/dispute.dart';
-import 'package:luqta/features/disputes/domain/repositories/disputes_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/disputes/data/datasources/disputes_remote_data_source.dart';
+import 'package:laqta/features/disputes/data/mappers/dispute_mapper.dart';
+import 'package:laqta/features/disputes/domain/entities/dispute.dart';
+import 'package:laqta/features/disputes/domain/repositories/disputes_repository.dart';
 
 class DisputesRepositoryImpl implements DisputesRepository {
   final DisputesRemoteDataSource _remoteDataSource;

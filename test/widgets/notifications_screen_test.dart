@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/auth/domain/entities/auth_user.dart';
-import 'package:luqta/features/auth/domain/repositories/auth_repository.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
-import 'package:luqta/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/domain/entities/auth_user.dart';
+import 'package:laqta/features/auth/domain/repositories/auth_repository.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/features/notifications/presentation/screens/notifications_screen.dart';
 
 void main() {
   tearDown(() {
@@ -35,8 +35,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('المستخدم غير مسجل الدخول'), findsOneWidget);
-      expect(find.text('إعادة المحاولة'), findsOneWidget);
+      final context = tester.element(find.byType(NotificationsScreen));
+      final localizations = AppLocalizations.of(context);
+
+      expect(find.text(localizations.userNotAuthenticated), findsOneWidget);
+      expect(find.text(localizations.retry), findsOneWidget);
     },
   );
 }

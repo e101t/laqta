@@ -1,5 +1,5 @@
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/domain/entities/request_deliverables.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/domain/entities/request_deliverables.dart';
 import '../dtos/request_dto.dart';
 
 class RequestMapper {

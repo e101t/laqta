@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
-import 'package:luqta/features/notifications/data/mappers/notification_mapper.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
+import 'package:laqta/features/notifications/data/mappers/notification_mapper.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/domain/repositories/notifications_repository.dart';
 
 class NotificationsRepositoryImpl implements NotificationsRepository {
   final NotificationsRemoteDataSource _remoteDataSource;

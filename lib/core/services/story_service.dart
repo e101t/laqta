@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/utils/firestore_parsers.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/utils/firestore_parsers.dart';
 
 /// Provides Firestore access helpers for stories.
 class StoryService {

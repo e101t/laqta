@@ -1,4 +1,4 @@
-import 'package:luqta/features/payment/domain/entities/payment_intent.dart';
+import 'package:laqta/features/payment/domain/entities/payment_intent.dart';
 
 class PaymentIntentDto {
   final String paymentIntentId;

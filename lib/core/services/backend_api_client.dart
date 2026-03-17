@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:luqta/core/services/backend_config.dart';
-import 'package:luqta/core/services/backend_session_service.dart';
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/core/services/backend_session_service.dart';
 
 class BackendApiException implements Exception {
   final String message;

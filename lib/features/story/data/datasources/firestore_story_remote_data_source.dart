@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/features/story/data/datasources/story_remote_data_source.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/features/story/data/datasources/story_remote_data_source.dart';
 
 class FirestoreStoryRemoteDataSource implements StoryRemoteDataSource {
   final FirebaseFirestore _firestore;

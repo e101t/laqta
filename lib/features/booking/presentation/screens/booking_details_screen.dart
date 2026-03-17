@@ -3,31 +3,31 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/booking/booking_dependencies.dart';
-import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
-import 'package:luqta/features/chat/chat_dependencies.dart';
-import 'package:luqta/features/deliveries/deliveries_dependencies.dart';
-import 'package:luqta/features/deliveries/domain/entities/delivery.dart';
-import 'package:luqta/features/deliveries/presentation/screens/delivery_upload_screen.dart';
-import 'package:luqta/features/disputes/disputes_dependencies.dart';
-import 'package:luqta/features/disputes/domain/entities/dispute.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
-import 'package:luqta/features/trust/trust_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/deliveries/deliveries_dependencies.dart';
+import 'package:laqta/features/deliveries/domain/entities/delivery.dart';
+import 'package:laqta/features/deliveries/presentation/screens/delivery_upload_screen.dart';
+import 'package:laqta/features/disputes/disputes_dependencies.dart';
+import 'package:laqta/features/disputes/domain/entities/dispute.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/features/trust/trust_dependencies.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:luqta/features/downloads/downloads_dependencies.dart';
-import 'package:luqta/features/downloads/presentation/providers/download_provider.dart';
-import 'package:luqta/features/downloads/presentation/screens/download_links_screen.dart';
+import 'package:laqta/features/downloads/downloads_dependencies.dart';
+import 'package:laqta/features/downloads/presentation/providers/download_provider.dart';
+import 'package:laqta/features/downloads/presentation/screens/download_links_screen.dart';
 
 class BookingDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -1006,7 +1006,7 @@ class _ContactCard extends StatelessWidget {
                   Text(
                     contactAllowed
                         ? (phone ?? 'No phone number available')
-                        : 'رقم الهاتف يظهر بعد تأكيد الحجز',
+                        : 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ ÙŠØ¸Ù‡Ø± Ø¨Ø¹Ø¯ ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø­Ø¬Ø²',
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: contactAllowed
                           ? FontWeight.w600
@@ -1015,7 +1015,7 @@ class _ContactCard extends StatelessWidget {
                   ),
                   if (!contactAllowed)
                     Text(
-                      'هذا جزء من سياسة الخصوصية لضمان التواصل داخل المنصة.',
+                      'Ù‡Ø°Ø§ Ø¬Ø²Ø¡ Ù…Ù† Ø³ÙŠØ§Ø³Ø© Ø§Ù„Ø®ØµÙˆØµÙŠØ© Ù„Ø¶Ù…Ø§Ù† Ø§Ù„ØªÙˆØ§ØµÙ„ Ø¯Ø§Ø®Ù„ Ø§Ù„Ù…Ù†ØµØ©.',
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -1029,7 +1029,7 @@ class _ContactCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: scheme.primary,
                 ),
-                child: const Text('اتصال'),
+                child: const Text('Ø§ØªØµØ§Ù„'),
               ),
           ],
         ),
@@ -1234,7 +1234,7 @@ String _buildDistanceLabel(
   if (distance == null) {
     return '${localizations.photographerInGov} $photographerGov';
   }
-  return '${localizations.photographerInGov} $photographerGov • ${localizations.estimatedDistance} ${distance.toStringAsFixed(0)} ${localizations.distanceUnit}';
+  return '${localizations.photographerInGov} $photographerGov â€¢ ${localizations.estimatedDistance} ${distance.toStringAsFixed(0)} ${localizations.distanceUnit}';
 }
 
 double? _estimateDistanceKm(String? requestGov, String photographerGov) {
@@ -1443,7 +1443,7 @@ class _PolicyCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('• ', style: TextStyle(fontSize: 18)),
+                    const Text('â€¢ ', style: TextStyle(fontSize: 18)),
                     Expanded(child: Text(item, style: textTheme.bodyMedium)),
                   ],
                 ),

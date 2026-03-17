@@ -5,23 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/services/follow_service.dart';
-import 'package:luqta/core/services/report_service.dart';
-import 'package:luqta/core/utils/runtime_env.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/post_card.dart';
-import 'package:luqta/core/widgets/photographer_card.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/reels/domain/entities/comment_model.dart';
-import 'package:luqta/features/reels/domain/entities/reel_model.dart';
-import 'package:luqta/features/reels/reels_dependencies.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:luqta/features/search/domain/entities/search_result_photographer.dart';
-import 'package:luqta/features/search/search_dependencies.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/services/follow_service.dart';
+import 'package:laqta/core/services/report_service.dart';
+import 'package:laqta/core/utils/runtime_env.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/post_card.dart';
+import 'package:laqta/core/widgets/photographer_card.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/reels/domain/entities/comment_model.dart';
+import 'package:laqta/features/reels/domain/entities/reel_model.dart';
+import 'package:laqta/features/reels/reels_dependencies.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/features/search/domain/entities/search_result_photographer.dart';
+import 'package:laqta/features/search/search_dependencies.dart';
 
 class ExploreScreen extends StatefulWidget {
   final FollowService? followService;
@@ -203,83 +203,83 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return const [
       SearchResultPhotographer(
         id: 'demo_ph_1',
-        name: 'Ù…Ø±ÙˆØ© Ø§Ù„Ø­Ø±Ø¨ÙŠ',
+        name: 'Ã™â€¦Ã˜Â±Ã™Ë†Ã˜Â© Ã˜Â§Ã™â€žÃ˜Â­Ã˜Â±Ã˜Â¨Ã™Å ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ø¨ÙˆØ±ØªØ±ÙŠÙ‡', 'Ù…ÙˆØ¶Ø©'],
+        specialties: ['Ã˜Â¨Ã™Ë†Ã˜Â±Ã˜ÂªÃ˜Â±Ã™Å Ã™â€¡', 'Ã™â€¦Ã™Ë†Ã˜Â¶Ã˜Â©'],
         rating: 4.8,
         reviewCount: 124,
         startingPrice: 120000,
-        governorate: 'Ø¨ØºØ¯Ø§Ø¯',
+        governorate: 'Ã˜Â¨Ã˜ÂºÃ˜Â¯Ã˜Â§Ã˜Â¯',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_2',
-        name: 'Ø³ÙŠÙ Ø§Ù„ÙƒØ¹Ø¨ÙŠ',
+        name: 'Ã˜Â³Ã™Å Ã™Â Ã˜Â§Ã™â€žÃ™Æ’Ã˜Â¹Ã˜Â¨Ã™Å ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ù…Ù†Ø§Ø³Ø¨Ø§Øª', 'Ø²ÙØ§Ù'],
+        specialties: ['Ã™â€¦Ã™â€ Ã˜Â§Ã˜Â³Ã˜Â¨Ã˜Â§Ã˜Âª', 'Ã˜Â²Ã™ÂÃ˜Â§Ã™Â'],
         rating: 4.6,
         reviewCount: 89,
         startingPrice: 150000,
-        governorate: 'Ø§Ù„Ø¨ØµØ±Ø©',
+        governorate: 'Ã˜Â§Ã™â€žÃ˜Â¨Ã˜ÂµÃ˜Â±Ã˜Â©',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_3',
-        name: 'Ù†ÙˆØ± Ø§Ù„Ù‡Ø§Ø¯ÙŠ',
+        name: 'Ã™â€ Ã™Ë†Ã˜Â± Ã˜Â§Ã™â€žÃ™â€¡Ã˜Â§Ã˜Â¯Ã™Å ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ù…Ù†ØªØ¬Ø§Øª', 'ØªØ¬Ø§Ø±ÙŠ'],
+        specialties: ['Ã™â€¦Ã™â€ Ã˜ÂªÃ˜Â¬Ã˜Â§Ã˜Âª', 'Ã˜ÂªÃ˜Â¬Ã˜Â§Ã˜Â±Ã™Å '],
         rating: 4.9,
         reviewCount: 156,
         startingPrice: 90000,
-        governorate: 'Ø£Ø±Ø¨ÙŠÙ„',
+        governorate: 'Ã˜Â£Ã˜Â±Ã˜Â¨Ã™Å Ã™â€ž',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_4',
-        name: 'Ø±Ù†ÙŠÙ… Ø§Ù„Ø¨ØºØ¯Ø§Ø¯ÙŠ',
+        name: 'Ã˜Â±Ã™â€ Ã™Å Ã™â€¦ Ã˜Â§Ã™â€žÃ˜Â¨Ã˜ÂºÃ˜Â¯Ã˜Â§Ã˜Â¯Ã™Å ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ø¬Ù„Ø³Ø§Øª Ø¹Ø§Ø¦Ù„ÙŠØ©', 'Ø£Ø³Ù„ÙˆØ¨ Ø·Ø¨ÙŠØ¹ÙŠ'],
+        specialties: ['Ã˜Â¬Ã™â€žÃ˜Â³Ã˜Â§Ã˜Âª Ã˜Â¹Ã˜Â§Ã˜Â¦Ã™â€žÃ™Å Ã˜Â©', 'Ã˜Â£Ã˜Â³Ã™â€žÃ™Ë†Ã˜Â¨ Ã˜Â·Ã˜Â¨Ã™Å Ã˜Â¹Ã™Å '],
         rating: 4.7,
         reviewCount: 72,
         startingPrice: 105000,
-        governorate: 'ÙƒØ±Ø¨Ù„Ø§Ø¡',
+        governorate: 'Ã™Æ’Ã˜Â±Ã˜Â¨Ã™â€žÃ˜Â§Ã˜Â¡',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_5',
-        name: 'Ø¹Ù…Ø± Ø§Ù„Ø³Ø¹Ø¯ÙŠ',
+        name: 'Ã˜Â¹Ã™â€¦Ã˜Â± Ã˜Â§Ã™â€žÃ˜Â³Ã˜Â¹Ã˜Â¯Ã™Å ',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ø·Ø¹Ø§Ù…', 'Ø¥Ø¹Ù„Ø§Ù†ÙŠ'],
+        specialties: ['Ã˜Â·Ã˜Â¹Ã˜Â§Ã™â€¦', 'Ã˜Â¥Ã˜Â¹Ã™â€žÃ˜Â§Ã™â€ Ã™Å '],
         rating: 4.5,
         reviewCount: 58,
         startingPrice: 98000,
-        governorate: 'Ø§Ù„Ù†Ø¬Ù',
+        governorate: 'Ã˜Â§Ã™â€žÃ™â€ Ã˜Â¬Ã™Â',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_6',
-        name: 'Ø²Ù‡Ø±Ø§Ø¡ Ø³Ø§Ù„Ù…',
+        name: 'Ã˜Â²Ã™â€¡Ã˜Â±Ã˜Â§Ã˜Â¡ Ã˜Â³Ã˜Â§Ã™â€žÃ™â€¦',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ø£Ø·ÙØ§Ù„', 'Ù…ÙˆØ§Ù„ÙŠØ¯'],
+        specialties: ['Ã˜Â£Ã˜Â·Ã™ÂÃ˜Â§Ã™â€ž', 'Ã™â€¦Ã™Ë†Ã˜Â§Ã™â€žÃ™Å Ã˜Â¯'],
         rating: 4.8,
         reviewCount: 143,
         startingPrice: 115000,
-        governorate: 'Ù†ÙŠÙ†ÙˆÙ‰',
+        governorate: 'Ã™â€ Ã™Å Ã™â€ Ã™Ë†Ã™â€°',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_7',
-        name: 'Ø¹Ù„ÙŠ Ø´Ø§ÙƒØ±',
+        name: 'Ã˜Â¹Ã™â€žÃ™Å  Ã˜Â´Ã˜Â§Ã™Æ’Ã˜Â±',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ù…Ø¹Ù…Ø§Ø±ÙŠ', 'Ø¹Ù‚Ø§Ø±Ø§Øª'],
+        specialties: ['Ã™â€¦Ã˜Â¹Ã™â€¦Ã˜Â§Ã˜Â±Ã™Å ', 'Ã˜Â¹Ã™â€šÃ˜Â§Ã˜Â±Ã˜Â§Ã˜Âª'],
         rating: 4.6,
         reviewCount: 81,
         startingPrice: 130000,
-        governorate: 'Ø§Ù„Ø³Ù„ÙŠÙ…Ø§Ù†ÙŠØ©',
+        governorate: 'Ã˜Â§Ã™â€žÃ˜Â³Ã™â€žÃ™Å Ã™â€¦Ã˜Â§Ã™â€ Ã™Å Ã˜Â©',
       ),
       SearchResultPhotographer(
         id: 'demo_ph_8',
-        name: 'Ù‡Ø¯Ù‰ Ø¬Ø§Ø¨Ø±',
+        name: 'Ã™â€¡Ã˜Â¯Ã™â€° Ã˜Â¬Ã˜Â§Ã˜Â¨Ã˜Â±',
         image: 'assets/images/placeholder.jpg',
-        specialties: ['Ø£Ø²ÙŠØ§Ø¡', 'ØªØ­Ø±ÙŠØ±ÙŠ'],
+        specialties: ['Ã˜Â£Ã˜Â²Ã™Å Ã˜Â§Ã˜Â¡', 'Ã˜ÂªÃ˜Â­Ã˜Â±Ã™Å Ã˜Â±Ã™Å '],
         rating: 4.9,
         reviewCount: 167,
         startingPrice: 160000,
-        governorate: 'Ø¨Ø§Ø¨Ù„',
+        governorate: 'Ã˜Â¨Ã˜Â§Ã˜Â¨Ã™â€ž',
       ),
     ];
   }
@@ -290,12 +290,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_1',
         photographerId: 'demo_ph_1',
-        photographerName: 'Ù…Ø±ÙˆØ© Ø§Ù„Ø­Ø±Ø¨ÙŠ',
+        photographerName: 'Ã™â€¦Ã˜Â±Ã™Ë†Ã˜Â© Ã˜Â§Ã™â€žÃ˜Â­Ã˜Â±Ã˜Â¨Ã™Å ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_auth.png',
         thumbnailUrl: 'assets/images/hero_auth.png',
         caption:
-            'Ø¥Ø¶Ø§Ø¡Ø© Ø¯Ø§ÙØ¦Ø© ÙˆÙ„Ù‚Ø·Ø© Ù‚Ø±ÙŠØ¨Ø© ØªÙØ¨Ø±Ø² Ø§Ù„ØªÙØ§ØµÙŠÙ„.',
+            'Ã˜Â¥Ã˜Â¶Ã˜Â§Ã˜Â¡Ã˜Â© Ã˜Â¯Ã˜Â§Ã™ÂÃ˜Â¦Ã˜Â© Ã™Ë†Ã™â€žÃ™â€šÃ˜Â·Ã˜Â© Ã™â€šÃ˜Â±Ã™Å Ã˜Â¨Ã˜Â© Ã˜ÂªÃ™ÂÃ˜Â¨Ã˜Â±Ã˜Â² Ã˜Â§Ã™â€žÃ˜ÂªÃ™ÂÃ˜Â§Ã˜ÂµÃ™Å Ã™â€ž.',
         tags: const ['portrait', 'golden'],
         views: 1240,
         likes: 320,
@@ -307,11 +307,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_2',
         photographerId: 'demo_ph_2',
-        photographerName: 'Ø³ÙŠÙ Ø§Ù„ÙƒØ¹Ø¨ÙŠ',
+        photographerName: 'Ã˜Â³Ã™Å Ã™Â Ã˜Â§Ã™â€žÃ™Æ’Ã˜Â¹Ã˜Â¨Ã™Å ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_role.png',
         thumbnailUrl: 'assets/images/hero_role.png',
-        caption: 'Ù…Ù†Ø§Ø³Ø¨Ø§Øª Ø¨Ø£Ø³Ù„ÙˆØ¨ Ø³ÙŠÙ†Ù…Ø§Ø¦ÙŠ Ù…ØªÙˆØ§Ø²Ù†.',
+        caption: 'Ã™â€¦Ã™â€ Ã˜Â§Ã˜Â³Ã˜Â¨Ã˜Â§Ã˜Âª Ã˜Â¨Ã˜Â£Ã˜Â³Ã™â€žÃ™Ë†Ã˜Â¨ Ã˜Â³Ã™Å Ã™â€ Ã™â€¦Ã˜Â§Ã˜Â¦Ã™Å  Ã™â€¦Ã˜ÂªÃ™Ë†Ã˜Â§Ã˜Â²Ã™â€ .',
         tags: const ['event', 'cinematic'],
         views: 980,
         likes: 210,
@@ -322,11 +322,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_3',
         photographerId: 'demo_ph_3',
-        photographerName: 'Ù†ÙˆØ± Ø§Ù„Ù‡Ø§Ø¯ÙŠ',
+        photographerName: 'Ã™â€ Ã™Ë†Ã˜Â± Ã˜Â§Ã™â€žÃ™â€¡Ã˜Â§Ã˜Â¯Ã™Å ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_welcome.png',
         thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'Ù…Ù†ØªØ¬Ø§Øª Ø¨Ø®Ù„ÙÙŠØ© Ù†Ø¸ÙŠÙØ© ÙˆÙ„Ù…Ø³Ø© ÙØ§Ø®Ø±Ø©.',
+        caption: 'Ã™â€¦Ã™â€ Ã˜ÂªÃ˜Â¬Ã˜Â§Ã˜Âª Ã˜Â¨Ã˜Â®Ã™â€žÃ™ÂÃ™Å Ã˜Â© Ã™â€ Ã˜Â¸Ã™Å Ã™ÂÃ˜Â© Ã™Ë†Ã™â€žÃ™â€¦Ã˜Â³Ã˜Â© Ã™ÂÃ˜Â§Ã˜Â®Ã˜Â±Ã˜Â©.',
         tags: const ['product', 'premium'],
         views: 1560,
         likes: 402,
@@ -337,11 +337,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_4',
         photographerId: 'demo_ph_4',
-        photographerName: 'Ø±Ù†ÙŠÙ… Ø§Ù„Ø¨ØºØ¯Ø§Ø¯ÙŠ',
+        photographerName: 'Ã˜Â±Ã™â€ Ã™Å Ã™â€¦ Ã˜Â§Ã™â€žÃ˜Â¨Ã˜ÂºÃ˜Â¯Ã˜Â§Ã˜Â¯Ã™Å ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_auth.png',
         thumbnailUrl: 'assets/images/hero_auth.png',
-        caption: 'Ø¬Ù„Ø³Ø© Ø¹Ø§Ø¦Ù„ÙŠØ© Ø¨Ø¯ÙØ¡ Ø£Ù„ÙˆØ§Ù† Ù‡Ø§Ø¯Ø¦.',
+        caption: 'Ã˜Â¬Ã™â€žÃ˜Â³Ã˜Â© Ã˜Â¹Ã˜Â§Ã˜Â¦Ã™â€žÃ™Å Ã˜Â© Ã˜Â¨Ã˜Â¯Ã™ÂÃ˜Â¡ Ã˜Â£Ã™â€žÃ™Ë†Ã˜Â§Ã™â€  Ã™â€¡Ã˜Â§Ã˜Â¯Ã˜Â¦.',
         tags: const ['family', 'warm'],
         views: 820,
         likes: 188,
@@ -352,12 +352,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_5',
         photographerId: 'demo_ph_5',
-        photographerName: 'Ø¹Ù…Ø± Ø§Ù„Ø³Ø¹Ø¯ÙŠ',
+        photographerName: 'Ã˜Â¹Ã™â€¦Ã˜Â± Ã˜Â§Ã™â€žÃ˜Â³Ã˜Â¹Ã˜Â¯Ã™Å ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_role.png',
         thumbnailUrl: 'assets/images/hero_role.png',
         caption:
-            'ØªØµÙˆÙŠØ± Ø·Ø¹Ø§Ù… Ø¨ØªØ¨Ø§ÙŠÙ† Ù„Ø·ÙŠÙ ÙˆØªÙØ§ØµÙŠÙ„ ÙˆØ§Ø¶Ø­Ø©.',
+            'Ã˜ÂªÃ˜ÂµÃ™Ë†Ã™Å Ã˜Â± Ã˜Â·Ã˜Â¹Ã˜Â§Ã™â€¦ Ã˜Â¨Ã˜ÂªÃ˜Â¨Ã˜Â§Ã™Å Ã™â€  Ã™â€žÃ˜Â·Ã™Å Ã™Â Ã™Ë†Ã˜ÂªÃ™ÂÃ˜Â§Ã˜ÂµÃ™Å Ã™â€ž Ã™Ë†Ã˜Â§Ã˜Â¶Ã˜Â­Ã˜Â©.',
         tags: const ['food', 'studio'],
         views: 1340,
         likes: 276,
@@ -368,11 +368,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ReelModel(
         reelId: 'demo_reel_6',
         photographerId: 'demo_ph_6',
-        photographerName: 'Ø²Ù‡Ø±Ø§Ø¡ Ø³Ø§Ù„Ù…',
+        photographerName: 'Ã˜Â²Ã™â€¡Ã˜Â±Ã˜Â§Ã˜Â¡ Ã˜Â³Ã˜Â§Ã™â€žÃ™â€¦',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         videoUrl: 'assets/images/hero_welcome.png',
         thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'Ù„Ù‚Ø·Ø§Øª Ø£Ø·ÙØ§Ù„ Ø·Ø¨ÙŠØ¹ÙŠØ© Ø¨Ø¥Ø¶Ø§Ø¡Ø© Ù„Ø·ÙŠÙØ©.',
+        caption: 'Ã™â€žÃ™â€šÃ˜Â·Ã˜Â§Ã˜Âª Ã˜Â£Ã˜Â·Ã™ÂÃ˜Â§Ã™â€ž Ã˜Â·Ã˜Â¨Ã™Å Ã˜Â¹Ã™Å Ã˜Â© Ã˜Â¨Ã˜Â¥Ã˜Â¶Ã˜Â§Ã˜Â¡Ã˜Â© Ã™â€žÃ˜Â·Ã™Å Ã™ÂÃ˜Â©.',
         tags: const ['kids', 'soft'],
         views: 1120,
         likes: 310,
@@ -411,7 +411,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           _followingIds.remove(photographerId);
         }
       });
-      _showSnackBar('ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…ØªØ§Ø¨Ø¹Ø©');
+      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜ÂªÃ˜Â­Ã˜Â¯Ã™Å Ã˜Â« Ã˜Â§Ã™â€žÃ™â€¦Ã˜ÂªÃ˜Â§Ã˜Â¨Ã˜Â¹Ã˜Â©');
     }
   }
 
@@ -460,13 +460,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             )
             .toList();
       });
-      _showSnackBar('ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¥Ø¹Ø¬Ø§Ø¨');
+      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜ÂªÃ˜Â­Ã˜Â¯Ã™Å Ã˜Â« Ã˜Â§Ã™â€žÃ˜Â¥Ã˜Â¹Ã˜Â¬Ã˜Â§Ã˜Â¨');
     }
   }
 
   Future<void> _openComments(ReelModel reel) async {
     if (_userId.isEmpty) {
-      _showSnackBar('ÙŠØ¬Ø¨ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø£ÙˆÙ„Ø§Ù‹');
+      _showSnackBar('Ã™Å Ã˜Â¬Ã˜Â¨ Ã˜ÂªÃ˜Â³Ã˜Â¬Ã™Å Ã™â€ž Ã˜Â§Ã™â€žÃ˜Â¯Ã˜Â®Ã™Ë†Ã™â€ž Ã˜Â£Ã™Ë†Ã™â€žÃ˜Â§Ã™â€¹');
       return;
     }
 
@@ -504,7 +504,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       MaterialPageRoute(
         builder: (context) => CreateRequestScreen(
           prefillNotes:
-              'Ù…Ø±Ø¬Ø¹ Ù…Ù† Ù…Ù†Ø´ÙˆØ± Ø§Ù„Ù…ØµÙˆØ± ${reel.photographerName}',
+              'Ã™â€¦Ã˜Â±Ã˜Â¬Ã˜Â¹ Ã™â€¦Ã™â€  Ã™â€¦Ã™â€ Ã˜Â´Ã™Ë†Ã˜Â± Ã˜Â§Ã™â€žÃ™â€¦Ã˜ÂµÃ™Ë†Ã˜Â± ${reel.photographerName}',
           prefillReferenceImages: imageUrl.isNotEmpty ? [imageUrl] : const [],
           prefillSelectedPhotographerId: reel.photographerId,
         ),
@@ -592,9 +592,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           reason: selected,
         );
       }
-      _showSnackBar('ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº');
+      _showSnackBar('Ã˜ÂªÃ™â€¦ Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜Â§Ã™â€žÃ˜Â¨Ã™â€žÃ˜Â§Ã˜Âº');
     } catch (_) {
-      _showSnackBar('ØªØ¹Ø°Ø± Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº');
+      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜Â§Ã™â€žÃ˜Â¨Ã™â€žÃ˜Â§Ã˜Âº');
     }
   }
 
@@ -699,8 +699,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_photographers.isEmpty) {
       return EmptyState(
         icon: Icons.photo_camera_outlined,
-        title: 'Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…ØµÙˆØ±ÙŠÙ†',
-        message: 'Ø¬Ø±Ù‘Ø¨ Ù„Ø§Ø­Ù‚Ø§Ù‹',
+        title: 'No photographers found',
+        message: 'Try again later',
       );
     }
 
@@ -740,9 +740,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     child: TextButton(
                       onPressed: () => _toggleFollow(photographer.id),
                       child: Text(
-                        isFollowing
-                            ? 'Ø¥Ù„ØºØ§Ø¡ Ø§Ù„Ù…ØªØ§Ø¨Ø¹Ø©'
-                            : 'Ù…ØªØ§Ø¨Ø¹Ø©',
+                        isFollowing ? 'Unfollow' : 'Follow',
                       ),
                     ),
                   ),
@@ -778,8 +776,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_posts.isEmpty) {
       return EmptyState(
         icon: Icons.photo_library_outlined,
-        title: 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù†Ø´ÙˆØ±Ø§Øª',
-        message: 'ØªØ§Ø¨Ø¹ Ø§Ù„Ù…ØµÙˆØ±ÙŠÙ† Ù„Ù…Ø´Ø§Ù‡Ø¯Ø© Ù…Ù†Ø´ÙˆØ±Ø§ØªÙ‡Ù….',
+        title: 'No posts yet',
+        message: 'Follow photographers to see posts here.',
       );
     }
 
@@ -905,16 +903,17 @@ class _ExplorePostCard extends StatelessWidget {
           onShare: onShare,
         ),
         const SizedBox(height: 8),
-        Row(
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text('${reel.likes} Ø¥Ø¹Ø¬Ø§Ø¨', style: textTheme.bodySmall),
-            const SizedBox(width: 12),
-            Text('${reel.comments} ØªØ¹Ù„ÙŠÙ‚', style: textTheme.bodySmall),
-            const Spacer(),
+            Text('${reel.likes} likes', style: textTheme.bodySmall),
+            Text('${reel.comments} comments', style: textTheme.bodySmall),
             if (canFollow)
               TextButton(
                 onPressed: onFollow,
-                child: Text(isFollowing ? 'Ù…ØªØ§Ø¨Ø¹Ø© âœ“' : 'Ù…ØªØ§Ø¨Ø¹Ø©'),
+                child: Text(isFollowing ? 'Unfollow' : 'Follow'),
               ),
           ],
         ),
@@ -929,12 +928,12 @@ class _ExplorePostCard extends StatelessWidget {
                 children: [
                   OutlinedButton(
                     onPressed: onViewPhotographer,
-                    child: const Text('Ø¹Ø±Ø¶ Ø§Ù„Ù…ØµÙˆØ±'),
+                    child: const Text('View photographer'),
                   ),
                   if (isCustomer)
                     ElevatedButton(
                       onPressed: onCreateRequest,
-                      child: const Text('Ø·Ù„Ø¨ Ù†ÙØ³ Ø§Ù„Ø£Ø³Ù„ÙˆØ¨'),
+                      child: const Text('Request now'),
                     ),
                 ],
               ),
@@ -942,7 +941,7 @@ class _ExplorePostCard extends StatelessWidget {
             IconButton(
               onPressed: onReport,
               icon: const Icon(Icons.flag_outlined),
-              tooltip: 'Ø¥Ø¨Ù„Ø§Øº',
+              tooltip: 'Report',
             ),
           ],
         ),
@@ -978,8 +977,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   DateTime? _lastCommentAt;
 
   static const List<String> _blockedWords = [
-    'Ø±Ù‚Ù…',
-    'ÙˆØ§ØªØ³Ø§Ø¨',
+    'Ã˜Â±Ã™â€šÃ™â€¦',
+    'Ã™Ë†Ã˜Â§Ã˜ÂªÃ˜Â³Ã˜Â§Ã˜Â¨',
     'whatsapp',
     'telegram',
     'tel',
@@ -1019,7 +1018,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
     if (_containsPhone(text) || _containsUrl(text) || _containsBlocked(text)) {
       _showSnackBar(
-        'ÙŠÙ…Ù†Ø¹ Ù…Ø´Ø§Ø±ÙƒØ© Ø£Ø±Ù‚Ø§Ù… Ø£Ùˆ Ø±ÙˆØ§Ø¨Ø· Ø£Ùˆ Ù…Ø­ØªÙˆÙ‰ Ù…Ø®Ø§Ù„Ù.',
+        'Ã™Å Ã™â€¦Ã™â€ Ã˜Â¹ Ã™â€¦Ã˜Â´Ã˜Â§Ã˜Â±Ã™Æ’Ã˜Â© Ã˜Â£Ã˜Â±Ã™â€šÃ˜Â§Ã™â€¦ Ã˜Â£Ã™Ë† Ã˜Â±Ã™Ë†Ã˜Â§Ã˜Â¨Ã˜Â· Ã˜Â£Ã™Ë† Ã™â€¦Ã˜Â­Ã˜ÂªÃ™Ë†Ã™â€° Ã™â€¦Ã˜Â®Ã˜Â§Ã™â€žÃ™Â.',
       );
       return;
     }
@@ -1028,7 +1027,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     if (_lastCommentAt != null &&
         now.difference(_lastCommentAt!).inSeconds < 3) {
       _showSnackBar(
-        'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø§Ù„Ø§Ù†ØªØ¸Ø§Ø± Ù‚Ø¨Ù„ Ø¥Ø±Ø³Ø§Ù„ ØªØ¹Ù„ÙŠÙ‚ Ø¢Ø®Ø±.',
+        'Ã˜Â§Ã™â€žÃ˜Â±Ã˜Â¬Ã˜Â§Ã˜Â¡ Ã˜Â§Ã™â€žÃ˜Â§Ã™â€ Ã˜ÂªÃ˜Â¸Ã˜Â§Ã˜Â± Ã™â€šÃ˜Â¨Ã™â€ž Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€š Ã˜Â¢Ã˜Â®Ã˜Â±.',
       );
       return;
     }
@@ -1054,7 +1053,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       setState(() => _comments.insert(0, comment));
       widget.onCommentAdded();
     } else {
-      _showSnackBar('ØªØ¹Ø°Ø± Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªØ¹Ù„ÙŠÙ‚.');
+      _showSnackBar('Ã˜ÂªÃ˜Â¹Ã˜Â°Ã˜Â± Ã˜Â¥Ã˜Â±Ã˜Â³Ã˜Â§Ã™â€ž Ã˜Â§Ã™â€žÃ˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€š.');
     }
 
     if (mounted) {
@@ -1103,7 +1102,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Ø§Ù„ØªØ¹Ù„ÙŠÙ‚Ø§Øª',
+              'Ã˜Â§Ã™â€žÃ˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€šÃ˜Â§Ã˜Âª',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -1144,7 +1143,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     child: TextField(
                       controller: _controller,
                       decoration: const InputDecoration(
-                        hintText: 'Ø§ÙƒØªØ¨ ØªØ¹Ù„ÙŠÙ‚Ø§Ù‹...',
+                        hintText: 'Ã˜Â§Ã™Æ’Ã˜ÂªÃ˜Â¨ Ã˜ÂªÃ˜Â¹Ã™â€žÃ™Å Ã™â€šÃ˜Â§Ã™â€¹...',
                       ),
                       minLines: 1,
                       maxLines: 3,

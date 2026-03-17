@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_animations.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/constants/app_animations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Enhanced Photographer Card with beautiful design and smooth animations
 class EnhancedPhotographerCard extends StatefulWidget {

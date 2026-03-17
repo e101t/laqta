@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/settings/data/datasources/settings_remote_data_source.dart';
-import 'package:luqta/features/settings/domain/entities/report_submission.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/settings/data/datasources/settings_remote_data_source.dart';
+import 'package:laqta/features/settings/domain/entities/report_submission.dart';
 
 class FirestoreSettingsRemoteDataSource implements SettingsRemoteDataSource {
   final FirebaseFirestore _firestore;

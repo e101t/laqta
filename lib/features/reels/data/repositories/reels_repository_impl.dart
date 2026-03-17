@@ -1,10 +1,10 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/reels/data/datasources/reels_remote_data_source.dart';
-import 'package:luqta/features/reels/data/mappers/reels_mapper.dart';
-import 'package:luqta/features/reels/domain/entities/comment_model.dart';
-import 'package:luqta/features/reels/domain/entities/reel_model.dart';
-import 'package:luqta/features/reels/domain/repositories/reels_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/reels/data/datasources/reels_remote_data_source.dart';
+import 'package:laqta/features/reels/data/mappers/reels_mapper.dart';
+import 'package:laqta/features/reels/domain/entities/comment_model.dart';
+import 'package:laqta/features/reels/domain/entities/reel_model.dart';
+import 'package:laqta/features/reels/domain/repositories/reels_repository.dart';
 
 class ReelsRepositoryImpl implements ReelsRepository {
   final ReelsRemoteDataSource _remoteDataSource;

@@ -1,4 +1,4 @@
-import 'package:luqta/core/domain/result/result.dart';
+import 'package:laqta/core/domain/result/result.dart';
 import '../entities/comment_model.dart';
 import '../entities/reel_model.dart';
 

@@ -1,23 +1,23 @@
 import 'package:mocktail/mocktail.dart';
-import 'package:luqta/features/auth/domain/repositories/auth_repository.dart';
-import 'package:luqta/features/requests/domain/repositories/requests_repository.dart';
-import 'package:luqta/features/booking/domain/repositories/booking_repository.dart';
-import 'package:luqta/features/reels/domain/repositories/reels_repository.dart';
-import 'package:luqta/features/search/domain/repositories/search_repository.dart';
-import 'package:luqta/features/profile/domain/repositories/profile_repository.dart';
-import 'package:luqta/features/notifications/domain/repositories/notifications_repository.dart';
-import 'package:luqta/features/story/domain/repositories/story_repository.dart';
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/domain/entities/request_offer.dart';
-import 'package:luqta/features/requests/domain/entities/request_deliverables.dart';
-import 'package:luqta/features/booking/domain/entities/booking.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/reels/domain/entities/reel_model.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/features/chat/domain/repositories/chat_repository.dart';
-import 'package:luqta/features/chat/domain/entities/chat_thread_preview.dart';
-import 'package:luqta/features/chat/domain/entities/chat_thread.dart';
-import 'package:luqta/features/chat/domain/entities/chat_message.dart';
+import 'package:laqta/features/auth/domain/repositories/auth_repository.dart';
+import 'package:laqta/features/requests/domain/repositories/requests_repository.dart';
+import 'package:laqta/features/booking/domain/repositories/booking_repository.dart';
+import 'package:laqta/features/reels/domain/repositories/reels_repository.dart';
+import 'package:laqta/features/search/domain/repositories/search_repository.dart';
+import 'package:laqta/features/profile/domain/repositories/profile_repository.dart';
+import 'package:laqta/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:laqta/features/story/domain/repositories/story_repository.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/domain/entities/request_offer.dart';
+import 'package:laqta/features/requests/domain/entities/request_deliverables.dart';
+import 'package:laqta/features/booking/domain/entities/booking.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/reels/domain/entities/reel_model.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/features/chat/domain/repositories/chat_repository.dart';
+import 'package:laqta/features/chat/domain/entities/chat_thread_preview.dart';
+import 'package:laqta/features/chat/domain/entities/chat_thread.dart';
+import 'package:laqta/features/chat/domain/entities/chat_message.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
 class MockRequestsRepository extends Mock implements RequestsRepository {}

@@ -1,6 +1,6 @@
-import 'package:luqta/core/services/backend_api_client.dart';
-import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
-import 'package:luqta/features/notifications/data/dtos/notification_dto.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
+import 'package:laqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
+import 'package:laqta/features/notifications/data/dtos/notification_dto.dart';
 
 class BackendNotificationsRemoteDataSource
     implements NotificationsRemoteDataSource {

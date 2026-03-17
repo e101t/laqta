@@ -3,14 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/reels/domain/entities/reel_model.dart';
-import 'package:luqta/features/reels/reels_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/reels/domain/entities/reel_model.dart';
+import 'package:laqta/features/reels/reels_dependencies.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final Future<XFile?> Function(ImageSource source)? imagePicker;

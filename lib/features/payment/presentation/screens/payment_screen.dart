@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:logger/logger.dart';
-import 'package:luqta/features/payment/payment_dependencies.dart';
-import 'package:luqta/features/payment/domain/entities/payment_intent.dart';
+import 'package:laqta/features/payment/payment_dependencies.dart';
+import 'package:laqta/features/payment/domain/entities/payment_intent.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String bookingId;

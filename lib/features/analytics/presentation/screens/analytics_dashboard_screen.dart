@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/features/analytics/analytics_dependencies.dart';
-import 'package:luqta/features/analytics/domain/entities/analytics_metrics.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/analytics/analytics_dependencies.dart';
+import 'package:laqta/features/analytics/domain/entities/analytics_metrics.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
   const AnalyticsDashboardScreen({super.key});

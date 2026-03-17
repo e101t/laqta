@@ -1,4 +1,4 @@
-import 'package:luqta/features/notifications/data/dtos/notification_dto.dart';
+import 'package:laqta/features/notifications/data/dtos/notification_dto.dart';
 
 abstract class NotificationsRemoteDataSource {
   Future<List<NotificationDto>> getNotifications(String userId);

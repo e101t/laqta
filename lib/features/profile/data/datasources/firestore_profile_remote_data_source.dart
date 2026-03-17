@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/core/utils/user_public_fields.dart';
-import 'package:luqta/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:luqta/features/profile/data/dtos/portfolio_dto.dart';
-import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/core/utils/user_public_fields.dart';
+import 'package:laqta/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:laqta/features/profile/data/dtos/portfolio_dto.dart';
+import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
 
 class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
   final FirebaseFirestore _firestore;

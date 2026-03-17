@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
 
 class AdminReportsScreen extends StatefulWidget {
   const AdminReportsScreen({super.key});

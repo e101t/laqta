@@ -1,4 +1,4 @@
-import 'package:luqta/core/domain/result/result.dart';
+import 'package:laqta/core/domain/result/result.dart';
 import '../entities/delivery.dart';
 import '../repositories/deliveries_repository.dart';
 

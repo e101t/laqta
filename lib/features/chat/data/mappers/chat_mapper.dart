@@ -1,6 +1,6 @@
-import 'package:luqta/features/chat/data/dtos/chat_dto.dart';
-import 'package:luqta/features/chat/domain/entities/chat_message.dart';
-import 'package:luqta/features/chat/domain/entities/chat_thread.dart';
+import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
+import 'package:laqta/features/chat/domain/entities/chat_message.dart';
+import 'package:laqta/features/chat/domain/entities/chat_thread.dart';
 
 class ChatMapper {
   static ChatThread toThread(ChatDto dto) {

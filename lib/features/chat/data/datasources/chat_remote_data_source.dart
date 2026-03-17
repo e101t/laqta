@@ -1,4 +1,4 @@
-import 'package:luqta/features/chat/data/dtos/chat_dto.dart';
+import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
 
 abstract class ChatRemoteDataSource {
   String createMessageId(String chatId);

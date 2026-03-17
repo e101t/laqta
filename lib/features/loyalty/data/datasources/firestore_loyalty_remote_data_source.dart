@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/loyalty/data/datasources/loyalty_remote_data_source.dart';
-import 'package:luqta/features/loyalty/data/dtos/loyalty_points_dto.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/loyalty/data/datasources/loyalty_remote_data_source.dart';
+import 'package:laqta/features/loyalty/data/dtos/loyalty_points_dto.dart';
 
 class FirestoreLoyaltyRemoteDataSource implements LoyaltyRemoteDataSource {
   final FirebaseFirestore _firestore;

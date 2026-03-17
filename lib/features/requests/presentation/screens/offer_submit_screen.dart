@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
-import 'package:luqta/features/requests/domain/entities/request_deliverables.dart';
-import 'package:luqta/features/requests/domain/entities/request_offer.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/features/requests/domain/entities/request_deliverables.dart';
+import 'package:laqta/features/requests/domain/entities/request_offer.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
 
 class OfferSubmitScreen extends StatefulWidget {
   final String requestId;

@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
-import 'package:luqta/features/dashboard/data/mappers/dashboard_mapper.dart';
-import 'package:luqta/features/dashboard/domain/entities/dashboard_booking.dart';
-import 'package:luqta/features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/dashboard/data/datasources/dashboard_remote_data_source.dart';
+import 'package:laqta/features/dashboard/data/mappers/dashboard_mapper.dart';
+import 'package:laqta/features/dashboard/domain/entities/dashboard_booking.dart';
+import 'package:laqta/features/dashboard/domain/repositories/dashboard_repository.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
   final DashboardRemoteDataSource _remoteDataSource;

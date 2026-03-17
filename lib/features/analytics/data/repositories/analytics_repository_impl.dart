@@ -1,8 +1,8 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/analytics/data/datasources/analytics_remote_data_source.dart';
-import 'package:luqta/features/analytics/domain/entities/analytics_metrics.dart';
-import 'package:luqta/features/analytics/domain/repositories/analytics_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/analytics/data/datasources/analytics_remote_data_source.dart';
+import 'package:laqta/features/analytics/domain/entities/analytics_metrics.dart';
+import 'package:laqta/features/analytics/domain/repositories/analytics_repository.dart';
 
 class AnalyticsRepositoryImpl implements AnalyticsRepository {
   final AnalyticsRemoteDataSource _remoteDataSource;

@@ -1,5 +1,5 @@
-import 'package:luqta/core/models/achievement_model.dart';
-import 'package:luqta/features/achievements/data/dtos/user_achievement_dto.dart';
+import 'package:laqta/core/models/achievement_model.dart';
+import 'package:laqta/features/achievements/data/dtos/user_achievement_dto.dart';
 
 class AchievementMapper {
   static UserAchievement toDomain(UserAchievementDto dto) {

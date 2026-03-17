@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/core/services/story_service.dart';
-import 'package:luqta/core/utils/image_provider.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/core/services/story_service.dart';
+import 'package:laqta/core/utils/image_provider.dart';
 
 class StoryViewerScreen extends StatefulWidget {
   final List<StoryModel> stories;
@@ -156,7 +156,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                         context,
                         widget.stories[_currentIndex].photographerId,
                       ),
-                      child: const Text('عرض المصور'),
+                      child: const Text('Ø¹Ø±Ø¶ Ø§Ù„Ù…ØµÙˆØ±'),
                     ),
                   ),
                   if (widget.isCustomer) ...[
@@ -165,7 +165,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                       child: ElevatedButton(
                         onPressed: () =>
                             widget.onCreateRequest(widget.stories[_currentIndex]),
-                        child: const Text('طلب نفس الأسلوب'),
+                        child: const Text('Ø·Ù„Ø¨ Ù†ÙØ³ Ø§Ù„Ø£Ø³Ù„ÙˆØ¨'),
                       ),
                     ),
                   ],

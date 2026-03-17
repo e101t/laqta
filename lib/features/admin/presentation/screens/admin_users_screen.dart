@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
@@ -113,7 +113,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   title: Text(name, style: textTheme.titleMedium),
-                  subtitle: Text('$role • $governorate'),
+                  subtitle: Text('$role â€¢ $governorate'),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'toggleBlock') {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
 
 class MyRequestsScreen extends StatefulWidget {
   const MyRequestsScreen({super.key});

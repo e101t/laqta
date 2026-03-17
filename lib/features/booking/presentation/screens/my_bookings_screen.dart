@@ -1,16 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/booking/booking_dependencies.dart';
-import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
-import 'package:luqta/features/chat/chat_dependencies.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});

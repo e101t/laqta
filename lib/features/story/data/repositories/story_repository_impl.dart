@@ -1,8 +1,8 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/features/story/data/datasources/story_remote_data_source.dart';
-import 'package:luqta/features/story/domain/repositories/story_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/features/story/data/datasources/story_remote_data_source.dart';
+import 'package:laqta/features/story/domain/repositories/story_repository.dart';
 
 class StoryRepositoryImpl implements StoryRepository {
   final StoryRemoteDataSource _remoteDataSource;

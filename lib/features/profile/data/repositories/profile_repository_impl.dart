@@ -1,12 +1,12 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:luqta/features/profile/data/dtos/portfolio_dto.dart';
-import 'package:luqta/features/profile/data/mappers/profile_mapper.dart';
-import 'package:luqta/features/profile/domain/entities/portfolio.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile_update.dart';
-import 'package:luqta/features/profile/domain/repositories/profile_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:laqta/features/profile/data/dtos/portfolio_dto.dart';
+import 'package:laqta/features/profile/data/mappers/profile_mapper.dart';
+import 'package:laqta/features/profile/domain/entities/portfolio.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
+import 'package:laqta/features/profile/domain/repositories/profile_repository.dart';
 
 class ProfileRepositoryImpl implements ProfileRepository {
   final ProfileRemoteDataSource _remoteDataSource;

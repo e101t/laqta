@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:luqta/core/theme/laqta_theme.dart';
+import 'package:laqta/core/theme/laqta_theme.dart';
 
 class ThemeProvider extends ChangeNotifier {
   bool _isDarkMode = false;

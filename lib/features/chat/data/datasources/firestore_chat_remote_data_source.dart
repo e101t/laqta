@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/features/chat/data/datasources/chat_remote_data_source.dart';
-import 'package:luqta/features/chat/data/dtos/chat_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
 
 class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
   final FirebaseFirestore _firestore;

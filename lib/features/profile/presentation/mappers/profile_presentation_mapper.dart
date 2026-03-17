@@ -1,8 +1,8 @@
-import 'package:luqta/core/models/portfolio_model.dart' as core;
-import 'package:luqta/core/models/user_model.dart' as core;
-import 'package:luqta/features/profile/domain/entities/portfolio.dart'
+import 'package:laqta/core/models/portfolio_model.dart' as core;
+import 'package:laqta/core/models/user_model.dart' as core;
+import 'package:laqta/features/profile/domain/entities/portfolio.dart'
     as domain;
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
 
 class ProfilePresentationMapper {
   static core.UserModel toUserModel(UserProfile profile) {

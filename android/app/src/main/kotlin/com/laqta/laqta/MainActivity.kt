@@ -1,4 +1,4 @@
-package com.luqta.luqta
+package com.laqta.laqta
 
 import io.flutter.embedding.android.FlutterActivity
 

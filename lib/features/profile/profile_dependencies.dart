@@ -1,17 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:luqta/features/profile/data/datasources/firestore_profile_remote_data_source.dart';
-import 'package:luqta/features/profile/data/datasources/profile_remote_data_source.dart';
-import 'package:luqta/features/profile/data/repositories/profile_repository_impl.dart';
-import 'package:luqta/features/profile/domain/repositories/profile_repository.dart';
-import 'package:luqta/features/profile/domain/usecases/check_username_availability.dart';
-import 'package:luqta/features/profile/domain/usecases/delete_storage_file.dart';
-import 'package:luqta/features/profile/domain/usecases/get_portfolio.dart';
-import 'package:luqta/features/profile/domain/usecases/get_user_profile.dart';
-import 'package:luqta/features/profile/domain/usecases/save_basic_info.dart';
-import 'package:luqta/features/profile/domain/usecases/save_portfolio.dart';
-import 'package:luqta/features/profile/domain/usecases/update_user_profile.dart';
-import 'package:luqta/features/profile/domain/usecases/upload_portfolio_image.dart';
-import 'package:luqta/features/profile/domain/usecases/upload_profile_photo.dart';
+import 'package:laqta/features/profile/data/datasources/firestore_profile_remote_data_source.dart';
+import 'package:laqta/features/profile/data/datasources/profile_remote_data_source.dart';
+import 'package:laqta/features/profile/data/repositories/profile_repository_impl.dart';
+import 'package:laqta/features/profile/domain/repositories/profile_repository.dart';
+import 'package:laqta/features/profile/domain/usecases/check_username_availability.dart';
+import 'package:laqta/features/profile/domain/usecases/delete_storage_file.dart';
+import 'package:laqta/features/profile/domain/usecases/get_portfolio.dart';
+import 'package:laqta/features/profile/domain/usecases/get_user_profile.dart';
+import 'package:laqta/features/profile/domain/usecases/save_basic_info.dart';
+import 'package:laqta/features/profile/domain/usecases/save_portfolio.dart';
+import 'package:laqta/features/profile/domain/usecases/update_user_profile.dart';
+import 'package:laqta/features/profile/domain/usecases/upload_portfolio_image.dart';
+import 'package:laqta/features/profile/domain/usecases/upload_profile_photo.dart';
 
 class ProfileDependencies {
   static final ProfileRemoteDataSource _remoteDataSource =

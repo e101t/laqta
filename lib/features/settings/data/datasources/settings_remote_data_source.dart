@@ -1,4 +1,4 @@
-import 'package:luqta/features/settings/domain/entities/report_submission.dart';
+import 'package:laqta/features/settings/domain/entities/report_submission.dart';
 
 abstract class SettingsRemoteDataSource {
   Future<void> submitReport(ReportSubmission submission);

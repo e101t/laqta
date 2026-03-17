@@ -2,11 +2,11 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/theme/laqta_tokens.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
 
 class StoreScreen extends StatelessWidget {
   const StoreScreen({super.key});
@@ -14,27 +14,27 @@ class StoreScreen extends StatelessWidget {
   static const List<_StoreProduct> _demoProducts = [
     _StoreProduct(
       id: 'demo_product_1',
-      title: 'إطار صور فاخر',
-      subtitle: 'خشب طبيعي + زجاج مقاوم للخدش',
+      title: 'Ø¥Ø·Ø§Ø± ØµÙˆØ± ÙØ§Ø®Ø±',
+      subtitle: 'Ø®Ø´Ø¨ Ø·Ø¨ÙŠØ¹ÙŠ + Ø²Ø¬Ø§Ø¬ Ù…Ù‚Ø§ÙˆÙ… Ù„Ù„Ø®Ø¯Ø´',
       priceIQD: 35000,
       imageAssetPath: 'assets/images/offers/offer_1.png',
-      badge: 'جديد',
+      badge: 'Ø¬Ø¯ÙŠØ¯',
     ),
     _StoreProduct(
       id: 'demo_product_2',
-      title: 'ألبوم مطبوع',
-      subtitle: 'ورق عالي الجودة + تصميم أنيق',
+      title: 'Ø£Ù„Ø¨ÙˆÙ… Ù…Ø·Ø¨ÙˆØ¹',
+      subtitle: 'ÙˆØ±Ù‚ Ø¹Ø§Ù„ÙŠ Ø§Ù„Ø¬ÙˆØ¯Ø© + ØªØµÙ…ÙŠÙ… Ø£Ù†ÙŠÙ‚',
       priceIQD: 65000,
       imageAssetPath: 'assets/images/offers/offer_2.png',
-      badge: 'الأكثر مبيعًا',
+      badge: 'Ø§Ù„Ø£ÙƒØ«Ø± Ù…Ø¨ÙŠØ¹Ù‹Ø§',
     ),
     _StoreProduct(
       id: 'demo_product_3',
-      title: 'جلسة تصوير منتجات',
-      subtitle: 'باقة مناسبة للمتاجر والمتاجر الإلكترونية',
+      title: 'Ø¬Ù„Ø³Ø© ØªØµÙˆÙŠØ± Ù…Ù†ØªØ¬Ø§Øª',
+      subtitle: 'Ø¨Ø§Ù‚Ø© Ù…Ù†Ø§Ø³Ø¨Ø© Ù„Ù„Ù…ØªØ§Ø¬Ø± ÙˆØ§Ù„Ù…ØªØ§Ø¬Ø± Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ©',
       priceIQD: 120000,
       imageAssetPath: 'assets/images/offers/offer_3.png',
-      badge: 'عرض',
+      badge: 'Ø¹Ø±Ø¶',
     ),
   ];
 
@@ -63,14 +63,14 @@ class StoreScreen extends StatelessWidget {
                 icon: Icons.storefront_outlined,
                 title: localizations.noProducts,
                 message: localizations.productsEmptyMessage,
-                emoji: '🛍️',
+                emoji: 'ðŸ›ï¸',
               )
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
                   _StoreHeroCard(
                     title: localizations.featuredProducts,
-                    subtitle: 'منتجات مختارة بعناية لتكمل تجربة التصوير.',
+                    subtitle: 'Ù…Ù†ØªØ¬Ø§Øª Ù…Ø®ØªØ§Ø±Ø© Ø¨Ø¹Ù†Ø§ÙŠØ© Ù„ØªÙƒÙ…Ù„ ØªØ¬Ø±Ø¨Ø© Ø§Ù„ØªØµÙˆÙŠØ±.',
                     onTap: () => _showCatalogGuidanceSnackBar(context),
                   ),
                   const SizedBox(height: 16),
@@ -112,7 +112,7 @@ class StoreScreen extends StatelessWidget {
 
   static String _formatIQD(int amount, String locale) {
     final formatted = NumberFormat.decimalPattern(locale).format(amount);
-    return '$formatted د.ع';
+    return '$formatted Ø¯.Ø¹';
   }
 
   static void _showCatalogGuidanceSnackBar(BuildContext context) {
@@ -120,7 +120,7 @@ class StoreScreen extends StatelessWidget {
       SnackBar(
         content: Text(
           Localizations.localeOf(context).languageCode == 'ar'
-              ? 'اختر منتجًا ثم أرسل طلبك من داخل التطبيق.'
+              ? 'Ø§Ø®ØªØ± Ù…Ù†ØªØ¬Ù‹Ø§ Ø«Ù… Ø£Ø±Ø³Ù„ Ø·Ù„Ø¨Ùƒ Ù…Ù† Ø¯Ø§Ø®Ù„ Ø§Ù„ØªØ·Ø¨ÙŠÙ‚.'
               : 'Choose a product, then send your request from inside the app.',
         ),
         behavior: SnackBarBehavior.floating,
@@ -136,11 +136,11 @@ class StoreScreen extends StatelessWidget {
     final priceLabel = _formatIQD(product.priceIQD, locale);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (isArabic) {
-      return '''مهتم بهذا المنتج من المتجر:
-الاسم: ${product.title}
-التفاصيل: ${product.subtitle}
-السعر: $priceLabel
-أحتاج متابعة لإتمام الطلب.''';
+      return '''Ù…Ù‡ØªÙ… Ø¨Ù‡Ø°Ø§ Ø§Ù„Ù…Ù†ØªØ¬ Ù…Ù† Ø§Ù„Ù…ØªØ¬Ø±:
+Ø§Ù„Ø§Ø³Ù…: ${product.title}
+Ø§Ù„ØªÙØ§ØµÙŠÙ„: ${product.subtitle}
+Ø§Ù„Ø³Ø¹Ø±: $priceLabel
+Ø£Ø­ØªØ§Ø¬ Ù…ØªØ§Ø¨Ø¹Ø© Ù„Ø¥ØªÙ…Ø§Ù… Ø§Ù„Ø·Ù„Ø¨.''';
     }
     return '''I am interested in this store item:
 Name: ${product.title}

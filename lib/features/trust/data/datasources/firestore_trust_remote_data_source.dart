@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/trust/data/datasources/trust_remote_data_source.dart';
-import 'package:luqta/features/trust/data/dtos/trust_stats_dto.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/trust/data/datasources/trust_remote_data_source.dart';
+import 'package:laqta/features/trust/data/dtos/trust_stats_dto.dart';
 
 class FirestoreTrustRemoteDataSource implements TrustRemoteDataSource {
   final FirebaseFirestore _firestore;

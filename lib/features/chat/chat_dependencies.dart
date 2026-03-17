@@ -1,18 +1,18 @@
 import 'package:flutter/foundation.dart';
-import 'package:luqta/features/chat/data/datasources/chat_remote_data_source.dart';
-import 'package:luqta/features/chat/data/datasources/firestore_chat_remote_data_source.dart';
-import 'package:luqta/features/chat/data/repositories/chat_repository_impl.dart';
-import 'package:luqta/features/chat/domain/repositories/chat_repository.dart';
-import 'package:luqta/features/chat/domain/usecases/delete_chat.dart';
-import 'package:luqta/features/chat/domain/usecases/delete_chat_with_messages.dart';
-import 'package:luqta/features/chat/domain/usecases/generate_message_id.dart';
-import 'package:luqta/features/chat/domain/usecases/get_or_create_booking_chat.dart';
-import 'package:luqta/features/chat/domain/usecases/get_chat_messages.dart';
-import 'package:luqta/features/chat/domain/usecases/get_chat_threads.dart';
-import 'package:luqta/features/chat/domain/usecases/get_other_participant_id.dart';
-import 'package:luqta/features/chat/domain/usecases/send_chat_media_message.dart';
-import 'package:luqta/features/chat/domain/usecases/send_chat_message.dart';
-import 'package:luqta/features/chat/domain/usecases/toggle_block_user.dart';
+import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:laqta/features/chat/data/datasources/firestore_chat_remote_data_source.dart';
+import 'package:laqta/features/chat/data/repositories/chat_repository_impl.dart';
+import 'package:laqta/features/chat/domain/repositories/chat_repository.dart';
+import 'package:laqta/features/chat/domain/usecases/delete_chat.dart';
+import 'package:laqta/features/chat/domain/usecases/delete_chat_with_messages.dart';
+import 'package:laqta/features/chat/domain/usecases/generate_message_id.dart';
+import 'package:laqta/features/chat/domain/usecases/get_or_create_booking_chat.dart';
+import 'package:laqta/features/chat/domain/usecases/get_chat_messages.dart';
+import 'package:laqta/features/chat/domain/usecases/get_chat_threads.dart';
+import 'package:laqta/features/chat/domain/usecases/get_other_participant_id.dart';
+import 'package:laqta/features/chat/domain/usecases/send_chat_media_message.dart';
+import 'package:laqta/features/chat/domain/usecases/send_chat_message.dart';
+import 'package:laqta/features/chat/domain/usecases/toggle_block_user.dart';
 
 class ChatDependencies {
   static final ChatRemoteDataSource _remoteDataSource =

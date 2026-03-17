@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/analytics/data/datasources/analytics_remote_data_source.dart';
-import 'package:luqta/features/analytics/domain/entities/analytics_metrics.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/analytics/data/datasources/analytics_remote_data_source.dart';
+import 'package:laqta/features/analytics/domain/entities/analytics_metrics.dart';
 
 class FirestoreAnalyticsRemoteDataSource implements AnalyticsRemoteDataSource {
   final FirebaseFirestore _firestore;

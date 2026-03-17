@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/app_cards.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/favorites/domain/entities/favorite_photographer.dart';
-import 'package:luqta/features/favorites/favorites_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/app_cards.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/favorites/domain/entities/favorite_photographer.dart';
+import 'package:laqta/features/favorites/favorites_dependencies.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});

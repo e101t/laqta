@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/features/auth/data/utils/phone_number_utils.dart';
+import 'package:laqta/features/auth/data/utils/phone_number_utils.dart';
 
 void main() {
   group('normalizePhoneNumberForFirebase', () {

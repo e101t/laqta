@@ -1,5 +1,5 @@
-import 'package:luqta/features/review/data/dtos/review_dto.dart';
-import 'package:luqta/features/review/domain/entities/review_submission.dart';
+import 'package:laqta/features/review/data/dtos/review_dto.dart';
+import 'package:laqta/features/review/domain/entities/review_submission.dart';
 
 class ReviewMapper {
   static ReviewDto toDto(ReviewSubmission submission) {

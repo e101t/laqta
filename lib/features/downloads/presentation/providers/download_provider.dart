@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:luqta/features/downloads/domain/entities/download_link_entity.dart';
-import 'package:luqta/features/downloads/domain/usecases/download_usecases.dart';
+import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
+import 'package:laqta/features/downloads/domain/usecases/download_usecases.dart';
 
 /// Download State Management
 class DownloadProvider extends ChangeNotifier {

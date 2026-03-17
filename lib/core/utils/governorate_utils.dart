@@ -1,4 +1,4 @@
-import 'package:luqta/core/constants/app_constants.dart';
+import 'package:laqta/core/constants/app_constants.dart';
 
 String? normalizeGovernorateToArabic(String? governorate) {
   final normalized = governorate?.trim();

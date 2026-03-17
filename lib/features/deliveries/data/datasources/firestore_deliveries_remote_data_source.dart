@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
-import 'package:luqta/features/deliveries/data/dtos/delivery_dto.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
+import 'package:laqta/features/deliveries/data/dtos/delivery_dto.dart';
 
 class FirestoreDeliveriesRemoteDataSource
     implements DeliveriesRemoteDataSource {

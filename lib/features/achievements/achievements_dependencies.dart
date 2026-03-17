@@ -1,8 +1,8 @@
-import 'package:luqta/features/achievements/data/datasources/achievements_remote_data_source.dart';
-import 'package:luqta/features/achievements/data/datasources/firestore_achievements_remote_data_source.dart';
-import 'package:luqta/features/achievements/data/repositories/achievements_repository_impl.dart';
-import 'package:luqta/features/achievements/domain/repositories/achievements_repository.dart';
-import 'package:luqta/features/achievements/domain/usecases/get_user_achievements.dart';
+import 'package:laqta/features/achievements/data/datasources/achievements_remote_data_source.dart';
+import 'package:laqta/features/achievements/data/datasources/firestore_achievements_remote_data_source.dart';
+import 'package:laqta/features/achievements/data/repositories/achievements_repository_impl.dart';
+import 'package:laqta/features/achievements/domain/repositories/achievements_repository.dart';
+import 'package:laqta/features/achievements/domain/usecases/get_user_achievements.dart';
 
 class AchievementsDependencies {
   static final AchievementsRemoteDataSource _remoteDataSource =

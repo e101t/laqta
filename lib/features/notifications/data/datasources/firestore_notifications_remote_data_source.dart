@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
-import 'package:luqta/features/notifications/data/dtos/notification_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
+import 'package:laqta/features/notifications/data/dtos/notification_dto.dart';
 
 class FirestoreNotificationsRemoteDataSource
     implements NotificationsRemoteDataSource {

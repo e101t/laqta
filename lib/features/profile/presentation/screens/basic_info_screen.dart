@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/utils/debouncer.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile_update.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/utils/debouncer.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
 
 class BasicInfoScreen extends StatefulWidget {
   final String userRole;
@@ -37,7 +37,6 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     'owner',
     'official',
     'laqta',
-    'luqta',
     'photographer',
     'customer',
     'help',
@@ -46,13 +45,13 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     'admin1',
     'mod',
     'moderator',
-    'ادمـن',
-    'ادمن',
-    'الدعم',
-    'نظام',
-    'المساعدة',
-    'لقطة',
-    'لقتة',
+    'Ø§Ø¯Ù…Ù€Ù†',
+    'Ø§Ø¯Ù…Ù†',
+    'Ø§Ù„Ø¯Ø¹Ù…',
+    'Ù†Ø¸Ø§Ù…',
+    'Ø§Ù„Ù…Ø³Ø§Ø¹Ø¯Ø©',
+    'Ù„Ù‚Ø·Ø©',
+    'Ù„Ù‚ØªØ©',
   };
 
   String? _selectedGender;
@@ -149,7 +148,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'اسم المستخدم محجوز';
+        _usernameError = 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø­Ø¬ÙˆØ²';
       });
       return;
     }
@@ -159,7 +158,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
         _isCheckingUsername = false;
         _usernameAvailable = false;
         _usernameError =
-            'اسم المستخدم يجب أن يبدأ بحرف ويحتوي حروفاً أو أرقاماً فقط';
+            'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ø­Ø±Ù ÙˆÙŠØ­ØªÙˆÙŠ Ø­Ø±ÙˆÙØ§Ù‹ Ø£Ùˆ Ø£Ø±Ù‚Ø§Ù…Ø§Ù‹ ÙÙ‚Ø·';
       });
       return;
     }
@@ -176,17 +175,17 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = result.valueOrNull ?? false;
-        _usernameError = (_usernameAvailable) ? null : 'اسم المستخدم غير متاح';
+        _usernameError = (_usernameAvailable) ? null : 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­';
       });
     } catch (e) {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'تعذر التحقق من اسم المستخدم';
+        _usernameError = 'ØªØ¹Ø°Ø± Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…';
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ أثناء فحص اسم المستخدم')),
+          const SnackBar(content: Text('Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ ÙØ­Øµ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…')),
         );
       }
     }
@@ -303,19 +302,19 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     if (_selectedGender == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اختر الجنس من فضلك')));
+      ).showSnackBar(const SnackBar(content: Text('Ø§Ø®ØªØ± Ø§Ù„Ø¬Ù†Ø³ Ù…Ù† ÙØ¶Ù„Ùƒ')));
       return;
     }
     if (_selectedGovernorate == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('اختر المحافظة من فضلك')));
+      ).showSnackBar(const SnackBar(content: Text('Ø§Ø®ØªØ± Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø© Ù…Ù† ÙØ¶Ù„Ùƒ')));
       return;
     }
     if (!_over18Confirmed) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('يجب تأكيد أنك فوق 18 سنة')));
+      ).showSnackBar(const SnackBar(content: Text('ÙŠØ¬Ø¨ ØªØ£ÙƒÙŠØ¯ Ø£Ù†Ùƒ ÙÙˆÙ‚ 18 Ø³Ù†Ø©')));
       return;
     }
 
@@ -325,7 +324,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       final userResult = await AuthDependencies.getCurrentUser().call();
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
-        throw Exception('لم يتم العثور على مستخدم مسجل حالياً');
+        throw Exception('Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø³Ø¬Ù„ Ø­Ø§Ù„ÙŠØ§Ù‹');
       }
 
       final username = _usernameController.text.trim().toLowerCase();
@@ -365,7 +364,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('حدث خطأ أثناء الحفظ')));
+      ).showSnackBar(const SnackBar(content: Text('Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø§Ù„Ø­ÙØ¸')));
     }
   }
 
@@ -384,7 +383,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('المعلومات الأساسية'),
+        title: const Text('Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ©'),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -458,13 +457,13 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 28),
 
               Text(
-                'اسم المستخدم (Username)',
+                'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… (Username)',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _usernameController,
-                hint: 'مثال: ahmedphoto23',
+                hint: 'Ù…Ø«Ø§Ù„: ahmedphoto23',
                 prefixIcon: Icons.person_outline,
                 suffixIcon: _isCheckingUsername
                     ? null
@@ -487,20 +486,20 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال اسم المستخدم';
+                    return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…';
                   }
                   final normalized = value.trim().toLowerCase();
                   if (_isUsernameForbidden(normalized)) {
-                    return 'اسم المستخدم محجوز';
+                    return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…Ø­Ø¬ÙˆØ²';
                   }
                   if (!_isUsernameFormatValid(normalized)) {
-                    return 'اسم المستخدم يجب أن يبدأ بحرف ويحتوي حروفاً أو أرقاماً فقط (بدون مسافات)';
+                    return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙŠØ¬Ø¨ Ø£Ù† ÙŠØ¨Ø¯Ø£ Ø¨Ø­Ø±Ù ÙˆÙŠØ­ØªÙˆÙŠ Ø­Ø±ÙˆÙØ§Ù‹ Ø£Ùˆ Ø£Ø±Ù‚Ø§Ù…Ø§Ù‹ ÙÙ‚Ø· (Ø¨Ø¯ÙˆÙ† Ù…Ø³Ø§ÙØ§Øª)';
                   }
                   if (normalized.length < 2) {
-                    return 'يجب ألا يقل عن حرفين';
+                    return 'ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠÙ‚Ù„ Ø¹Ù† Ø­Ø±ÙÙŠÙ†';
                   }
                   if (!_usernameAvailable && !_isCheckingUsername) {
-                    return 'اسم المستخدم غير متاح';
+                    return 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­';
                   }
                   if (_usernameError != null && _usernameError!.isNotEmpty) {
                     return _usernameError;
@@ -512,7 +511,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                 Padding(
                   padding: EdgeInsets.only(top: 4),
                   child: Text(
-                    'جارٍ التحقق...',
+                    'Ø¬Ø§Ø±Ù Ø§Ù„ØªØ­Ù‚Ù‚...',
                     style: TextStyle(
                       fontSize: 12,
                       color: scheme.onSurfaceVariant,
@@ -531,7 +530,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                       ),
                       SizedBox(width: 4),
                       Text(
-                        'اسم المستخدم متاح',
+                        'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ù…ØªØ§Ø­',
                         style: TextStyle(
                           fontSize: 12,
                           color: scheme.tertiary,
@@ -550,7 +549,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                       Icon(Icons.error, size: 16, color: scheme.error),
                       SizedBox(width: 4),
                       Text(
-                        'اسم المستخدم غير متاح',
+                        'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ØºÙŠØ± Ù…ØªØ§Ø­',
                         style: TextStyle(fontSize: 12, color: scheme.error),
                       ),
                     ],
@@ -561,14 +560,14 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'اقتراحات اسم مستخدم',
+                    'Ø§Ù‚ØªØ±Ø§Ø­Ø§Øª Ø§Ø³Ù… Ù…Ø³ØªØ®Ø¯Ù…',
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
                   TextButton(
                     onPressed: _isSuggesting ? null : _generateSuggestions,
-                    child: Text(_isSuggesting ? 'جاري...' : 'اقتراحات'),
+                    child: Text(_isSuggesting ? 'Ø¬Ø§Ø±ÙŠ...' : 'Ø§Ù‚ØªØ±Ø§Ø­Ø§Øª'),
                   ),
                 ],
               ),
@@ -595,13 +594,13 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 20),
 
               Text(
-                'رقم الهاتف',
+                'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _phoneController,
-                hint: 'رقم الهاتف',
+                hint: 'Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ',
                 prefixIcon: Icons.phone,
                 keyboardType: TextInputType.phone,
                 enabled: false,
@@ -609,7 +608,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 20),
 
               Text(
-                'البريد الإلكتروني (اختياري)',
+                'Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
@@ -624,7 +623,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                   }
                   final normalized = value.trim();
                   if (!normalized.contains('@') || !normalized.contains('.')) {
-                    return 'صيغة البريد الإلكتروني غير صحيحة';
+                    return 'ØµÙŠØºØ© Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ØºÙŠØ± ØµØ­ÙŠØ­Ø©';
                   }
                   return null;
                 },
@@ -632,17 +631,17 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 20),
 
               Text(
-                'الاسم الكامل',
+                'Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _fullNameController,
-                hint: 'اكتب اسمك الكامل',
+                hint: 'Ø§ÙƒØªØ¨ Ø§Ø³Ù…Ùƒ Ø§Ù„ÙƒØ§Ù…Ù„',
                 prefixIcon: Icons.badge_outlined,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'الاسم الكامل مطلوب';
+                    return 'Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„ Ù…Ø·Ù„ÙˆØ¨';
                   }
                   return null;
                 },
@@ -650,7 +649,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 20),
 
               Text(
-                'الجنس',
+                'Ø§Ù„Ø¬Ù†Ø³',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
@@ -659,7 +658,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                   Expanded(
                     child: _GenderOption(
                       icon: Icons.male,
-                      label: 'ذكر',
+                      label: 'Ø°ÙƒØ±',
                       isSelected: _selectedGender == 'male',
                       onTap: () => setState(() => _selectedGender = 'male'),
                     ),
@@ -668,7 +667,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                   Expanded(
                     child: _GenderOption(
                       icon: Icons.female,
-                      label: 'أنثى',
+                      label: 'Ø£Ù†Ø«Ù‰',
                       isSelected: _selectedGender == 'female',
                       onTap: () => setState(() => _selectedGender = 'female'),
                     ),
@@ -678,24 +677,24 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 20),
 
               Text(
-                'سنة الميلاد',
+                'Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               AppTextField(
                 controller: _birthYearController,
-                hint: 'مثال: 1995',
+                hint: 'Ù…Ø«Ø§Ù„: 1995',
                 prefixIcon: Icons.cake,
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'الرجاء إدخال سنة الميلاد';
+                    return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯';
                   }
                   final year = int.tryParse(value);
                   if (year == null ||
                       year < 1900 ||
                       year > DateTime.now().year - 18) {
-                    return 'يجب أن تشير سنة الميلاد إلى عمر 18 عاماً أو أكثر';
+                    return 'ÙŠØ¬Ø¨ Ø£Ù† ØªØ´ÙŠØ± Ø³Ù†Ø© Ø§Ù„Ù…ÙŠÙ„Ø§Ø¯ Ø¥Ù„Ù‰ Ø¹Ù…Ø± 18 Ø¹Ø§Ù…Ø§Ù‹ Ø£Ùˆ Ø£ÙƒØ«Ø±';
                   }
                   return null;
                 },
@@ -703,13 +702,13 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 20),
 
               Text(
-                'المحافظة',
+                'Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©',
                 style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               AppDropdownField<String>(
                 initialValue: _selectedGovernorate,
-                hint: 'اختر المحافظة',
+                hint: 'Ø§Ø®ØªØ± Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©',
                 prefixIcon: Icons.location_on,
                 items: AppConstants.iraqiGovernoratesAr.map((gov) {
                   return DropdownMenuItem(value: gov, child: Text(gov));
@@ -740,7 +739,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
-                        'أؤكد أن عمري فوق 18 سنة',
+                        'Ø£Ø¤ÙƒØ¯ Ø£Ù† Ø¹Ù…Ø±ÙŠ ÙÙˆÙ‚ 18 Ø³Ù†Ø©',
                         style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
@@ -750,7 +749,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
               const SizedBox(height: 32),
 
               CTAButton(
-                text: 'متابعة',
+                text: 'Ù…ØªØ§Ø¨Ø¹Ø©',
                 onPressed: _saveAndContinue,
                 isLoading: _isLoading,
               ),

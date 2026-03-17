@@ -1,5 +1,5 @@
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/payment/domain/entities/payment_intent.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/payment/domain/entities/payment_intent.dart';
 
 abstract class PaymentRepository {
   Future<Result<PaymentIntentData>> createPaymentIntent({

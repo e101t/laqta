@@ -1,7 +1,7 @@
-import 'package:luqta/features/profile/data/dtos/portfolio_dto.dart';
-import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
-import 'package:luqta/features/profile/domain/entities/portfolio.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/data/dtos/portfolio_dto.dart';
+import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
+import 'package:laqta/features/profile/domain/entities/portfolio.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
 
 class ProfileMapper {
   static UserProfile toDomain(UserProfileDto dto) {

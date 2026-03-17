@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/achievements/data/datasources/achievements_remote_data_source.dart';
-import 'package:luqta/features/achievements/data/dtos/user_achievement_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/achievements/data/datasources/achievements_remote_data_source.dart';
+import 'package:laqta/features/achievements/data/dtos/user_achievement_dto.dart';
 
 class FirestoreAchievementsRemoteDataSource
     implements AchievementsRemoteDataSource {

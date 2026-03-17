@@ -1,4 +1,4 @@
-import 'package:luqta/features/auth/data/dtos/auth_user_dto.dart';
+import 'package:laqta/features/auth/data/dtos/auth_user_dto.dart';
 
 typedef AuthPhoneCodeSent =
     void Function(String verificationId, int? resendToken);

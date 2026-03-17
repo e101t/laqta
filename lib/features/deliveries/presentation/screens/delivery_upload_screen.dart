@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/deliveries/deliveries_dependencies.dart';
-import 'package:luqta/features/deliveries/domain/entities/delivery.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/deliveries/deliveries_dependencies.dart';
+import 'package:laqta/features/deliveries/domain/entities/delivery.dart';
 
 class DeliveryUploadScreen extends StatefulWidget {
   final String bookingId;

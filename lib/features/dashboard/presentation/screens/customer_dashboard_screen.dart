@@ -4,24 +4,24 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/models/story_model.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/core/services/story_service.dart';
-import 'package:luqta/core/theme/laqta_tokens.dart';
-import 'package:luqta/core/utils/runtime_env.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/skeleton_loaders.dart';
-import 'package:luqta/core/widgets/story_bubble.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/booking/booking_dependencies.dart';
-import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:luqta/features/explore/presentation/screens/story_viewer_screen.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/core/services/story_service.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
+import 'package:laqta/core/utils/runtime_env.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/skeleton_loaders.dart';
+import 'package:laqta/core/widgets/story_bubble.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/features/explore/presentation/screens/story_viewer_screen.dart';
 import 'package:intl/intl.dart';
 
 class CustomerDashboardScreen extends StatefulWidget {
@@ -49,27 +49,27 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   static const List<_FeaturedProduct> _demoFeaturedProducts = [
     _FeaturedProduct(
       id: 'demo_product_1',
-      title: 'إطار صور فاخر',
-      subtitle: 'خشب طبيعي + زجاج مقاوم للخدش',
+      title: 'Ø¥Ø·Ø§Ø± ØµÙˆØ± ÙØ§Ø®Ø±',
+      subtitle: 'Ø®Ø´Ø¨ Ø·Ø¨ÙŠØ¹ÙŠ + Ø²Ø¬Ø§Ø¬ Ù…Ù‚Ø§ÙˆÙ… Ù„Ù„Ø®Ø¯Ø´',
       priceIQD: 35000,
       assetPath: 'assets/images/offers/offer_1.png',
-      badge: 'جديد',
+      badge: 'Ø¬Ø¯ÙŠØ¯',
     ),
     _FeaturedProduct(
       id: 'demo_product_2',
-      title: 'ألبوم مطبوع',
-      subtitle: 'ورق عالي الجودة + تصميم أنيق',
+      title: 'Ø£Ù„Ø¨ÙˆÙ… Ù…Ø·Ø¨ÙˆØ¹',
+      subtitle: 'ÙˆØ±Ù‚ Ø¹Ø§Ù„ÙŠ Ø§Ù„Ø¬ÙˆØ¯Ø© + ØªØµÙ…ÙŠÙ… Ø£Ù†ÙŠÙ‚',
       priceIQD: 65000,
       assetPath: 'assets/images/offers/offer_2.png',
-      badge: 'الأكثر مبيعًا',
+      badge: 'Ø§Ù„Ø£ÙƒØ«Ø± Ù…Ø¨ÙŠØ¹Ù‹Ø§',
     ),
     _FeaturedProduct(
       id: 'demo_product_3',
-      title: 'جلسة تصوير منتجات',
-      subtitle: 'باقة مناسبة للمتاجر والمتاجر الإلكترونية',
+      title: 'Ø¬Ù„Ø³Ø© ØªØµÙˆÙŠØ± Ù…Ù†ØªØ¬Ø§Øª',
+      subtitle: 'Ø¨Ø§Ù‚Ø© Ù…Ù†Ø§Ø³Ø¨Ø© Ù„Ù„Ù…ØªØ§Ø¬Ø± ÙˆØ§Ù„Ù…ØªØ§Ø¬Ø± Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠØ©',
       priceIQD: 120000,
       assetPath: 'assets/images/offers/offer_3.png',
-      badge: 'عرض',
+      badge: 'Ø¹Ø±Ø¶',
     ),
   ];
 
@@ -79,21 +79,21 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
 
   final List<_OfferSlide> _offerSlides = const [
     _OfferSlide(
-      title: 'جلسات بورتريه فاخرة',
-      subtitle: 'خصم ٢٠٪ على جلسات التصوير الشخصية هذا الأسبوع',
-      cta: 'احجز الآن',
+      title: 'Ø¬Ù„Ø³Ø§Øª Ø¨ÙˆØ±ØªØ±ÙŠÙ‡ ÙØ§Ø®Ø±Ø©',
+      subtitle: 'Ø®ØµÙ… Ù¢Ù Ùª Ø¹Ù„Ù‰ Ø¬Ù„Ø³Ø§Øª Ø§Ù„ØªØµÙˆÙŠØ± Ø§Ù„Ø´Ø®ØµÙŠØ© Ù‡Ø°Ø§ Ø§Ù„Ø£Ø³Ø¨ÙˆØ¹',
+      cta: 'Ø§Ø­Ø¬Ø² Ø§Ù„Ø¢Ù†',
       assetPath: 'assets/images/offers/offer_1.png',
     ),
     _OfferSlide(
-      title: 'تصوير مناسبات مميز',
-      subtitle: 'احجز باقة المناسبات واحصل على ألبوم مطبوع مجانًا',
-      cta: 'استكشف الباقة',
+      title: 'ØªØµÙˆÙŠØ± Ù…Ù†Ø§Ø³Ø¨Ø§Øª Ù…Ù…ÙŠØ²',
+      subtitle: 'Ø§Ø­Ø¬Ø² Ø¨Ø§Ù‚Ø© Ø§Ù„Ù…Ù†Ø§Ø³Ø¨Ø§Øª ÙˆØ§Ø­ØµÙ„ Ø¹Ù„Ù‰ Ø£Ù„Ø¨ÙˆÙ… Ù…Ø·Ø¨ÙˆØ¹ Ù…Ø¬Ø§Ù†Ù‹Ø§',
+      cta: 'Ø§Ø³ØªÙƒØ´Ù Ø§Ù„Ø¨Ø§Ù‚Ø©',
       assetPath: 'assets/images/offers/offer_2.png',
     ),
     _OfferSlide(
-      title: 'تصوير منتجات احترافي',
-      subtitle: 'لأصحاب المتاجر: جلسات احترافية بأسعار خاصة',
-      cta: 'ابدأ الآن',
+      title: 'ØªØµÙˆÙŠØ± Ù…Ù†ØªØ¬Ø§Øª Ø§Ø­ØªØ±Ø§ÙÙŠ',
+      subtitle: 'Ù„Ø£ØµØ­Ø§Ø¨ Ø§Ù„Ù…ØªØ§Ø¬Ø±: Ø¬Ù„Ø³Ø§Øª Ø§Ø­ØªØ±Ø§ÙÙŠØ© Ø¨Ø£Ø³Ø¹Ø§Ø± Ø®Ø§ØµØ©',
+      cta: 'Ø§Ø¨Ø¯Ø£ Ø§Ù„Ø¢Ù†',
       assetPath: 'assets/images/offers/offer_3.png',
     ),
   ];
@@ -216,7 +216,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           date: '2026-02-10',
           time: '06:30 PM',
           duration: 120,
-          type: 'جلسة عائلية',
+          type: 'Ø¬Ù„Ø³Ø© Ø¹Ø§Ø¦Ù„ÙŠØ©',
           price: 150000,
           status: 'confirmed',
           payment: PaymentInfo(
@@ -224,7 +224,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
             amount: 50000,
             paidAt: now.subtract(const Duration(days: 1)),
           ),
-          location: LocationInfo(text: 'بغداد - المنصور'),
+          location: LocationInfo(text: 'Ø¨ØºØ¯Ø§Ø¯ - Ø§Ù„Ù…Ù†ØµÙˆØ±'),
           deliverables: DeliverablesInfo(
             photosCount: 25,
             includesEditing: true,
@@ -242,11 +242,11 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
           date: '2026-02-20',
           time: '05:00 PM',
           duration: 90,
-          type: 'تصوير مناسبات',
+          type: 'ØªØµÙˆÙŠØ± Ù…Ù†Ø§Ø³Ø¨Ø§Øª',
           price: 220000,
           status: 'pending',
           payment: PaymentInfo(status: 'pending', amount: 0),
-          location: LocationInfo(text: 'أربيل - عينكاوا'),
+          location: LocationInfo(text: 'Ø£Ø±Ø¨ÙŠÙ„ - Ø¹ÙŠÙ†ÙƒØ§ÙˆØ§'),
           deliverables: DeliverablesInfo(
             photosCount: 40,
             includesEditing: true,
@@ -264,7 +264,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
   String _formatIQD(BuildContext context, int amount) {
     final locale = Localizations.localeOf(context).toString();
     final formatted = NumberFormat.decimalPattern(locale).format(amount);
-    return '$formatted د.ع';
+    return '$formatted Ø¯.Ø¹';
   }
 
   Future<void> _loadStories() async {
@@ -306,10 +306,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       StoryModel(
         storyId: 'demo_story_1',
         photographerId: 'demo_ph_1',
-        photographerName: 'مروة الحربي',
+        photographerName: 'Ù…Ø±ÙˆØ© Ø§Ù„Ø­Ø±Ø¨ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         imageUrl: 'assets/images/hero_auth.png',
-        caption: 'بورتريه فاخر بإضاءة ذهبية ناعمة.',
+        caption: 'Ø¨ÙˆØ±ØªØ±ÙŠÙ‡ ÙØ§Ø®Ø± Ø¨Ø¥Ø¶Ø§Ø¡Ø© Ø°Ù‡Ø¨ÙŠØ© Ù†Ø§Ø¹Ù…Ø©.',
         createdAt: now.subtract(const Duration(hours: 1)),
         expiresAt: now.add(const Duration(hours: 23)),
         isActive: true,
@@ -317,10 +317,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       StoryModel(
         storyId: 'demo_story_2',
         photographerId: 'demo_ph_2',
-        photographerName: 'سيف الكعبي',
+        photographerName: 'Ø³ÙŠÙ Ø§Ù„ÙƒØ¹Ø¨ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         imageUrl: 'assets/images/hero_role.png',
-        caption: 'مناسبات بلمسة سينمائية أنيقة.',
+        caption: 'Ù…Ù†Ø§Ø³Ø¨Ø§Øª Ø¨Ù„Ù…Ø³Ø© Ø³ÙŠÙ†Ù…Ø§Ø¦ÙŠØ© Ø£Ù†ÙŠÙ‚Ø©.',
         createdAt: now.subtract(const Duration(hours: 3)),
         expiresAt: now.add(const Duration(hours: 21)),
         isActive: true,
@@ -328,10 +328,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       StoryModel(
         storyId: 'demo_story_3',
         photographerId: 'demo_ph_3',
-        photographerName: 'نور الهادي',
+        photographerName: 'Ù†ÙˆØ± Ø§Ù„Ù‡Ø§Ø¯ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         imageUrl: 'assets/images/hero_welcome.png',
-        caption: 'تصوير منتجات بخلفية نظيفة ولمسة فاخرة.',
+        caption: 'ØªØµÙˆÙŠØ± Ù…Ù†ØªØ¬Ø§Øª Ø¨Ø®Ù„ÙÙŠØ© Ù†Ø¸ÙŠÙØ© ÙˆÙ„Ù…Ø³Ø© ÙØ§Ø®Ø±Ø©.',
         createdAt: now.subtract(const Duration(hours: 6)),
         expiresAt: now.add(const Duration(hours: 18)),
         isActive: true,
@@ -339,10 +339,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       StoryModel(
         storyId: 'demo_story_4',
         photographerId: 'demo_ph_4',
-        photographerName: 'رنيم البغدادي',
+        photographerName: 'Ø±Ù†ÙŠÙ… Ø§Ù„Ø¨ØºØ¯Ø§Ø¯ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         imageUrl: 'assets/images/hero_auth.png',
-        caption: 'جلسات عائلية دافئة في الضوء الطبيعي.',
+        caption: 'Ø¬Ù„Ø³Ø§Øª Ø¹Ø§Ø¦Ù„ÙŠØ© Ø¯Ø§ÙØ¦Ø© ÙÙŠ Ø§Ù„Ø¶ÙˆØ¡ Ø§Ù„Ø·Ø¨ÙŠØ¹ÙŠ.',
         createdAt: now.subtract(const Duration(hours: 8)),
         expiresAt: now.add(const Duration(hours: 16)),
         isActive: true,
@@ -350,10 +350,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       StoryModel(
         storyId: 'demo_story_5',
         photographerId: 'demo_ph_5',
-        photographerName: 'عمر السعدي',
+        photographerName: 'Ø¹Ù…Ø± Ø§Ù„Ø³Ø¹Ø¯ÙŠ',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         imageUrl: 'assets/images/hero_role.png',
-        caption: 'تصوير طعام احترافي لإبراز التفاصيل.',
+        caption: 'ØªØµÙˆÙŠØ± Ø·Ø¹Ø§Ù… Ø§Ø­ØªØ±Ø§ÙÙŠ Ù„Ø¥Ø¨Ø±Ø§Ø² Ø§Ù„ØªÙØ§ØµÙŠÙ„.',
         createdAt: now.subtract(const Duration(hours: 10)),
         expiresAt: now.add(const Duration(hours: 14)),
         isActive: true,
@@ -361,10 +361,10 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       StoryModel(
         storyId: 'demo_story_6',
         photographerId: 'demo_ph_6',
-        photographerName: 'زهـراء سالم',
+        photographerName: 'Ø²Ù‡Ù€Ø±Ø§Ø¡ Ø³Ø§Ù„Ù…',
         photographerPhotoUrl: 'assets/images/placeholder.jpg',
         imageUrl: 'assets/images/hero_welcome.png',
-        caption: 'تصوير أطفال بأسلوب هادئ وآمن.',
+        caption: 'ØªØµÙˆÙŠØ± Ø£Ø·ÙØ§Ù„ Ø¨Ø£Ø³Ù„ÙˆØ¨ Ù‡Ø§Ø¯Ø¦ ÙˆØ¢Ù…Ù†.',
         createdAt: now.subtract(const Duration(hours: 12)),
         expiresAt: now.add(const Duration(hours: 12)),
         isActive: true,
@@ -392,7 +392,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       MaterialPageRoute(
         builder: (context) => CreateRequestScreen(
           prefillNotes:
-              'مرجع من قصة المصور ${story.photographerName}: ${story.caption ?? ''}',
+              'Ù…Ø±Ø¬Ø¹ Ù…Ù† Ù‚ØµØ© Ø§Ù„Ù…ØµÙˆØ± ${story.photographerName}: ${story.caption ?? ''}',
           prefillReferenceImages: [story.imageUrl],
           prefillSelectedPhotographerId: story.photographerId,
         ),
@@ -410,7 +410,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'العروض المميزة',
+          'Ø§Ù„Ø¹Ø±ÙˆØ¶ Ø§Ù„Ù…Ù…ÙŠØ²Ø©',
           style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
@@ -456,7 +456,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'القصص',
+            'Ø§Ù„Ù‚ØµØµ',
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -493,7 +493,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'القصص',
+          'Ø§Ù„Ù‚ØµØµ',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -611,7 +611,7 @@ class _CustomerDashboardScreenState extends State<CustomerDashboardScreen> {
                       icon: Icons.storefront_outlined,
                       title: localizations.noProducts,
                       message: localizations.productsEmptyMessage,
-                      emoji: '🛍️',
+                      emoji: 'ðŸ›ï¸',
                     )
                   else
                     SizedBox(
@@ -982,7 +982,7 @@ class _OfferSlideCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'عرض',
+                                'Ø¹Ø±Ø¶',
                                 style: textTheme.labelSmall?.copyWith(
                                   color: LaqtaColors.accent,
                                   fontWeight: FontWeight.w600,

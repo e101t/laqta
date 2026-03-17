@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
-import 'package:luqta/features/deliveries/data/mappers/delivery_mapper.dart';
-import 'package:luqta/features/deliveries/domain/entities/delivery.dart';
-import 'package:luqta/features/deliveries/domain/repositories/deliveries_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
+import 'package:laqta/features/deliveries/data/mappers/delivery_mapper.dart';
+import 'package:laqta/features/deliveries/domain/entities/delivery.dart';
+import 'package:laqta/features/deliveries/domain/repositories/deliveries_repository.dart';
 
 class DeliveriesRepositoryImpl implements DeliveriesRepository {
   final DeliveriesRemoteDataSource _remoteDataSource;

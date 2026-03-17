@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/auth/presentation/screens/auth_screen.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/presentation/screens/auth_screen.dart';
 
 import '../helpers/mocks.dart';
 import '../helpers/test_app.dart';

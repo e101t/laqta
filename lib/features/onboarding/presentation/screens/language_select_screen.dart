@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/providers/locale_provider.dart';
-import 'package:luqta/app/router/app_router.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/providers/locale_provider.dart';
+import 'package:laqta/app/router/app_router.dart';
 
 class LanguageSelectScreen extends StatefulWidget {
   const LanguageSelectScreen({super.key});
@@ -199,7 +199,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                             child: SlideTransition(
                               position: _cardSlideOne,
                               child: _LanguageCard(
-                                title: 'العربية',
+                                title: 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©',
                                 subtitle: 'Arabic',
                                 isSelected: currentCode == 'ar',
                                 onTap: () => _selectLanguage(context, 'ar'),
@@ -213,7 +213,7 @@ class _LanguageSelectScreenState extends State<LanguageSelectScreen>
                               position: _cardSlideTwo,
                               child: _LanguageCard(
                                 title: 'English',
-                                subtitle: 'الإنجليزية',
+                                subtitle: 'Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠØ©',
                                 isSelected: currentCode == 'en',
                                 onTap: () => _selectLanguage(context, 'en'),
                               ),

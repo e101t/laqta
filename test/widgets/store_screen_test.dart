@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:luqta/features/store/presentation/screens/store_screen.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/features/store/presentation/screens/store_screen.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../helpers/mocks.dart';
@@ -23,7 +23,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Featured Products'), findsNWidgets(2));
-    expect(find.text('ألبوم مطبوع'), findsOneWidget);
+    expect(find.text('Ø£Ù„Ø¨ÙˆÙ… Ù…Ø·Ø¨ÙˆØ¹'), findsOneWidget);
     expect(find.byType(EmptyState), findsNothing);
     expect(find.byIcon(Icons.shopping_bag_outlined), findsWidgets);
   });

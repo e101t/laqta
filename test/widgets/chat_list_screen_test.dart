@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/auth/domain/entities/auth_user.dart';
-import 'package:luqta/features/auth/domain/repositories/auth_repository.dart';
-import 'package:luqta/features/chat/chat_dependencies.dart';
-import 'package:luqta/features/chat/domain/entities/chat_thread_preview.dart';
-import 'package:luqta/features/chat/domain/repositories/chat_repository.dart';
-import 'package:luqta/features/chat/presentation/screens/chat_list_screen.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/domain/entities/auth_user.dart';
+import 'package:laqta/features/auth/domain/repositories/auth_repository.dart';
+import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/chat/domain/entities/chat_thread_preview.dart';
+import 'package:laqta/features/chat/domain/repositories/chat_repository.dart';
+import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 
 void main() {
   tearDown(() {
@@ -36,8 +36,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('لا توجد رسائل'), findsOneWidget);
-    expect(find.text('ابدأ محادثة مع مصور'), findsOneWidget);
+    final context = tester.element(find.byType(ChatListScreen));
+    final localizations = AppLocalizations.of(context);
+
+    expect(find.text(localizations.noMessagesTitle), findsOneWidget);
+    expect(
+      find.text(localizations.startConversationWithPhotographer),
+      findsOneWidget,
+    );
   });
 }
 

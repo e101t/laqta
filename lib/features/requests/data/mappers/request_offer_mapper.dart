@@ -1,5 +1,5 @@
-import 'package:luqta/features/requests/domain/entities/request_deliverables.dart';
-import 'package:luqta/features/requests/domain/entities/request_offer.dart';
+import 'package:laqta/features/requests/domain/entities/request_deliverables.dart';
+import 'package:laqta/features/requests/domain/entities/request_offer.dart';
 import '../dtos/request_offer_dto.dart';
 
 class RequestOfferMapper {

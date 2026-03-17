@@ -9,52 +9,52 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'routes.dart';
 
 // core
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
 
 // app shell
-import 'package:luqta/app/main_app_screen.dart';
+import 'package:laqta/app/main_app_screen.dart';
 
 // features (prefer features/* over screens/* shims)
-import 'package:luqta/features/auth/presentation/screens/auth_screen.dart';
-import 'package:luqta/features/auth/presentation/screens/sign_up_details_screen.dart';
-import 'package:luqta/features/onboarding/presentation/screens/splash_screen.dart';
-import 'package:luqta/features/onboarding/presentation/screens/language_select_screen.dart';
+import 'package:laqta/features/auth/presentation/screens/auth_screen.dart';
+import 'package:laqta/features/auth/presentation/screens/sign_up_details_screen.dart';
+import 'package:laqta/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:laqta/features/onboarding/presentation/screens/language_select_screen.dart';
 
-import 'package:luqta/features/role/presentation/screens/role_picker_screen.dart';
-import 'package:luqta/features/profile/presentation/screens/basic_info_screen.dart';
-import 'package:luqta/features/profile/presentation/screens/portfolio_editor_screen.dart';
-import 'package:luqta/features/profile/presentation/screens/profile_screen.dart';
-import 'package:luqta/features/admin/presentation/screens/account_blocked_screen.dart';
+import 'package:laqta/features/role/presentation/screens/role_picker_screen.dart';
+import 'package:laqta/features/profile/presentation/screens/basic_info_screen.dart';
+import 'package:laqta/features/profile/presentation/screens/portfolio_editor_screen.dart';
+import 'package:laqta/features/profile/presentation/screens/profile_screen.dart';
+import 'package:laqta/features/admin/presentation/screens/account_blocked_screen.dart';
 
-import 'package:luqta/features/search/presentation/screens/search_screen.dart';
-import 'package:luqta/features/chat/presentation/screens/chat_screen.dart';
-import 'package:luqta/features/booking/presentation/screens/booking_details_screen.dart';
-import 'package:luqta/features/booking/presentation/screens/my_bookings_screen.dart';
-import 'package:luqta/features/payment/presentation/screens/payment_screen.dart';
-import 'package:luqta/features/reels/presentation/screens/create_post_screen.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:luqta/features/requests/presentation/screens/my_requests_screen.dart';
-import 'package:luqta/features/requests/presentation/screens/offer_submit_screen.dart';
-import 'package:luqta/features/requests/presentation/screens/request_details_screen.dart';
-import 'package:luqta/features/store/presentation/screens/store_screen.dart';
+import 'package:laqta/features/search/presentation/screens/search_screen.dart';
+import 'package:laqta/features/chat/presentation/screens/chat_screen.dart';
+import 'package:laqta/features/booking/presentation/screens/booking_details_screen.dart';
+import 'package:laqta/features/booking/presentation/screens/my_bookings_screen.dart';
+import 'package:laqta/features/payment/presentation/screens/payment_screen.dart';
+import 'package:laqta/features/reels/presentation/screens/create_post_screen.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/features/requests/presentation/screens/my_requests_screen.dart';
+import 'package:laqta/features/requests/presentation/screens/offer_submit_screen.dart';
+import 'package:laqta/features/requests/presentation/screens/request_details_screen.dart';
+import 'package:laqta/features/store/presentation/screens/store_screen.dart';
 
-import 'package:luqta/features/photographer/presentation/screens/photographer_profile_screen.dart';
-import 'package:luqta/features/dashboard/presentation/screens/photographer_dashboard_screen.dart';
-import 'package:luqta/features/notifications/presentation/screens/notifications_screen.dart';
-import 'package:luqta/features/favorites/presentation/screens/favorites_screen.dart';
-import 'package:luqta/features/settings/presentation/screens/settings_screen.dart';
-import 'package:luqta/features/settings/presentation/screens/policy_terms_screen.dart';
-import 'package:luqta/features/settings/presentation/screens/booking_policies_screen.dart';
-import 'package:luqta/features/explore/presentation/screens/explore_screen.dart';
+import 'package:laqta/features/photographer/presentation/screens/photographer_profile_screen.dart';
+import 'package:laqta/features/dashboard/presentation/screens/photographer_dashboard_screen.dart';
+import 'package:laqta/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:laqta/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:laqta/features/settings/presentation/screens/settings_screen.dart';
+import 'package:laqta/features/settings/presentation/screens/policy_terms_screen.dart';
+import 'package:laqta/features/settings/presentation/screens/booking_policies_screen.dart';
+import 'package:laqta/features/explore/presentation/screens/explore_screen.dart';
 
-import 'package:luqta/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
-import 'package:luqta/features/achievements/presentation/screens/achievements_screen.dart';
-import 'package:luqta/features/loyalty/presentation/screens/loyalty_points_screen.dart';
-import 'package:luqta/features/photographer/presentation/screens/availability_screen.dart';
-import 'package:luqta/features/review/presentation/screens/write_review_screen.dart';
-import 'package:luqta/features/story/presentation/screens/create_story_screen.dart';
+import 'package:laqta/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
+import 'package:laqta/features/achievements/presentation/screens/achievements_screen.dart';
+import 'package:laqta/features/loyalty/presentation/screens/loyalty_points_screen.dart';
+import 'package:laqta/features/photographer/presentation/screens/availability_screen.dart';
+import 'package:laqta/features/review/presentation/screens/write_review_screen.dart';
+import 'package:laqta/features/story/presentation/screens/create_story_screen.dart';
 
 class AppRouter {
   static String? _cachedProfileUserId;

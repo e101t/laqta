@@ -1,13 +1,13 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/booking/data/mappers/booking_mapper.dart';
-import 'package:luqta/features/booking/domain/entities/booking.dart';
-import 'package:luqta/features/requests/data/datasources/requests_remote_data_source.dart';
-import 'package:luqta/features/requests/data/mappers/request_mapper.dart';
-import 'package:luqta/features/requests/data/mappers/request_offer_mapper.dart';
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/domain/entities/request_offer.dart';
-import 'package:luqta/features/requests/domain/repositories/requests_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/booking/data/mappers/booking_mapper.dart';
+import 'package:laqta/features/booking/domain/entities/booking.dart';
+import 'package:laqta/features/requests/data/datasources/requests_remote_data_source.dart';
+import 'package:laqta/features/requests/data/mappers/request_mapper.dart';
+import 'package:laqta/features/requests/data/mappers/request_offer_mapper.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/domain/entities/request_offer.dart';
+import 'package:laqta/features/requests/domain/repositories/requests_repository.dart';
 
 class RequestsRepositoryImpl implements RequestsRepository {
   final RequestsRemoteDataSource _remoteDataSource;

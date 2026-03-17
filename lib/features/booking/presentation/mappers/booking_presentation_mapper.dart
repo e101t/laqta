@@ -1,5 +1,5 @@
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/features/booking/domain/entities/booking.dart' as domain;
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/features/booking/domain/entities/booking.dart' as domain;
 
 class BookingPresentationMapper {
   static BookingModel toModel(domain.Booking booking) {

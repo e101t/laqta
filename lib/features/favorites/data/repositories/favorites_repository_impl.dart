@@ -1,8 +1,8 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
-import 'package:luqta/features/favorites/domain/entities/favorite_photographer.dart';
-import 'package:luqta/features/favorites/domain/repositories/favorites_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
+import 'package:laqta/features/favorites/domain/entities/favorite_photographer.dart';
+import 'package:laqta/features/favorites/domain/repositories/favorites_repository.dart';
 
 class FavoritesRepositoryImpl implements FavoritesRepository {
   final FavoritesRemoteDataSource _remoteDataSource;

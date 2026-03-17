@@ -1,4 +1,4 @@
-import 'package:luqta/features/trust/domain/entities/trust_stats.dart';
+import 'package:laqta/features/trust/domain/entities/trust_stats.dart';
 import '../dtos/trust_stats_dto.dart';
 
 class TrustStatsMapper {

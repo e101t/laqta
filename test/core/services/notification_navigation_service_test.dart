@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/app/router/routes.dart';
-import 'package:luqta/core/services/notification_navigation_service.dart';
+import 'package:laqta/app/router/routes.dart';
+import 'package:laqta/core/services/notification_navigation_service.dart';
 
 void main() {
   group('NotificationNavigationService.resolveNotificationPath', () {

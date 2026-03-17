@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/models/achievement_model.dart';
-import 'package:luqta/core/widgets/skeleton_loaders.dart';
-import 'package:luqta/features/achievements/achievements_dependencies.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/core/models/achievement_model.dart';
+import 'package:laqta/core/widgets/skeleton_loaders.dart';
+import 'package:laqta/features/achievements/achievements_dependencies.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -101,7 +101,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('الإنجازات 🏆'), centerTitle: true),
+      appBar: AppBar(title: const Text('Ø§Ù„Ø¥Ù†Ø¬Ø§Ø²Ø§Øª ðŸ†'), centerTitle: true),
       body: _isLoading
           ? SkeletonList(
               itemBuilder: const _AchievementSkeleton(),
@@ -128,7 +128,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _loadAchievements,
-                      child: const Text('إعادة المحاولة'),
+                      child: const Text('Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø©'),
                     ),
                   ],
                 ),
@@ -142,13 +142,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 const SizedBox(height: 24),
 
                 // Progress Overview
-                Text('التقدم', style: textTheme.titleLarge),
+                Text('Ø§Ù„ØªÙ‚Ø¯Ù…', style: textTheme.titleLarge),
                 const SizedBox(height: 12),
                 _buildProgressCard(),
                 const SizedBox(height: 24),
 
                 // Achievements List
-                Text('جميع الإنجازات', style: textTheme.titleLarge),
+                Text('Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¥Ù†Ø¬Ø§Ø²Ø§Øª', style: textTheme.titleLarge),
                 const SizedBox(height: 12),
                 ..._achievements.map((achievement) {
                   final userAchievement =
@@ -184,7 +184,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       ),
       child: Column(
         children: [
-          const Text('🏆', style: TextStyle(fontSize: 60)),
+          const Text('ðŸ†', style: TextStyle(fontSize: 60)),
           const SizedBox(height: 16),
           Text(
             '$_unlockedCount / ${_achievements.length}',
@@ -196,7 +196,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'إنجاز مفتوح',
+            'Ø¥Ù†Ø¬Ø§Ø² Ù…ÙØªÙˆØ­',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
             ),
@@ -214,7 +214,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 const Icon(Icons.stars, color: Colors.white),
                 const SizedBox(width: 8),
                 Text(
-                  '$_totalPoints نقطة مكتسبة',
+                  '$_totalPoints Ù†Ù‚Ø·Ø© Ù…ÙƒØªØ³Ø¨Ø©',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -247,7 +247,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('التقدم الكلي', style: textTheme.titleMedium),
+              Text('Ø§Ù„ØªÙ‚Ø¯Ù… Ø§Ù„ÙƒÙ„ÙŠ', style: textTheme.titleMedium),
               Text(
                 '${(progress * 100).toStringAsFixed(0)}%',
                 style: textTheme.titleMedium?.copyWith(
@@ -409,7 +409,7 @@ class _AchievementCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '+${achievement.rewardPoints} نقطة',
+                          '+${achievement.rewardPoints} Ù†Ù‚Ø·Ø©',
                           style: textTheme.labelSmall?.copyWith(
                             color: scheme.secondary,
                             fontWeight: FontWeight.bold,

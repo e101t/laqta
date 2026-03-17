@@ -1,4 +1,4 @@
-import 'package:luqta/features/deliveries/domain/entities/delivery.dart';
+import 'package:laqta/features/deliveries/domain/entities/delivery.dart';
 import '../dtos/delivery_dto.dart';
 
 class DeliveryMapper {

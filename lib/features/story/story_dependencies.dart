@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:luqta/features/story/data/datasources/firestore_story_remote_data_source.dart';
-import 'package:luqta/features/story/data/datasources/story_remote_data_source.dart';
-import 'package:luqta/features/story/data/repositories/story_repository_impl.dart';
-import 'package:luqta/features/story/domain/repositories/story_repository.dart';
-import 'package:luqta/features/story/domain/usecases/create_story.dart';
-import 'package:luqta/features/story/domain/usecases/upload_story_image.dart';
+import 'package:laqta/features/story/data/datasources/firestore_story_remote_data_source.dart';
+import 'package:laqta/features/story/data/datasources/story_remote_data_source.dart';
+import 'package:laqta/features/story/data/repositories/story_repository_impl.dart';
+import 'package:laqta/features/story/domain/repositories/story_repository.dart';
+import 'package:laqta/features/story/domain/usecases/create_story.dart';
+import 'package:laqta/features/story/domain/usecases/upload_story_image.dart';
 
 class StoryDependencies {
   static final StoryRemoteDataSource _remoteDataSource =

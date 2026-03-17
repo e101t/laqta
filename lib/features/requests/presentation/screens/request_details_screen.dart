@@ -1,24 +1,24 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/booking/booking_dependencies.dart';
-import 'package:luqta/features/booking/domain/entities/booking.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
-import 'package:luqta/features/notifications/notifications_dependencies.dart';
-import 'package:luqta/features/offers/presentation/widgets/offer_filters_widget.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/domain/entities/request_offer.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:luqta/features/trust/trust_dependencies.dart';
-import 'package:luqta/features/trust/domain/entities/trust_stats.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/booking/domain/entities/booking.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/notifications_dependencies.dart';
+import 'package:laqta/features/offers/presentation/widgets/offer_filters_widget.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/domain/entities/request_offer.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/features/trust/trust_dependencies.dart';
+import 'package:laqta/features/trust/domain/entities/trust_stats.dart';
 
 class RequestDetailsScreen extends StatefulWidget {
   final String requestId;

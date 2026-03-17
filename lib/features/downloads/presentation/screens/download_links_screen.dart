@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/features/downloads/domain/entities/download_link_entity.dart';
-import 'package:luqta/features/downloads/presentation/providers/download_provider.dart';
+import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
+import 'package:laqta/features/downloads/presentation/providers/download_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 

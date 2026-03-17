@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/photographer/data/datasources/photographer_remote_data_source.dart';
-import 'package:luqta/features/photographer/data/dtos/photographer_dto.dart';
-import 'package:luqta/features/profile/data/dtos/portfolio_dto.dart';
-import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/photographer/data/datasources/photographer_remote_data_source.dart';
+import 'package:laqta/features/photographer/data/dtos/photographer_dto.dart';
+import 'package:laqta/features/profile/data/dtos/portfolio_dto.dart';
+import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
 
 class FirestorePhotographerRemoteDataSource
     implements PhotographerRemoteDataSource {

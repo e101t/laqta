@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/features/downloads/presentation/screens/download_links_screen.dart';
+import 'package:laqta/features/downloads/presentation/screens/download_links_screen.dart';
 import '../helpers/test_app.dart';
 
 void main() {

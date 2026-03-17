@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/features/reels/data/datasources/reels_remote_data_source.dart';
-import 'package:luqta/features/reels/data/dtos/comment_dto.dart';
-import 'package:luqta/features/reels/data/dtos/reel_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/features/reels/data/datasources/reels_remote_data_source.dart';
+import 'package:laqta/features/reels/data/dtos/comment_dto.dart';
+import 'package:laqta/features/reels/data/dtos/reel_dto.dart';
 
 class FirestoreReelsRemoteDataSource implements ReelsRemoteDataSource {
   final FirebaseFirestore _firestore;

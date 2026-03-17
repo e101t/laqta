@@ -1,8 +1,8 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/search/data/datasources/search_remote_data_source.dart';
-import 'package:luqta/features/search/domain/entities/search_result_photographer.dart';
-import 'package:luqta/features/search/domain/repositories/search_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/search/data/datasources/search_remote_data_source.dart';
+import 'package:laqta/features/search/domain/entities/search_result_photographer.dart';
+import 'package:laqta/features/search/domain/repositories/search_repository.dart';
 
 class SearchRepositoryImpl implements SearchRepository {
   final SearchRemoteDataSource _remoteDataSource;

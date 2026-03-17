@@ -1,4 +1,4 @@
-import 'package:luqta/features/disputes/domain/entities/dispute.dart';
+import 'package:laqta/features/disputes/domain/entities/dispute.dart';
 import '../dtos/dispute_dto.dart';
 
 class DisputeMapper {

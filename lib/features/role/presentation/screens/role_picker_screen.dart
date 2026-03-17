@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/utils/responsive.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/role/role_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/utils/responsive.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/role/role_dependencies.dart';
 
 class RolePickerScreen extends StatefulWidget {
   const RolePickerScreen({super.key});

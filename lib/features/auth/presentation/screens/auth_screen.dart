@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/utils/responsive.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/utils/responsive.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
@@ -213,18 +213,18 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = _passwordController.text;
 
     if (identifier.isEmpty) {
-      _showSnackBar('الرجاء إدخال اسم المستخدم أو البريد الإلكتروني');
+      _showSnackBar('Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ');
       return;
     }
     if (password.isEmpty) {
-      _showSnackBar('الرجاء إدخال كلمة المرور');
+      _showSnackBar('Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¯Ø®Ø§Ù„ ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±');
       return;
     }
 
     final normalized = identifier.replaceAll(' ', '');
     final looksLikePhone = RegExp(r'^\\+?\\d{7,}$').hasMatch(normalized);
     if (looksLikePhone && !normalized.contains('@')) {
-      _showSnackBar('للدخول برقم الهاتف استخدم التحقق بالرمز (OTP)');
+      _showSnackBar('Ù„Ù„Ø¯Ø®ÙˆÙ„ Ø¨Ø±Ù‚Ù… Ø§Ù„Ù‡Ø§ØªÙ Ø§Ø³ØªØ®Ø¯Ù… Ø§Ù„ØªØ­Ù‚Ù‚ Ø¨Ø§Ù„Ø±Ù…Ø² (OTP)');
       setState(() {
         _showPhoneAuth = true;
         _showOTPVerification = false;
@@ -744,8 +744,8 @@ class _AuthScreenState extends State<AuthScreen> {
     return [
       AppTextField(
         controller: _identifierController,
-        label: 'اسم المستخدم / البريد',
-        hint: 'مثال: ahmedphoto23',
+        label: 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… / Ø§Ù„Ø¨Ø±ÙŠØ¯',
+        hint: 'Ù…Ø«Ø§Ù„: ahmedphoto23',
         prefixIcon: Icons.person_outline,
         enabled: !_isLoading,
         textInputAction: TextInputAction.next,
@@ -753,8 +753,8 @@ class _AuthScreenState extends State<AuthScreen> {
       const SizedBox(height: 12),
       AppTextField(
         controller: _passwordController,
-        label: 'كلمة المرور',
-        hint: '••••••••',
+        label: 'ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±',
+        hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
         prefixIcon: Icons.lock_outline,
         enabled: !_isLoading,
         obscureText: _obscurePassword,

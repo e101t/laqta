@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/providers/theme_provider.dart';
-import 'package:luqta/core/providers/locale_provider.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/settings/presentation/screens/policies_screen.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/providers/theme_provider.dart';
+import 'package:laqta/core/providers/locale_provider.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/settings/presentation/screens/policies_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:luqta/features/settings/settings_dependencies.dart';
+import 'package:laqta/features/settings/settings_dependencies.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -240,14 +240,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: Text(localizations.language),
                 subtitle: Text(
                   localeProvider.locale.languageCode == 'ar'
-                      ? 'العربية'
+                      ? 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©'
                       : 'English',
                 ),
                 trailing: DropdownButton<String>(
                   value: localeProvider.locale.languageCode,
                   underline: const SizedBox(),
                   items: const [
-                    DropdownMenuItem(value: 'ar', child: Text('العربية')),
+                    DropdownMenuItem(value: 'ar', child: Text('Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©')),
                     DropdownMenuItem(value: 'en', child: Text('English')),
                   ],
                   onChanged: _changeLanguage,

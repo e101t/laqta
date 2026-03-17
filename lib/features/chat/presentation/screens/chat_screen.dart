@@ -5,13 +5,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/features/settings/presentation/screens/report_screen.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/chat/chat_dependencies.dart';
-import 'package:luqta/features/chat/domain/entities/chat_message.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/settings/presentation/screens/report_screen.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/chat/domain/entities/chat_message.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;

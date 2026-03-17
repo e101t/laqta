@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/photographer_model.dart';
-import 'package:luqta/core/models/portfolio_model.dart';
-import 'package:luqta/core/models/review_model.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/photographer/photographer_dependencies.dart';
-import 'package:luqta/features/photographer/presentation/mappers/photographer_presentation_mapper.dart';
-import 'package:luqta/features/trust/domain/entities/trust_stats.dart';
-import 'package:luqta/features/trust/trust_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/photographer_model.dart';
+import 'package:laqta/core/models/portfolio_model.dart';
+import 'package:laqta/core/models/review_model.dart';
+import 'package:laqta/core/models/user_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/photographer/photographer_dependencies.dart';
+import 'package:laqta/features/photographer/presentation/mappers/photographer_presentation_mapper.dart';
+import 'package:laqta/features/trust/domain/entities/trust_stats.dart';
+import 'package:laqta/features/trust/trust_dependencies.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -310,7 +310,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
 
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('حسابي')),
+        appBar: AppBar(title: const Text('Ø­Ø³Ø§Ø¨ÙŠ')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -330,7 +330,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                 ),
                 const SizedBox(height: 16),
                 CTAButton(
-                  text: 'إعادة المحاولة',
+                  text: 'Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø©',
                   onPressed: _loadPhotographerData,
                 ),
               ],
@@ -345,11 +345,11 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
     }
 
     final genderLabel = _userData!.gender == 'female'
-        ? 'أنثى'
+        ? 'Ø£Ù†Ø«Ù‰'
         : _userData!.gender == 'male'
-        ? 'ذكر'
+        ? 'Ø°ÙƒØ±'
         : null;
-    final ageLabel = _userData!.age != null ? '${_userData!.age} سنة' : null;
+    final ageLabel = _userData!.age != null ? '${_userData!.age} Ø³Ù†Ø©' : null;
 
     return Scaffold(
       body: CustomScrollView(
@@ -599,9 +599,9 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
                   unselectedLabelColor: scheme.onSurfaceVariant,
                   indicatorColor: scheme.primary,
                   tabs: [
-                    const Tab(text: 'الملخص'),
+                    const Tab(text: 'Ø§Ù„Ù…Ù„Ø®Øµ'),
                     Tab(text: localizations.reviews),
-                    const Tab(text: 'المعرض'),
+                    const Tab(text: 'Ø§Ù„Ù…Ø¹Ø±Ø¶'),
                   ],
                 ),
 
@@ -645,7 +645,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
   Widget _buildPortfolioTab() {
     final images = _portfolioData?.images ?? [];
     if (images.isEmpty) {
-      return const Center(child: Text('لا توجد صور في المعرض حالياً'));
+      return const Center(child: Text('Ù„Ø§ ØªÙˆØ¬Ø¯ ØµÙˆØ± ÙÙŠ Ø§Ù„Ù…Ø¹Ø±Ø¶ Ø­Ø§Ù„ÙŠØ§Ù‹'));
     }
 
     return GridView.builder(
@@ -753,7 +753,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
         ListTile(
           leading: Icon(Icons.place, color: scheme.primary),
           title: Text(_userData?.governorate ?? ''),
-          subtitle: const Text('المحافظة'),
+          subtitle: const Text('Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©'),
         ),
         ListTile(
           leading: Icon(Icons.price_change, color: scheme.primary),
@@ -768,7 +768,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen>
         ),
         if (_photographerData!.specialties.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text('التخصصات', style: textTheme.titleMedium),
+          Text('Ø§Ù„ØªØ®ØµØµØ§Øª', style: textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

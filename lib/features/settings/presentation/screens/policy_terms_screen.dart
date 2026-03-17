@@ -93,7 +93,7 @@ class PolicyTermsScreen extends StatelessWidget {
                     Icon(Icons.email, size: 16, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
-                      'support@luqta.iq',
+                      'support@laqta.cloud',
                       style: textTheme.bodyMedium?.copyWith(
                         color: scheme.primary,
                         decoration: TextDecoration.underline,

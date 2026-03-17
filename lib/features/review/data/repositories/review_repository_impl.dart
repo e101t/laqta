@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/review/data/datasources/review_remote_data_source.dart';
-import 'package:luqta/features/review/data/mappers/review_mapper.dart';
-import 'package:luqta/features/review/domain/entities/review_submission.dart';
-import 'package:luqta/features/review/domain/repositories/review_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/review/data/datasources/review_remote_data_source.dart';
+import 'package:laqta/features/review/data/mappers/review_mapper.dart';
+import 'package:laqta/features/review/domain/entities/review_submission.dart';
+import 'package:laqta/features/review/domain/repositories/review_repository.dart';
 
 class ReviewRepositoryImpl implements ReviewRepository {
   final ReviewRemoteDataSource _remoteDataSource;

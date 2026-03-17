@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/loyalty/data/datasources/loyalty_remote_data_source.dart';
-import 'package:luqta/features/loyalty/data/mappers/loyalty_mapper.dart';
-import 'package:luqta/features/loyalty/domain/entities/loyalty_points.dart';
-import 'package:luqta/features/loyalty/domain/repositories/loyalty_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/loyalty/data/datasources/loyalty_remote_data_source.dart';
+import 'package:laqta/features/loyalty/data/mappers/loyalty_mapper.dart';
+import 'package:laqta/features/loyalty/domain/entities/loyalty_points.dart';
+import 'package:laqta/features/loyalty/domain/repositories/loyalty_repository.dart';
 
 class LoyaltyRepositoryImpl implements LoyaltyRepository {
   final LoyaltyRemoteDataSource _remoteDataSource;

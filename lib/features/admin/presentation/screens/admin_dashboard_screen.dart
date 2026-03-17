@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/admin/presentation/screens/admin_disputes_screen.dart';
-import 'package:luqta/features/admin/presentation/screens/admin_reports_screen.dart';
-import 'package:luqta/features/admin/presentation/screens/admin_users_screen.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/admin/presentation/screens/admin_disputes_screen.dart';
+import 'package:laqta/features/admin/presentation/screens/admin_reports_screen.dart';
+import 'package:laqta/features/admin/presentation/screens/admin_users_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/features/booking/presentation/screens/booking_details_screen.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/features/booking/presentation/screens/booking_details_screen.dart';
 import '../helpers/test_app.dart';
 
 void main() {

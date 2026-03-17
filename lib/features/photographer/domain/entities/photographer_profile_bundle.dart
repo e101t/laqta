@@ -1,5 +1,5 @@
-import 'package:luqta/features/profile/domain/entities/portfolio.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/domain/entities/portfolio.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
 import 'photographer_details.dart';
 import 'photographer_review.dart';
 

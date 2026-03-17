@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/auth/domain/entities/auth_user.dart';
-import 'package:luqta/features/auth/domain/repositories/auth_repository.dart';
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/domain/repositories/requests_repository.dart';
-import 'package:luqta/features/requests/presentation/screens/photographer_requests_screen.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/domain/entities/auth_user.dart';
+import 'package:laqta/features/auth/domain/repositories/auth_repository.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/domain/repositories/requests_repository.dart';
+import 'package:laqta/features/requests/presentation/screens/photographer_requests_screen.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
 
 import '../helpers/test_app.dart';
 

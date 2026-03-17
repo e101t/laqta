@@ -5,14 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/core/security/secure_storage.dart';
-import 'package:luqta/core/utils/governorate_utils.dart';
-import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
-import 'package:luqta/features/requests/data/datasources/requests_remote_data_source.dart';
-import 'package:luqta/features/requests/data/dtos/request_dto.dart';
-import 'package:luqta/features/requests/data/dtos/request_offer_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/core/utils/governorate_utils.dart';
+import 'package:laqta/features/booking/data/dtos/booking_dto.dart';
+import 'package:laqta/features/requests/data/datasources/requests_remote_data_source.dart';
+import 'package:laqta/features/requests/data/dtos/request_dto.dart';
+import 'package:laqta/features/requests/data/dtos/request_offer_dto.dart';
 
 class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
   final FirebaseFirestore _firestore;

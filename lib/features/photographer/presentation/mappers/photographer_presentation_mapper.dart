@@ -1,13 +1,13 @@
-import 'package:luqta/core/models/photographer_model.dart' as core;
-import 'package:luqta/core/models/portfolio_model.dart' as core;
-import 'package:luqta/core/models/review_model.dart' as core;
-import 'package:luqta/core/models/user_model.dart' as core;
-import 'package:luqta/features/photographer/domain/entities/photographer_details.dart';
-import 'package:luqta/features/photographer/domain/entities/photographer_review.dart';
-import 'package:luqta/features/profile/domain/entities/portfolio.dart'
+import 'package:laqta/core/models/photographer_model.dart' as core;
+import 'package:laqta/core/models/portfolio_model.dart' as core;
+import 'package:laqta/core/models/review_model.dart' as core;
+import 'package:laqta/core/models/user_model.dart' as core;
+import 'package:laqta/features/photographer/domain/entities/photographer_details.dart';
+import 'package:laqta/features/photographer/domain/entities/photographer_review.dart';
+import 'package:laqta/features/profile/domain/entities/portfolio.dart'
     as domain;
-import 'package:luqta/features/profile/domain/entities/user_profile.dart';
-import 'package:luqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
 
 class PhotographerPresentationMapper {
   static core.UserModel toUserModel(UserProfile profile) {

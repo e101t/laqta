@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/features/photographer/presentation/screens/availability_screen.dart';
+import 'package:laqta/features/photographer/presentation/screens/availability_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/test_app.dart';

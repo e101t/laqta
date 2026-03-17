@@ -1,5 +1,5 @@
-import 'package:luqta/features/loyalty/data/dtos/loyalty_points_dto.dart';
-import 'package:luqta/features/loyalty/domain/entities/loyalty_points.dart';
+import 'package:laqta/features/loyalty/data/dtos/loyalty_points_dto.dart';
+import 'package:laqta/features/loyalty/domain/entities/loyalty_points.dart';
 
 class LoyaltyMapper {
   static LoyaltyPoints toDomain(LoyaltyPointsDto dto) {

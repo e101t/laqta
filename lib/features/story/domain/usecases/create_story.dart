@@ -1,5 +1,5 @@
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/core/models/story_model.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/models/story_model.dart';
 import '../repositories/story_repository.dart';
 
 class CreateStory {

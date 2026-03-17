@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Custom Text Field Widget
 class AppTextField extends StatelessWidget {

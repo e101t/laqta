@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:luqta/core/utils/firestore_parsers.dart';
+import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class BookingModel {
   final String id;

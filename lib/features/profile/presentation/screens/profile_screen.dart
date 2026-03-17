@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/domain/entities/user_profile_update.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/user_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (authUser == null) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'الرجاء تسجيل الدخول لعرض الحساب';
+        _errorMessage = 'Ø§Ù„Ø±Ø¬Ø§Ø¡ ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ù„Ø¹Ø±Ø¶ Ø§Ù„Ø­Ø³Ø§Ø¨';
         _isLoading = false;
       });
       return;
@@ -58,7 +58,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'تعذّر تحميل الملف الشخصي';
+        _errorMessage = 'ØªØ¹Ø°Ù‘Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ';
         _isLoading = false;
       });
     }
@@ -132,13 +132,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _isUploading = false);
 
         messenger.showSnackBar(
-          const SnackBar(content: Text('تم تحديث صورة الملف الشخصي')),
+          const SnackBar(content: Text('ØªÙ… ØªØ­Ø¯ÙŠØ« ØµÙˆØ±Ø© Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ')),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isUploading = false);
-      messenger.showSnackBar(const SnackBar(content: Text('فشل رفع الصورة')));
+      messenger.showSnackBar(const SnackBar(content: Text('ÙØ´Ù„ Ø±ÙØ¹ Ø§Ù„ØµÙˆØ±Ø©')));
     }
   }
 
@@ -153,10 +153,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final newValue = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تعديل $title'),
+        title: Text('ØªØ¹Ø¯ÙŠÙ„ $title'),
         content: AppTextField(
           controller: controller,
-          hint: 'اكتب $title',
+          hint: 'Ø§ÙƒØªØ¨ $title',
           label: title,
           keyboardType: fieldKey == 'phone'
               ? TextInputType.phone
@@ -167,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final value = controller.text.trim();
             if (value.isEmpty) {
               messenger.showSnackBar(
-                SnackBar(content: Text('$title لا يمكن أن يكون فارغاً')),
+                SnackBar(content: Text('$title Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø£Ù† ÙŠÙƒÙˆÙ† ÙØ§Ø±ØºØ§Ù‹')),
               );
               return;
             }
@@ -177,20 +177,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إلغاء'),
+            child: const Text('Ø¥Ù„ØºØ§Ø¡'),
           ),
           TextButton(
             onPressed: () {
               final value = controller.text.trim();
               if (value.isEmpty) {
                 messenger.showSnackBar(
-                  SnackBar(content: Text('$title لا يمكن أن يكون فارغاً')),
+                  SnackBar(content: Text('$title Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø£Ù† ÙŠÙƒÙˆÙ† ÙØ§Ø±ØºØ§Ù‹')),
                 );
                 return;
               }
               Navigator.of(context).pop(value);
             },
-            child: const Text('حفظ'),
+            child: const Text('Ø­ÙØ¸'),
           ),
         ],
       ),
@@ -200,10 +200,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await _updateUser({fieldKey: newValue});
         messenger.showSnackBar(
-          SnackBar(content: Text('تم تحديث $title بنجاح')),
+          SnackBar(content: Text('ØªÙ… ØªØ­Ø¯ÙŠØ« $title Ø¨Ù†Ø¬Ø§Ø­')),
         );
       } catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text('تعذّر تحديث $title')));
+        messenger.showSnackBar(SnackBar(content: Text('ØªØ¹Ø°Ù‘Ø± ØªØ­Ø¯ÙŠØ« $title')));
       }
     }
   }
@@ -221,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('حسابي')),
+        appBar: AppBar(title: const Text('Ø­Ø³Ø§Ø¨ÙŠ')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -240,10 +240,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                CTAButton(text: 'إعادة المحاولة', onPressed: _loadUser),
+                CTAButton(text: 'Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø©', onPressed: _loadUser),
                 const SizedBox(height: 8),
                 SecondaryButton(
-                  text: 'إكمال البيانات الأساسية',
+                  text: 'Ø¥ÙƒÙ…Ø§Ù„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ©',
                   onPressed: () => AppRouter.goToBasicInfo(
                     context,
                     AppConstants.roleCustomer,
@@ -258,15 +258,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final user = _user!;
     final genderLabel = user.gender == 'female'
-        ? 'أنثى'
+        ? 'Ø£Ù†Ø«Ù‰'
         : user.gender == 'male'
-        ? 'ذكر'
+        ? 'Ø°ÙƒØ±'
         : null;
-    final ageLabel = user.age != null ? '${user.age} سنة' : null;
+    final ageLabel = user.age != null ? '${user.age} Ø³Ù†Ø©' : null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('حسابي'),
+        title: const Text('Ø­Ø³Ø§Ø¨ÙŠ'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -379,21 +379,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoCard(
               icon: Icons.email,
               title: 'Email',
-              value: user.email ?? 'غير مضاف',
+              value: user.email ?? 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
               fieldKey: 'email',
             ),
             const SizedBox(height: 12),
             _buildInfoCard(
               icon: Icons.phone,
               title: localizations.phoneNumber,
-              value: user.phone ?? 'غير مضاف',
+              value: user.phone ?? 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
               fieldKey: 'phone',
             ),
             const SizedBox(height: 12),
             _buildInfoCard(
               icon: Icons.person_outline,
-              title: 'اسم المستخدم',
-              value: user.username ?? 'غير مضاف',
+              title: 'Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…',
+              value: user.username ?? 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
               fieldKey: 'username',
               editable: false,
             ),
@@ -403,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: localizations.governorate,
               value: user.governorate.isNotEmpty
                   ? user.governorate
-                  : 'غير مضاف',
+                  : 'ØºÙŠØ± Ù…Ø¶Ø§Ù',
               fieldKey: 'governorate',
             ),
             const SizedBox(height: 24),

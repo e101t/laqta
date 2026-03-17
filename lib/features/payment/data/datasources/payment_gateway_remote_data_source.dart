@@ -1,5 +1,5 @@
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:luqta/features/payment/data/dtos/payment_intent_dto.dart';
+import 'package:laqta/features/payment/data/dtos/payment_intent_dto.dart';
 
 abstract class PaymentGatewayRemoteDataSource {
   Future<PaymentIntentDto> createPaymentIntent({

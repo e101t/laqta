@@ -1,4 +1,4 @@
-import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
+import 'package:laqta/features/booking/data/dtos/booking_dto.dart';
 
 abstract class BookingRemoteDataSource {
   Future<List<BookingDto>> getMyBookings(String userId);

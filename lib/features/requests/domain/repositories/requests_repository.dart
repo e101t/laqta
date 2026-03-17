@@ -1,5 +1,5 @@
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/booking/domain/entities/booking.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/booking/domain/entities/booking.dart';
 import '../entities/photo_request.dart';
 import '../entities/request_offer.dart';
 

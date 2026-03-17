@@ -1,8 +1,8 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/settings/data/datasources/settings_remote_data_source.dart';
-import 'package:luqta/features/settings/domain/entities/report_submission.dart';
-import 'package:luqta/features/settings/domain/repositories/settings_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/settings/data/datasources/settings_remote_data_source.dart';
+import 'package:laqta/features/settings/domain/entities/report_submission.dart';
+import 'package:laqta/features/settings/domain/repositories/settings_repository.dart';
 
 class SettingsRepositoryImpl implements SettingsRepository {
   final SettingsRemoteDataSource _remoteDataSource;

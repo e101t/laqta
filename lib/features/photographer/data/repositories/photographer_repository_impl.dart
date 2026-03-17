@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/photographer/data/datasources/photographer_remote_data_source.dart';
-import 'package:luqta/features/photographer/data/mappers/photographer_mapper.dart';
-import 'package:luqta/features/photographer/domain/entities/photographer_profile_bundle.dart';
-import 'package:luqta/features/photographer/domain/repositories/photographer_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/photographer/data/datasources/photographer_remote_data_source.dart';
+import 'package:laqta/features/photographer/data/mappers/photographer_mapper.dart';
+import 'package:laqta/features/photographer/domain/entities/photographer_profile_bundle.dart';
+import 'package:laqta/features/photographer/domain/repositories/photographer_repository.dart';
 
 class PhotographerRepositoryImpl implements PhotographerRepository {
   final PhotographerRemoteDataSource _remoteDataSource;

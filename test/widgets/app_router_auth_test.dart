@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/features/auth/presentation/screens/auth_screen.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/features/auth/presentation/screens/auth_screen.dart';
 
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 

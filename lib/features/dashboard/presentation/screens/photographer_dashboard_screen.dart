@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
 import 'package:go_router/go_router.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/booking/booking_dependencies.dart';
-import 'package:luqta/features/dashboard/dashboard_dependencies.dart';
-import 'package:luqta/features/dashboard/domain/entities/dashboard_booking.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/dashboard/dashboard_dependencies.dart';
+import 'package:laqta/features/dashboard/domain/entities/dashboard_booking.dart';
 
 class PhotographerDashboardScreen extends StatefulWidget {
   const PhotographerDashboardScreen({super.key});

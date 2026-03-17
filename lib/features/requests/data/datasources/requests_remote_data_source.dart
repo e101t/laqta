@@ -1,4 +1,4 @@
-import 'package:luqta/features/booking/data/dtos/booking_dto.dart';
+import 'package:laqta/features/booking/data/dtos/booking_dto.dart';
 import '../dtos/request_dto.dart';
 import '../dtos/request_offer_dto.dart';
 

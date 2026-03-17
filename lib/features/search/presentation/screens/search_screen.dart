@@ -1,17 +1,17 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/constants/app_animations.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/app/router/app_router.dart';
-import 'package:luqta/core/widgets/enhanced_photographer_card.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/constants/app_animations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/enhanced_photographer_card.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:luqta/features/search/domain/entities/search_result_photographer.dart';
-import 'package:luqta/features/search/search_dependencies.dart';
+import 'package:laqta/features/search/domain/entities/search_result_photographer.dart';
+import 'package:laqta/features/search/search_dependencies.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});

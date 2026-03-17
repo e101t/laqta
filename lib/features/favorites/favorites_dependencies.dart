@@ -1,9 +1,9 @@
-import 'package:luqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
-import 'package:luqta/features/favorites/data/datasources/firestore_favorites_remote_data_source.dart';
-import 'package:luqta/features/favorites/data/repositories/favorites_repository_impl.dart';
-import 'package:luqta/features/favorites/domain/repositories/favorites_repository.dart';
-import 'package:luqta/features/favorites/domain/usecases/get_favorites.dart';
-import 'package:luqta/features/favorites/domain/usecases/remove_favorite.dart';
+import 'package:laqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
+import 'package:laqta/features/favorites/data/datasources/firestore_favorites_remote_data_source.dart';
+import 'package:laqta/features/favorites/data/repositories/favorites_repository_impl.dart';
+import 'package:laqta/features/favorites/domain/repositories/favorites_repository.dart';
+import 'package:laqta/features/favorites/domain/usecases/get_favorites.dart';
+import 'package:laqta/features/favorites/domain/usecases/remove_favorite.dart';
 
 class FavoritesDependencies {
   static final FavoritesRemoteDataSource _remoteDataSource =

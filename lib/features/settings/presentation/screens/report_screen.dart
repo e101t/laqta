@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/settings/domain/entities/report_submission.dart';
-import 'package:luqta/features/settings/settings_dependencies.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/settings/domain/entities/report_submission.dart';
+import 'package:laqta/features/settings/settings_dependencies.dart';
 
 class ReportScreen extends StatefulWidget {
   final String? reportedUserId;
@@ -32,38 +32,38 @@ class _ReportScreenState extends State<ReportScreen> {
     ReportReason(
       id: 'inappropriate',
       icon: Icons.report,
-      title: 'محتوى غير لائق',
-      emoji: '⚠️',
+      title: 'Ù…Ø­ØªÙˆÙ‰ ØºÙŠØ± Ù„Ø§Ø¦Ù‚',
+      emoji: 'âš ï¸',
     ),
     ReportReason(
       id: 'spam',
       icon: Icons.mail_outline,
-      title: 'بريد مزعج',
-      emoji: '📧',
+      title: 'Ø¨Ø±ÙŠØ¯ Ù…Ø²Ø¹Ø¬',
+      emoji: 'ðŸ“§',
     ),
     ReportReason(
       id: 'scam',
       icon: Icons.warning,
-      title: 'احتيال أو نصب',
-      emoji: '🚨',
+      title: 'Ø§Ø­ØªÙŠØ§Ù„ Ø£Ùˆ Ù†ØµØ¨',
+      emoji: 'ðŸš¨',
     ),
     ReportReason(
       id: 'harassment',
       icon: Icons.block,
-      title: 'تحرش أو مضايقة',
-      emoji: '🚫',
+      title: 'ØªØ­Ø±Ø´ Ø£Ùˆ Ù…Ø¶Ø§ÙŠÙ‚Ø©',
+      emoji: 'ðŸš«',
     ),
     ReportReason(
       id: 'copyright',
       icon: Icons.copyright,
-      title: 'انتهاك حقوق النشر',
-      emoji: '©️',
+      title: 'Ø§Ù†ØªÙ‡Ø§Ùƒ Ø­Ù‚ÙˆÙ‚ Ø§Ù„Ù†Ø´Ø±',
+      emoji: 'Â©ï¸',
     ),
     ReportReason(
       id: 'other',
       icon: Icons.more_horiz,
-      title: 'أخرى',
-      emoji: '📝',
+      title: 'Ø£Ø®Ø±Ù‰',
+      emoji: 'ðŸ“',
     ),
   ];
 
@@ -78,7 +78,7 @@ class _ReportScreenState extends State<ReportScreen> {
     if (_selectedReason == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('الرجاء اختيار سبب البلاغ')));
+      ).showSnackBar(const SnackBar(content: Text('Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø§Ø®ØªÙŠØ§Ø± Ø³Ø¨Ø¨ Ø§Ù„Ø¨Ù„Ø§Øº')));
       return;
     }
 
@@ -112,7 +112,7 @@ class _ReportScreenState extends State<ReportScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حدث خطأ أثناء إرسال البلاغ')),
+        const SnackBar(content: Text('Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº')),
       );
       return;
     }
@@ -146,13 +146,13 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'تم إرسال البلاغ بنجاح',
+              'ØªÙ… Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº Ø¨Ù†Ø¬Ø§Ø­',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              'شكراً لك! سنقوم بمراجعة البلاغ في أقرب وقت.',
+              'Ø´ÙƒØ±Ø§Ù‹ Ù„Ùƒ! Ø³Ù†Ù‚ÙˆÙ… Ø¨Ù…Ø±Ø§Ø¬Ø¹Ø© Ø§Ù„Ø¨Ù„Ø§Øº ÙÙŠ Ø£Ù‚Ø±Ø¨ ÙˆÙ‚Øª.',
               style: textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -162,7 +162,7 @@ class _ReportScreenState extends State<ReportScreen> {
             SizedBox(
               width: double.infinity,
               child: CTAButton(
-                text: 'تم',
+                text: 'ØªÙ…',
                 onPressed: () {
                   Navigator.of(context).pop();
                   Navigator.of(context).pop();
@@ -182,7 +182,7 @@ class _ReportScreenState extends State<ReportScreen> {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('إرسال بلاغ 🚨'), centerTitle: true),
+      appBar: AppBar(title: const Text('Ø¥Ø±Ø³Ø§Ù„ Ø¨Ù„Ø§Øº ðŸš¨'), centerTitle: true),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -229,7 +229,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'الإبلاغ عن:',
+                            'Ø§Ù„Ø¥Ø¨Ù„Ø§Øº Ø¹Ù†:',
                             style: textTheme.labelSmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -248,7 +248,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ],
 
             // Title
-            Text('سبب البلاغ ⚠️', style: textTheme.titleLarge),
+            Text('Ø³Ø¨Ø¨ Ø§Ù„Ø¨Ù„Ø§Øº âš ï¸', style: textTheme.titleLarge),
             const SizedBox(height: 16),
 
             // Report Reasons Grid
@@ -313,19 +313,19 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 24),
 
             // Details
-            Text('تفاصيل إضافية 📋', style: textTheme.titleLarge),
+            Text('ØªÙØ§ØµÙŠÙ„ Ø¥Ø¶Ø§ÙÙŠØ© ðŸ“‹', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             AppTextField(
               controller: _detailsController,
-              hint: 'الرجاء وصف المشكلة بالتفصيل...',
+              hint: 'Ø§Ù„Ø±Ø¬Ø§Ø¡ ÙˆØµÙ Ø§Ù„Ù…Ø´ÙƒÙ„Ø© Ø¨Ø§Ù„ØªÙØµÙŠÙ„...',
               maxLines: 5,
               maxLength: 500,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'الرجاء إضافة تفاصيل البلاغ';
+                  return 'Ø§Ù„Ø±Ø¬Ø§Ø¡ Ø¥Ø¶Ø§ÙØ© ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø¨Ù„Ø§Øº';
                 }
                 if (value.trim().length < 20) {
-                  return 'يجب أن تكون التفاصيل 20 حرف على الأقل';
+                  return 'ÙŠØ¬Ø¨ Ø£Ù† ØªÙƒÙˆÙ† Ø§Ù„ØªÙØ§ØµÙŠÙ„ 20 Ø­Ø±Ù Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„';
                 }
                 return null;
               },
@@ -349,8 +349,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'سيتم مراجعة بلاغك من قبل فريقنا خلال 24-48 ساعة. '
-                      'نحن نأخذ جميع البلاغات على محمل الجد ونعمل على توفير بيئة آمنة للجميع.',
+                      'Ø³ÙŠØªÙ… Ù…Ø±Ø§Ø¬Ø¹Ø© Ø¨Ù„Ø§ØºÙƒ Ù…Ù† Ù‚Ø¨Ù„ ÙØ±ÙŠÙ‚Ù†Ø§ Ø®Ù„Ø§Ù„ 24-48 Ø³Ø§Ø¹Ø©. '
+                      'Ù†Ø­Ù† Ù†Ø£Ø®Ø° Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø¨Ù„Ø§ØºØ§Øª Ø¹Ù„Ù‰ Ù…Ø­Ù…Ù„ Ø§Ù„Ø¬Ø¯ ÙˆÙ†Ø¹Ù…Ù„ Ø¹Ù„Ù‰ ØªÙˆÙÙŠØ± Ø¨ÙŠØ¦Ø© Ø¢Ù…Ù†Ø© Ù„Ù„Ø¬Ù…ÙŠØ¹.',
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.primary,
                         height: 1.5,
@@ -364,7 +364,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
             // Submit Button
             CTAButton(
-              text: 'إرسال البلاغ ✅',
+              text: 'Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ø¨Ù„Ø§Øº âœ…',
               onPressed: _submitReport,
               isLoading: _isSubmitting,
             ),

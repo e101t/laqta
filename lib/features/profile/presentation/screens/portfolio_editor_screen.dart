@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:luqta/core/models/portfolio_model.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/profile/profile_dependencies.dart';
-import 'package:luqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
+import 'package:laqta/core/models/portfolio_model.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
 
 class PortfolioEditorScreen extends StatefulWidget {
   const PortfolioEditorScreen({super.key});

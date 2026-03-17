@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:luqta/core/utils/firestore_parsers.dart';
+import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class StoryModel {
   final String storyId;
@@ -79,11 +79,11 @@ class StoryModel {
     final difference = now.difference(createdAt);
 
     if (difference.inHours > 0) {
-      return 'منذ ${difference.inHours} ساعة';
+      return 'Ù…Ù†Ø° ${difference.inHours} Ø³Ø§Ø¹Ø©';
     } else if (difference.inMinutes > 0) {
-      return 'منذ ${difference.inMinutes} دقيقة';
+      return 'Ù…Ù†Ø° ${difference.inMinutes} Ø¯Ù‚ÙŠÙ‚Ø©';
     } else {
-      return 'الآن';
+      return 'Ø§Ù„Ø¢Ù†';
     }
   }
 
@@ -92,11 +92,11 @@ class StoryModel {
     final remaining = expiresAt.difference(now);
 
     if (remaining.inHours > 0) {
-      return 'باقي ${remaining.inHours} ساعة';
+      return 'Ø¨Ø§Ù‚ÙŠ ${remaining.inHours} Ø³Ø§Ø¹Ø©';
     } else if (remaining.inMinutes > 0) {
-      return 'باقي ${remaining.inMinutes} دقيقة';
+      return 'Ø¨Ø§Ù‚ÙŠ ${remaining.inMinutes} Ø¯Ù‚ÙŠÙ‚Ø©';
     } else {
-      return 'تنتهي قريباً';
+      return 'ØªÙ†ØªÙ‡ÙŠ Ù‚Ø±ÙŠØ¨Ø§Ù‹';
     }
   }
 }

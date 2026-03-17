@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/ar_translations.dart';
-import 'package:luqta/core/localization/en_translations.dart';
+import 'package:laqta/core/localization/ar_translations.dart';
+import 'package:laqta/core/localization/en_translations.dart';
 
 class AppLocalizations {
   final Locale locale;

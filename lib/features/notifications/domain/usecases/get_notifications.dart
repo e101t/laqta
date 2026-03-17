@@ -1,4 +1,4 @@
-import 'package:luqta/core/domain/result/result.dart';
+import 'package:laqta/core/domain/result/result.dart';
 import '../entities/notification_model.dart';
 import '../repositories/notifications_repository.dart';
 

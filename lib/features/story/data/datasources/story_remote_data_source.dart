@@ -1,4 +1,4 @@
-import 'package:luqta/core/models/story_model.dart';
+import 'package:laqta/core/models/story_model.dart';
 
 abstract class StoryRemoteDataSource {
   Future<String> uploadStoryImage({

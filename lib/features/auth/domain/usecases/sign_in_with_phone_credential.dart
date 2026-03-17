@@ -1,4 +1,4 @@
-import 'package:luqta/core/domain/result/result.dart';
+import 'package:laqta/core/domain/result/result.dart';
 import '../entities/auth_user.dart';
 import '../repositories/auth_repository.dart';
 

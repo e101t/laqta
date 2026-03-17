@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/auth/domain/entities/auth_user.dart';
-import 'package:luqta/features/requests/requests_dependencies.dart';
-import 'package:luqta/features/requests/domain/entities/photo_request.dart';
-import 'package:luqta/features/requests/domain/entities/request_deliverables.dart';
-import 'package:luqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:luqta/features/requests/presentation/screens/select_location_screen.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/domain/entities/auth_user.dart';
+import 'package:laqta/features/requests/requests_dependencies.dart';
+import 'package:laqta/features/requests/domain/entities/photo_request.dart';
+import 'package:laqta/features/requests/domain/entities/request_deliverables.dart';
+import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
+import 'package:laqta/features/requests/presentation/screens/select_location_screen.dart';
 import '../helpers/mocks.dart';
 import '../helpers/test_app.dart';
 
@@ -133,7 +133,7 @@ void main() {
       type: 'Wedding',
       date: '2026-12-31',
       time: '09:00',
-      governorate: 'النجف',
+      governorate: 'Ø§Ù„Ù†Ø¬Ù',
       durationHours: 2,
       style: 'Classic',
       deliverables: const RequestDeliverables(),

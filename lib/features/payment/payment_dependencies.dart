@@ -1,10 +1,10 @@
-import 'package:luqta/features/payment/data/datasources/firestore_payment_remote_data_source.dart';
-import 'package:luqta/features/payment/data/datasources/payment_gateway_remote_data_source.dart';
-import 'package:luqta/features/payment/data/datasources/payment_remote_data_source.dart';
-import 'package:luqta/features/payment/data/repositories/payment_repository_impl.dart';
-import 'package:luqta/features/payment/domain/repositories/payment_repository.dart';
-import 'package:luqta/features/payment/domain/usecases/create_payment_intent.dart';
-import 'package:luqta/features/payment/domain/usecases/update_booking_payment_status.dart';
+import 'package:laqta/features/payment/data/datasources/firestore_payment_remote_data_source.dart';
+import 'package:laqta/features/payment/data/datasources/payment_gateway_remote_data_source.dart';
+import 'package:laqta/features/payment/data/datasources/payment_remote_data_source.dart';
+import 'package:laqta/features/payment/data/repositories/payment_repository_impl.dart';
+import 'package:laqta/features/payment/domain/repositories/payment_repository.dart';
+import 'package:laqta/features/payment/domain/usecases/create_payment_intent.dart';
+import 'package:laqta/features/payment/domain/usecases/update_booking_payment_status.dart';
 
 class PaymentDependencies {
   static final PaymentRemoteDataSource _remoteDataSource =

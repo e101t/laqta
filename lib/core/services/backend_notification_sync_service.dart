@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:luqta/core/services/backend_api_client.dart';
-import 'package:luqta/core/services/backend_session_service.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
+import 'package:laqta/core/services/backend_session_service.dart';
 
 class BackendNotificationSyncService {
   BackendNotificationSyncService._();

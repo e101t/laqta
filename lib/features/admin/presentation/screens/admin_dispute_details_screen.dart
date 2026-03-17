@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/booking/booking_dependencies.dart';
-import 'package:luqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
-import 'package:luqta/features/disputes/disputes_dependencies.dart';
-import 'package:luqta/features/disputes/domain/entities/dispute.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:laqta/features/disputes/disputes_dependencies.dart';
+import 'package:laqta/features/disputes/domain/entities/dispute.dart';
 
 class AdminDisputeDetailsScreen extends StatefulWidget {
   final Dispute dispute;

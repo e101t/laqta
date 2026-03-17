@@ -1,4 +1,4 @@
-import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
+import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
 
 abstract class RoleRemoteDataSource {
   Future<UserProfileDto> saveUserRole({

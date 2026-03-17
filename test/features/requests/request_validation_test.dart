@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luqta/features/requests/domain/utils/request_validation.dart';
+import 'package:laqta/features/requests/domain/utils/request_validation.dart';
 
 void main() {
   test('isFutureDateTime rejects past selections', () {

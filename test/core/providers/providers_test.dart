@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:luqta/core/providers/theme_provider.dart';
-import 'package:luqta/core/providers/locale_provider.dart';
+import 'package:laqta/core/providers/theme_provider.dart';
+import 'package:laqta/core/providers/locale_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

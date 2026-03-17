@@ -43,6 +43,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'laqta-16406.firebasestorage.app',
     iosClientId:
         '1002424043359-tk3l3hlv85uqrkf43uqqhcgfpfb7ntjc.apps.googleusercontent.com',
-    iosBundleId: 'com.luqta.luqta',
+    iosBundleId: 'com.laqta.laqta',
   );
 }

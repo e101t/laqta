@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/chat/data/datasources/chat_remote_data_source.dart';
-import 'package:luqta/features/chat/data/mappers/chat_mapper.dart';
-import 'package:luqta/features/chat/domain/entities/chat_message.dart';
-import 'package:luqta/features/chat/domain/entities/chat_thread.dart';
-import 'package:luqta/features/chat/domain/entities/chat_thread_preview.dart';
-import 'package:luqta/features/chat/domain/repositories/chat_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:laqta/features/chat/data/mappers/chat_mapper.dart';
+import 'package:laqta/features/chat/domain/entities/chat_message.dart';
+import 'package:laqta/features/chat/domain/entities/chat_thread.dart';
+import 'package:laqta/features/chat/domain/entities/chat_thread_preview.dart';
+import 'package:laqta/features/chat/domain/repositories/chat_repository.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource _remoteDataSource;

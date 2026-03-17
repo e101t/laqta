@@ -1,5 +1,5 @@
-import 'package:luqta/features/notifications/data/dtos/notification_dto.dart';
-import 'package:luqta/features/notifications/domain/entities/notification_model.dart';
+import 'package:laqta/features/notifications/data/dtos/notification_dto.dart';
+import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
 
 class NotificationMapper {
   static NotificationModel toDomain(NotificationDto dto) {

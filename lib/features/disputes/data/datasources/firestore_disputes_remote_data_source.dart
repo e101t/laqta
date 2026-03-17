@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/disputes/data/datasources/disputes_remote_data_source.dart';
-import 'package:luqta/features/disputes/data/dtos/dispute_dto.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/disputes/data/datasources/disputes_remote_data_source.dart';
+import 'package:laqta/features/disputes/data/dtos/dispute_dto.dart';
 
 class FirestoreDisputesRemoteDataSource implements DisputesRemoteDataSource {
   final FirebaseFirestore _firestore;

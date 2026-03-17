@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
-import 'package:luqta/features/review/domain/entities/review_submission.dart';
-import 'package:luqta/features/review/review_dependencies.dart';
-import 'package:luqta/features/trust/trust_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/review/domain/entities/review_submission.dart';
+import 'package:laqta/features/review/review_dependencies.dart';
+import 'package:laqta/features/trust/trust_dependencies.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   final String bookingId;

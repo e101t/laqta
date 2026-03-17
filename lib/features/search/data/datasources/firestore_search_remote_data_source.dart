@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/security/secure_firestore.dart';
-import 'package:luqta/features/photographer/data/dtos/photographer_dto.dart';
-import 'package:luqta/features/profile/data/dtos/user_profile_dto.dart';
-import 'package:luqta/features/search/data/datasources/search_remote_data_source.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/features/photographer/data/dtos/photographer_dto.dart';
+import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
+import 'package:laqta/features/search/data/datasources/search_remote_data_source.dart';
 
 class FirestoreSearchRemoteDataSource implements SearchRemoteDataSource {
   final FirebaseFirestore _firestore;

@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:luqta/features/auth/domain/entities/auth_user.dart';
+import 'package:laqta/features/auth/domain/entities/auth_user.dart';
 
 class AuthUserDto {
   final String id;

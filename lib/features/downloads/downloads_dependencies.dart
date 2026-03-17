@@ -1,7 +1,7 @@
-import 'package:luqta/features/downloads/data/datasources/downloads_remote_data_source.dart';
-import 'package:luqta/features/downloads/data/datasources/firestore_downloads_remote_data_source.dart';
-import 'package:luqta/features/downloads/data/repositories/download_repository_impl.dart';
-import 'package:luqta/features/downloads/domain/usecases/download_usecases.dart';
+import 'package:laqta/features/downloads/data/datasources/downloads_remote_data_source.dart';
+import 'package:laqta/features/downloads/data/datasources/firestore_downloads_remote_data_source.dart';
+import 'package:laqta/features/downloads/data/repositories/download_repository_impl.dart';
+import 'package:laqta/features/downloads/domain/usecases/download_usecases.dart';
 
 class DownloadsDependencies {
   static final DownloadsRemoteDataSource _remoteDataSource =

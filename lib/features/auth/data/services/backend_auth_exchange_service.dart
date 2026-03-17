@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:luqta/core/services/backend_api_client.dart';
-import 'package:luqta/core/services/backend_notification_sync_service.dart';
-import 'package:luqta/core/services/backend_session_service.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
+import 'package:laqta/core/services/backend_notification_sync_service.dart';
+import 'package:laqta/core/services/backend_session_service.dart';
 
 class BackendAuthExchangeService {
   BackendAuthExchangeService({

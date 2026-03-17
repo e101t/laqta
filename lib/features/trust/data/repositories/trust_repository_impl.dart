@@ -1,9 +1,9 @@
-import 'package:luqta/core/domain/failures/failure.dart';
-import 'package:luqta/core/domain/result/result.dart';
-import 'package:luqta/features/trust/data/datasources/trust_remote_data_source.dart';
-import 'package:luqta/features/trust/data/mappers/trust_stats_mapper.dart';
-import 'package:luqta/features/trust/domain/entities/trust_stats.dart';
-import 'package:luqta/features/trust/domain/repositories/trust_repository.dart';
+import 'package:laqta/core/domain/failures/failure.dart';
+import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/trust/data/datasources/trust_remote_data_source.dart';
+import 'package:laqta/features/trust/data/mappers/trust_stats_mapper.dart';
+import 'package:laqta/features/trust/domain/entities/trust_stats.dart';
+import 'package:laqta/features/trust/domain/repositories/trust_repository.dart';
 
 class TrustRepositoryImpl implements TrustRepository {
   final TrustRemoteDataSource _remoteDataSource;

@@ -35,7 +35,7 @@ plugins {
 }
 
 android {
-    namespace = "com.luqta.luqta"
+    namespace = "com.laqta.laqta"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -49,7 +49,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.luqta.luqta"
+        applicationId = "com.laqta.laqta"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

@@ -1,4 +1,4 @@
-import 'package:luqta/features/downloads/domain/entities/download_link_entity.dart';
+import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
 
 abstract class DownloadsRemoteDataSource {
   Future<DownloadLinkBatch?> getBatch(String bookingId);

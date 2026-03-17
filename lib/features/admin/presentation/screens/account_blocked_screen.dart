@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
 
 class AccountBlockedScreen extends StatelessWidget {
   const AccountBlockedScreen({super.key});
