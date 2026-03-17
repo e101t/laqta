@@ -1,32 +1,39 @@
 {
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
-  "functions": {
-    "source": "functions"
-  },
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "laqta-16406",
-          "appId": "1:1002424043359:android:8a8f655d7a5d49a61218ea",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "laqta-16406",
-          "configurations": {
-            "android": "1:1002424043359:android:8a8f655d7a5d49a61218ea",
-            "ios": "1:1002424043359:ios:af42e23c1321b64a1218ea"
-          }
-        }
-      }
-    }
-  }
+    "firestore":  {
+                      "rules":  "firestore.rules",
+                      "indexes":  "firestore.indexes.json"
+                  },
+    "storage":  {
+                    "rules":  "storage.rules"
+                },
+    "functions":  {
+                      "source":  "functions"
+                  },
+    "flutter":  {
+                    "platforms":  {
+                                      "android":  {
+                                                      "default":  {
+                                                                      "projectId":  "laqta-16406",
+                                                                      "appId":  "1:1002424043359:android:8a8f655d7a5d49a61218ea",
+                                                                      "fileOutput":  "android/app/google-services.json"
+                                                                  },
+                                                      "buildConfigurations":  {
+                                                                                  ".":  {
+                                                                                            "projectId":  "laqta-16406",
+                                                                                            "appId":  "1:1002424043359:android:1d756517be0408a91218ea",
+                                                                                            "fileOutput":  "android/app/google-services.json"
+                                                                                        }
+                                                                              }
+                                                  },
+                                      "dart":  {
+                                                   "lib/firebase_options.dart":  {
+                                                                                     "projectId":  "laqta-16406",
+                                                                                     "configurations":  {
+                                                                                                            "android":  "1:1002424043359:android:1d756517be0408a91218ea",
+                                                                                                            "ios":  "1:1002424043359:ios:5ea4fb27afc272711218ea"
+                                                                                                        }
+                                                                                 }
+                                               }
+                                  }
+                }
 }

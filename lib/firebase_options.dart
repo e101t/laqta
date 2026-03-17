@@ -29,7 +29,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCnt1cCwRai57pMSdS-XVRh1PLKtA_dCIY',
-    appId: '1:1002424043359:android:8a8f655d7a5d49a61218ea',
+    appId: '1:1002424043359:android:1d756517be0408a91218ea',
     messagingSenderId: '1002424043359',
     projectId: 'laqta-16406',
     storageBucket: 'laqta-16406.firebasestorage.app',
@@ -37,12 +37,13 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDb2k5gZRFj7zQ6tmiq0s4us5okmmLg_ZU',
-    appId: '1:1002424043359:ios:af42e23c1321b64a1218ea',
+    appId: '1:1002424043359:ios:5ea4fb27afc272711218ea',
     messagingSenderId: '1002424043359',
     projectId: 'laqta-16406',
     storageBucket: 'laqta-16406.firebasestorage.app',
-    iosClientId:
-        '1002424043359-tk3l3hlv85uqrkf43uqqhcgfpfb7ntjc.apps.googleusercontent.com',
+    androidClientId: '1002424043359-7789fsq4srhi7a6kr63hddr80otjl17l.apps.googleusercontent.com',
+    iosClientId: '1002424043359-7tmde5l68i54fvc0en3c3o6hst5nobsd.apps.googleusercontent.com',
     iosBundleId: 'com.laqta.laqta',
   );
+
 }
