@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:luqta/core/constants/app_constants.dart';
 import 'package:luqta/core/localization/app_localizations.dart';
 import 'package:luqta/core/utils/governorate_utils.dart';
-import 'package:luqta/app/router/app_router.dart';
 import 'package:luqta/core/widgets/app_buttons.dart';
 import 'package:luqta/core/widgets/app_text_field.dart';
 import 'package:luqta/features/auth/auth_dependencies.dart';
@@ -15,6 +14,7 @@ import 'package:luqta/features/notifications/notifications_dependencies.dart';
 import 'package:luqta/features/requests/domain/entities/photo_request.dart';
 import 'package:luqta/features/requests/domain/entities/request_deliverables.dart';
 import 'package:luqta/features/requests/domain/utils/request_validation.dart';
+import 'package:luqta/features/requests/presentation/screens/request_details_screen.dart';
 import 'package:luqta/features/requests/presentation/screens/select_location_screen.dart';
 import 'package:luqta/features/requests/requests_dependencies.dart';
 import 'package:luqta/features/search/search_dependencies.dart';
@@ -469,8 +469,14 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
         );
         if (widget.onRequestSubmitted != null) {
           widget.onRequestSubmitted!(_requestId);
+        } else if (_isEditing) {
+          Navigator.of(context).pop(_requestId);
         } else {
-          AppRouter.goToRequestDetails(context, _requestId);
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => RequestDetailsScreen(requestId: _requestId),
+            ),
+          );
         }
       }
     } catch (_) {

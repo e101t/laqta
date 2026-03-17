@@ -119,12 +119,17 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
 
   Future<void> _editRequest() async {
     if (_request == null) return;
-    await Navigator.of(context).push(
+    final wasUpdated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => CreateRequestScreen(initialRequest: _request),
+        builder: (modalContext) => CreateRequestScreen(
+          initialRequest: _request,
+          onRequestSubmitted: (_) => Navigator.of(modalContext).pop(true),
+        ),
       ),
     );
-    await _loadRequest();
+    if (wasUpdated == true) {
+      await _loadRequest();
+    }
   }
 
   Future<void> _cancelRequest() async {

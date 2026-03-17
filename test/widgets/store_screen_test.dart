@@ -23,6 +23,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Featured Products'), findsNWidgets(2));
+    expect(find.text('ألبوم مطبوع'), findsOneWidget);
     expect(find.byType(EmptyState), findsNothing);
     expect(find.byIcon(Icons.shopping_bag_outlined), findsWidgets);
   });
