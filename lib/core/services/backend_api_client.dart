@@ -72,6 +72,60 @@ class BackendApiClient {
     );
   }
 
+  Future<dynamic> uploadFile(
+    String path, {
+    required String filePath,
+    String fieldName = 'file',
+    bool authorized = true,
+  }) async {
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    if (authorized) {
+      final token = await _sessionService.getToken();
+      if (token == null || token.isEmpty) {
+        throw const BackendApiException('Missing backend session.');
+      }
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final uri = BackendConfig.apiUri(path);
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(headers);
+    request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+
+    final streamedResponse = await _client.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) {
+        return null;
+      }
+      return jsonDecode(response.body);
+    }
+
+    String message = 'File upload failed.';
+    if (response.body.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          final backendMessage = decoded['message'];
+          if (backendMessage is String && backendMessage.isNotEmpty) {
+            message = backendMessage;
+          }
+        }
+      } catch (_) {
+        message = response.body;
+      }
+    }
+
+    throw BackendApiException(
+      message,
+      statusCode: response.statusCode,
+    );
+  }
+
   Future<dynamic> _send({
     required String method,
     required String path,

@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 
 class BackendConfig {
   BackendConfig._();
@@ -9,12 +9,28 @@ class BackendConfig {
       return override;
     }
 
-    if (Platform.isAndroid) {
+    if (kIsWeb) {
+      return 'http://127.0.0.1:4000';
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:4000';
     }
 
     return 'http://127.0.0.1:4000';
   }
+
+  static bool get useBackendRequests =>
+      const bool.fromEnvironment('LAQTA_USE_BACKEND_REQUESTS');
+
+  static bool get useBackendChat =>
+      const bool.fromEnvironment('LAQTA_USE_BACKEND_CHAT');
+
+  static bool get useBackendDeliveries =>
+      const bool.fromEnvironment('LAQTA_USE_BACKEND_DELIVERIES');
+
+  static bool get useBackendDisputes =>
+      const bool.fromEnvironment('LAQTA_USE_BACKEND_DISPUTES');
 
   static Uri apiUri(String path) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';

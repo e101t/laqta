@@ -75,7 +75,10 @@ class RequestDto {
       status: _readString(data, 'status', fallback: 'draft'),
       offersCount: _readInt(data, 'offersCount', fallback: 0),
       selectedOfferId: _readNullableString(data, 'selectedOfferId'),
-      selectedPhotographerId: _readNullableString(data, 'selectedPhotographerId'),
+      selectedPhotographerId: _readNullableString(
+        data,
+        'selectedPhotographerId',
+      ),
       expiresAt: _readNullableDateTime(data['expiresAt']),
       location: RequestLocationDto.fromMap(
         _readMap(data['location']) ?? <String, dynamic>{},
@@ -85,6 +88,53 @@ class RequestDto {
       locationLabel: _readNullableString(data, 'locationLabel'),
       createdAt: _readDateTime(data['createdAt']),
       updatedAt: _readDateTime(data['updatedAt']),
+    );
+  }
+
+  factory RequestDto.fromJson(Map<String, dynamic> json) {
+    final location = RequestLocationDto.fromMap(_readMap(json['location']));
+    return RequestDto(
+      id: _readString(json, 'id'),
+      clientId: _readString(json, 'clientId'),
+      type: _readString(json, 'type'),
+      date: _readString(
+        json,
+        'date',
+        fallback: _readString(json, 'sessionDate'),
+      ),
+      time: _readString(
+        json,
+        'time',
+        fallback: _readString(json, 'sessionTime'),
+      ),
+      governorate: _readString(json, 'governorate'),
+      address: _readNullableString(json, 'address'),
+      budgetMin: _readNullableDouble(json, 'budgetMin'),
+      budgetMax: _readNullableDouble(json, 'budgetMax'),
+      durationHours: _readInt(
+        json,
+        'durationHours',
+        fallback: _readInt(json, 'duration', fallback: 1),
+      ),
+      style: _readNullableString(json, 'style'),
+      deliverables: _readMap(json['deliverables']),
+      notes: _readNullableString(json, 'notes'),
+      referenceImages: _readStringList(json['referenceImages']),
+      status: _readString(json, 'status', fallback: 'draft'),
+      offersCount: _readInt(json, 'offersCount', fallback: 0),
+      selectedOfferId: _readNullableString(json, 'selectedOfferId'),
+      selectedPhotographerId: _readNullableString(
+        json,
+        'selectedPhotographerId',
+      ),
+      expiresAt: _readNullableDateTime(json['expiresAt']),
+      latitude: _readNullableDouble(json, 'latitude') ?? location.lat,
+      longitude: _readNullableDouble(json, 'longitude') ?? location.lng,
+      locationLabel:
+          _readNullableString(json, 'locationLabel') ?? location.label,
+      location: location,
+      createdAt: _readDateTime(json['createdAt']),
+      updatedAt: _readDateTime(json['updatedAt']),
     );
   }
 
@@ -114,6 +164,59 @@ class RequestDto {
       'location': location?.toMap(),
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'clientId': clientId,
+      'type': type,
+      'date': date,
+      'time': time,
+      'governorate': governorate,
+      'address': address,
+      'budgetMin': budgetMin,
+      'budgetMax': budgetMax,
+      'durationHours': durationHours,
+      'style': style,
+      'deliverables': deliverables,
+      'notes': notes,
+      'referenceImages': referenceImages,
+      'status': status,
+      'offersCount': offersCount,
+      'selectedOfferId': selectedOfferId,
+      'selectedPhotographerId': selectedPhotographerId,
+      'expiresAt': expiresAt?.toIso8601String(),
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationLabel': locationLabel,
+      'location': location?.toMap(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toBackendCreateJson() {
+    return {
+      'type': type,
+      'sessionDate': date,
+      'sessionTime': time,
+      'governorate': governorate,
+      'address': address,
+      'budgetMin': budgetMin,
+      'budgetMax': budgetMax,
+      'durationHours': durationHours,
+      'style': style,
+      'deliverables': deliverables,
+      'notes': notes,
+      'referenceImages': referenceImages,
+      'expiresAt': expiresAt?.toIso8601String(),
+      'location': {
+        'lat': latitude ?? location?.lat,
+        'lng': longitude ?? location?.lng,
+        'label': locationLabel ?? location?.label,
+      },
     };
   }
 
@@ -187,6 +290,9 @@ class RequestDto {
   }
 
   static DateTime _readDateTime(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
     if (value is Timestamp) {
       return value.toDate();
     }
@@ -197,6 +303,9 @@ class RequestDto {
   }
 
   static DateTime? _readNullableDateTime(dynamic value) {
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
     if (value is Timestamp) {
       return value.toDate();
     }
@@ -226,10 +335,6 @@ class RequestLocationDto {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'lat': lat,
-      'lng': lng,
-      'label': label,
-    };
+    return {'lat': lat, 'lng': lng, 'label': label};
   }
 }

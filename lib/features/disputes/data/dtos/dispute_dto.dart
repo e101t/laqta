@@ -56,6 +56,26 @@ class DisputeDto {
     );
   }
 
+  factory DisputeDto.fromJson(Map<String, dynamic> json) {
+    return DisputeDto(
+      id: json['id'] as String,
+      bookingId: json['bookingId'] as String,
+      requestId: json['requestId'] as String?,
+      customerId: json['customerId'] as String,
+      photographerId: json['photographerId'] as String,
+      openedBy: json['openedBy'] as String,
+      reason: json['reason'] as String,
+      details: json['details'] as String,
+      evidenceUrls: (json['evidenceUrls'] as List<dynamic>).cast<String>(),
+      status: json['status'] as String,
+      resolution: json['resolution'] as String?,
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      closedAt: json['closedAt'] != null ? DateTime.parse(json['closedAt']) : null,
+      decidedBy: json['decidedBy'] as String?,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'bookingId': bookingId,
@@ -71,6 +91,26 @@ class DisputeDto {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
+      'decidedBy': decidedBy,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'bookingId': bookingId,
+      'requestId': requestId,
+      'customerId': customerId,
+      'photographerId': photographerId,
+      'openedBy': openedBy,
+      'reason': reason,
+      'details': details,
+      'evidenceUrls': evidenceUrls,
+      'status': status,
+      'resolution': resolution,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'closedAt': closedAt?.toIso8601String(),
       'decidedBy': decidedBy,
     };
   }

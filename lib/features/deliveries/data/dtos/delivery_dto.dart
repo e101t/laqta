@@ -52,6 +52,24 @@ class DeliveryDto {
     );
   }
 
+  factory DeliveryDto.fromJson(Map<String, dynamic> json) {
+    return DeliveryDto(
+      id: json['id'] as String,
+      bookingId: json['bookingId'] as String,
+      photographerId: json['photographerId'] as String,
+      customerId: json['customerId'] as String,
+      status: json['status'] as String,
+      photoUrls: (json['photoUrls'] as List<dynamic>).cast<String>(),
+      videoUrls: (json['videoUrls'] as List<dynamic>).cast<String>(),
+      otherUrls: (json['otherUrls'] as List<dynamic>).cast<String>(),
+      note: json['note'] as String?,
+      revisionNote: json['revisionNote'] as String?,
+      revisionCount: json['revisionCount'] as int,
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'bookingId': bookingId,
@@ -66,6 +84,24 @@ class DeliveryDto {
       'revisionCount': revisionCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'bookingId': bookingId,
+      'photographerId': photographerId,
+      'customerId': customerId,
+      'status': status,
+      'photoUrls': photoUrls,
+      'videoUrls': videoUrls,
+      'otherUrls': otherUrls,
+      'note': note,
+      'revisionNote': revisionNote,
+      'revisionCount': revisionCount,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 

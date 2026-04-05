@@ -116,6 +116,35 @@ class BookingDto {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'customerId': customerId,
+      'photographerId': photographerId,
+      'requestId': requestId,
+      'offerId': offerId,
+      'date': date,
+      'time': time,
+      'duration': duration,
+      'type': type,
+      'price': price,
+      'currency': currency,
+      'status': status,
+      'payment': payment.toMap(),
+      'location': location.toMap(),
+      'deliverables': deliverables.toMap(),
+      'notes': notes,
+      'chatId': chatId,
+      'deliveryId': deliveryId,
+      'disputeId': disputeId,
+      'revisionCount': revisionCount,
+      'canceledBy': canceledBy,
+      'timeline': timeline.toMap(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
   static Map<String, dynamic> _readMap(dynamic value) {
     if (value is Map<String, dynamic>) {
       return value;

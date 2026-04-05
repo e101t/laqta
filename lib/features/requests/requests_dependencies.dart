@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/features/requests/data/datasources/api_requests_remote_data_source.dart';
 import 'package:laqta/features/requests/data/datasources/firestore_requests_remote_data_source.dart';
 import 'package:laqta/features/requests/data/datasources/requests_remote_data_source.dart';
 import 'package:laqta/features/requests/data/repositories/requests_repository_impl.dart';
@@ -26,7 +28,9 @@ class RequestsDependencies {
   }
 
   static RequestsRemoteDataSource get _remote =>
-      _remoteDataSource ??= FirestoreRequestsRemoteDataSource();
+      _remoteDataSource ??= (BackendConfig.useBackendRequests
+      ? ApiRequestsRemoteDataSource()
+      : FirestoreRequestsRemoteDataSource());
 
   static RequestsRepository get _repository =>
       _repositoryOverride ?? RequestsRepositoryImpl(_remote);

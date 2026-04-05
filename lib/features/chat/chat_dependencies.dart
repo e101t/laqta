@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/features/chat/data/datasources/api_chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/datasources/firestore_chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/repositories/chat_repository_impl.dart';
@@ -15,8 +17,7 @@ import 'package:laqta/features/chat/domain/usecases/send_chat_message.dart';
 import 'package:laqta/features/chat/domain/usecases/toggle_block_user.dart';
 
 class ChatDependencies {
-  static final ChatRemoteDataSource _remoteDataSource =
-      FirestoreChatRemoteDataSource();
+  static ChatRemoteDataSource? _remoteDataSource;
   static ChatRepository? _repositoryOverride;
 
   @visibleForTesting
@@ -25,7 +26,12 @@ class ChatDependencies {
   }
 
   static ChatRepository get _repository =>
-      _repositoryOverride ?? ChatRepositoryImpl(_remoteDataSource);
+      _repositoryOverride ?? ChatRepositoryImpl(_remote);
+
+  static ChatRemoteDataSource get _remote =>
+      _remoteDataSource ??= (BackendConfig.useBackendChat
+      ? ApiChatRemoteDataSource()
+      : FirestoreChatRemoteDataSource());
 
   static GetChatThreads getChatThreads() => GetChatThreads(_repository);
 

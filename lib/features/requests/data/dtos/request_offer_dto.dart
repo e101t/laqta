@@ -46,6 +46,22 @@ class RequestOfferDto {
     );
   }
 
+  factory RequestOfferDto.fromJson(Map<String, dynamic> json) {
+    return RequestOfferDto(
+      id: json['id'] as String,
+      requestId: json['requestId'] as String,
+      photographerId: json['photographerId'] as String,
+      price: (json['price'] as num).toDouble(),
+      currency: json['currency'] as String,
+      deliveryDays: json['deliveryDays'] as int,
+      deliverables: json['deliverables'] as Map<String, dynamic>?,
+      notes: json['notes'] as String?,
+      status: json['status'] as String,
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'requestId': requestId,
@@ -58,6 +74,22 @@ class RequestOfferDto {
       'status': status,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'requestId': requestId,
+      'photographerId': photographerId,
+      'price': price,
+      'currency': currency,
+      'deliveryDays': deliveryDays,
+      'deliverables': deliverables,
+      'notes': notes,
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 

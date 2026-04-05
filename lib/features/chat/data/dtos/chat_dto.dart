@@ -23,11 +23,29 @@ class ChatDto {
     );
   }
 
+  factory ChatDto.fromJson(Map<String, dynamic> json) {
+    return ChatDto(
+      id: json['id'] as String,
+      bookingId: json['bookingId'] as String,
+      participants: (json['participants'] as List<dynamic>).cast<String>(),
+      lastMessageAt: DateTime.parse(json['lastMessageAt']),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'bookingId': bookingId,
       'participants': participants,
       'lastMessageAt': Timestamp.fromDate(lastMessageAt),
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'bookingId': bookingId,
+      'participants': participants,
+      'lastMessageAt': lastMessageAt.toIso8601String(),
     };
   }
 
@@ -91,6 +109,18 @@ class ChatMessageDto {
     );
   }
 
+  factory ChatMessageDto.fromJson(Map<String, dynamic> json) {
+    return ChatMessageDto(
+      id: json['id'] as String,
+      chatId: json['chatId'] as String,
+      senderId: json['senderId'] as String,
+      type: json['type'] as String,
+      content: json['content'] as String,
+      createdAt: DateTime.parse(json['createdAt']),
+      seenBy: (json['seenBy'] as List<dynamic>?)?.cast<String>() ?? [],
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'chatId': chatId,
@@ -98,6 +128,18 @@ class ChatMessageDto {
       'type': type,
       'content': content,
       'createdAt': Timestamp.fromDate(createdAt),
+      'seenBy': seenBy,
+    };
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'chatId': chatId,
+      'senderId': senderId,
+      'type': type,
+      'content': content,
+      'createdAt': createdAt.toIso8601String(),
       'seenBy': seenBy,
     };
   }

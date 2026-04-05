@@ -1,3 +1,5 @@
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/features/deliveries/data/datasources/api_deliveries_remote_data_source.dart';
 import 'package:laqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
 import 'package:laqta/features/deliveries/data/datasources/firestore_deliveries_remote_data_source.dart';
 import 'package:laqta/features/deliveries/data/repositories/deliveries_repository_impl.dart';
@@ -7,17 +9,22 @@ import 'package:laqta/features/deliveries/domain/usecases/upsert_delivery.dart';
 import 'package:laqta/features/deliveries/domain/usecases/upload_delivery_file.dart';
 
 class DeliveriesDependencies {
-  static final DeliveriesRemoteDataSource _remoteDataSource =
-      FirestoreDeliveriesRemoteDataSource();
-  static final DeliveriesRepository _repository = DeliveriesRepositoryImpl(
-    _remoteDataSource,
-  );
+  static DeliveriesRemoteDataSource? _remoteDataSource;
+  static DeliveriesRepository? _repository;
+
+  static DeliveriesRemoteDataSource get _remote =>
+      _remoteDataSource ??= (BackendConfig.useBackendDeliveries
+      ? ApiDeliveriesRemoteDataSource()
+      : FirestoreDeliveriesRemoteDataSource());
+
+  static DeliveriesRepository get _resolvedRepository =>
+      _repository ??= DeliveriesRepositoryImpl(_remote);
 
   static GetDeliveryByBooking getDeliveryByBooking() =>
-      GetDeliveryByBooking(_repository);
+      GetDeliveryByBooking(_resolvedRepository);
 
-  static UpsertDelivery upsertDelivery() => UpsertDelivery(_repository);
+  static UpsertDelivery upsertDelivery() => UpsertDelivery(_resolvedRepository);
 
   static UploadDeliveryFile uploadDeliveryFile() =>
-      UploadDeliveryFile(_repository);
+      UploadDeliveryFile(_resolvedRepository);
 }
