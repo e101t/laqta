@@ -31,8 +31,6 @@ class IraqiPhoneNumberField extends FormField<String> {
                  final theme = Theme.of(sheetContext);
                  final scheme = theme.colorScheme;
                  final textTheme = theme.textTheme;
-                 const digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
-
                  return StatefulBuilder(
                    builder: (context, setModalState) {
                      void addDigit(String digit) {
@@ -91,29 +89,63 @@ class IraqiPhoneNumberField extends FormField<String> {
                              ),
                            ),
                            const SizedBox(height: 16),
-                           Wrap(
-                             spacing: 12,
-                             runSpacing: 12,
-                             children: [
-                               for (final digit in digits)
-                                 _PhoneKey(
-                                   label: digit,
-                                   onTap: () => addDigit(digit),
+                           Directionality(
+                             textDirection: TextDirection.ltr,
+                             child: Column(
+                               children: [
+                                 for (final row in const [
+                                   ['1', '2', '3'],
+                                   ['4', '5', '6'],
+                                   ['7', '8', '9'],
+                                 ])
+                                   Padding(
+                                     padding: const EdgeInsets.only(bottom: 12),
+                                     child: Row(
+                                       children: [
+                                         for (
+                                           var i = 0;
+                                           i < row.length;
+                                           i++
+                                         ) ...[
+                                           Expanded(
+                                             child: _PhoneKey(
+                                               label: row[i],
+                                               onTap: () => addDigit(row[i]),
+                                             ),
+                                           ),
+                                           if (i != row.length - 1)
+                                             const SizedBox(width: 12),
+                                         ],
+                                       ],
+                                     ),
+                                   ),
+                                 Row(
+                                   children: [
+                                     Expanded(
+                                       child: _PhoneKey(
+                                         icon: Icons.backspace_outlined,
+                                         onTap: removeDigit,
+                                       ),
+                                     ),
+                                     const SizedBox(width: 12),
+                                     Expanded(
+                                       child: _PhoneKey(
+                                         label: '0',
+                                         onTap: () => addDigit('0'),
+                                       ),
+                                     ),
+                                     const SizedBox(width: 12),
+                                     Expanded(
+                                       child: _PhoneKey(
+                                         label: localizations.clearAll,
+                                         onTap: () =>
+                                             setModalState(() => current = ''),
+                                       ),
+                                     ),
+                                   ],
                                  ),
-                               _PhoneKey(
-                                 label: localizations.clearAll,
-                                 isWide: true,
-                                 onTap: () => setModalState(() => current = ''),
-                               ),
-                               _PhoneKey(
-                                 label: '0',
-                                 onTap: () => addDigit('0'),
-                               ),
-                               _PhoneKey(
-                                 icon: Icons.backspace_outlined,
-                                 onTap: removeDigit,
-                               ),
-                             ],
+                               ],
+                             ),
                            ),
                            const SizedBox(height: 20),
                            Row(
@@ -128,9 +160,8 @@ class IraqiPhoneNumberField extends FormField<String> {
                                const SizedBox(width: 12),
                                Expanded(
                                  child: FilledButton(
-                                   onPressed: () => Navigator.of(
-                                     sheetContext,
-                                   ).pop(current),
+                                   onPressed: () =>
+                                       Navigator.of(sheetContext).pop(current),
                                    child: Text(localizations.done),
                                  ),
                                ),
@@ -159,7 +190,8 @@ class IraqiPhoneNumberField extends FormField<String> {
                  enabled: enabled,
                  readOnly: true,
                  textDirection: TextDirection.ltr,
-                 validator: (_) => state.widget.validator?.call(controller.text),
+                 validator: (_) =>
+                     state.widget.validator?.call(controller.text),
                  decoration: InputDecoration(
                    labelText: label,
                    hintText: hint,
@@ -177,22 +209,12 @@ class _PhoneKey extends StatelessWidget {
   final String? label;
   final IconData? icon;
   final VoidCallback onTap;
-  final bool isWide;
-
-  const _PhoneKey({
-    this.label,
-    this.icon,
-    required this.onTap,
-    this.isWide = false,
-  });
+  const _PhoneKey({this.label, this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final width = isWide ? 216.0 : 102.0;
-
     return SizedBox(
-      width: width,
       height: 58,
       child: Material(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),

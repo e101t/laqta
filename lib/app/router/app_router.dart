@@ -57,6 +57,7 @@ import 'package:laqta/features/review/presentation/screens/write_review_screen.d
 import 'package:laqta/features/story/presentation/screens/create_story_screen.dart';
 
 class AppRouter {
+  static const Duration _profileStatusTimeout = Duration(seconds: 6);
   static String? _cachedProfileUserId;
   static bool? _cachedProfileCompleted;
   static String? _cachedProfileRole;
@@ -447,8 +448,11 @@ class AppRouter {
     }
     final user = _auth.currentUser;
     if (user == null) {
+      await _clearPersistedProfileStatus();
       _cachedProfileUserId = null;
       _cachedProfileCompleted = null;
+      _cachedProfileRole = null;
+      _cachedProfileBlocked = null;
 
       if (kDebugMode && devBypassAuth) {
         if (isSplash) {
@@ -512,31 +516,52 @@ class AppRouter {
       );
     }
 
-    final result = await ProfileDependencies.getUserProfile().call(
-      userId: userId,
-    );
-    if (!result.isSuccess) {
+    final prefs = await SharedPreferences.getInstance();
+    final persisted = _readPersistedProfileStatus(prefs, userId);
+
+    try {
+      final result = await ProfileDependencies.getUserProfile()
+          .call(userId: userId)
+          .timeout(_profileStatusTimeout);
+      if (!result.isSuccess) {
+        throw StateError('profile lookup failed');
+      }
+
+      final user = result.valueOrNull;
+      final completed = user?.profileCompleted ?? false;
+      final role = user?.role ?? '';
+      final isBlocked =
+          user?.blockedUsers.contains(AppConstants.adminBlockMarker) ?? false;
+      _cachedProfileUserId = userId;
+      _cachedProfileCompleted = completed;
+      _cachedProfileRole = role;
+      _cachedProfileBlocked = isBlocked;
+      await _persistProfileStatus(
+        prefs,
+        userId: userId,
+        completed: completed,
+        role: role,
+        isBlocked: isBlocked,
+      );
+      return _ProfileStatus(
+        completed: completed,
+        role: role,
+        isBlocked: isBlocked,
+      );
+    } catch (_) {
+      if (persisted != null) {
+        _cachedProfileUserId = userId;
+        _cachedProfileCompleted = persisted.completed;
+        _cachedProfileRole = persisted.role;
+        _cachedProfileBlocked = persisted.isBlocked;
+        return persisted;
+      }
       _cachedProfileUserId = userId;
       _cachedProfileCompleted = false;
       _cachedProfileRole = '';
       _cachedProfileBlocked = false;
       return const _ProfileStatus(completed: false, role: '', isBlocked: false);
     }
-
-    final user = result.valueOrNull;
-    final completed = user?.profileCompleted ?? false;
-    final role = user?.role ?? '';
-    final isBlocked =
-        user?.blockedUsers.contains(AppConstants.adminBlockMarker) ?? false;
-    _cachedProfileUserId = userId;
-    _cachedProfileCompleted = completed;
-    _cachedProfileRole = role;
-    _cachedProfileBlocked = isBlocked;
-    return _ProfileStatus(
-      completed: completed,
-      role: role,
-      isBlocked: isBlocked,
-    );
   }
 
   static void invalidateProfileCache([String? userId]) {
@@ -546,6 +571,41 @@ class AppRouter {
       _cachedProfileRole = null;
       _cachedProfileBlocked = null;
     }
+  }
+
+  static _ProfileStatus? _readPersistedProfileStatus(
+    SharedPreferences prefs,
+    String userId,
+  ) {
+    final cachedUserId = prefs.getString(AppConstants.keyProfileCacheUserId);
+    if (cachedUserId != userId) return null;
+
+    return _ProfileStatus(
+      completed: prefs.getBool(AppConstants.keyProfileCacheCompleted) ?? false,
+      role: prefs.getString(AppConstants.keyProfileCacheRole) ?? '',
+      isBlocked: prefs.getBool(AppConstants.keyProfileCacheBlocked) ?? false,
+    );
+  }
+
+  static Future<void> _persistProfileStatus(
+    SharedPreferences prefs, {
+    required String userId,
+    required bool completed,
+    required String role,
+    required bool isBlocked,
+  }) async {
+    await prefs.setString(AppConstants.keyProfileCacheUserId, userId);
+    await prefs.setBool(AppConstants.keyProfileCacheCompleted, completed);
+    await prefs.setString(AppConstants.keyProfileCacheRole, role);
+    await prefs.setBool(AppConstants.keyProfileCacheBlocked, isBlocked);
+  }
+
+  static Future<void> _clearPersistedProfileStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(AppConstants.keyProfileCacheUserId);
+    await prefs.remove(AppConstants.keyProfileCacheCompleted);
+    await prefs.remove(AppConstants.keyProfileCacheRole);
+    await prefs.remove(AppConstants.keyProfileCacheBlocked);
   }
 
   // Backward-compatible aliases (some screens may call AppRouter.settings etc.)

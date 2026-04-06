@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
 
@@ -38,21 +39,23 @@ void main() async {
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
+    ).timeout(const Duration(seconds: 10));
     final shouldEnableAppCheck =
         AppConstants.enableAppCheck &&
         (!kDebugMode || AppConstants.forceDebugAppCheck);
     if (AppConstants.useFirebaseEmulators) {
       await _connectFirebaseEmulators();
     } else if (shouldEnableAppCheck) {
-      await FirebaseAppCheck.instance.activate(
-        providerAndroid: kDebugMode
-            ? const AndroidDebugProvider()
-            : const AndroidPlayIntegrityProvider(),
-        providerApple: kDebugMode
-            ? const AppleDebugProvider()
-            : const AppleDeviceCheckProvider(),
-      );
+      await FirebaseAppCheck.instance
+          .activate(
+            providerAndroid: kDebugMode
+                ? const AndroidDebugProvider()
+                : const AndroidPlayIntegrityProvider(),
+            providerApple: kDebugMode
+                ? const AppleDebugProvider()
+                : const AppleDeviceCheckProvider(),
+          )
+          .timeout(const Duration(seconds: 8));
     }
   } catch (e) {
     if (kDebugMode) {
@@ -60,21 +63,8 @@ void main() async {
     }
   }
 
-  try {
-    await BackendAuthExchangeService().ensureBackendSession();
-    await FirebaseMessaging.instance.setAutoInitEnabled(true);
-    await BackendNotificationSyncService.instance.initialize();
-    await NotificationNavigationService.instance.initialize();
-  } catch (e) {
-    if (kDebugMode) {
-      debugPrint('Notification sync initialization error: $e');
-    }
-  }
-
   runApp(const LaqtaApp());
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    NotificationNavigationService.instance.flushPendingLaunchMessage();
-  });
+  unawaited(_initializeDeferredServices());
 }
 
 Future<void> _connectFirebaseEmulators() async {
@@ -86,6 +76,38 @@ Future<void> _connectFirebaseEmulators() async {
     persistenceEnabled: false,
     sslEnabled: false,
   );
+}
+
+Future<void> _initializeDeferredServices() async {
+  Future<void> guard(String label, Future<void> Function() task) async {
+    try {
+      await task().timeout(const Duration(seconds: 8));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('$label initialization error: $e');
+      }
+    }
+  }
+
+  await guard('Backend session', () async {
+    await BackendAuthExchangeService().ensureBackendSession();
+  });
+
+  await guard('Firebase Messaging auto-init', () async {
+    await FirebaseMessaging.instance.setAutoInitEnabled(true);
+  });
+
+  await guard('Notification sync', () async {
+    await BackendNotificationSyncService.instance.initialize();
+  });
+
+  await guard('Notification navigation', () async {
+    await NotificationNavigationService.instance.initialize();
+  });
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    NotificationNavigationService.instance.flushPendingLaunchMessage();
+  });
 }
 
 class LaqtaApp extends StatelessWidget {

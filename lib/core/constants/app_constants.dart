@@ -201,6 +201,10 @@ class AppConstants {
   static const String keyNotificationsEnabled = 'notificationsEnabled';
   static const String keyBackendJwt = 'backendJwt';
   static const String keyBackendUserId = 'backendUserId';
+  static const String keyProfileCacheUserId = 'profileCacheUserId';
+  static const String keyProfileCacheCompleted = 'profileCacheCompleted';
+  static const String keyProfileCacheRole = 'profileCacheRole';
+  static const String keyProfileCacheBlocked = 'profileCacheBlocked';
 
   // Default Language
   static const String defaultLanguage = 'ar';
