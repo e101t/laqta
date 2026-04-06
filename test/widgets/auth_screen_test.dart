@@ -2,11 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/widgets/iraqi_phone_number_field.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/auth/presentation/screens/auth_screen.dart';
 
 import '../helpers/mocks.dart';
 import '../helpers/test_app.dart';
+
+Future<void> enterPhoneFromPicker(WidgetTester tester, String phoneNumber) async {
+  await tester.tap(find.byType(IraqiPhoneNumberField));
+  await tester.pumpAndSettle();
+
+  for (final digit in phoneNumber.split('')) {
+    await tester.tap(find.text(digit).last);
+    await tester.pump();
+  }
+
+  await tester.tap(find.text('Done'));
+  await tester.pumpAndSettle();
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +55,7 @@ void main() {
     await tester.tap(find.text('Sign in with Phone'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField), '+964 770 000 0000');
+    await enterPhoneFromPicker(tester, '07700000000');
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
@@ -74,11 +88,11 @@ void main() {
     await tester.tap(find.text('Sign in with Phone'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField), '+964 770 000 0000');
+    await enterPhoneFromPicker(tester, '07700000000');
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextFormField).first, '123');
+    await tester.enterText(find.byType(TextFormField).last, '123');
     await tester.ensureVisible(find.text('Verify'));
     await tester.tap(find.text('Verify'));
     await tester.pump(const Duration(milliseconds: 100));

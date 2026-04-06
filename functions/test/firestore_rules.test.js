@@ -139,17 +139,40 @@ function publicUserDocData({ name, role, governorate }) {
     usernameLower: null,
     photoUrl: null,
     governorate,
-    gender: null,
-    age: null,
-    birthYear: null,
     role,
-    profileCompleted: true,
-    over18Confirmed: true,
-    lang: 'ar',
-    lastSeen: null,
     createdAt: now,
     updatedAt: now,
   };
+}
+
+async function seedVerifiedPhotographer(uid, { governorates = ['Baghdad'], name = 'Photographer' } = {}) {
+  const now = Timestamp.fromDate(new Date());
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, `users_public/${uid}`),
+      publicUserDocData({
+        name,
+        role: 'photographer',
+        governorate: governorates[0] ?? 'Baghdad',
+      }),
+    );
+    await setDoc(doc(db, `photographers/${uid}`), {
+      specialties: [],
+      governorates,
+      rate: 0,
+      reviewsCount: 0,
+      basePrice: 0,
+      currency: 'IQD',
+      bio: '',
+      instagram: null,
+      tiktok: null,
+      geo: null,
+      isVerified: true,
+      verifiedAt: now,
+      updatedAt: now,
+    });
+  });
 }
 
 test('story views: viewer can create but cannot read', async () => {
@@ -313,15 +336,7 @@ test('requests read allows owner and matching-governorate photographer', async (
   const photographerDb = authedDb('photogBaghdad');
   const docRef = ownerDb.collection('requests').doc('req-own');
 
-  await assertSucceeds(
-    photographerDb.collection('users_public').doc('photogBaghdad').set(
-      publicUserDocData({
-        name: 'Photographer',
-        role: 'photographer',
-        governorate: 'Baghdad',
-      }),
-    ),
-  );
+  await seedVerifiedPhotographer('photogBaghdad');
 
   const requestData = requestDocData({
     clientId: 'clientZ',
@@ -339,19 +354,54 @@ test('requests read allows owner and matching-governorate photographer', async (
   await assertSucceeds(photographerDb.collection('requests').doc('req-own').get());
 });
 
-test('requests query allows photographer to fetch open requests with matching rule filters', async () => {
-  const customerDb = authedDb('clientBaghdad');
-  const photographerDb = authedDb('photogBaghdad');
+test('requests read denies self-promoted users_public photographers without verified photographer profile', async () => {
+  const ownerDb = authedDb('clientSelfPromote');
+  const attackerDb = authedDb('selfPromotedPhotog');
+  const docRef = ownerDb.collection('requests').doc('req-self-promote');
 
   await assertSucceeds(
-    photographerDb.collection('users_public').doc('photogBaghdad').set(
+    attackerDb.collection('users_public').doc('selfPromotedPhotog').set(
       publicUserDocData({
-        name: 'Photographer',
+        name: 'Attacker',
         role: 'photographer',
         governorate: 'Baghdad',
       }),
     ),
   );
+
+  const requestData = requestDocData({
+    clientId: 'clientSelfPromote',
+    withLocation: false,
+  });
+  requestData.status = 'published';
+  requestData.selectedPhotographerId = null;
+
+  await assertSucceeds(docRef.set(requestData));
+  await assertFails(attackerDb.collection('requests').doc('req-self-promote').get());
+});
+
+test('users_public read is denied for unauthenticated clients', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, 'users_public/public-user-1'),
+      publicUserDocData({
+        name: 'Public User',
+        role: 'customer',
+        governorate: 'Baghdad',
+      }),
+    );
+  });
+
+  const anonDb = testEnv.unauthenticatedContext().firestore();
+  await assertFails(anonDb.collection('users_public').doc('public-user-1').get());
+});
+
+test('requests query allows photographer to fetch open requests with matching rule filters', async () => {
+  const customerDb = authedDb('clientBaghdad');
+  const photographerDb = authedDb('photogBaghdad');
+
+  await seedVerifiedPhotographer('photogBaghdad');
 
   const publicRequest = requestDocData({
     clientId: 'clientBaghdad',
@@ -476,18 +526,7 @@ test('offers create: photographer can create offer and increment offersCount', a
   const customerDb = authedDb(customerId);
   const photographerDb = authedDb(photographerId);
 
-  await assertSucceeds(
-    photographerDb
-      .collection('users_public')
-      .doc(photographerId)
-      .set(
-        publicUserDocData({
-          name: 'Photographer',
-          role: 'photographer',
-          governorate: 'Baghdad',
-        }),
-      ),
-  );
+  await seedVerifiedPhotographer(photographerId);
 
   const requestData = requestDocData({ clientId: customerId, withLocation: true });
   requestData.status = 'published';
@@ -528,7 +567,7 @@ test('offers create: photographer can create offer and increment offersCount', a
   await assertSucceeds(batch.commit());
 });
 
-test('accept offer batch: booking create allows confirmed status', async () => {
+test('accept offer batch: booking create denies confirmed status before payment', async () => {
   const customerId = 'cust_accept';
   const photographerId = 'photog_accept';
   const requestId = 'req_accept_1';
@@ -538,18 +577,7 @@ test('accept offer batch: booking create allows confirmed status', async () => {
   const customerDb = authedDb(customerId);
   const photographerDb = authedDb(photographerId);
 
-  await assertSucceeds(
-    photographerDb
-      .collection('users_public')
-      .doc(photographerId)
-      .set(
-        publicUserDocData({
-          name: 'Photographer',
-          role: 'photographer',
-          governorate: 'Baghdad',
-        }),
-      ),
-  );
+  await seedVerifiedPhotographer(photographerId);
 
   const requestData = requestDocData({ clientId: customerId, withLocation: true });
   requestData.status = 'awaiting_offers';
@@ -637,7 +665,205 @@ test('accept offer batch: booking create allows confirmed status', async () => {
   });
   batch.set(customerDb.collection('bookings').doc(bookingId), bookingData);
 
+  await assertFails(batch.commit());
+});
+
+test('accept offer batch: booking create allows pending status before payment', async () => {
+  const customerId = 'cust_accept_ok';
+  const photographerId = 'photog_accept_ok';
+  const requestId = 'req_accept_ok_1';
+  const offerId = 'offer_accept_ok_1';
+  const bookingId = 'booking_accept_ok_1';
+
+  const customerDb = authedDb(customerId);
+  const photographerDb = authedDb(photographerId);
+
+  await seedVerifiedPhotographer(photographerId);
+
+  const requestData = requestDocData({ clientId: customerId, withLocation: true });
+  requestData.status = 'awaiting_offers';
+  await assertSucceeds(
+    customerDb.collection('requests').doc(requestId).set(requestData),
+  );
+
+  const offerData = {
+    requestId,
+    photographerId,
+    price: 180,
+    currency: 'IQD',
+    deliveryDays: 2,
+    deliverables: {
+      photosCount: 40,
+      videoMinutes: null,
+      includesEditing: true,
+      includesVideo: false,
+      notes: null,
+    },
+    notes: null,
+    status: 'submitted',
+    createdAt: Timestamp.fromDate(new Date()),
+    updatedAt: Timestamp.fromDate(new Date()),
+  };
+  await assertSucceeds(
+    photographerDb.collection('offers').doc(offerId).set(offerData),
+  );
+
+  const now = new Date();
+  const bookingData = {
+    customerId,
+    photographerId,
+    requestId,
+    offerId,
+    date: '2026-02-01',
+    time: '10:00',
+    duration: 120,
+    type: 'Wedding',
+    price: 180,
+    currency: 'IQD',
+    status: 'pending',
+    payment: {
+      status: 'pending',
+      intentId: null,
+      amount: null,
+      paidAt: null,
+    },
+    location: { lat: null, lng: null, text: null },
+    deliverables: {
+      photosCount: 40,
+      videoMinutes: null,
+      includesEditing: true,
+      includesVideo: false,
+      notes: null,
+    },
+    notes: null,
+    chatId: null,
+    deliveryId: null,
+    disputeId: null,
+    revisionCount: 0,
+    canceledBy: null,
+    timeline: {
+      confirmedAt: null,
+      inProgressAt: null,
+      deliveredAt: null,
+      revisionRequestedAt: null,
+      completedAt: null,
+      canceledAt: null,
+    },
+    createdAt: Timestamp.fromDate(now),
+    updatedAt: Timestamp.fromDate(now),
+  };
+
+  const batch = customerDb.batch();
+  batch.update(customerDb.collection('requests').doc(requestId), {
+    status: 'offer_selected',
+    selectedOfferId: offerId,
+    selectedPhotographerId: photographerId,
+    updatedAt: Timestamp.fromDate(new Date()),
+  });
+  batch.update(customerDb.collection('offers').doc(offerId), {
+    status: 'accepted',
+    updatedAt: Timestamp.fromDate(new Date()),
+  });
+  batch.set(customerDb.collection('bookings').doc(bookingId), bookingData);
+
   await assertSucceeds(batch.commit());
+});
+
+test('booking delete is denied for customer and allowed for admin', async () => {
+  const customerId = 'cust_delete_booking';
+  const adminDb = authedDb('admin_delete', { admin: true });
+  const customerDb = authedDb(customerId);
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'bookings/book-del-1'), {
+      customerId,
+      photographerId: 'photog-del-1',
+      requestId: 'req-del-1',
+      offerId: 'offer-del-1',
+      date: '2026-02-01',
+      time: '10:00',
+      duration: 60,
+      type: 'Wedding',
+      price: 100,
+      currency: 'IQD',
+      status: 'pending',
+      payment: { status: 'pending', intentId: null, amount: null, paidAt: null },
+      location: { lat: null, lng: null, text: null },
+      deliverables: null,
+      notes: null,
+      chatId: null,
+      deliveryId: null,
+      disputeId: null,
+      revisionCount: 0,
+      canceledBy: null,
+      timeline: {
+        confirmedAt: null,
+        inProgressAt: null,
+        deliveredAt: null,
+        revisionRequestedAt: null,
+        completedAt: null,
+        canceledAt: null,
+      },
+      createdAt: Timestamp.fromDate(new Date()),
+      updatedAt: Timestamp.fromDate(new Date()),
+    });
+  });
+
+  await assertFails(customerDb.collection('bookings').doc('book-del-1').delete());
+  await assertSucceeds(adminDb.collection('bookings').doc('book-del-1').delete());
+});
+
+test('photographer cannot confirm pending booking before payment succeeds', async () => {
+  const bookingId = 'booking_no_confirm_before_payment';
+  const customerId = 'cust_no_confirm';
+  const photographerId = 'photog_no_confirm';
+  const t0 = Timestamp.fromDate(new Date());
+  const t1 = Timestamp.fromDate(new Date(Date.now() + 1000));
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, `bookings/${bookingId}`), {
+      customerId,
+      photographerId,
+      requestId: 'req_no_confirm',
+      offerId: 'offer_no_confirm',
+      date: '2026-02-01',
+      time: '10:00',
+      duration: 60,
+      type: 'Wedding',
+      price: 100,
+      currency: 'IQD',
+      status: 'pending',
+      payment: { status: 'pending', intentId: null, amount: null, paidAt: null },
+      location: { lat: null, lng: null, text: null },
+      deliverables: null,
+      notes: null,
+      chatId: null,
+      deliveryId: null,
+      disputeId: null,
+      revisionCount: 0,
+      canceledBy: null,
+      timeline: {
+        confirmedAt: null,
+        inProgressAt: null,
+        deliveredAt: null,
+        revisionRequestedAt: null,
+        completedAt: null,
+        canceledAt: null,
+      },
+      createdAt: t0,
+      updatedAt: t0,
+    });
+  });
+
+  const photographerDb = authedDb(photographerId);
+  await assertFails(
+    photographerDb.collection('bookings').doc(bookingId).update({
+      status: 'confirmed',
+      updatedAt: t1,
+    }),
+  );
 });
 
 test('booking revision: allows re-delivery with new deliveredAt timestamp', async () => {

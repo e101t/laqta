@@ -7,6 +7,7 @@ import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/utils/debouncer.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/iraqi_phone_number_field.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
@@ -116,7 +117,8 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'يجب أن يبدأ بحرف ويحتوي حروف/أرقام فقط بدون مسافات';
+        _usernameError =
+            'يجب أن يبدأ بحرف ويحتوي حروف أو أرقام فقط بدون مسافات';
       });
       return;
     }
@@ -139,7 +141,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       setState(() {
         _isCheckingUsername = false;
         _usernameAvailable = false;
-        _usernameError = 'تعذّر التحقق من اسم المستخدم';
+        _usernameError = 'تعذر التحقق من اسم المستخدم';
       });
     }
   }
@@ -381,7 +383,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             const SizedBox(height: 16),
                             AppTextField(
                               controller: _usernameController,
-                              label: 'اسم المستخدم (Username)',
+                              label: 'اسم المستخدم',
                               hint: 'مثال: ahmedphoto23',
                               prefixIcon: Icons.person_outline,
                               enabled: !_isLoading,
@@ -413,7 +415,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                                   return 'اسم المستخدم محجوز';
                                 }
                                 if (!_isUsernameFormatValid(normalized)) {
-                                  return 'يجب أن يبدأ بحرف ويحتوي حروف/أرقام فقط';
+                                  return 'يجب أن يبدأ بحرف ويحتوي حروف أو أرقام فقط';
                                 }
                                 if (!_usernameAvailable &&
                                     !_isCheckingUsername) {
@@ -438,16 +440,15 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                               ),
 
                             const SizedBox(height: 16),
-                            AppTextField(
+                            IraqiPhoneNumberField(
+                              context: context,
                               controller: _phoneController,
                               label: localizations.phoneNumber,
-                              hint: '+964 XXX XXX XXXX',
-                              prefixIcon: Icons.phone,
-                              keyboardType: TextInputType.phone,
+                              hint: '07XXXXXXXXX',
                               enabled: !_isLoading,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
-                                  return 'الرجاء إدخال رقم الهاتف';
+                                  return localizations.phoneNumberRequired;
                                 }
                                 return null;
                               },

@@ -456,7 +456,8 @@ void main() {
     await tester.tap(find.text('Accept'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Booking Confirmed'), findsWidgets);
+    expect(requestsRepo.lastAcceptedBooking?.status, 'pending');
+    expect(find.byType(BookingDetailsScreen), findsOneWidget);
   });
 
   testWidgets('photographer submits offer from open requests',

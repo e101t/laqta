@@ -7,6 +7,7 @@ import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/utils/responsive.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/iraqi_phone_number_field.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -910,16 +911,12 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       ),
       const SizedBox(height: 4),
-      AppTextField(
+      IraqiPhoneNumberField(
+        context: context,
         controller: _phoneController,
         label: localizations.phoneNumber,
-        hint: '+964 XXX XXX XXXX',
-        prefixIcon: Icons.phone,
-        keyboardType: TextInputType.phone,
-        textInputAction: TextInputAction.done,
+        hint: '07XXXXXXXXX',
         enabled: !_isLoading,
-        autofillHints: const [AutofillHints.telephoneNumber],
-        onFieldSubmitted: (_) => _signInWithPhone(),
       ),
 
       const SizedBox(height: 24),

@@ -131,7 +131,7 @@ service firebase.storage {
         (
           requestDoc.data.clientId == request.auth.uid ||
           requestDoc.data.selectedPhotographerId == request.auth.uid ||
-          isMatchingGovernoratePhotographerForRequest(requestId)
+          isAdmin()
         );
     }
 

@@ -3,10 +3,16 @@ import 'package:flutter/foundation.dart';
 class BackendConfig {
   BackendConfig._();
 
+  static const String _productionBaseUrl = 'https://api.laqta.cloud';
+
   static String get baseUrl {
     const override = String.fromEnvironment('BACKEND_BASE_URL');
     if (override.isNotEmpty) {
       return override;
+    }
+
+    if (kReleaseMode) {
+      return _productionBaseUrl;
     }
 
     if (kIsWeb) {

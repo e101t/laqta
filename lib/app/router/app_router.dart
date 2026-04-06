@@ -466,7 +466,7 @@ class AppRouter {
     final profileCompleted = profileStatus.completed;
     final role = profileStatus.role.trim();
     final hasRole = role.isNotEmpty;
-    final inProfileFlow = isRole || isBasicInfo;
+    final inProfileFlow = isRole || isBasicInfo || isSignUpDetails;
     final isBlocked = profileStatus.isBlocked;
 
     if (isBlocked && !isBlockedRoute) {
@@ -487,7 +487,7 @@ class AppRouter {
     }
 
     if (!profileCompleted) {
-      if (!isBasicInfo) {
+      if (!isBasicInfo && !isSignUpDetails) {
         if (hasRole) {
           final query = Uri(queryParameters: {'role': role}).query;
           return '${Routes.basicInfo}?$query';

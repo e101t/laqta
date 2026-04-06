@@ -13,6 +13,7 @@ import 'package:laqta/features/auth/domain/entities/auth_user.dart';
 import 'package:laqta/features/profile/domain/entities/user_profile.dart';
 import 'package:laqta/features/profile/profile_dependencies.dart';
 import 'package:laqta/features/profile/presentation/screens/basic_info_screen.dart';
+import 'package:laqta/features/auth/presentation/screens/sign_up_details_screen.dart';
 
 import '../helpers/mocks.dart';
 
@@ -138,6 +139,64 @@ void main() {
 
     expect(find.byType(BasicInfoScreen), findsOneWidget);
   });
+
+  testWidgets(
+    'signed in incomplete user may stay on sign up details while finishing onboarding',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({'language': 'en'});
+
+      final auth = MockFirebaseAuth();
+      final user = MockUser();
+      final profileRepo = MockProfileRepository();
+      final authRepo = MockAuthRepository();
+
+      when(() => user.uid).thenReturn('user1');
+      when(() => auth.currentUser).thenReturn(user);
+      when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(user));
+
+      when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
+        (_) async => Result.success(
+          UserProfile(
+            id: 'user1',
+            role: '',
+            name: 'User',
+            governorate: 'Baghdad',
+            profileCompleted: false,
+            createdAt: DateTime(2026, 1, 1),
+            updatedAt: DateTime(2026, 1, 1),
+          ),
+        ),
+      );
+
+      AppRouter.setAuthOverride(auth);
+      AppRouter.setSplashDelayCompleteForTest(true);
+      ProfileDependencies.setRepositoryOverride(profileRepo);
+      AuthDependencies.setRepositoryOverride(authRepo);
+      when(() => authRepo.getCurrentUser()).thenAnswer(
+        (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
+      );
+
+      final router = AppRouter.createRouter(authOverride: auth);
+      router.go('/sign-up');
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          locale: const Locale('en'),
+          supportedLocales: const [Locale('en')],
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SignUpDetailsScreen), findsOneWidget);
+    },
+  );
 
   // Full main app routing is covered in integration_test/app_flow_test.dart.
 }

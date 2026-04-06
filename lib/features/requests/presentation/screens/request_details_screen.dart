@@ -261,7 +261,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
         notificationId: '',
         userId: offer.photographerId,
         title: 'Offer accepted',
-        body: 'Your offer was accepted. The booking is confirmed.',
+        body: 'Your offer was accepted. The booking is awaiting payment.',
         type: 'booking',
         data: {
           'requestId': offer.requestId,
@@ -290,8 +290,8 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
       type: request.type,
       price: offer.price,
       currency: offer.currency,
-      status: AppConstants.bookingConfirmed,
-      payment: const BookingPayment(),
+      status: AppConstants.bookingPending,
+      payment: const BookingPayment(status: AppConstants.paymentPending),
       location: BookingLocation(
         lat: request.latitude,
         lng: request.longitude,
@@ -310,7 +310,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
       disputeId: null,
       revisionCount: 0,
       canceledBy: null,
-      timeline: BookingTimeline(confirmedAt: DateTime.now()),
+      timeline: const BookingTimeline(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

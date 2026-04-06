@@ -60,14 +60,7 @@ function publicUserDocPayload({ role, governorate }) {
     usernameLower: null,
     photoUrl: null,
     governorate,
-    gender: null,
-    age: null,
-    birthYear: null,
     role,
-    profileCompleted: true,
-    over18Confirmed: true,
-    lang: 'ar',
-    lastSeen: null,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -122,7 +115,7 @@ test('request reference images are denied for non-participants', async () => {
 
 });
 
-test('request reference images are allowed for matching-governorate photographers', async () => {
+test('request reference images are denied for unselected photographers even with matching governorate', async () => {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const adminDb = context.firestore();
     await setDoc(
@@ -148,18 +141,34 @@ test('request reference images are allowed for matching-governorate photographer
 
   const allowedStorage = testEnv.authenticatedContext('photogGov').storage();
   const allowedRef = ref(allowedStorage, 'requests/req-open/references/test.jpg');
-  await assertSucceeds(getDownloadURL(allowedRef));
+  await assertFails(getDownloadURL(allowedRef));
 
   const deniedStorage = testEnv.authenticatedContext('photogOther').storage();
   const deniedRef = ref(deniedStorage, 'requests/req-open/references/test.jpg');
-  let error;
-  try {
-    await getDownloadURL(deniedRef);
-  } catch (err) {
-    error = err;
-  }
-  assert.ok(error);
-  assert.match(String(error), /storage\/unauthorized/);
+  await assertFails(getDownloadURL(deniedRef));
+});
+
+test('request reference images are allowed only for selected photographer', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const adminDb = context.firestore();
+    await setDoc(
+      doc(adminDb, 'requests/req-selected'),
+      requestDocPayload({ clientId: 'userA', photographerId: 'photogSelected' }),
+    );
+
+    const adminStorage = context.storage();
+    const adminRef = ref(adminStorage, 'requests/req-selected/references/test.jpg');
+    await uploadBytes(adminRef, new Uint8Array([1, 2, 3]), {
+      contentType: 'image/jpeg',
+    });
+  });
+
+  const selectedStorage = testEnv.authenticatedContext('photogSelected').storage();
+  const selectedRef = ref(
+    selectedStorage,
+    'requests/req-selected/references/test.jpg',
+  );
+  await assertSucceeds(getDownloadURL(selectedRef));
 });
 
 test('delivery uploads: only the booking photographer can write', async () => {

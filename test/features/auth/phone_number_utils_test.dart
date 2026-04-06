@@ -23,5 +23,29 @@ void main() {
         '+9647721700800',
       );
     });
+
+    test('accepts Arabic numerals from Iraqi keyboards', () {
+      expect(
+        normalizePhoneNumberForFirebase('٠٧٧٢١٧٠٠٨٠٠'),
+        '+9647721700800',
+      );
+    });
+  });
+
+  group('normalizePhoneNumberForLocalInput', () {
+    test('keeps local Iraqi number without country code', () {
+      expect(normalizePhoneNumberForLocalInput('07721700800'), '07721700800');
+    });
+
+    test('converts international Iraqi number to local display format', () {
+      expect(
+        normalizePhoneNumberForLocalInput('+964 772 170 0800'),
+        '07721700800',
+      );
+    });
+
+    test('converts Arabic numerals to local ASCII digits', () {
+      expect(normalizePhoneNumberForLocalInput('٠٧٧٢١٧٠٠٨٠٠'), '07721700800');
+    });
   });
 }

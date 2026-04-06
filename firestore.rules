@@ -38,6 +38,29 @@ service cloud.firestore {
       return isSignedIn() ? getUserPublic(request.auth.uid) : null;
     }
 
+    function getPhotographerProfile(userId) {
+      return get(/databases/$(database)/documents/photographers/$(userId));
+    }
+
+    function currentPhotographerProfile() {
+      return isSignedIn() ? getPhotographerProfile(request.auth.uid) : null;
+    }
+
+    function currentPhotographerIsVerified() {
+      let doc = currentPhotographerProfile();
+      return doc != null &&
+        doc.data != null &&
+        doc.data.isVerified == true;
+    }
+
+    function currentPhotographerServesGovernorate(governorate) {
+      let doc = currentPhotographerProfile();
+      return doc != null &&
+        doc.data != null &&
+        doc.data.governorates is list &&
+        doc.data.governorates.hasAny([governorate]);
+    }
+
     function currentUserRole() {
       let doc = currentUserPublic();
       return doc != null && doc.data != null && doc.data.role is string
@@ -165,14 +188,7 @@ service cloud.firestore {
         'usernameLower',
         'photoUrl',
         'governorate',
-        'gender',
-        'age',
-        'birthYear',
         'role',
-        'profileCompleted',
-        'over18Confirmed',
-        'lang',
-        'lastSeen',
         'createdAt',
         'updatedAt'
       ];
@@ -211,15 +227,8 @@ service cloud.firestore {
         isNullableString(data.usernameLower) &&
         isNullableString(data.photoUrl) &&
         isString(data.governorate) &&
-        isNullableString(data.gender) &&
-        isNullableNumber(data.age) &&
-        isNullableNumber(data.birthYear) &&
         isString(data.role) &&
         isValidRole(data.role) &&
-        isBool(data.profileCompleted) &&
-        isBool(data.over18Confirmed) &&
-        isString(data.lang) &&
-        isNullableTimestamp(data.lastSeen) &&
         isTimestamp(data.createdAt) &&
         isTimestamp(data.updatedAt);
     }
@@ -736,7 +745,17 @@ service cloud.firestore {
           (
             request.auth.uid == resource.data.photographerId &&
             (
-              (newStatus == 'confirmed' && oldStatus == 'pending') ||
+              (
+                newStatus == 'confirmed' &&
+                oldStatus == 'pending' &&
+                resource.data.payment != null &&
+                resource.data.payment.status in [
+                  'succeeded',
+                  'deposit_paid',
+                  'escrow_held',
+                  'released'
+                ]
+              ) ||
               (newStatus == 'rejected' && oldStatus == 'pending') ||
               (
                 newStatus == 'in_progress' &&
@@ -917,7 +936,17 @@ service cloud.firestore {
         (
           request.auth.uid == resource.data.photographerId &&
           (
-            (newStatus == 'confirmed' && oldStatus == 'pending') ||
+            (
+              newStatus == 'confirmed' &&
+              oldStatus == 'pending' &&
+              resource.data.payment != null &&
+              resource.data.payment.status in [
+                'succeeded',
+                'deposit_paid',
+                'escrow_held',
+                'released'
+              ]
+            ) ||
             (newStatus == 'rejected' && oldStatus == 'pending') ||
             (newStatus == 'in_progress' &&
               oldStatus == 'confirmed' &&
@@ -1033,24 +1062,16 @@ service cloud.firestore {
     }
 
     function canReadRequestAsPhotographer(data) {
-      let user = currentUserPublic();
-      let role = user != null && user.data != null && user.data.role is string
-        ? user.data.role
-        : '';
-      let governorate =
-        user != null && user.data != null && user.data.governorate is string
-          ? user.data.governorate
-          : '';
       return isSignedIn() &&
-        role == 'photographer' &&
+        currentPhotographerIsVerified() &&
         (
           data.selectedPhotographerId == request.auth.uid ||
           (
             data.status in ['published', 'awaiting_offers'] &&
             (data.selectedPhotographerId == null ||
              data.selectedPhotographerId == request.auth.uid) &&
-            governorate != '' &&
-            data.governorate == governorate
+            isString(data.governorate) &&
+            currentPhotographerServesGovernorate(data.governorate)
           )
         );
     }
@@ -1063,14 +1084,6 @@ service cloud.firestore {
         request.resource.data.offersCount == null
           ? 0
           : request.resource.data.offersCount;
-      let user = currentUserPublic();
-      let role = user != null && user.data != null && user.data.role is string
-        ? user.data.role
-        : '';
-      let governorate =
-        user != null && user.data != null && user.data.governorate is string
-          ? user.data.governorate
-          : '';
       return isSignedIn() &&
         resource.data != null &&
         changed.hasOnly(['offersCount', 'updatedAt']) &&
@@ -1083,31 +1096,23 @@ service cloud.firestore {
         request.resource.data.status == resource.data.status &&
         resource.data.status in ['published', 'awaiting_offers'] &&
         (resource.data.expiresAt == null || resource.data.expiresAt > request.time) &&
-        role == 'photographer' &&
+        currentPhotographerIsVerified() &&
         (
           resource.data.selectedPhotographerId == request.auth.uid ||
           (
             resource.data.selectedPhotographerId == null &&
-            governorate != '' &&
-            resource.data.governorate == governorate
+            isString(resource.data.governorate) &&
+            currentPhotographerServesGovernorate(resource.data.governorate)
           )
         );
     }
 
     function canCreateOfferForRequest(requestId) {
       let req = get(/databases/$(database)/documents/requests/$(requestId));
-      let user = currentUserPublic();
-      let role = user != null && user.data != null && user.data.role is string
-        ? user.data.role
-        : '';
-      let governorate =
-        user != null && user.data != null && user.data.governorate is string
-          ? user.data.governorate
-          : '';
       return isSignedIn() &&
         req != null &&
         req.data != null &&
-        role == 'photographer' &&
+        currentPhotographerIsVerified() &&
         req.data.status in ['published', 'awaiting_offers'] &&
         (req.data.expiresAt == null || req.data.expiresAt > request.time) &&
         req.data.clientId != request.auth.uid &&
@@ -1115,8 +1120,8 @@ service cloud.firestore {
           req.data.selectedPhotographerId == request.auth.uid ||
           (
             req.data.selectedPhotographerId == null &&
-            governorate != '' &&
-            req.data.governorate == governorate
+            isString(req.data.governorate) &&
+            currentPhotographerServesGovernorate(req.data.governorate)
           )
         );
     }
@@ -1677,7 +1682,7 @@ service cloud.firestore {
     }
 
     match /users_public/{userId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow create: if isOwner(userId) &&
         isValidPublicUserDoc(request.resource.data);
       allow update: if (isOwner(userId) || isAdmin()) &&
@@ -1718,7 +1723,7 @@ service cloud.firestore {
         isValidBookingDoc(request.resource.data) &&
         request.resource.data.payment != null &&
         request.resource.data.payment.status == 'pending' &&
-        request.resource.data.status in ['pending', 'confirmed'] &&
+        request.resource.data.status == 'pending' &&
         isNonEmptyString(request.resource.data.requestId) &&
         isNonEmptyString(request.resource.data.offerId) &&
         bookingCreateLinkedWritesAllowed(
@@ -1738,7 +1743,7 @@ service cloud.firestore {
         resource.data != null &&
         isBookingParticipant() &&
         bookingParticipantUpdateAllowed(bookingId);
-      allow delete: if isOwner(resource.data.customerId) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     match /requests/{requestId} {

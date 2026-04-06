@@ -31,6 +31,13 @@ if exist ".tools\flutter\bin\flutter.bat" (
   set "FLUTTER=flutter"
 )
 
+set "ADB=adb"
+if exist "%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe" (
+  set "ADB=%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"
+)
+
+call "%ADB%" -s "%DEVICE_ID%" uninstall com.laqta.laqta >nul 2>&1
+
 call "%FLUTTER%" test integration_test\app_flow_test.dart -d "%DEVICE_ID%"
 if errorlevel 1 goto :cleanup
 
