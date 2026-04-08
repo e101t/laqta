@@ -1,21 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/features/settings/data/datasources/settings_remote_data_source.dart';
 import 'package:laqta/features/settings/domain/entities/report_submission.dart';
 
 class FirestoreSettingsRemoteDataSource implements SettingsRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
   final SecureFirestore _secure;
 
-  FirestoreSettingsRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+  FirestoreSettingsRemoteDataSource({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance,
+       _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
 
   CollectionReference<Map<String, dynamic>> get _reportsCollection =>
       _firestore.collection('reports');
-
-  CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      _firestore.collection('users');
 
   @override
   Future<void> submitReport(ReportSubmission submission) async {
@@ -35,6 +37,10 @@ class FirestoreSettingsRemoteDataSource implements SettingsRemoteDataSource {
 
   @override
   Future<void> deleteUserData(String userId) async {
-    await _secure.guard(() => _usersCollection.doc(userId).delete());
+    if (userId.trim().isEmpty) {
+      throw StateError('Missing userId');
+    }
+    final callable = _functions.httpsCallable('deleteAccountData');
+    await callable.call(<String, dynamic>{'userId': userId});
   }
 }

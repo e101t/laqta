@@ -115,13 +115,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
 
-      // Delete user account from Firebase Auth
-      final authDeleteResult = await AuthDependencies.deleteCurrentUser()
-          .call();
-      if (!authDeleteResult.isSuccess) {
+      // The server-side account deletion callable already deletes the
+      // Firebase Auth user. We only need to clear the local session here.
+      final signOutResult = await AuthDependencies.signOut().call();
+      if (!signOutResult.isSuccess) {
         throw StateError(
-          authDeleteResult.failureOrNull?.message ??
-              'Failed to delete auth account',
+          signOutResult.failureOrNull?.message ??
+              'Failed to clear local auth session',
         );
       }
 
@@ -144,7 +144,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).deleteAccountFailed),
+          content: Text(
+            e is StateError
+                ? e.message.toString()
+                : AppLocalizations.of(context).deleteAccountFailed,
+          ),
         ),
       );
     }

@@ -12,7 +12,7 @@ class BackendNotificationSyncService {
       BackendNotificationSyncService._();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final BackendSessionService _sessionService = const BackendSessionService();
+  final BackendSessionService _sessionService = BackendSessionService();
   final BackendApiClient _apiClient = BackendApiClient();
 
   StreamSubscription<String>? _tokenRefreshSubscription;
@@ -52,10 +52,7 @@ class BackendNotificationSyncService {
     try {
       await _apiClient.post(
         '/notifications/devices',
-        body: {
-          'token': fcmToken,
-          'platform': _platform,
-        },
+        body: {'token': fcmToken, 'platform': _platform},
       );
     } catch (_) {
       // Best effort; background re-sync can retry later.

@@ -11,7 +11,7 @@ class BackendAuthExchangeService {
     BackendNotificationSyncService? notificationSyncService,
   }) : _auth = auth ?? FirebaseAuth.instance,
        _apiClient = apiClient ?? BackendApiClient(),
-       _sessionService = sessionService ?? const BackendSessionService(),
+       _sessionService = sessionService ?? BackendSessionService(),
        _notificationSyncService =
            notificationSyncService ?? BackendNotificationSyncService.instance;
 
@@ -21,12 +21,12 @@ class BackendAuthExchangeService {
   final BackendNotificationSyncService _notificationSyncService;
 
   Future<bool> ensureBackendSession() async {
-    final existingToken = await _sessionService.getToken();
-    if (existingToken != null && existingToken.isNotEmpty) {
+    if (await _sessionService.hasValidToken()) {
       return false;
     }
 
     if (_auth.currentUser == null) {
+      await _sessionService.clear();
       return false;
     }
 

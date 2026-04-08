@@ -1,21 +1,103 @@
 param(
-  [switch]$SkipBuild
+  [switch]$SkipBuild,
+  [switch]$SkipTests
 )
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "Running Flutter release checks..."
+function Get-ShortPath {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Path
+  )
 
-if (-not (Test-Path "android/key.properties")) {
+  $fsi = New-Object -ComObject Scripting.FileSystemObject
+  return $fsi.GetFolder($Path).ShortPath.Trim()
+}
+
+function Format-CmdArgument {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$Value
+  )
+
+  if ($Value -notmatch '[\s"]') {
+    return $Value
+  }
+
+  return '"' + ($Value -replace '"', '\"') + '"'
+}
+
+function Invoke-InWorkDir {
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$WorkDir,
+    [Parameter(Mandatory = $true)]
+    [string]$FilePath,
+    [string[]]$Arguments = @()
+  )
+
+  $formattedFile = Format-CmdArgument -Value $FilePath
+  $formattedArgs = @($Arguments | ForEach-Object { Format-CmdArgument -Value $_ })
+  $cmdLine = @(
+    "pushd `"$WorkDir`"",
+    "call $formattedFile $($formattedArgs -join ' ')",
+    "set EXITCODE=%ERRORLEVEL%",
+    "popd",
+    "exit /b %EXITCODE%"
+  ) -join " && "
+
+  cmd /d /c $cmdLine
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed in ${WorkDir}: $FilePath $($Arguments -join ' ')"
+  }
+}
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoDir = Split-Path -Parent $scriptDir
+$workDir = $repoDir
+$linkDir = $null
+$flutterCmd = Join-Path $repoDir ".tools\flutter\bin\flutter.bat"
+
+try {
+  $shortPath = Get-ShortPath -Path $repoDir
+  if ($shortPath -and ($shortPath -notmatch '\s')) {
+    $workDir = $shortPath
+  }
+} catch {
+  Write-Warning "Could not resolve short path for '$repoDir'. Falling back to junction if needed."
+}
+
+if ($workDir -match '\s') {
+  $linkDir = Join-Path $env:TEMP "laqta_repo_no_spaces_release"
+  if (Test-Path $linkDir) {
+    Remove-Item -LiteralPath $linkDir -Force -Recurse
+  }
+
+  Write-Host "Preparing no-spaces workspace at $linkDir"
+  cmd /c "mklink /J `"$linkDir`" `"$repoDir`"" | Out-Null
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path $linkDir)) {
+    throw "Failed to prepare no-spaces workspace."
+  }
+  $workDir = $linkDir
+}
+
+if (-not (Test-Path $flutterCmd)) {
+  $flutterCmd = "flutter"
+}
+
+Write-Host "Running Flutter release checks from $workDir"
+
+if (-not (Test-Path (Join-Path $repoDir "android/key.properties"))) {
   Write-Warning "Missing android/key.properties (release keystore config)."
 }
 
-if (-not (Test-Path "android/app/google-services.json")) {
+if (-not (Test-Path (Join-Path $repoDir "android/app/google-services.json"))) {
   Write-Warning "Missing android/app/google-services.json (Firebase config)."
 }
 
-if (Test-Path "ios/Runner/Info.plist") {
-  $plist = Get-Content "ios/Runner/Info.plist"
+if (Test-Path (Join-Path $repoDir "ios/Runner/Info.plist")) {
+  $plist = Get-Content (Join-Path $repoDir "ios/Runner/Info.plist") -Raw
   if ($plist -notmatch "NSCameraUsageDescription") {
     Write-Warning "Info.plist missing NSCameraUsageDescription."
   }
@@ -29,13 +111,21 @@ if (Test-Path "ios/Runner/Info.plist") {
   Write-Host "iOS folder not found. Skipping iOS checks."
 }
 
-flutter --version
-flutter pub get
-flutter analyze
+Invoke-InWorkDir -WorkDir $workDir -FilePath $flutterCmd -Arguments @("--version")
+Invoke-InWorkDir -WorkDir $workDir -FilePath $flutterCmd -Arguments @("pub", "get")
+Invoke-InWorkDir -WorkDir $workDir -FilePath $flutterCmd -Arguments @("analyze")
+
+if (-not $SkipTests) {
+  Invoke-InWorkDir -WorkDir $workDir -FilePath $flutterCmd -Arguments @("test")
+}
 
 if (-not $SkipBuild) {
-  flutter build apk --release
-  flutter build appbundle --release
+  Invoke-InWorkDir -WorkDir $workDir -FilePath $flutterCmd -Arguments @("build", "apk", "--release")
+  Invoke-InWorkDir -WorkDir $workDir -FilePath $flutterCmd -Arguments @("build", "appbundle", "--release")
+}
+
+if ($linkDir -and (Test-Path $linkDir)) {
+  Remove-Item -LiteralPath $linkDir -Force -Recurse
 }
 
 Write-Host "Release checks complete."

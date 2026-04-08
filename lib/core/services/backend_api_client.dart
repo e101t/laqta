@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/core/services/backend_session_service.dart';
@@ -15,24 +16,15 @@ class BackendApiException implements Exception {
 }
 
 class BackendApiClient {
-  BackendApiClient({
-    BackendSessionService? sessionService,
-    http.Client? client,
-  }) : _sessionService = sessionService ?? const BackendSessionService(),
-       _client = client ?? http.Client();
+  BackendApiClient({BackendSessionService? sessionService, http.Client? client})
+    : _sessionService = sessionService ?? BackendSessionService(),
+      _client = client ?? http.Client();
 
   final BackendSessionService _sessionService;
   final http.Client _client;
 
-  Future<dynamic> get(
-    String path, {
-    bool authorized = true,
-  }) {
-    return _send(
-      method: 'GET',
-      path: path,
-      authorized: authorized,
-    );
+  Future<dynamic> get(String path, {bool authorized = true}) {
+    return _send(method: 'GET', path: path, authorized: authorized);
   }
 
   Future<dynamic> post(
@@ -61,15 +53,8 @@ class BackendApiClient {
     );
   }
 
-  Future<dynamic> delete(
-    String path, {
-    bool authorized = true,
-  }) {
-    return _send(
-      method: 'DELETE',
-      path: path,
-      authorized: authorized,
-    );
+  Future<dynamic> delete(String path, {bool authorized = true}) {
+    return _send(method: 'DELETE', path: path, authorized: authorized);
   }
 
   Future<dynamic> uploadFile(
@@ -78,9 +63,7 @@ class BackendApiClient {
     String fieldName = 'file',
     bool authorized = true,
   }) async {
-    final headers = <String, String>{
-      'Accept': 'application/json',
-    };
+    final headers = <String, String>{'Accept': 'application/json'};
 
     if (authorized) {
       final token = await _sessionService.getToken();
@@ -120,10 +103,7 @@ class BackendApiClient {
       }
     }
 
-    throw BackendApiException(
-      message,
-      statusCode: response.statusCode,
-    );
+    throw BackendApiException(message, statusCode: response.statusCode);
   }
 
   Future<dynamic> _send({
@@ -131,6 +111,7 @@ class BackendApiClient {
     required String path,
     Map<String, dynamic>? body,
     required bool authorized,
+    bool retryOnUnauthorized = true,
   }) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -157,7 +138,11 @@ class BackendApiClient {
         response = await _client.post(uri, headers: headers, body: encodedBody);
         break;
       case 'PATCH':
-        response = await _client.patch(uri, headers: headers, body: encodedBody);
+        response = await _client.patch(
+          uri,
+          headers: headers,
+          body: encodedBody,
+        );
         break;
       case 'DELETE':
         response = await _client.delete(uri, headers: headers);
@@ -171,6 +156,20 @@ class BackendApiClient {
         return null;
       }
       return jsonDecode(response.body);
+    }
+
+    if (authorized && response.statusCode == 401 && retryOnUnauthorized) {
+      final refreshed = await _refreshBackendSession();
+      if (refreshed) {
+        return _send(
+          method: method,
+          path: path,
+          body: body,
+          authorized: authorized,
+          retryOnUnauthorized: false,
+        );
+      }
+      await _sessionService.clear();
     }
 
     String message = 'Backend request failed.';
@@ -188,9 +187,62 @@ class BackendApiClient {
       }
     }
 
-    throw BackendApiException(
-      message,
-      statusCode: response.statusCode,
+    throw BackendApiException(message, statusCode: response.statusCode);
+  }
+
+  Future<bool> _refreshBackendSession() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return false;
+    }
+
+    final idToken = await user.getIdToken(true);
+    if (idToken == null || idToken.isEmpty) {
+      return false;
+    }
+
+    final uri = BackendConfig.apiUri('/auth/firebase/exchange');
+    final response = await _client.post(
+      uri,
+      headers: const {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'idToken': idToken,
+        if (user.displayName != null && user.displayName!.trim().isNotEmpty)
+          'name': user.displayName!.trim(),
+      }),
     );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      return false;
+    }
+
+    if (response.body.isEmpty) {
+      return false;
+    }
+
+    final decoded = jsonDecode(response.body);
+    if (decoded is! Map<String, dynamic>) {
+      return false;
+    }
+
+    final token = decoded['token'];
+    final backendUser = decoded['user'];
+    if (token is! String || token.isEmpty) {
+      return false;
+    }
+
+    String? userId;
+    if (backendUser is Map<String, dynamic>) {
+      final rawUserId = backendUser['id'];
+      if (rawUserId is String && rawUserId.isNotEmpty) {
+        userId = rawUserId;
+      }
+    }
+
+    await _sessionService.saveSession(token: token, userId: userId);
+    return true;
   }
 }
