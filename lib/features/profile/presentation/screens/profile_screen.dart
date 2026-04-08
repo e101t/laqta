@@ -7,6 +7,7 @@ import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/auth/data/utils/phone_number_utils.dart';
 import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
 import 'package:laqta/features/profile/profile_dependencies.dart';
 import 'package:laqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
@@ -386,7 +387,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoCard(
               icon: Icons.phone,
               title: localizations.phoneNumber,
-              value: user.phone ?? 'غير مضاف',
+              value: user.phone == null || user.phone!.trim().isEmpty
+                  ? 'غير مضاف'
+                  : formatPhoneNumberForDisplay(user.phone),
               fieldKey: 'phone',
             ),
             const SizedBox(height: 12),

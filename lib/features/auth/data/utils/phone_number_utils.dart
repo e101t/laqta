@@ -76,3 +76,23 @@ String normalizePhoneNumberForFirebase(String rawPhoneNumber) {
 
   return normalized;
 }
+
+String formatPhoneNumberForDisplay(String? rawPhoneNumber) {
+  if (rawPhoneNumber == null || rawPhoneNumber.trim().isEmpty) {
+    return '';
+  }
+
+  final local = normalizePhoneNumberForLocalInput(rawPhoneNumber);
+  if (local.length == 11 && local.startsWith('07')) {
+    return local;
+  }
+
+  final normalized = _normalizeNumerals(
+    rawPhoneNumber,
+  ).replaceAll(RegExp(r'[^0-9+]'), '');
+  if (normalized.startsWith('+') && normalized.length > 1) {
+    return normalized;
+  }
+
+  return rawPhoneNumber.trim();
+}

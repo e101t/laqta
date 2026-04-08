@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/follow_service.dart';
 import 'package:laqta/core/services/report_service.dart';
 import 'package:laqta/core/utils/runtime_env.dart';
@@ -48,6 +49,15 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
+bool _exploreIsArabic(BuildContext context) =>
+    Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+
+String _exploreTr(
+  BuildContext context, {
+  required String ar,
+  required String en,
+}) => _exploreIsArabic(context) ? ar : en;
+
 class _ExploreScreenState extends State<ExploreScreen> {
   FollowService? _followService;
   ReportService? _reportService;
@@ -74,6 +84,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool get _isPhotographer => _userRole == AppConstants.rolePhotographer;
   bool get _useDemoContent =>
       AppConstants.enableDemoContent && kDebugMode && !isFlutterTestEnv();
+
+  String _tr({required String ar, required String en}) =>
+      _exploreTr(context, ar: ar, en: en);
 
   @override
   void initState() {
@@ -155,7 +168,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       } else {
         setState(() {
           _postsLoading = false;
-          _postsError = 'Failed to load posts';
+          _postsError = _tr(
+            ar: '\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062a',
+            en: 'Failed to load posts',
+          );
         });
       }
     }
@@ -193,7 +209,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       } else {
         setState(() {
           _photographersLoading = false;
-          _photographersError = 'Failed to load photographers';
+          _photographersError = _tr(
+            ar: '\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0645\u0635\u0648\u0631\u064a\u0646',
+            en: 'Failed to load photographers',
+          );
         });
       }
     }
@@ -604,9 +623,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Explore'),
+        title: Text(localizations.explore),
         actions: [
           if (_isPhotographer)
             IconButton(
@@ -635,11 +655,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildCreateSection() {
+    final localizations = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Create',
+          _tr(ar: '\u0625\u0646\u0634\u0627\u0621', en: 'Create'),
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -651,7 +672,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => AppRouter.goToCreatePost(context),
                 icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Post'),
+                label: Text(localizations.createPost),
               ),
             ),
             const SizedBox(width: 12),
@@ -659,7 +680,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => AppRouter.goToCreateStory(context),
                 icon: const Icon(Icons.bolt_outlined),
-                label: const Text('Story'),
+                label: Text(localizations.createStory),
               ),
             ),
           ],
@@ -675,7 +696,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Photographers',
+            _tr(
+              ar: '\u0627\u0644\u0645\u0635\u0648\u0631\u0648\u0646',
+              en: 'Photographers',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -696,8 +720,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_photographers.isEmpty) {
       return EmptyState(
         icon: Icons.photo_camera_outlined,
-        title: 'No photographers found',
-        message: 'Try again later',
+        title: _tr(
+          ar: '\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0635\u0648\u0631\u0648\u0646 \u0627\u0644\u0622\u0646',
+          en: 'No photographers found',
+        ),
+        message: _tr(
+          ar: '\u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649 \u0644\u0627\u062d\u0642\u064b\u0627',
+          en: 'Try again later',
+        ),
       );
     }
 
@@ -705,7 +735,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Photographers',
+          _tr(
+            ar: '\u0627\u0644\u0645\u0635\u0648\u0631\u0648\u0646',
+            en: 'Photographers',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -736,7 +769,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     alignment: AlignmentDirectional.centerEnd,
                     child: TextButton(
                       onPressed: () => _toggleFollow(photographer.id),
-                      child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                      child: Text(
+                        isFollowing
+                            ? _tr(
+                                ar: '\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629',
+                                en: 'Unfollow',
+                              )
+                            : _tr(
+                                ar: '\u0645\u062a\u0627\u0628\u0639\u0629',
+                                en: 'Follow',
+                              ),
+                      ),
                     ),
                   ),
               ],
@@ -753,7 +796,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Posts',
+            _tr(
+              ar: '\u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062a',
+              en: 'Posts',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -771,8 +817,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (_posts.isEmpty) {
       return EmptyState(
         icon: Icons.photo_library_outlined,
-        title: 'No posts yet',
-        message: 'Follow photographers to see posts here.',
+        title: _tr(
+          ar: '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u0634\u0648\u0631\u0627\u062a \u0628\u0639\u062f',
+          en: 'No posts yet',
+        ),
+        message: _tr(
+          ar: '\u062a\u0627\u0628\u0639 \u0627\u0644\u0645\u0635\u0648\u0631\u064a\u0646 \u0644\u062a\u0638\u0647\u0631 \u0645\u0646\u0634\u0648\u0631\u0627\u062a\u0647\u0645 \u0647\u0646\u0627.',
+          en: 'Follow photographers to see posts here.',
+        ),
       );
     }
 
@@ -784,15 +836,29 @@ class _ExploreScreenState extends State<ExploreScreen> {
         .toList();
 
     final sections = <_PostSection>[
-      if (followed.isNotEmpty) _PostSection('Following', followed),
-      if (suggested.isNotEmpty) _PostSection('Suggested', suggested),
+      if (followed.isNotEmpty)
+        _PostSection(
+          _tr(
+            ar: '\u0623\u062a\u0627\u0628\u0639\u0647\u0645',
+            en: 'Following',
+          ),
+          followed,
+        ),
+      if (suggested.isNotEmpty)
+        _PostSection(
+          _tr(ar: '\u0645\u0642\u062a\u0631\u062d', en: 'Suggested'),
+          suggested,
+        ),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Posts',
+          _tr(
+            ar: '\u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062a',
+            en: 'Posts',
+          ),
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -881,6 +947,9 @@ class _ExplorePostCard extends StatelessWidget {
     required this.canFollow,
   });
 
+  String _tr(BuildContext context, {required String ar, required String en}) =>
+      _exploreTr(context, ar: ar, en: en);
+
   @override
   Widget build(BuildContext context) {
     final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
@@ -908,7 +977,19 @@ class _ExplorePostCard extends StatelessWidget {
             if (canFollow)
               TextButton(
                 onPressed: onFollow,
-                child: Text(isFollowing ? 'Unfollow' : 'Follow'),
+                child: Text(
+                  isFollowing
+                      ? _tr(
+                          context,
+                          ar: '\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629',
+                          en: 'Unfollow',
+                        )
+                      : _tr(
+                          context,
+                          ar: '\u0645\u062a\u0627\u0628\u0639\u0629',
+                          en: 'Follow',
+                        ),
+                ),
               ),
           ],
         ),
@@ -923,12 +1004,24 @@ class _ExplorePostCard extends StatelessWidget {
                 children: [
                   OutlinedButton(
                     onPressed: onViewPhotographer,
-                    child: const Text('View photographer'),
+                    child: Text(
+                      _tr(
+                        context,
+                        ar: '\u0639\u0631\u0636 \u0645\u0644\u0641 \u0627\u0644\u0645\u0635\u0648\u0631',
+                        en: 'View photographer',
+                      ),
+                    ),
                   ),
                   if (isCustomer)
                     ElevatedButton(
                       onPressed: onCreateRequest,
-                      child: const Text('Request now'),
+                      child: Text(
+                        _tr(
+                          context,
+                          ar: '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646',
+                          en: 'Request now',
+                        ),
+                      ),
                     ),
                 ],
               ),
@@ -936,7 +1029,11 @@ class _ExplorePostCard extends StatelessWidget {
             IconButton(
               onPressed: onReport,
               icon: const Icon(Icons.flag_outlined),
-              tooltip: 'Report',
+              tooltip: _tr(
+                context,
+                ar: '\u0628\u0644\u0627\u063a',
+                en: 'Report',
+              ),
             ),
           ],
         ),
