@@ -1,3 +1,5 @@
+import 'package:cloud_functions/cloud_functions.dart'
+    show FirebaseFunctionsException;
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/features/profile/data/datasources/profile_remote_data_source.dart';
@@ -40,6 +42,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
       }
       await _remoteDataSource.updateUserProfile(userId, updates);
       return Result.success(null);
+    } on FirebaseFunctionsException catch (e) {
+      return Result.failure(
+        Failure(
+          message: e.message ?? 'Failed to update user profile',
+          code: e.code,
+        ),
+      );
     } catch (e) {
       return Result.failure(
         Failure(message: 'Failed to update user profile', code: e.toString()),
@@ -69,6 +78,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
         'profileCompleted': data.profileCompleted,
       });
       return Result.success(null);
+    } on FirebaseFunctionsException catch (e) {
+      return Result.failure(
+        Failure(
+          message: e.message ?? 'Failed to save basic info',
+          code: e.code,
+        ),
+      );
     } catch (e) {
       return Result.failure(
         Failure(message: 'Failed to save basic info', code: e.toString()),

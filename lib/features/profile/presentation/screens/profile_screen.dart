@@ -95,11 +95,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     setState(() {
       _user = _user!.copyWith(
+        role: updates['role'] as String? ?? _user!.role,
         name: updates['name'] as String? ?? _user!.name,
+        username: updates['username'] as String? ?? _user!.username,
         email: updates['email'] as String? ?? _user!.email,
         phone: updates['phone'] as String? ?? _user!.phone,
         governorate: updates['governorate'] as String? ?? _user!.governorate,
         photoUrl: updates['photoUrl'] as String? ?? _user!.photoUrl,
+        gender: updates['gender'] as String? ?? _user!.gender,
+        age: updates['age'] as int? ?? _user!.age,
+        birthYear: updates['birthYear'] as int? ?? _user!.birthYear,
+        profileCompleted:
+            updates['profileCompleted'] as bool? ?? _user!.profileCompleted,
+        over18Confirmed:
+            updates['over18Confirmed'] as bool? ?? _user!.over18Confirmed,
       );
     });
   }

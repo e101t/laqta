@@ -12,7 +12,13 @@ function Get-ShortPath {
   )
 
   $fsi = New-Object -ComObject Scripting.FileSystemObject
-  return $fsi.GetFolder($Path).ShortPath.Trim()
+  if (Test-Path -LiteralPath $Path -PathType Container) {
+    return $fsi.GetFolder($Path).ShortPath.Trim()
+  }
+  if (Test-Path -LiteralPath $Path -PathType Leaf) {
+    return $fsi.GetFile($Path).ShortPath.Trim()
+  }
+  throw "Path not found: $Path"
 }
 
 function Format-CmdArgument {
@@ -84,6 +90,15 @@ if ($workDir -match '\s') {
 
 if (-not (Test-Path $flutterCmd)) {
   $flutterCmd = "flutter"
+} else {
+  try {
+    $shortFlutterCmd = Get-ShortPath -Path $flutterCmd
+    if ($shortFlutterCmd -and ($shortFlutterCmd -notmatch '\s')) {
+      $flutterCmd = $shortFlutterCmd
+    }
+  } catch {
+    Write-Warning "Could not resolve short path for Flutter binary '$flutterCmd'."
+  }
 }
 
 Write-Host "Running Flutter release checks from $workDir"

@@ -18,6 +18,10 @@ const {
   toNumber,
   validateAmountAndCurrency,
 } = require("./payment_validation");
+const {
+  buildPublicUserData,
+  sanitizeProfilePayload,
+} = require("./profile_validation");
 
 async function getBookingOrThrow(bookingId) {
   if (typeof bookingId !== "string" || bookingId.trim().length === 0) {
@@ -66,6 +70,127 @@ function assertAmountAndCurrency(booking, amount, currency) {
 function isPlainObject(value) {
   return value != null && typeof value === "object" && !Array.isArray(value);
 }
+
+exports.saveUserProfile = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Authentication required.",
+    );
+  }
+
+  const source = isPlainObject(data) ? data : {};
+  const userId =
+    typeof source.userId === "string" && source.userId.trim()
+      ? source.userId.trim()
+      : context.auth.uid;
+  if (userId !== context.auth.uid) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "You cannot modify another user profile.",
+    );
+  }
+
+  const createIfMissing = Boolean(source.createIfMissing);
+  const sanitized = sanitizeProfilePayload(source.profile ?? source);
+  if (!sanitized.ok) {
+    throw new functions.https.HttpsError(
+      sanitized.code,
+      sanitized.message,
+    );
+  }
+
+  const payload = sanitized.payload || {};
+  const serverTimestamp = admin.firestore.FieldValue.serverTimestamp();
+  const usersRef = db.collection("users").doc(userId);
+  const publicRef = db.collection("users_public").doc(userId);
+  const claimsRef = db.collection("username_claims");
+
+  await db.runTransaction(async (tx) => {
+    const userSnap = await tx.get(usersRef);
+    const existing = userSnap.exists ? userSnap.data() || {} : {};
+    const oldUsername =
+      typeof existing.usernameLower === "string" ? existing.usernameLower : null;
+    const nextUsername =
+      typeof payload.usernameLower === "string"
+        ? payload.usernameLower
+        : oldUsername;
+
+    if (createIfMissing && !nextUsername) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Username is required.",
+      );
+    }
+
+    if (nextUsername) {
+      const claimRef = claimsRef.doc(nextUsername);
+      const claimSnap = await tx.get(claimRef);
+      const claimedBy =
+        claimSnap.exists && claimSnap.data()
+          ? claimSnap.data().userId
+          : null;
+      if (claimedBy && claimedBy !== userId) {
+        throw new functions.https.HttpsError(
+          "already-exists",
+          "Username is already taken.",
+        );
+      }
+
+      tx.set(
+        claimRef,
+        {
+          userId,
+          usernameLower: nextUsername,
+          createdAt: claimSnap.exists
+            ? claimSnap.data().createdAt || serverTimestamp
+            : serverTimestamp,
+          updatedAt: serverTimestamp,
+        },
+        { merge: true },
+      );
+
+      if (oldUsername && oldUsername !== nextUsername) {
+        tx.delete(claimsRef.doc(oldUsername));
+      }
+    }
+
+    const basePayload =
+      createIfMissing && !userSnap.exists
+        ? {
+            uid: userId,
+            lang: "ar",
+            photoUrl: null,
+            fcmToken: null,
+            lastSeen: null,
+            blockedUsers: [],
+            interests: [],
+            createdAt: serverTimestamp,
+          }
+        : {};
+
+    const nextUserData = {
+      ...basePayload,
+      ...payload,
+      updatedAt: serverTimestamp,
+    };
+
+    tx.set(usersRef, nextUserData, { merge: true });
+
+    const mergedForPublic = {
+      ...existing,
+      ...basePayload,
+      ...payload,
+    };
+    tx.set(
+      publicRef,
+      buildPublicUserData(mergedForPublic, serverTimestamp),
+      { merge: true },
+    );
+  });
+
+  return { ok: true };
+});
 
 exports.createPaymentIntent = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -1094,7 +1219,21 @@ exports.deleteAccountData = functions
       scrubbedBookings: 0,
       deletedPrivateDocs: 0,
       deletedProfileFiles: 0,
+      deletedUsernameClaims: 0,
     };
+
+    let usernameLower = null;
+    try {
+      const userDoc = await db.collection("users").doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() || {};
+        if (typeof userData.usernameLower === "string") {
+          usernameLower = userData.usernameLower;
+        }
+      }
+    } catch (_) {
+      // Best-effort lookup.
+    }
 
     summary.deletedNotifications += await deleteDocsByQuery(
       db.collection("notifications").where("userId", "==", userId),
@@ -1172,6 +1311,14 @@ exports.deleteAccountData = functions
       await db.collection("users").doc(userId).delete();
     } catch (_) {
       // Best-effort cleanup.
+    }
+    if (usernameLower) {
+      try {
+        await db.collection("username_claims").doc(usernameLower).delete();
+        summary.deletedUsernameClaims += 1;
+      } catch (_) {
+        // Best-effort cleanup.
+      }
     }
 
     summary.deletedProfileFiles += await deleteFilesWithPrefix(

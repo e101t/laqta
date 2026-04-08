@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/core/security/secure_storage.dart';
 import 'package:laqta/core/utils/user_public_fields.dart';
@@ -12,14 +12,17 @@ import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
 
 class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
   final FirebaseStorage _storage;
   final SecureFirestore _secure;
   final SecureStorage _secureStorage;
 
   FirestoreProfileRemoteDataSource({
     FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
     FirebaseStorage? storage,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance,
        _storage = storage ?? FirebaseStorage.instance,
        _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
        _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
@@ -48,39 +51,21 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     String userId,
     Map<String, dynamic> updates,
   ) async {
-    await _secure.guard(() => _usersCollection.doc(userId).update(updates));
-    await _syncPublicProfile(userId, updates);
+    if (updates.isEmpty) return;
+    await _saveProfileViaCallable(
+      userId: userId,
+      profile: updates,
+      createIfMissing: false,
+    );
   }
 
   @override
   Future<void> saveBasicInfo(String userId, Map<String, dynamic> data) async {
-    final ref = _usersCollection.doc(userId);
-    final existing = await _secure.guard(() => ref.get());
-    final timestamp = FieldValue.serverTimestamp();
-
-    final payload = <String, dynamic>{
-      ...data,
-      'updatedAt': timestamp,
-    };
-
-    // Ensure the user document exists with required fields.
-    // This allows onboarding to skip the dedicated role screen.
-    if (!existing.exists) {
-      payload.addAll({
-        'uid': userId,
-        'lang': AppConstants.defaultLanguage,
-        'photoUrl': null,
-        'fcmToken': null,
-        'lastSeen': null,
-        'blockedUsers': <String>[],
-        'interests': <String>[],
-        'createdAt': timestamp,
-      });
-    }
-
-    await _secure.guard(() => ref.set(payload, SetOptions(merge: true)));
-
-    await _syncPublicProfile(userId, payload);
+    await _saveProfileViaCallable(
+      userId: userId,
+      profile: data,
+      createIfMissing: true,
+    );
   }
 
   @override
@@ -203,17 +188,19 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     );
   }
 
-  Future<void> _syncPublicProfile(
-    String userId,
-    Map<String, dynamic> updates,
-  ) async {
-    final payload = buildUserPublicData(updates);
-    if (payload.isEmpty) return;
-    payload['updatedAt'] = FieldValue.serverTimestamp();
-    await _secure.guard(
-      () => _usersPublicCollection
-          .doc(userId)
-          .set(payload, SetOptions(merge: true)),
-    );
+  Future<void> _saveProfileViaCallable({
+    required String userId,
+    required Map<String, dynamic> profile,
+    required bool createIfMissing,
+  }) async {
+    if (userId.trim().isEmpty) {
+      throw StateError('Missing userId');
+    }
+    final callable = _functions.httpsCallable('saveUserProfile');
+    await callable.call(<String, dynamic>{
+      'userId': userId,
+      'createIfMissing': createIfMissing,
+      'profile': profile,
+    });
   }
 }

@@ -253,7 +253,16 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
         data: data,
       );
       if (!saveResult.isSuccess) {
-        throw StateError(saveResult.failureOrNull?.message ?? 'Save failed');
+        final rollback = await AuthDependencies.deleteCurrentUser().call();
+        if (kDebugMode && !rollback.isSuccess) {
+          debugPrint(
+            'Failed to rollback auth user after sign-up save failure: '
+            '${rollback.failureOrNull}',
+          );
+        }
+        throw StateError(
+          saveResult.failureOrNull?.message ?? 'Save failed',
+        );
       }
 
       AppRouter.invalidateProfileCache(authUserId);
@@ -265,7 +274,13 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
       }
       if (mounted) {
         messenger.showSnackBar(
-          SnackBar(content: Text(localizations.somethingWentWrong)),
+          SnackBar(
+            content: Text(
+              e is StateError
+                  ? e.message.toString()
+                  : localizations.somethingWentWrong,
+            ),
+          ),
         );
       }
     } finally {

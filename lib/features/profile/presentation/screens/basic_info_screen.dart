@@ -369,7 +369,15 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('حدث خطأ أثناء الحفظ')));
+      ).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is StateError
+                ? e.message.toString()
+                : 'حدث خطأ أثناء الحفظ',
+          ),
+        ),
+      );
     }
   }
 
@@ -834,3 +842,4 @@ class _GenderOption extends StatelessWidget {
     );
   }
 }
+
