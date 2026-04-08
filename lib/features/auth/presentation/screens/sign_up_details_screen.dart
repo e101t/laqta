@@ -118,7 +118,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
         _isCheckingUsername = false;
         _usernameAvailable = false;
         _usernameError =
-            'يجب أن يبدأ بحرف ويحتوي حروف أو أرقام فقط بدون مسافات';
+            'يجب أن يبدأ بحرف ويحتوي على حروف أو أرقام فقط بدون مسافات';
       });
       return;
     }
@@ -415,7 +415,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                                   return 'اسم المستخدم محجوز';
                                 }
                                 if (!_isUsernameFormatValid(normalized)) {
-                                  return 'يجب أن يبدأ بحرف ويحتوي حروف أو أرقام فقط';
+                                  return 'يجب أن يبدأ بحرف ويحتوي على حروف أو أرقام فقط';
                                 }
                                 if (!_usernameAvailable &&
                                     !_isCheckingUsername) {
@@ -549,7 +549,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             AppTextField(
                               controller: _passwordController,
                               label: 'كلمة المرور',
-                              hint: '••••••••',
+                              hint: '********',
                               prefixIcon: Icons.lock_outline,
                               enabled: !_isLoading,
                               obscureText: _obscurePassword,
@@ -574,7 +574,7 @@ class _SignUpDetailsScreenState extends State<SignUpDetailsScreen> {
                             AppTextField(
                               controller: _confirmPasswordController,
                               label: 'تأكيد كلمة المرور',
-                              hint: '••••••••',
+                              hint: '********',
                               prefixIcon: Icons.lock_outline,
                               enabled: !_isLoading,
                               obscureText: _obscureConfirmPassword,

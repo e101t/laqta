@@ -28,13 +28,13 @@ class LoyaltyPoints {
   String getTierName() {
     switch (tier) {
       case 'platinum':
-        return '????????? ??';
+        return 'بلاتينيوم بلس';
       case 'gold':
-        return '???? ??';
+        return 'ذهبي بلس';
       case 'silver':
-        return '??? ??';
+        return 'فضي بلس';
       default:
-        return '?????? ??';
+        return 'برونزي بلس';
     }
   }
 
@@ -110,32 +110,32 @@ class PointTransaction {
   String getIcon() {
     switch (source) {
       case 'booking':
-        return '??';
+        return '📸';
       case 'referral':
-        return '??';
+        return '👥';
       case 'review':
-        return '?';
+        return '⭐';
       case 'first_booking':
-        return '??';
+        return '🎉';
       default:
-        return '??';
+        return '🎁';
     }
   }
 
   String getTitle() {
     switch (source) {
       case 'booking':
-        return '??? ????';
+        return 'حجز مكتمل';
       case 'referral':
-        return '???? ????';
+        return 'دعوة صديق';
       case 'review':
-        return '????? ?????';
+        return 'كتابة تقييم';
       case 'first_booking':
-        return '??? ???';
+        return 'أول حجز';
       case 'redeemed':
-        return '??????? ??????';
+        return 'استبدال النقاط';
       default:
-        return '????';
+        return 'نقاط';
     }
   }
 }

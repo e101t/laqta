@@ -37,6 +37,11 @@ class _AuthScreenState extends State<AuthScreen> {
   Timer? _timer;
   bool _obscurePassword = true;
 
+  bool get _isArabic =>
+      Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+
+  String _tr({required String ar, required String en}) => _isArabic ? ar : en;
+
   @override
   void initState() {
     super.initState();
@@ -113,6 +118,19 @@ class _AuthScreenState extends State<AuthScreen> {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
       case TargetPlatform.iOS:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  bool get _isAppleSignInSupported {
+    if (kIsWeb) {
+      return true;
+    }
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.iOS:
+      case TargetPlatform.macOS:
         return true;
       default:
         return false;
@@ -216,18 +234,30 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = _passwordController.text;
 
     if (identifier.isEmpty) {
-      _showSnackBar('الرجاء إدخال اسم المستخدم أو البريد الإلكتروني');
+      _showSnackBar(
+        _tr(
+          ar: 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني',
+          en: 'Please enter your username or email',
+        ),
+      );
       return;
     }
     if (password.isEmpty) {
-      _showSnackBar('الرجاء إدخال كلمة المرور');
+      _showSnackBar(
+        _tr(ar: 'يرجى إدخال كلمة المرور', en: 'Please enter your password'),
+      );
       return;
     }
 
     final normalized = identifier.replaceAll(' ', '');
-    final looksLikePhone = RegExp(r'^\\+?\\d{7,}$').hasMatch(normalized);
+    final looksLikePhone = RegExp(r'^\+?\d{7,}$').hasMatch(normalized);
     if (looksLikePhone && !normalized.contains('@')) {
-      _showSnackBar('للدخول برقم الهاتف استخدم التحقق بالرمز (OTP)');
+      _showSnackBar(
+        _tr(
+          ar: 'للدخول برقم الهاتف استخدم التحقق بالرمز (OTP)',
+          en: 'Use phone verification (OTP) to sign in with a phone number',
+        ),
+      );
       setState(() {
         _showPhoneAuth = true;
         _showOTPVerification = false;
@@ -275,6 +305,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithPhone() async {
+
     _trackTap("phone");
     final localizations = AppLocalizations.of(context);
 
@@ -756,8 +787,8 @@ class _AuthScreenState extends State<AuthScreen> {
     return [
       AppTextField(
         controller: _identifierController,
-        label: 'اسم المستخدم / البريد',
-        hint: 'مثال: ahmedphoto23',
+        label: _tr(ar: 'اسم المستخدم / البريد الإلكتروني', en: 'Username / Email'),
+        hint: _tr(ar: 'مثال: ahmedphoto23', en: 'Example: ahmedphoto23'),
         prefixIcon: Icons.person_outline,
         enabled: !_isLoading,
         textInputAction: TextInputAction.next,
@@ -765,8 +796,8 @@ class _AuthScreenState extends State<AuthScreen> {
       const SizedBox(height: 12),
       AppTextField(
         controller: _passwordController,
-        label: 'كلمة المرور',
-        hint: '••••••••',
+        label: _tr(ar: 'كلمة المرور', en: 'Password'),
+        hint: '********',
         prefixIcon: Icons.lock_outline,
         enabled: !_isLoading,
         obscureText: _obscurePassword,
@@ -841,22 +872,23 @@ class _AuthScreenState extends State<AuthScreen> {
 
       const SizedBox(height: 14),
 
-      _AuthProviderButton(
-        onPressed: _isLoading ? null : _signInWithApple,
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        icon: const _AuthBadge(
+      if (_isAppleSignInSupported) ...[
+        _AuthProviderButton(
+          onPressed: _isLoading ? null : _signInWithApple,
           backgroundColor: Colors.black,
-          child: Icon(Icons.apple, color: Colors.white),
+          foregroundColor: Colors.white,
+          icon: const _AuthBadge(
+            backgroundColor: Colors.black,
+            child: Icon(Icons.apple, color: Colors.white),
+          ),
+          label: appleLabel,
+          textStyle: textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
-        label: appleLabel,
-        textStyle: textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-      ),
-
-      const SizedBox(height: 18),
+        const SizedBox(height: 18),
+      ],
 
       if (_isPhoneAuthSupported)
         _AuthProviderButton(
@@ -1337,3 +1369,4 @@ class _AuthLoadingBarrier extends StatelessWidget {
     );
   }
 }
+

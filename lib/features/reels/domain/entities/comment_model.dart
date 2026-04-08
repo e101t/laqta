@@ -46,15 +46,15 @@ class CommentModel {
     final difference = now.difference(createdAt);
 
     if (difference.inMinutes < 1) {
-      return '????';
+      return 'الآن';
     } else if (difference.inMinutes < 60) {
-      return '??? ${difference.inMinutes} ?????';
+      return 'منذ ${difference.inMinutes} دقيقة';
     } else if (difference.inHours < 24) {
-      return '??? ${difference.inHours} ????';
+      return 'منذ ${difference.inHours} ساعة';
     } else if (difference.inDays < 7) {
-      return '??? ${difference.inDays} ???';
+      return 'منذ ${difference.inDays} يوم';
     } else {
-      return '${difference.inDays ~/ 7} ?????';
+      return 'منذ ${difference.inDays ~/ 7} أسبوع';
     }
   }
 }

@@ -41,21 +41,21 @@ class NotificationModel {
   String getIcon() {
     switch (type) {
       case 'booking':
-        return '??';
+        return '📅';
       case 'message':
-        return '??';
+        return '💬';
       case 'review':
-        return '?';
+        return '⭐';
       case 'offer':
-        return '??';
+        return '💼';
       case 'request':
-        return '??';
+        return '📸';
       case 'payment':
-        return '??';
+        return '💳';
       case 'system':
-        return '??';
+        return '🔔';
       default:
-        return '??';
+        return '🔔';
     }
   }
 
@@ -64,15 +64,15 @@ class NotificationModel {
     final difference = now.difference(createdAt);
 
     if (difference.inSeconds < 60) {
-      return '????';
+      return 'الآن';
     } else if (difference.inMinutes < 60) {
-      return '??? ${difference.inMinutes} ?????';
+      return 'منذ ${difference.inMinutes} دقيقة';
     } else if (difference.inHours < 24) {
-      return '??? ${difference.inHours} ????';
+      return 'منذ ${difference.inHours} ساعة';
     } else if (difference.inDays < 7) {
-      return '??? ${difference.inDays} ???';
+      return 'منذ ${difference.inDays} يوم';
     } else if (difference.inDays < 30) {
-      return '??? ${(difference.inDays / 7).floor()} ?????';
+      return 'منذ ${(difference.inDays / 7).floor()} أسبوع';
     } else {
       return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
     }
