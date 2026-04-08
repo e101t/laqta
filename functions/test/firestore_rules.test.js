@@ -668,7 +668,7 @@ test('accept offer batch: booking create denies confirmed status before payment'
   await assertFails(batch.commit());
 });
 
-test('accept offer batch: booking create allows pending status before payment', async () => {
+test('accept offer batch: direct client accept is denied even with pending booking', async () => {
   const customerId = 'cust_accept_ok';
   const photographerId = 'photog_accept_ok';
   const requestId = 'req_accept_ok_1';
@@ -766,7 +766,54 @@ test('accept offer batch: booking create allows pending status before payment', 
   });
   batch.set(customerDb.collection('bookings').doc(bookingId), bookingData);
 
-  await assertSucceeds(batch.commit());
+  await assertFails(batch.commit());
+});
+
+test('offer update: request owner can still reject a submitted offer directly', async () => {
+  const customerId = 'cust_reject_ok';
+  const photographerId = 'photog_reject_ok';
+  const requestId = 'req_reject_ok_1';
+  const offerId = 'offer_reject_ok_1';
+
+  const customerDb = authedDb(customerId);
+  const photographerDb = authedDb(photographerId);
+
+  await seedVerifiedPhotographer(photographerId);
+
+  const requestData = requestDocData({ clientId: customerId, withLocation: true });
+  requestData.status = 'awaiting_offers';
+  await assertSucceeds(
+    customerDb.collection('requests').doc(requestId).set(requestData),
+  );
+
+  const offerData = {
+    requestId,
+    photographerId,
+    price: 180,
+    currency: 'IQD',
+    deliveryDays: 2,
+    deliverables: {
+      photosCount: 40,
+      videoMinutes: null,
+      includesEditing: true,
+      includesVideo: false,
+      notes: null,
+    },
+    notes: null,
+    status: 'submitted',
+    createdAt: Timestamp.fromDate(new Date()),
+    updatedAt: Timestamp.fromDate(new Date()),
+  };
+  await assertSucceeds(
+    photographerDb.collection('offers').doc(offerId).set(offerData),
+  );
+
+  await assertSucceeds(
+    customerDb.collection('offers').doc(offerId).update({
+      status: 'rejected',
+      updatedAt: Timestamp.fromDate(new Date()),
+    }),
+  );
 });
 
 test('booking delete is denied for customer and allowed for admin', async () => {

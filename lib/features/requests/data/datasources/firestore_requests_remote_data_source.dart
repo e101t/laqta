@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,14 +17,17 @@ import 'package:laqta/features/requests/data/dtos/request_offer_dto.dart';
 
 class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
   final FirebaseStorage _storage;
   final SecureFirestore _secure;
   final SecureStorage _secureStorage;
 
   FirestoreRequestsRemoteDataSource({
     FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
     FirebaseStorage? storage,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance,
        _storage = storage ?? FirebaseStorage.instance,
        _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
        _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
@@ -34,13 +38,12 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
   CollectionReference<Map<String, dynamic>> get _offersCollection =>
       _firestore.collection('offers');
 
-  CollectionReference<Map<String, dynamic>> get _bookingsCollection =>
-      _firestore.collection('bookings');
-
   @override
   Future<List<RequestDto>> getMyRequests(String clientId) async {
     if (Firebase.apps.isEmpty) {
-      throw StateError('Firebase must be initialized before fetching requests.');
+      throw StateError(
+        'Firebase must be initialized before fetching requests.',
+      );
     }
     final auth = FirebaseAuth.instance;
     final currentUser = auth.currentUser;
@@ -59,8 +62,10 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
     if (clientId != currentUser.uid) {
       throw StateError('ClientId mismatch ($clientId vs ${currentUser.uid}).');
     }
-    Query<Map<String, dynamic>> query =
-        _requestsCollection.where('clientId', isEqualTo: clientId);
+    Query<Map<String, dynamic>> query = _requestsCollection.where(
+      'clientId',
+      isEqualTo: clientId,
+    );
     if (!kDebugMode) {
       query = query.orderBy('createdAt', descending: true);
     }
@@ -131,10 +136,8 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
 
     final docs = docsById.values.toList()
       ..sort(
-        (a, b) => _compareCreatedAtDesc(
-          a.data()['createdAt'],
-          b.data()['createdAt'],
-        ),
+        (a, b) =>
+            _compareCreatedAtDesc(a.data()['createdAt'], b.data()['createdAt']),
       );
 
     return docs
@@ -169,13 +172,17 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
   ) async {
     final patched = Map<String, dynamic>.from(updates)
       ..['updatedAt'] = Timestamp.now();
-    await _secure.guard(() => _requestsCollection.doc(requestId).update(patched));
+    await _secure.guard(
+      () => _requestsCollection.doc(requestId).update(patched),
+    );
   }
 
   @override
   Future<List<RequestOfferDto>> getOffersForRequest(String requestId) async {
-    Query<Map<String, dynamic>> query =
-        _offersCollection.where('requestId', isEqualTo: requestId);
+    Query<Map<String, dynamic>> query = _offersCollection.where(
+      'requestId',
+      isEqualTo: requestId,
+    );
     if (!kDebugMode) {
       query = query.orderBy('createdAt', descending: true);
     }
@@ -187,8 +194,10 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
 
   @override
   Future<List<RequestOfferDto>> getMyOffers(String photographerId) async {
-    Query<Map<String, dynamic>> query =
-        _offersCollection.where('photographerId', isEqualTo: photographerId);
+    Query<Map<String, dynamic>> query = _offersCollection.where(
+      'photographerId',
+      isEqualTo: photographerId,
+    );
     if (!kDebugMode) {
       query = query.orderBy('createdAt', descending: true);
     }
@@ -219,19 +228,12 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
     required RequestOfferDto offer,
     required BookingDto booking,
   }) async {
-    final batch = _firestore.batch();
-    batch.update(_requestsCollection.doc(request.id), {
-      'status': 'offer_selected',
-      'selectedOfferId': offer.id,
-      'selectedPhotographerId': offer.photographerId,
-      'updatedAt': Timestamp.now(),
+    final callable = _functions.httpsCallable('acceptOfferWithBooking');
+    await callable.call(<String, dynamic>{
+      'requestId': request.id,
+      'offerId': offer.id,
+      'booking': booking.toJson(),
     });
-    batch.update(_offersCollection.doc(offer.id), {
-      'status': 'accepted',
-      'updatedAt': Timestamp.now(),
-    });
-    batch.set(_bookingsCollection.doc(booking.id), booking.toMap());
-    await _secure.guard(() => batch.commit());
   }
 
   @override
@@ -240,8 +242,7 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
     required String filePath,
   }) async {
     final extension = _fileExtension(filePath);
-    final fileName =
-        'ref_${DateTime.now().millisecondsSinceEpoch}$extension';
+    final fileName = 'ref_${DateTime.now().millisecondsSinceEpoch}$extension';
     final storageRef = _storage
         .ref()
         .child('requests')

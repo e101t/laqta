@@ -77,13 +77,10 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
     }
   }
 
-  bool get _isOwner =>
-      _request != null && _currentUserId == _request!.clientId;
+  bool get _isOwner => _request != null && _currentUserId == _request!.clientId;
 
   bool get _canEdit =>
-      _isOwner &&
-      _request != null &&
-      !_isLockedStatus(_request!.status);
+      _isOwner && _request != null && !_isLockedStatus(_request!.status);
 
   bool get _canCancel =>
       _isOwner &&
@@ -168,9 +165,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
     }
     await _notifyOfferPhotographers();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(localizations.requestCanceled)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(localizations.requestCanceled)));
     }
     await _loadRequest();
   }
@@ -186,8 +183,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
     }
     if (offers.isEmpty) return;
 
-    final photographerIds =
-        offers.map((offer) => offer.photographerId).toSet();
+    final photographerIds = offers.map((offer) => offer.photographerId).toSet();
     for (final id in photographerIds) {
       final notification = NotificationModel(
         notificationId: '',
@@ -237,22 +233,68 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
         booking: booking,
       );
       if (!result.isSuccess) {
-        throw StateError('Failed to accept offer');
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to accept offer',
+        );
       }
       await _notifyPhotographer(offer, bookingId);
 
       if (mounted) {
         AppRouter.goToBookingDetails(context, bookingId);
       }
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizations.acceptOfferFailed)),
+          SnackBar(
+            content: Text(
+              _mapAcceptOfferError(
+                error is StateError ? error.message : null,
+                localizations,
+              ),
+            ),
+          ),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  String _mapAcceptOfferError(String? message, AppLocalizations localizations) {
+    switch (message) {
+      case "This offer is below the photographer's minimum booking price.":
+        return _localizedText(
+          ar: 'هذا العرض أقل من الحد الأدنى لسعر هذا المصور.',
+          en: message!,
+        );
+      case 'This photographer does not accept same-day bookings.':
+        return _localizedText(
+          ar: 'هذا المصور لا يقبل الحجوزات في نفس اليوم.',
+          en: message!,
+        );
+      case 'This photographer is unavailable on the selected day.':
+        return _localizedText(
+          ar: 'هذا المصور غير متاح في اليوم المحدد.',
+          en: message!,
+        );
+      case "The selected time is outside the photographer's working hours.":
+        return _localizedText(
+          ar: 'الوقت المحدد خارج ساعات عمل المصور.',
+          en: message!,
+        );
+      case 'This photographer already has another booking at that time.':
+        return _localizedText(
+          ar: 'لدى هذا المصور حجز آخر في هذا الوقت.',
+          en: message!,
+        );
+      default:
+        return localizations.acceptOfferFailed;
+    }
+  }
+
+  String _localizedText({required String ar, required String en}) {
+    final languageCode = Localizations.localeOf(context).languageCode;
+    return languageCode == 'ar' ? ar : en;
   }
 
   Future<void> _notifyPhotographer(RequestOffer offer, String bookingId) async {
@@ -330,10 +372,12 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
   }
 
   Future<_OfferMetrics> _buildOfferMetrics(RequestOffer offer) async {
-    final trustResult =
-        await TrustDependencies.getTrustStats().call(offer.photographerId);
-    final profileResult =
-        await ProfileDependencies.getUserProfile().call(userId: offer.photographerId);
+    final trustResult = await TrustDependencies.getTrustStats().call(
+      offer.photographerId,
+    );
+    final profileResult = await ProfileDependencies.getUserProfile().call(
+      userId: offer.photographerId,
+    );
     return _OfferMetrics(
       offerId: offer.id,
       trustScore: _deriveTrustScore(trustResult.valueOrNull),
@@ -393,7 +437,8 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
     if (stats == null || stats.reviewCount == 0) {
       return 55;
     }
-    final average = (stats.avgQuality +
+    final average =
+        (stats.avgQuality +
             stats.avgCommunication +
             stats.avgOnTime +
             stats.avgDelivery) /
@@ -443,7 +488,9 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          isExpired ? localizations.offersClosed : localizations.receivingOffers,
+          isExpired
+              ? localizations.offersClosed
+              : localizations.receivingOffers,
           style: textTheme.bodyMedium,
         ),
         Text(
@@ -487,10 +534,7 @@ class _RequestDetailsScreenState extends State<RequestDetailsScreen> {
       appBar: AppBar(title: Text(localizations.requestDetails)),
       floatingActionButton: !_isOwner
           ? FloatingActionButton.extended(
-              onPressed: () => AppRouter.goToOfferSubmit(
-                context,
-                request.id,
-              ),
+              onPressed: () => AppRouter.goToOfferSubmit(context, request.id),
               label: Text(localizations.sendOffer),
               icon: const Icon(Icons.send),
             )
@@ -603,9 +647,15 @@ class _RequestSummaryCard extends StatelessWidget {
             const SizedBox(height: 8),
             _InfoRow(label: localizations.dateLabel, value: request.date),
             _InfoRow(label: localizations.timeLabel, value: request.time),
-            _InfoRow(label: localizations.locationLabel, value: request.governorate),
+            _InfoRow(
+              label: localizations.locationLabel,
+              value: request.governorate,
+            ),
             if (request.address != null)
-              _InfoRow(label: localizations.addressLabel, value: request.address!),
+              _InfoRow(
+                label: localizations.addressLabel,
+                value: request.address!,
+              ),
             _InfoRow(
               label: localizations.duration,
               value: '${request.durationHours} ${localizations.hours}',
@@ -648,7 +698,8 @@ class _RequestSummaryCard extends StatelessWidget {
             if (request.latitude != null && request.longitude != null)
               _InfoRow(
                 label: localizations.mapLabel,
-                value: request.locationLabel ??
+                value:
+                    request.locationLabel ??
                     'Lat ${request.latitude!.toStringAsFixed(4)}, '
                         'Lng ${request.longitude!.toStringAsFixed(4)}',
               ),
@@ -737,7 +788,9 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -750,11 +803,7 @@ class OfferCard extends StatelessWidget {
   final RequestOffer offer;
   final VoidCallback onAccept;
 
-  const OfferCard({
-    super.key,
-    required this.offer,
-    required this.onAccept,
-  });
+  const OfferCard({super.key, required this.offer, required this.onAccept});
 
   Future<String> _resolvePhotographerName() async {
     final result = await ProfileDependencies.getUserProfile().call(
@@ -773,8 +822,11 @@ class OfferCard extends StatelessWidget {
     }
 
     final average =
-        (stats.avgQuality + stats.avgCommunication + stats.avgOnTime + stats.avgDelivery) /
-            4;
+        (stats.avgQuality +
+            stats.avgCommunication +
+            stats.avgOnTime +
+            stats.avgDelivery) /
+        4;
     if (average >= 4.2) return 'high';
     if (average >= 3.2) return 'medium';
     return 'low';
@@ -795,10 +847,9 @@ class OfferCard extends StatelessWidget {
               future: _resolvePhotographerName(),
               builder: (context, snapshot) {
                 final name = snapshot.data;
-                final displayName =
-                    (name == null || name.isEmpty)
-                        ? localizations.photographer
-                        : name;
+                final displayName = (name == null || name.isEmpty)
+                    ? localizations.photographer
+                    : name;
                 return Text(displayName, style: textTheme.titleMedium);
               },
             ),

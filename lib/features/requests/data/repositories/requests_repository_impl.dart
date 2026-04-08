@@ -1,3 +1,5 @@
+import 'package:cloud_functions/cloud_functions.dart'
+    show FirebaseFunctionsException;
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/features/booking/data/mappers/booking_mapper.dart';
@@ -131,6 +133,13 @@ class RequestsRepositoryImpl implements RequestsRepository {
         booking: bookingDto,
       );
       return Result.success(null);
+    } on FirebaseFunctionsException catch (error) {
+      return Result.failure(
+        Failure(
+          message: error.message ?? 'Failed to accept offer',
+          code: error.code,
+        ),
+      );
     } catch (_) {
       return Result.failure(const Failure(message: 'Failed to accept offer'));
     }

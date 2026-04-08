@@ -1132,7 +1132,7 @@ service cloud.firestore {
         isRequestOwner(resource.data.requestId) &&
         changed.hasOnly(['status', 'updatedAt']) &&
         resource.data.status == 'submitted' &&
-        request.resource.data.status in ['accepted', 'rejected'];
+        request.resource.data.status in ['rejected'];
     }
 
     function offerUpdateByPhotographerAllowed() {
@@ -1158,6 +1158,25 @@ service cloud.firestore {
         offerAfter.data.requestId == requestId &&
         offerAfter.data.photographerId == photographerId &&
         offerAfter.data.status == 'accepted';
+    }
+
+    function requestOwnerDirectUpdateAllowed() {
+      return resource.data != null &&
+        request.resource.data.clientId == resource.data.clientId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (isOwner(resource.data.clientId) || isAdmin()) &&
+        isValidRequestDoc(request.resource.data) &&
+        (
+          isAdmin() ||
+          (
+            request.resource.data.selectedOfferId == resource.data.selectedOfferId &&
+            request.resource.data.selectedPhotographerId == resource.data.selectedPhotographerId &&
+            !(
+              request.resource.data.status == 'offer_selected' &&
+              resource.data.status != 'offer_selected'
+            )
+          )
+        );
     }
 
     function deliveryCreateAllowed(deliveryId) {
@@ -1778,11 +1797,7 @@ service cloud.firestore {
         isValidRequestDoc(request.resource.data);
       allow update: if isSignedIn() &&
         (
-          (resource.data != null &&
-            request.resource.data.clientId == resource.data.clientId &&
-            request.resource.data.createdAt == resource.data.createdAt &&
-            (isOwner(resource.data.clientId) || isAdmin()) &&
-            isValidRequestDoc(request.resource.data)) ||
+          requestOwnerDirectUpdateAllowed() ||
           requestOfferCounterUpdateAllowed()
         );
       allow delete: if isOwner(resource.data.clientId) || isAdmin();

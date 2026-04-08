@@ -22,6 +22,10 @@ const {
   buildPublicUserData,
   sanitizeProfilePayload,
 } = require("./profile_validation");
+const {
+  buildBookingForAcceptedOffer,
+  validateBookingAgainstAvailability,
+} = require("./booking_authority");
 
 async function getBookingOrThrow(bookingId) {
   if (typeof bookingId !== "string" || bookingId.trim().length === 0) {
@@ -240,6 +244,187 @@ exports.createPaymentIntent = functions.https.onCall(async (data, context) => {
     paymentIntentId: intent.id,
     clientSecret: intent.client_secret,
   };
+});
+
+function acceptOfferError(code) {
+  switch (code) {
+    case "booking_price_below_minimum":
+      return new functions.https.HttpsError(
+        "failed-precondition",
+        "This offer is below the photographer's minimum booking price.",
+      );
+    case "same_day_booking_unavailable":
+      return new functions.https.HttpsError(
+        "failed-precondition",
+        "This photographer does not accept same-day bookings.",
+      );
+    case "photographer_unavailable_day":
+      return new functions.https.HttpsError(
+        "failed-precondition",
+        "This photographer is unavailable on the selected day.",
+      );
+    case "photographer_unavailable_time":
+      return new functions.https.HttpsError(
+        "failed-precondition",
+        "The selected time is outside the photographer's working hours.",
+      );
+    case "booking_time_conflict":
+      return new functions.https.HttpsError(
+        "already-exists",
+        "This photographer already has another booking at that time.",
+      );
+    default:
+      return new functions.https.HttpsError(
+        "invalid-argument",
+        "Invalid booking availability data.",
+      );
+  }
+}
+
+exports.acceptOfferWithBooking = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Authentication required.",
+    );
+  }
+
+  const requestId = typeof data.requestId === "string" ? data.requestId.trim() : "";
+  const offerId = typeof data.offerId === "string" ? data.offerId.trim() : "";
+  const bookingInput = isPlainObject(data.booking) ? data.booking : null;
+  const bookingId =
+    bookingInput && typeof bookingInput.id === "string" ? bookingInput.id.trim() : "";
+
+  if (!requestId || !offerId || !bookingId || !bookingInput) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid request, offer, or booking payload.",
+    );
+  }
+
+  const requestRef = db.collection("requests").doc(requestId);
+  const offerRef = db.collection("offers").doc(offerId);
+  const bookingRef = db.collection("bookings").doc(bookingId);
+
+  await db.runTransaction(async (tx) => {
+    const [requestDoc, offerDoc, bookingDoc] = await Promise.all([
+      tx.get(requestRef),
+      tx.get(offerRef),
+      tx.get(bookingRef),
+    ]);
+
+    if (!requestDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Request not found.");
+    }
+    if (!offerDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "Offer not found.");
+    }
+
+    const requestData = requestDoc.data() || {};
+    const offerData = offerDoc.data() || {};
+
+    if (requestData.clientId !== context.auth.uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "You do not own this request.",
+      );
+    }
+    if (offerData.requestId !== requestId) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Offer does not belong to this request.",
+      );
+    }
+    if (!["published", "awaiting_offers"].includes(requestData.status)) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "This request can no longer accept offers.",
+      );
+    }
+    if (requestData.selectedOfferId || requestData.selectedPhotographerId) {
+      if (
+        requestData.selectedOfferId === offerId &&
+        requestData.selectedPhotographerId === offerData.photographerId &&
+        bookingDoc.exists
+      ) {
+        return;
+      }
+      throw new functions.https.HttpsError(
+        "already-exists",
+        "An offer has already been selected for this request.",
+      );
+    }
+    if (offerData.status !== "submitted") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "This offer is no longer available.",
+      );
+    }
+    if (bookingDoc.exists) {
+      throw new functions.https.HttpsError(
+        "already-exists",
+        "Booking already exists.",
+      );
+    }
+
+    const booking = buildBookingForAcceptedOffer({
+      bookingId,
+      requestId,
+      offerId,
+      requestData,
+      offerData,
+      customerId: context.auth.uid,
+      bookingInput,
+      now: new Date(),
+    });
+
+    const photographerProfileRef = db.collection("users").doc(offerData.photographerId);
+    const sameDayBookingsQuery = db
+      .collection("bookings")
+      .where("photographerId", "==", offerData.photographerId)
+      .where("date", "==", booking.date);
+
+    const [photographerProfileDoc, existingBookingsSnap] = await Promise.all([
+      tx.get(photographerProfileRef),
+      tx.get(sameDayBookingsQuery),
+    ]);
+
+    const availabilitySettings = photographerProfileDoc.exists
+      ? (photographerProfileDoc.data() || {}).availabilitySettings
+      : null;
+    const existingBookings = existingBookingsSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() || {}),
+    }));
+
+    const availabilityError = validateBookingAgainstAvailability({
+      booking,
+      availabilitySettings,
+      existingBookings,
+      now: new Date(),
+    });
+    if (availabilityError) {
+      throw acceptOfferError(availabilityError);
+    }
+
+    tx.update(requestRef, {
+      status: "offer_selected",
+      selectedOfferId: offerId,
+      selectedPhotographerId: offerData.photographerId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    tx.update(offerRef, {
+      status: "accepted",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    tx.set(bookingRef, {
+      ...booking,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  return { ok: true, bookingId };
 });
 
 exports.confirmPaymentIntent = functions.https.onCall(async (data, context) => {
