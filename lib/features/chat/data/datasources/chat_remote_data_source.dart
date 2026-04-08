@@ -13,6 +13,9 @@ abstract class ChatRemoteDataSource {
     required String bookingId,
     required List<String> participants,
     required DateTime lastMessageAt,
+    String lastMessage = '',
+    String lastMessageType = 'text',
+    String lastMessageSenderId = '',
   });
 
   Future<List<ChatMessageDto>> getMessages(String chatId);
@@ -32,7 +35,13 @@ abstract class ChatRemoteDataSource {
 
   Future<void> sendMessage(ChatMessageDto message);
 
-  Future<void> updateLastMessageAt(String chatId, DateTime timestamp);
+  Future<void> updateChatPreview({
+    required String chatId,
+    required DateTime timestamp,
+    required String lastMessage,
+    required String lastMessageType,
+    required String senderId,
+  });
 
   Future<void> deleteChat(String chatId);
 

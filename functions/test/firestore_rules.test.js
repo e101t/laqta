@@ -1209,3 +1209,73 @@ test('chats create: only booking participants can create with exact participants
     }),
   );
 });
+
+test('chats update: participants can refresh preview fields only with a valid sender', async () => {
+  const bookingId = 'booking_chat_2';
+  const customerId = 'cust_chat_2';
+  const photographerId = 'photog_chat_2';
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const adminDb = context.firestore();
+    const now = Timestamp.fromDate(new Date());
+    await setDoc(doc(adminDb, `bookings/${bookingId}`), {
+      customerId,
+      photographerId,
+      requestId: 'req_chat_2',
+      offerId: 'offer_chat_2',
+      date: '2026-02-01',
+      time: '10:00',
+      duration: 60,
+      type: 'Wedding',
+      price: 100,
+      currency: 'IQD',
+      status: 'confirmed',
+      payment: { status: 'pending', intentId: null, amount: null, paidAt: null },
+      location: { lat: null, lng: null, text: null },
+      deliverables: null,
+      notes: null,
+      chatId: null,
+      deliveryId: null,
+      disputeId: null,
+      revisionCount: 0,
+      canceledBy: null,
+      timeline: {
+        confirmedAt: now,
+        inProgressAt: null,
+        deliveredAt: null,
+        revisionRequestedAt: null,
+        completedAt: null,
+        canceledAt: null,
+      },
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await setDoc(doc(adminDb, 'chats/chat_preview_ok'), {
+      bookingId,
+      participants: [customerId, photographerId],
+      lastMessageAt: now,
+    });
+  });
+
+  const customerDb = authedDb(customerId);
+  const updatedAt = Timestamp.fromDate(new Date(Date.now() + 1000));
+
+  await assertSucceeds(
+    customerDb.collection('chats').doc('chat_preview_ok').update({
+      lastMessageAt: updatedAt,
+      lastMessage: 'Hello there',
+      lastMessageType: 'text',
+      lastMessageSenderId: customerId,
+    }),
+  );
+
+  await assertFails(
+    customerDb.collection('chats').doc('chat_preview_ok').update({
+      lastMessageAt: updatedAt,
+      lastMessage: 'Hello there',
+      lastMessageType: 'text',
+      lastMessageSenderId: 'attacker_user',
+    }),
+  );
+});

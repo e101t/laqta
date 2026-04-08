@@ -332,6 +332,15 @@ class AppRouter {
                 state.uri.queryParameters['photographerName'] ?? '';
             final sessionType = state.uri.queryParameters['sessionType'] ?? '';
 
+            if (!AppConstants.paymentsConfigured) {
+              return PaymentScreen(
+                bookingId: bookingId ?? '',
+                amount: amount ?? 0,
+                photographerName: photographerName,
+                sessionType: sessionType,
+              );
+            }
+
             if (bookingId == null || amount == null) {
               return const Scaffold(
                 body: Center(child: Text('Missing payment information')),
@@ -725,6 +734,19 @@ class AppRouter {
   ) {
     assert(bookingId.isNotEmpty, 'bookingId is required');
     assert(amount.isFinite, 'amount must be finite');
+
+    if (!AppConstants.paymentsConfigured) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger != null) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).paymentsUnavailable),
+          ),
+        );
+      }
+      return;
+    }
+
     final query = Uri(
       queryParameters: {
         'bookingId': bookingId,

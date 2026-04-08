@@ -1,0 +1,242 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
+import 'package:laqta/features/chat/data/repositories/chat_repository_impl.dart';
+
+class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
+  final List<ChatDto> chats;
+  final Map<String, Map<String, dynamic>?> publicUserDataById;
+  final Map<String, ChatMessageDto?> lastMessageByChatId;
+  final Map<String, List<ChatMessageDto>> otherMessagesByChatId;
+
+  int getLastMessageCalls = 0;
+  int getMessagesFromOtherUserCalls = 0;
+
+  _FakeChatRemoteDataSource({
+    required this.chats,
+    required this.publicUserDataById,
+    this.lastMessageByChatId = const {},
+    this.otherMessagesByChatId = const {},
+  });
+
+  @override
+  String createMessageId(String chatId) => 'msg_1';
+
+  @override
+  Future<ChatDto> createChat({
+    required String bookingId,
+    required List<String> participants,
+    required DateTime lastMessageAt,
+    String lastMessage = '',
+    String lastMessageType = 'text',
+    String lastMessageSenderId = '',
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteChat(String chatId) async => throw UnimplementedError();
+
+  @override
+  Future<void> deleteChatWithMessages(String chatId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ChatDto?> getChatByBookingId(String bookingId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<ChatDto> getChatById(String chatId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<ChatDto>> getChatsForUser(String userId) async => chats;
+
+  @override
+  Future<List<ChatMessageDto>> getMessages(String chatId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<List<ChatMessageDto>> getMessagesFromOtherUser(
+    String chatId,
+    String currentUserId,
+  ) async {
+    getMessagesFromOtherUserCalls++;
+    return otherMessagesByChatId[chatId] ?? const <ChatMessageDto>[];
+  }
+
+  @override
+  Future<ChatMessageDto?> getLastMessage(String chatId) async {
+    getLastMessageCalls++;
+    return lastMessageByChatId[chatId];
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getPublicUserData(String userId) async =>
+      publicUserDataById[userId];
+
+  @override
+  Future<Map<String, dynamic>?> getUserData(String userId) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> sendMessage(ChatMessageDto message) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<void> updateChatPreview({
+    required String chatId,
+    required DateTime timestamp,
+    required String lastMessage,
+    required String lastMessageType,
+    required String senderId,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<void> updateUserBlockedList(
+    String userId,
+    List<String> blockedUsers,
+  ) async => throw UnimplementedError();
+
+  @override
+  Future<String> uploadFile({
+    required String storagePath,
+    required String filePath,
+  }) async => throw UnimplementedError();
+}
+
+void main() {
+  group('ChatRepositoryImpl.getChatThreads', () {
+    test(
+      'uses cached chat preview without fetching the last message again',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: [
+            ChatDto(
+              id: 'chat_1',
+              bookingId: 'booking_1',
+              participants: const ['user_1', 'user_2'],
+              lastMessageAt: DateTime(2026, 4, 8, 10),
+              lastMessage: 'Hello from preview',
+              lastMessageType: 'text',
+              lastMessageSenderId: 'user_2',
+            ),
+          ],
+          publicUserDataById: {
+            'user_2': {
+              'name': 'Other User',
+              'photoUrl': 'https://example.com/user.jpg',
+            },
+          },
+          otherMessagesByChatId: {
+            'chat_1': [
+              ChatMessageDto(
+                id: 'msg_1',
+                chatId: 'chat_1',
+                senderId: 'user_2',
+                type: 'text',
+                content: 'Hello from preview',
+                createdAt: DateTime(2026, 4, 8, 10),
+                seenBy: const [],
+              ),
+            ],
+          },
+        );
+        final repository = ChatRepositoryImpl(remote);
+
+        final result = await repository.getChatThreads(userId: 'user_1');
+
+        expect(result.isSuccess, isTrue);
+        expect(remote.getLastMessageCalls, 0);
+        expect(remote.getMessagesFromOtherUserCalls, 1);
+        expect(result.valueOrNull, isNotNull);
+        expect(result.valueOrNull!.single.lastMessage, 'Hello from preview');
+      },
+    );
+
+    test(
+      'skips unread query when the latest preview belongs to the current user',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: [
+            ChatDto(
+              id: 'chat_2',
+              bookingId: 'booking_2',
+              participants: const ['user_1', 'user_3'],
+              lastMessageAt: DateTime(2026, 4, 8, 11),
+              lastMessage: 'Sent by me',
+              lastMessageType: 'text',
+              lastMessageSenderId: 'user_1',
+            ),
+          ],
+          publicUserDataById: {
+            'user_3': {
+              'name': 'Photographer',
+              'photoUrl': 'https://example.com/photo.jpg',
+            },
+          },
+        );
+        final repository = ChatRepositoryImpl(remote);
+
+        final result = await repository.getChatThreads(userId: 'user_1');
+
+        expect(result.isSuccess, isTrue);
+        expect(remote.getLastMessageCalls, 0);
+        expect(remote.getMessagesFromOtherUserCalls, 0);
+        expect(result.valueOrNull, isNotNull);
+        expect(result.valueOrNull!.single.unreadCount, 0);
+      },
+    );
+
+    test(
+      'falls back to the latest message query when cached preview is missing',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: [
+            ChatDto(
+              id: 'chat_3',
+              bookingId: 'booking_3',
+              participants: const ['user_1', 'user_4'],
+              lastMessageAt: DateTime(2026, 4, 8, 9),
+            ),
+          ],
+          publicUserDataById: {
+            'user_4': {'name': 'Client', 'photoUrl': ''},
+          },
+          lastMessageByChatId: {
+            'chat_3': ChatMessageDto(
+              id: 'msg_3',
+              chatId: 'chat_3',
+              senderId: 'user_4',
+              type: 'text',
+              content: 'Fallback message',
+              createdAt: DateTime(2026, 4, 8, 12),
+              seenBy: const [],
+            ),
+          },
+          otherMessagesByChatId: {
+            'chat_3': [
+              ChatMessageDto(
+                id: 'msg_3',
+                chatId: 'chat_3',
+                senderId: 'user_4',
+                type: 'text',
+                content: 'Fallback message',
+                createdAt: DateTime(2026, 4, 8, 12),
+                seenBy: const [],
+              ),
+            ],
+          },
+        );
+        final repository = ChatRepositoryImpl(remote);
+
+        final result = await repository.getChatThreads(userId: 'user_1');
+
+        expect(result.isSuccess, isTrue);
+        expect(remote.getLastMessageCalls, 1);
+        expect(result.valueOrNull, isNotNull);
+        expect(result.valueOrNull!.single.lastMessage, 'Fallback message');
+      },
+    );
+  });
+}

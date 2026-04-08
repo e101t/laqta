@@ -35,17 +35,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    if (_paymentsConfigured) {
+    if (AppConstants.paymentsConfigured) {
       // Initialize Stripe with your publishable key
       Stripe.publishableKey = AppConstants.stripePublishableKey;
     }
-  }
-
-  bool get _paymentsConfigured {
-    final key = AppConstants.stripePublishableKey;
-    return AppConstants.enablePayments &&
-        key.isNotEmpty &&
-        !key.contains('YOUR_STRIPE');
   }
 
   Future<void> _processPayment() async {
@@ -194,7 +187,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
-    if (!_paymentsConfigured) {
+    if (!AppConstants.paymentsConfigured) {
       return Scaffold(
         appBar: AppBar(title: Text(localizations.payment)),
         body: Padding(
@@ -229,30 +222,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      'Booking ID: ${widget.bookingId}',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
+                    if (widget.bookingId.isNotEmpty)
+                      Text(
+                        'Booking ID: ${widget.bookingId}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                      Icons.camera_alt,
-                      'Photographer',
-                      widget.photographerName,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                      Icons.event,
-                      'Session Type',
-                      widget.sessionType,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                      Icons.attach_money,
-                      'Amount',
-                      '${widget.amount.toStringAsFixed(0)} IQD',
-                    ),
+                    if (widget.photographerName.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        Icons.camera_alt,
+                        'Photographer',
+                        widget.photographerName,
+                      ),
+                    ],
+                    if (widget.sessionType.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        Icons.event,
+                        'Session Type',
+                        widget.sessionType,
+                      ),
+                    ],
+                    if (widget.amount > 0) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        Icons.attach_money,
+                        'Amount',
+                        '${widget.amount.toStringAsFixed(0)} IQD',
+                      ),
+                    ],
                   ],
                 ),
               ),

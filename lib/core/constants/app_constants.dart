@@ -149,6 +149,11 @@ class AppConstants {
     'ENABLE_APP_CHECK',
     defaultValue: true,
   );
+
+  static bool get paymentsConfigured =>
+      enablePayments &&
+      stripePublishableKey.trim().isNotEmpty &&
+      !stripePublishableKey.contains('YOUR_STRIPE');
   static const bool forceDebugAppCheck = bool.fromEnvironment(
     'FORCE_DEBUG_APP_CHECK',
     defaultValue: false,

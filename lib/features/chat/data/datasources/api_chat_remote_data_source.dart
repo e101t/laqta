@@ -34,6 +34,9 @@ class ApiChatRemoteDataSource implements ChatRemoteDataSource {
     required String bookingId,
     required List<String> participants,
     required DateTime lastMessageAt,
+    String lastMessage = '',
+    String lastMessageType = 'text',
+    String lastMessageSenderId = '',
   }) async {
     throw _unsupported();
   }
@@ -80,7 +83,13 @@ class ApiChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
-  Future<void> updateLastMessageAt(String chatId, DateTime timestamp) async {
+  Future<void> updateChatPreview({
+    required String chatId,
+    required DateTime timestamp,
+    required String lastMessage,
+    required String lastMessageType,
+    required String senderId,
+  }) async {
     throw _unsupported();
   }
 

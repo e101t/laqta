@@ -1262,7 +1262,26 @@ service cloud.firestore {
     }
 
     function chatKeys() {
-      return ['bookingId', 'participants', 'lastMessageAt'];
+      return [
+        'bookingId',
+        'participants',
+        'lastMessageAt',
+        'lastMessage',
+        'lastMessageType',
+        'lastMessageSenderId'
+      ];
+    }
+
+    function isValidChatPreview(data) {
+      return (!('lastMessage' in data) || isString(data.lastMessage)) &&
+        (!('lastMessageType' in data) || (
+          isString(data.lastMessageType) &&
+          isValidMessageType(data.lastMessageType)
+        )) &&
+        (!('lastMessageSenderId' in data) || (
+          isString(data.lastMessageSenderId) &&
+          data.lastMessageSenderId in data.participants
+        ));
     }
 
     function isValidChatDoc(data) {
@@ -1273,7 +1292,8 @@ service cloud.firestore {
         isString(data.participants[0]) &&
         isString(data.participants[1]) &&
         data.participants[0] != data.participants[1] &&
-        isTimestamp(data.lastMessageAt);
+        isTimestamp(data.lastMessageAt) &&
+        isValidChatPreview(data);
     }
 
     function chatCreateAllowed() {
@@ -1856,7 +1876,10 @@ service cloud.firestore {
         request.resource.data.participants == resource.data.participants &&
         request.resource.data.bookingId == resource.data.bookingId &&
         request.resource.data.diff(resource.data).changedKeys().hasOnly([
-          'lastMessageAt'
+          'lastMessageAt',
+          'lastMessage',
+          'lastMessageType',
+          'lastMessageSenderId'
         ]);
       allow delete: if isChatParticipant(chatId) || isAdmin();
 

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
 import 'package:laqta/features/chat/data/mappers/chat_mapper.dart';
 import 'package:laqta/features/chat/domain/entities/chat_message.dart';
 import 'package:laqta/features/chat/domain/entities/chat_thread.dart';
@@ -24,53 +25,16 @@ class ChatRepositoryImpl implements ChatRepository {
   }) async {
     try {
       final chats = await _remoteDataSource.getChatsForUser(userId);
-      final previews = <ChatThreadPreview>[];
+      final previews = await Future.wait(
+        chats.map(
+          (chat) => _buildChatThreadPreview(chat: chat, userId: userId),
+        ),
+      );
 
-      for (final chat in chats) {
-        final otherUserId = chat.participants.firstWhere(
-          (id) => id != userId,
-          orElse: () => '',
-        );
-        if (otherUserId.isEmpty) {
-          continue;
-        }
+      final sorted = previews.whereType<ChatThreadPreview>().toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-        final userData = await _remoteDataSource.getPublicUserData(otherUserId);
-        final userName = _readString(userData?['name']);
-        final userImage = _readString(userData?['photoUrl']);
-        final lastSeen = _readDateTime(userData?['lastSeen']);
-        final isOnline =
-            lastSeen != null &&
-            DateTime.now().difference(lastSeen).inMinutes < 5;
-
-        final lastMessageDto = await _remoteDataSource.getLastMessage(chat.id);
-        final lastMessage = lastMessageDto?.content ?? '';
-        final timestamp = lastMessageDto?.createdAt ?? chat.lastMessageAt;
-
-        int unreadCount = 0;
-        if (lastMessageDto != null) {
-          final otherMessages = await _remoteDataSource
-              .getMessagesFromOtherUser(chat.id, userId);
-          unreadCount = otherMessages
-              .where((message) => !message.seenBy.contains(userId))
-              .length;
-        }
-
-        previews.add(
-          ChatThreadPreview(
-            chatId: chat.id,
-            userId: otherUserId,
-            userName: userName,
-            userImage: userImage,
-            lastMessage: lastMessage,
-            timestamp: timestamp,
-            unreadCount: unreadCount,
-            isOnline: isOnline,
-          ),
-        );
-      }
-
-      return Result.success(previews);
+      return Result.success(sorted);
     } catch (e) {
       return Result.failure(
         Failure(message: 'Failed to load chats', code: e.toString()),
@@ -97,9 +61,15 @@ class ChatRepositoryImpl implements ChatRepository {
     try {
       final dto = ChatMapper.toDto(message);
       await _remoteDataSource.sendMessage(dto);
-      await _remoteDataSource.updateLastMessageAt(
-        message.chatId,
-        DateTime.now(),
+      await _remoteDataSource.updateChatPreview(
+        chatId: message.chatId,
+        timestamp: message.createdAt,
+        lastMessage: _buildPreviewContentFromMessage(
+          type: message.type,
+          content: message.content,
+        ),
+        lastMessageType: message.type,
+        senderId: message.senderId,
       );
       return Result.success(null);
     } catch (e) {
@@ -145,7 +115,16 @@ class ChatRepositoryImpl implements ChatRepository {
       );
 
       await _remoteDataSource.sendMessage(ChatMapper.toDto(message));
-      await _remoteDataSource.updateLastMessageAt(chatId, DateTime.now());
+      await _remoteDataSource.updateChatPreview(
+        chatId: chatId,
+        timestamp: message.createdAt,
+        lastMessage: _buildPreviewContentFromMessage(
+          type: type,
+          content: content,
+        ),
+        lastMessageType: type,
+        senderId: senderId,
+      );
 
       return Result.success(message);
     } catch (e) {
@@ -257,6 +236,9 @@ class ChatRepositoryImpl implements ChatRepository {
             bookingId: bookingId,
             participants: participants,
             lastMessageAt: DateTime.now(),
+            lastMessage: '',
+            lastMessageType: 'text',
+            lastMessageSenderId: '',
           );
       return Result.success(ChatMapper.toThread(chatDto));
     } catch (e) {
@@ -288,6 +270,92 @@ class ChatRepositoryImpl implements ChatRepository {
       return value;
     }
     return null;
+  }
+
+  Future<ChatThreadPreview?> _buildChatThreadPreview({
+    required ChatDto chat,
+    required String userId,
+  }) async {
+    final otherUserId = chat.participants.firstWhere(
+      (id) => id != userId,
+      orElse: () => '',
+    );
+    if (otherUserId.isEmpty) {
+      return null;
+    }
+
+    final userDataFuture = _remoteDataSource.getPublicUserData(otherUserId);
+    final fallbackLastMessageFuture = chat.lastMessage.isEmpty
+        ? _remoteDataSource.getLastMessage(chat.id)
+        : Future.value(null);
+
+    final results = await Future.wait<dynamic>([
+      userDataFuture,
+      fallbackLastMessageFuture,
+    ]);
+
+    final userData = results[0] as Map<String, dynamic>?;
+    final fallbackLastMessage = results[1] as ChatMessageDto?;
+
+    final userName = _readString(userData?['name']);
+    final userImage = _readString(userData?['photoUrl']);
+    final lastSeen = _readDateTime(userData?['lastSeen']);
+    final isOnline =
+        lastSeen != null && DateTime.now().difference(lastSeen).inMinutes < 5;
+
+    final lastMessage = chat.lastMessage.isNotEmpty
+        ? chat.lastMessage
+        : (fallbackLastMessage?.content ?? '');
+    final lastMessageSenderId = chat.lastMessageSenderId.isNotEmpty
+        ? chat.lastMessageSenderId
+        : (fallbackLastMessage?.senderId ?? '');
+    final timestamp = fallbackLastMessage?.createdAt ?? chat.lastMessageAt;
+
+    var unreadCount = 0;
+    if (lastMessage.isNotEmpty && lastMessageSenderId != userId) {
+      final otherMessages = await _remoteDataSource.getMessagesFromOtherUser(
+        chat.id,
+        userId,
+      );
+      unreadCount = otherMessages
+          .where((message) => !message.seenBy.contains(userId))
+          .length;
+    }
+
+    return ChatThreadPreview(
+      chatId: chat.id,
+      userId: otherUserId,
+      userName: userName,
+      userImage: userImage,
+      lastMessage: lastMessage,
+      timestamp: timestamp,
+      unreadCount: unreadCount,
+      isOnline: isOnline,
+    );
+  }
+
+  static String _buildPreviewContentFromMessage({
+    required String type,
+    required String content,
+  }) {
+    switch (type) {
+      case 'image':
+        return 'Image';
+      case 'video':
+        return 'Video';
+      case 'document':
+        return _extractDocumentName(content);
+      default:
+        return content.trim();
+    }
+  }
+
+  static String _extractDocumentName(String content) {
+    final segments = content.split('|');
+    if (segments.length >= 2 && segments[1].trim().isNotEmpty) {
+      return segments[1].trim();
+    }
+    return 'Document';
   }
 
   static String _resolveStoragePath({

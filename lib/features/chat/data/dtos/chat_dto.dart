@@ -5,12 +5,18 @@ class ChatDto {
   final String bookingId;
   final List<String> participants;
   final DateTime lastMessageAt;
+  final String lastMessage;
+  final String lastMessageType;
+  final String lastMessageSenderId;
 
   const ChatDto({
     required this.id,
     required this.bookingId,
     required this.participants,
     required this.lastMessageAt,
+    this.lastMessage = '',
+    this.lastMessageType = 'text',
+    this.lastMessageSenderId = '',
   });
 
   factory ChatDto.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -20,6 +26,9 @@ class ChatDto {
       bookingId: _readString(data, 'bookingId'),
       participants: _readStringList(data['participants']),
       lastMessageAt: _readDateTime(data['lastMessageAt']),
+      lastMessage: _readString(data, 'lastMessage'),
+      lastMessageType: _readString(data, 'lastMessageType', fallback: 'text'),
+      lastMessageSenderId: _readString(data, 'lastMessageSenderId'),
     );
   }
 
@@ -29,6 +38,9 @@ class ChatDto {
       bookingId: json['bookingId'] as String,
       participants: (json['participants'] as List<dynamic>).cast<String>(),
       lastMessageAt: DateTime.parse(json['lastMessageAt']),
+      lastMessage: json['lastMessage'] as String? ?? '',
+      lastMessageType: json['lastMessageType'] as String? ?? 'text',
+      lastMessageSenderId: json['lastMessageSenderId'] as String? ?? '',
     );
   }
 
@@ -37,6 +49,9 @@ class ChatDto {
       'bookingId': bookingId,
       'participants': participants,
       'lastMessageAt': Timestamp.fromDate(lastMessageAt),
+      'lastMessage': lastMessage,
+      'lastMessageType': lastMessageType,
+      'lastMessageSenderId': lastMessageSenderId,
     };
   }
 
@@ -46,15 +61,22 @@ class ChatDto {
       'bookingId': bookingId,
       'participants': participants,
       'lastMessageAt': lastMessageAt.toIso8601String(),
+      'lastMessage': lastMessage,
+      'lastMessageType': lastMessageType,
+      'lastMessageSenderId': lastMessageSenderId,
     };
   }
 
-  static String _readString(Map<String, dynamic> data, String key) {
+  static String _readString(
+    Map<String, dynamic> data,
+    String key, {
+    String fallback = '',
+  }) {
     final value = data[key];
     if (value is String) {
       return value;
     }
-    return '';
+    return fallback;
   }
 
   static List<String> _readStringList(dynamic value) {

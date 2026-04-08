@@ -39,8 +39,10 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
 
   @override
   Future<List<ChatDto>> getChatsForUser(String userId) async {
-    Query<Map<String, dynamic>> query =
-        _chatsCollection.where('participants', arrayContains: userId);
+    Query<Map<String, dynamic>> query = _chatsCollection.where(
+      'participants',
+      arrayContains: userId,
+    );
     if (!kDebugMode) {
       query = query.orderBy('lastMessageAt', descending: true);
     }
@@ -79,6 +81,9 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
     required String bookingId,
     required List<String> participants,
     required DateTime lastMessageAt,
+    String lastMessage = '',
+    String lastMessageType = 'text',
+    String lastMessageSenderId = '',
   }) async {
     final docRef = _chatsCollection.doc();
     final chat = ChatDto(
@@ -86,6 +91,9 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
       bookingId: bookingId,
       participants: participants,
       lastMessageAt: lastMessageAt,
+      lastMessage: lastMessage,
+      lastMessageType: lastMessageType,
+      lastMessageSenderId: lastMessageSenderId,
     );
     await _secure.guard(() => docRef.set(chat.toMap()));
     return chat;
@@ -177,10 +185,19 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
-  Future<void> updateLastMessageAt(String chatId, DateTime timestamp) async {
+  Future<void> updateChatPreview({
+    required String chatId,
+    required DateTime timestamp,
+    required String lastMessage,
+    required String lastMessageType,
+    required String senderId,
+  }) async {
     await _secure.guard(
       () => _chatsCollection.doc(chatId).update({
         'lastMessageAt': Timestamp.fromDate(timestamp),
+        'lastMessage': lastMessage,
+        'lastMessageType': lastMessageType,
+        'lastMessageSenderId': senderId,
       }),
     );
   }
