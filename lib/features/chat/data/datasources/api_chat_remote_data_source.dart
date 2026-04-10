@@ -65,6 +65,13 @@ class ApiChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
+  Future<Map<String, Map<String, dynamic>>> getPublicUsersData(
+    List<String> userIds,
+  ) async {
+    throw _unsupported();
+  }
+
+  @override
   Future<Map<String, dynamic>?> getUserData(String userId) async {
     throw _unsupported();
   }

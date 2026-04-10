@@ -25,9 +25,26 @@ class ChatRepositoryImpl implements ChatRepository {
   }) async {
     try {
       final chats = await _remoteDataSource.getChatsForUser(userId);
+      final otherUserIds = chats
+          .map(
+            (chat) => chat.participants.firstWhere(
+              (id) => id != userId,
+              orElse: () => '',
+            ),
+          )
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+      final publicUsersData = await _remoteDataSource.getPublicUsersData(
+        otherUserIds,
+      );
       final previews = await Future.wait(
         chats.map(
-          (chat) => _buildChatThreadPreview(chat: chat, userId: userId),
+          (chat) => _buildChatThreadPreview(
+            chat: chat,
+            userId: userId,
+            publicUsersData: publicUsersData,
+          ),
         ),
       );
 
@@ -275,6 +292,7 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<ChatThreadPreview?> _buildChatThreadPreview({
     required ChatDto chat,
     required String userId,
+    required Map<String, Map<String, dynamic>> publicUsersData,
   }) async {
     final otherUserId = chat.participants.firstWhere(
       (id) => id != userId,
@@ -284,7 +302,10 @@ class ChatRepositoryImpl implements ChatRepository {
       return null;
     }
 
-    final userDataFuture = _remoteDataSource.getPublicUserData(otherUserId);
+    final cachedUserData = publicUsersData[otherUserId];
+    final userDataFuture = cachedUserData != null
+        ? Future.value(cachedUserData)
+        : _remoteDataSource.getPublicUserData(otherUserId);
     final fallbackLastMessageFuture = chat.lastMessage.isEmpty
         ? _remoteDataSource.getLastMessage(chat.id)
         : Future.value(null);

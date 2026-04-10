@@ -29,6 +29,10 @@ abstract class ChatRemoteDataSource {
 
   Future<Map<String, dynamic>?> getPublicUserData(String userId);
 
+  Future<Map<String, Map<String, dynamic>>> getPublicUsersData(
+    List<String> userIds,
+  );
+
   Future<Map<String, dynamic>?> getUserData(String userId);
 
   Future<void> updateUserBlockedList(String userId, List<String> blockedUsers);

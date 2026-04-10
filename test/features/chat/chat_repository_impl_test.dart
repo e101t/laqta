@@ -11,6 +11,8 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
 
   int getLastMessageCalls = 0;
   int getMessagesFromOtherUserCalls = 0;
+  int getPublicUserDataCalls = 0;
+  int getPublicUsersDataCalls = 0;
 
   _FakeChatRemoteDataSource({
     required this.chats,
@@ -72,8 +74,22 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>?> getPublicUserData(String userId) async =>
-      publicUserDataById[userId];
+  Future<Map<String, dynamic>?> getPublicUserData(String userId) async {
+    getPublicUserDataCalls++;
+    return publicUserDataById[userId];
+  }
+
+  @override
+  Future<Map<String, Map<String, dynamic>>> getPublicUsersData(
+    List<String> userIds,
+  ) async {
+    getPublicUsersDataCalls++;
+    return {
+      for (final userId in userIds)
+        if (publicUserDataById[userId] != null)
+          userId: publicUserDataById[userId]!,
+    };
+  }
 
   @override
   Future<Map<String, dynamic>?> getUserData(String userId) async =>
@@ -149,6 +165,8 @@ void main() {
         expect(result.isSuccess, isTrue);
         expect(remote.getLastMessageCalls, 0);
         expect(remote.getMessagesFromOtherUserCalls, 1);
+        expect(remote.getPublicUsersDataCalls, 1);
+        expect(remote.getPublicUserDataCalls, 0);
         expect(result.valueOrNull, isNotNull);
         expect(result.valueOrNull!.single.lastMessage, 'Hello from preview');
       },
@@ -183,6 +201,8 @@ void main() {
         expect(result.isSuccess, isTrue);
         expect(remote.getLastMessageCalls, 0);
         expect(remote.getMessagesFromOtherUserCalls, 0);
+        expect(remote.getPublicUsersDataCalls, 1);
+        expect(remote.getPublicUserDataCalls, 0);
         expect(result.valueOrNull, isNotNull);
         expect(result.valueOrNull!.single.unreadCount, 0);
       },
@@ -234,8 +254,80 @@ void main() {
 
         expect(result.isSuccess, isTrue);
         expect(remote.getLastMessageCalls, 1);
+        expect(remote.getPublicUsersDataCalls, 1);
+        expect(remote.getPublicUserDataCalls, 0);
         expect(result.valueOrNull, isNotNull);
         expect(result.valueOrNull!.single.lastMessage, 'Fallback message');
+      },
+    );
+
+    test(
+      'loads public user data in one batched call for multiple chats',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: [
+            ChatDto(
+              id: 'chat_4',
+              bookingId: 'booking_4',
+              participants: const ['user_1', 'user_2'],
+              lastMessageAt: DateTime(2026, 4, 8, 10),
+              lastMessage: 'Hi',
+              lastMessageType: 'text',
+              lastMessageSenderId: 'user_2',
+            ),
+            ChatDto(
+              id: 'chat_5',
+              bookingId: 'booking_5',
+              participants: const ['user_1', 'user_3'],
+              lastMessageAt: DateTime(2026, 4, 8, 11),
+              lastMessage: 'Hello',
+              lastMessageType: 'text',
+              lastMessageSenderId: 'user_3',
+            ),
+          ],
+          publicUserDataById: {
+            'user_2': {
+              'name': 'Second User',
+              'photoUrl': 'https://example.com/2.jpg',
+            },
+            'user_3': {
+              'name': 'Third User',
+              'photoUrl': 'https://example.com/3.jpg',
+            },
+          },
+          otherMessagesByChatId: {
+            'chat_4': [
+              ChatMessageDto(
+                id: 'msg_4',
+                chatId: 'chat_4',
+                senderId: 'user_2',
+                type: 'text',
+                content: 'Hi',
+                createdAt: DateTime(2026, 4, 8, 10),
+                seenBy: const [],
+              ),
+            ],
+            'chat_5': [
+              ChatMessageDto(
+                id: 'msg_5',
+                chatId: 'chat_5',
+                senderId: 'user_3',
+                type: 'text',
+                content: 'Hello',
+                createdAt: DateTime(2026, 4, 8, 11),
+                seenBy: const [],
+              ),
+            ],
+          },
+        );
+        final repository = ChatRepositoryImpl(remote);
+
+        final result = await repository.getChatThreads(userId: 'user_1');
+
+        expect(result.isSuccess, isTrue);
+        expect(result.valueOrNull, hasLength(2));
+        expect(remote.getPublicUsersDataCalls, 1);
+        expect(remote.getPublicUserDataCalls, 0);
       },
     );
   });

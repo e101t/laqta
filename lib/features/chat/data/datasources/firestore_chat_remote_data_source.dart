@@ -156,6 +156,30 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
+  Future<Map<String, Map<String, dynamic>>> getPublicUsersData(
+    List<String> userIds,
+  ) async {
+    final ids = userIds.where((id) => id.trim().isNotEmpty).toSet().toList();
+    if (ids.isEmpty) {
+      return const <String, Map<String, dynamic>>{};
+    }
+
+    final result = <String, Map<String, dynamic>>{};
+    for (var index = 0; index < ids.length; index += 10) {
+      final chunk = ids.skip(index).take(10).toList();
+      final snapshot = await _secure.guard(
+        () => _usersPublicCollection
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get(),
+      );
+      for (final doc in snapshot.docs) {
+        result[doc.id] = doc.data();
+      }
+    }
+    return result;
+  }
+
+  @override
   Future<Map<String, dynamic>?> getUserData(String userId) async {
     final doc = await _secure.guard(() => _usersCollection.doc(userId).get());
     return doc.data();
