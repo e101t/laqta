@@ -74,6 +74,43 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
+  Future<Result<void>> markMessagesRead({
+    required String chatId,
+    required String userId,
+    List<ChatMessage>? messages,
+  }) async {
+    try {
+      final sourceMessages =
+          messages ??
+          (await _remoteDataSource.getMessages(
+            chatId,
+          )).map(ChatMapper.toDomain).toList();
+      final unreadIncoming = sourceMessages.where((message) {
+        return message.senderId != userId && !message.seenBy.contains(userId);
+      }).toList();
+
+      if (unreadIncoming.isEmpty) {
+        return Result.success(null);
+      }
+
+      final updatedDtos = unreadIncoming.map((message) {
+        final seenBy = {...message.seenBy, userId}.toList();
+        return ChatMapper.toDto(message.copyWith(seenBy: seenBy));
+      }).toList();
+
+      await _remoteDataSource.markMessagesSeen(
+        chatId: chatId,
+        messages: updatedDtos,
+      );
+      return Result.success(null);
+    } catch (e) {
+      return Result.failure(
+        Failure(message: 'Failed to mark messages as read', code: e.toString()),
+      );
+    }
+  }
+
+  @override
   Future<Result<void>> sendMessage(ChatMessage message) async {
     try {
       final dto = ChatMapper.toDto(message);

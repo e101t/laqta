@@ -90,6 +90,14 @@ class ApiChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
+  Future<void> markMessagesSeen({
+    required String chatId,
+    required List<ChatMessageDto> messages,
+  }) async {
+    throw _unsupported();
+  }
+
+  @override
   Future<void> updateChatPreview({
     required String chatId,
     required DateTime timestamp,

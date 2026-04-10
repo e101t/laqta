@@ -3,7 +3,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Auth helpers
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null &&
+        !exists(/databases/$(database)/documents/deleted_users/$(request.auth.uid));
     }
 
     function isOwner(userId) {
@@ -1713,7 +1714,7 @@ service cloud.firestore {
         isValidUserDoc(request.resource.data, userId) &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
 
       match /private/{docId} {
         allow read, write: if isOwner(userId) || isAdmin();
@@ -1726,7 +1727,11 @@ service cloud.firestore {
         isValidPublicUserDoc(request.resource.data);
       allow update: if (isOwner(userId) || isAdmin()) &&
         isValidPublicUserDoc(request.resource.data);
-      allow delete: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /deleted_users/{userId} {
+      allow read, write: if isAdmin();
     }
 
     match /photographers/{photographerId} {

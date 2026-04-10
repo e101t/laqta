@@ -12,6 +12,7 @@ import 'package:laqta/features/chat/domain/usecases/get_or_create_booking_chat.d
 import 'package:laqta/features/chat/domain/usecases/get_chat_messages.dart';
 import 'package:laqta/features/chat/domain/usecases/get_chat_threads.dart';
 import 'package:laqta/features/chat/domain/usecases/get_other_participant_id.dart';
+import 'package:laqta/features/chat/domain/usecases/mark_chat_messages_read.dart';
 import 'package:laqta/features/chat/domain/usecases/send_chat_media_message.dart';
 import 'package:laqta/features/chat/domain/usecases/send_chat_message.dart';
 import 'package:laqta/features/chat/domain/usecases/toggle_block_user.dart';
@@ -36,6 +37,9 @@ class ChatDependencies {
   static GetChatThreads getChatThreads() => GetChatThreads(_repository);
 
   static GetChatMessages getChatMessages() => GetChatMessages(_repository);
+
+  static MarkChatMessagesRead markChatMessagesRead() =>
+      MarkChatMessagesRead(_repository);
 
   static GenerateMessageId generateMessageId() =>
       GenerateMessageId(_repository);

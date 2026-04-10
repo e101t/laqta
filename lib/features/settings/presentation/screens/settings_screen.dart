@@ -115,8 +115,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
 
-      // The server-side account deletion callable already deletes the
-      // Firebase Auth user. We only need to clear the local session here.
+      // The server-side deletion flow disables the account immediately and
+      // completes cleanup in the background. We only need to clear the
+      // local session here.
       final signOutResult = await AuthDependencies.signOut().call();
       if (!signOutResult.isSuccess) {
         throw StateError(

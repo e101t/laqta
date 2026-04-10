@@ -171,6 +171,39 @@ test('request reference images are allowed only for selected photographer', asyn
   await assertSucceeds(getDownloadURL(selectedRef));
 });
 
+test('deleted users are denied storage access even if the request still points to them', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const adminDb = context.firestore();
+    await setDoc(
+      doc(adminDb, 'requests/req-deleted-photog'),
+      requestDocPayload({ clientId: 'userA', photographerId: 'photogDeleted' }),
+    );
+    await setDoc(doc(adminDb, 'deleted_users/photogDeleted'), {
+      userId: 'photogDeleted',
+      status: 'deleted',
+      requestedAt: Timestamp.fromDate(new Date()),
+    });
+
+    const adminStorage = context.storage();
+    const adminRef = ref(
+      adminStorage,
+      'requests/req-deleted-photog/references/test.jpg',
+    );
+    await uploadBytes(adminRef, new Uint8Array([1, 2, 3]), {
+      contentType: 'image/jpeg',
+    });
+  });
+
+  const deletedUserStorage = testEnv
+    .authenticatedContext('photogDeleted')
+    .storage();
+  const deletedUserRef = ref(
+    deletedUserStorage,
+    'requests/req-deleted-photog/references/test.jpg',
+  );
+  await assertFails(getDownloadURL(deletedUserRef));
+});
+
 test('delivery uploads: only the booking photographer can write', async () => {
   const bookingId = 'booking_upload_1';
   const customerId = 'cust_upload';

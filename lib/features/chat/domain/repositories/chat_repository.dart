@@ -12,6 +12,12 @@ abstract class ChatRepository {
 
   Future<Result<List<ChatMessage>>> getMessages({required String chatId});
 
+  Future<Result<void>> markMessagesRead({
+    required String chatId,
+    required String userId,
+    List<ChatMessage>? messages,
+  });
+
   Future<Result<void>> sendMessage(ChatMessage message);
 
   Future<Result<ChatMessage>> sendMediaMessage({

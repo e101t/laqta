@@ -209,6 +209,26 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
   }
 
   @override
+  Future<void> markMessagesSeen({
+    required String chatId,
+    required List<ChatMessageDto> messages,
+  }) async {
+    if (messages.isEmpty) {
+      return;
+    }
+
+    final batch = _firestore.batch();
+    for (final message in messages) {
+      batch.update(
+        _chatsCollection.doc(chatId).collection('messages').doc(message.id),
+        {'seenBy': message.seenBy},
+      );
+    }
+
+    await _secure.guard(() => batch.commit());
+  }
+
+  @override
   Future<void> updateChatPreview({
     required String chatId,
     required DateTime timestamp,

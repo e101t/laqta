@@ -2,23 +2,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
 import 'package:laqta/features/chat/data/repositories/chat_repository_impl.dart';
+import 'package:laqta/features/chat/domain/entities/chat_message.dart';
 
 class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
   final List<ChatDto> chats;
   final Map<String, Map<String, dynamic>?> publicUserDataById;
   final Map<String, ChatMessageDto?> lastMessageByChatId;
   final Map<String, List<ChatMessageDto>> otherMessagesByChatId;
+  final Map<String, List<ChatMessageDto>> messagesByChatId;
 
   int getLastMessageCalls = 0;
   int getMessagesFromOtherUserCalls = 0;
   int getPublicUserDataCalls = 0;
   int getPublicUsersDataCalls = 0;
+  int markMessagesSeenCalls = 0;
+  List<ChatMessageDto> lastMarkedMessages = const [];
 
   _FakeChatRemoteDataSource({
     required this.chats,
     required this.publicUserDataById,
     this.lastMessageByChatId = const {},
     this.otherMessagesByChatId = const {},
+    this.messagesByChatId = const {},
   });
 
   @override
@@ -56,7 +61,7 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
 
   @override
   Future<List<ChatMessageDto>> getMessages(String chatId) async =>
-      throw UnimplementedError();
+      messagesByChatId[chatId] ?? const <ChatMessageDto>[];
 
   @override
   Future<List<ChatMessageDto>> getMessagesFromOtherUser(
@@ -98,6 +103,15 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
   @override
   Future<void> sendMessage(ChatMessageDto message) async =>
       throw UnimplementedError();
+
+  @override
+  Future<void> markMessagesSeen({
+    required String chatId,
+    required List<ChatMessageDto> messages,
+  }) async {
+    markMessagesSeenCalls++;
+    lastMarkedMessages = messages;
+  }
 
   @override
   Future<void> updateChatPreview({
@@ -330,5 +344,116 @@ void main() {
         expect(remote.getPublicUserDataCalls, 0);
       },
     );
+  });
+
+  group('ChatRepositoryImpl.markMessagesRead', () {
+    test('marks only unseen incoming messages as read', () async {
+      final remote = _FakeChatRemoteDataSource(
+        chats: const [],
+        publicUserDataById: const {},
+      );
+      final repository = ChatRepositoryImpl(remote);
+
+      final result = await repository.markMessagesRead(
+        chatId: 'chat_6',
+        userId: 'user_1',
+        messages: [
+          ChatMessage(
+            id: 'msg_seen',
+            chatId: 'chat_6',
+            senderId: 'user_2',
+            type: 'text',
+            content: 'Seen already',
+            createdAt: DateTime(2026, 4, 8, 12),
+            seenBy: ['user_1'],
+          ),
+          ChatMessage(
+            id: 'msg_unread',
+            chatId: 'chat_6',
+            senderId: 'user_2',
+            type: 'text',
+            content: 'Unread',
+            createdAt: DateTime(2026, 4, 8, 13),
+            seenBy: [],
+          ),
+          ChatMessage(
+            id: 'msg_mine',
+            chatId: 'chat_6',
+            senderId: 'user_1',
+            type: 'text',
+            content: 'Mine',
+            createdAt: DateTime(2026, 4, 8, 14),
+            seenBy: [],
+          ),
+        ],
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(remote.markMessagesSeenCalls, 1);
+      expect(remote.lastMarkedMessages, hasLength(1));
+      expect(remote.lastMarkedMessages.single.id, 'msg_unread');
+      expect(remote.lastMarkedMessages.single.seenBy, ['user_1']);
+    });
+
+    test(
+      'does not write when every incoming message is already read',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: const [],
+          publicUserDataById: const {},
+        );
+        final repository = ChatRepositoryImpl(remote);
+
+        final result = await repository.markMessagesRead(
+          chatId: 'chat_7',
+          userId: 'user_1',
+          messages: [
+            ChatMessage(
+              id: 'msg_seen',
+              chatId: 'chat_7',
+              senderId: 'user_2',
+              type: 'text',
+              content: 'Seen already',
+              createdAt: DateTime(2026, 4, 8, 15),
+              seenBy: ['user_1'],
+            ),
+          ],
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(remote.markMessagesSeenCalls, 0);
+      },
+    );
+
+    test('loads messages remotely when no message list is provided', () async {
+      final remote = _FakeChatRemoteDataSource(
+        chats: const [],
+        publicUserDataById: const {},
+        messagesByChatId: {
+          'chat_8': [
+            ChatMessageDto(
+              id: 'msg_remote',
+              chatId: 'chat_8',
+              senderId: 'user_2',
+              type: 'text',
+              content: 'Remote unread',
+              createdAt: DateTime(2026, 4, 8, 16),
+              seenBy: const [],
+            ),
+          ],
+        },
+      );
+      final repository = ChatRepositoryImpl(remote);
+
+      final result = await repository.markMessagesRead(
+        chatId: 'chat_8',
+        userId: 'user_1',
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(remote.markMessagesSeenCalls, 1);
+      expect(remote.lastMarkedMessages.single.id, 'msg_remote');
+      expect(remote.lastMarkedMessages.single.seenBy, ['user_1']);
+    });
   });
 }

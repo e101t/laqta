@@ -39,6 +39,11 @@ abstract class ChatRemoteDataSource {
 
   Future<void> sendMessage(ChatMessageDto message);
 
+  Future<void> markMessagesSeen({
+    required String chatId,
+    required List<ChatMessageDto> messages,
+  });
+
   Future<void> updateChatPreview({
     required String chatId,
     required DateTime timestamp,

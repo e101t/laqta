@@ -1368,6 +1368,254 @@ async function scrubHistoricalBookings(userId) {
   return scrubbedBookings;
 }
 
+async function cleanupChatsForDeletedUser(userId) {
+  const snap = await db
+    .collection("chats")
+    .where("participants", "array-contains", userId)
+    .get();
+
+  let deletedChats = 0;
+  let deletedMessages = 0;
+  let deletedFiles = 0;
+
+  for (const chatDoc of snap.docs) {
+    deletedMessages += await deleteCollectionDocs(
+      chatDoc.ref.collection("messages"),
+    );
+    deletedFiles += await deleteFilesWithPrefix(`chat_images/${chatDoc.id}/`);
+    deletedFiles += await deleteFilesWithPrefix(`chat_videos/${chatDoc.id}/`);
+    deletedFiles += await deleteFilesWithPrefix(
+      `chat_documents/${chatDoc.id}/`,
+    );
+    deletedFiles += await deleteFilesWithPrefix(`chat_files/${chatDoc.id}/`);
+    await chatDoc.ref.delete();
+    deletedChats += 1;
+  }
+
+  return { deletedChats, deletedMessages, deletedFiles };
+}
+
+async function scrubClosedDisputesForDeletedUser(userId) {
+  const disputes = [
+    ...(await getUserScopedDocs("disputes", "customerId", userId)),
+    ...(await getUserScopedDocs("disputes", "photographerId", userId)),
+  ];
+  const seen = new Set();
+  let scrubbedDisputes = 0;
+  let deletedEvidenceFiles = 0;
+
+  for (const disputeDoc of disputes) {
+    if (seen.has(disputeDoc.id)) continue;
+    seen.add(disputeDoc.id);
+
+    deletedEvidenceFiles += await deleteFilesWithPrefix(
+      `disputes/${disputeDoc.id}/`,
+    );
+
+    await disputeDoc.ref.update({
+      details: "",
+      evidenceUrls: [],
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    scrubbedDisputes += 1;
+  }
+
+  return { scrubbedDisputes, deletedEvidenceFiles };
+}
+
+async function runAccountDeletionCleanup(userId, jobData = {}) {
+  const summary = {
+    deletedNotifications: 0,
+    deletedFavorites: 0,
+    deletedFollowing: 0,
+    deletedReports: 0,
+    deletedAchievements: 0,
+    deletedReviews: 0,
+    deletedStories: 0,
+    deletedStoryViews: 0,
+    deletedStoryFiles: 0,
+    deletedReels: 0,
+    deletedReelComments: 0,
+    deletedReelLikes: 0,
+    deletedReelFiles: 0,
+    deletedPortfolios: 0,
+    deletedPortfolioFiles: 0,
+    deletedRequests: 0,
+    scrubbedRequests: 0,
+    deletedOffers: 0,
+    deletedRequestReferenceFiles: 0,
+    scrubbedBookings: 0,
+    scrubbedDisputes: 0,
+    deletedDisputeEvidenceFiles: 0,
+    deletedChats: 0,
+    deletedChatMessages: 0,
+    deletedChatFiles: 0,
+    deletedPrivateDocs: 0,
+    deletedProfileFiles: 0,
+    deletedUsernameClaims: 0,
+    deletedTrustEvents: 0,
+    deletedAdminDocs: 0,
+  };
+
+  let usernameLower =
+    typeof jobData.usernameLower === "string" && jobData.usernameLower.trim()
+      ? jobData.usernameLower.trim()
+      : null;
+
+  if (!usernameLower) {
+    try {
+      const userDoc = await db.collection("users").doc(userId).get();
+      if (userDoc.exists) {
+        const userData = userDoc.data() || {};
+        if (typeof userData.usernameLower === "string") {
+          usernameLower = userData.usernameLower;
+        }
+      }
+    } catch (_) {
+      // Best-effort lookup.
+    }
+  }
+
+  summary.deletedNotifications += await deleteDocsByQuery(
+    db.collection("notifications").where("userId", "==", userId),
+  );
+  summary.deletedFavorites += await deleteDocsByQuery(
+    db.collection("favorites").where("userId", "==", userId),
+  );
+  summary.deletedFavorites += await deleteDocsByQuery(
+    db.collection("favorites").where("photographerId", "==", userId),
+  );
+  summary.deletedFollowing += await deleteDocsByQuery(
+    db.collection("following").where("followerId", "==", userId),
+  );
+  summary.deletedFollowing += await deleteDocsByQuery(
+    db.collection("following").where("followingId", "==", userId),
+  );
+  summary.deletedReports += await deleteDocsByQuery(
+    db.collection("reports").where("reporterId", "==", userId),
+  );
+  summary.deletedReports += await deleteDocsByQuery(
+    db.collection("reports").where("reportedUserId", "==", userId),
+  );
+  summary.deletedAchievements += await deleteDocsByQuery(
+    db.collection("user_achievements").where("userId", "==", userId),
+  );
+  summary.deletedReviews += await deleteDocsByQuery(
+    db.collection("reviews").where("reviewerId", "==", userId),
+  );
+  summary.deletedReviews += await deleteDocsByQuery(
+    db.collection("reviews").where("targetId", "==", userId),
+  );
+
+  const storySummary = await cleanupOwnedStories(userId);
+  summary.deletedStories += storySummary.deletedStories;
+  summary.deletedStoryViews += storySummary.deletedViews;
+  summary.deletedStoryFiles += storySummary.deletedFiles;
+
+  const reelSummary = await cleanupOwnedReels(userId);
+  summary.deletedReels += reelSummary.deletedReels;
+  summary.deletedReelComments += reelSummary.deletedComments;
+  summary.deletedReelLikes += reelSummary.deletedLikes;
+  summary.deletedReelFiles += reelSummary.deletedFiles;
+
+  const portfolioSummary = await cleanupPortfolio(userId);
+  summary.deletedPortfolios += portfolioSummary.deletedPortfolios;
+  summary.deletedPortfolioFiles += portfolioSummary.deletedFiles;
+
+  const requestSummary = await cleanupRequestsForDeletedUser(userId);
+  summary.deletedRequests += requestSummary.deletedRequests;
+  summary.scrubbedRequests += requestSummary.scrubbedRequests;
+  summary.deletedOffers += requestSummary.deletedOffers;
+  summary.deletedRequestReferenceFiles +=
+    requestSummary.deletedReferenceFiles;
+
+  summary.scrubbedBookings += await scrubHistoricalBookings(userId);
+
+  const disputeSummary = await scrubClosedDisputesForDeletedUser(userId);
+  summary.scrubbedDisputes += disputeSummary.scrubbedDisputes;
+  summary.deletedDisputeEvidenceFiles += disputeSummary.deletedEvidenceFiles;
+
+  const chatSummary = await cleanupChatsForDeletedUser(userId);
+  summary.deletedChats += chatSummary.deletedChats;
+  summary.deletedChatMessages += chatSummary.deletedMessages;
+  summary.deletedChatFiles += chatSummary.deletedFiles;
+
+  summary.deletedTrustEvents += await deleteDocsByQuery(
+    db.collection("trust_events").where("reviewerId", "==", userId),
+  );
+  summary.deletedTrustEvents += await deleteDocsByQuery(
+    db.collection("trust_events").where("photographerId", "==", userId),
+  );
+
+  const privateRef = db.collection("users").doc(userId).collection("private");
+  summary.deletedPrivateDocs += await deleteCollectionDocs(privateRef);
+
+  try {
+    await db.collection("loyalty_points").doc(userId).delete();
+  } catch (_) {
+    // Best-effort cleanup.
+  }
+  try {
+    await db.collection("trust_stats").doc(userId).delete();
+  } catch (_) {
+    // Best-effort cleanup.
+  }
+  try {
+    await db.collection("photographers").doc(userId).delete();
+  } catch (_) {
+    // Best-effort cleanup.
+  }
+  try {
+    await db.collection("users_public").doc(userId).delete();
+  } catch (_) {
+    // Best-effort cleanup.
+  }
+  try {
+    await db.collection("users").doc(userId).delete();
+  } catch (_) {
+    // Best-effort cleanup.
+  }
+  try {
+    await db.collection("admins").doc(userId).delete();
+    summary.deletedAdminDocs += 1;
+  } catch (_) {
+    // Best-effort cleanup.
+  }
+  if (usernameLower) {
+    try {
+      await db.collection("username_claims").doc(usernameLower).delete();
+      summary.deletedUsernameClaims += 1;
+    } catch (_) {
+      // Best-effort cleanup.
+    }
+  }
+
+  summary.deletedProfileFiles += await deleteFilesWithPrefix(
+    `users/${userId}/profile/`,
+  );
+
+  try {
+    await admin.auth().deleteUser(userId);
+  } catch (error) {
+    if (error && error.code !== "auth/user-not-found") {
+      throw error;
+    }
+  }
+
+  await db.collection("deleted_users").doc(userId).set(
+    {
+      status: "deleted",
+      usernameLower,
+      cleanedUpAt: admin.firestore.FieldValue.serverTimestamp(),
+      authDeleted: true,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return summary;
+}
+
 exports.deleteAccountData = functions
   .runWith({ timeoutSeconds: 540, memory: "1GB" })
   .https.onCall(async (_data, context) => {
@@ -1380,139 +1628,160 @@ exports.deleteAccountData = functions
 
     const userId = context.auth.uid;
     await assertAccountDeletionAllowed(userId);
+    const usersRef = db.collection("users").doc(userId);
+    const publicRef = db.collection("users_public").doc(userId);
+    const deletedRef = db.collection("deleted_users").doc(userId);
+    const jobRef = db.collection("account_deletion_jobs").doc(userId);
 
-    const summary = {
-      deletedNotifications: 0,
-      deletedFavorites: 0,
-      deletedFollowing: 0,
-      deletedReports: 0,
-      deletedAchievements: 0,
-      deletedReviews: 0,
-      deletedStories: 0,
-      deletedStoryViews: 0,
-      deletedStoryFiles: 0,
-      deletedReels: 0,
-      deletedReelComments: 0,
-      deletedReelLikes: 0,
-      deletedReelFiles: 0,
-      deletedPortfolios: 0,
-      deletedPortfolioFiles: 0,
-      deletedRequests: 0,
-      scrubbedRequests: 0,
-      deletedOffers: 0,
-      deletedRequestReferenceFiles: 0,
-      scrubbedBookings: 0,
-      deletedPrivateDocs: 0,
-      deletedProfileFiles: 0,
-      deletedUsernameClaims: 0,
-    };
+    const [userSnap, deletedSnap, jobSnap] = await Promise.all([
+      usersRef.get(),
+      deletedRef.get(),
+      jobRef.get(),
+    ]);
 
-    let usernameLower = null;
+    const existingJobStatus =
+      jobSnap.exists && jobSnap.data() ? jobSnap.data().status : null;
+    if (
+      deletedSnap.exists ||
+      existingJobStatus === "queued" ||
+      existingJobStatus === "running"
+    ) {
+      return {
+        ok: true,
+        queued: true,
+        status: existingJobStatus || "queued",
+      };
+    }
+
+    const userData = userSnap.exists ? userSnap.data() || {} : {};
+    const userRole =
+      typeof userData.role === "string" && userData.role.trim()
+        ? userData.role.trim()
+        : "customer";
+    const usernameLower =
+      typeof userData.usernameLower === "string" &&
+      userData.usernameLower.trim().length > 0
+        ? userData.usernameLower.trim()
+        : null;
+    const governorate =
+      typeof userData.governorate === "string" ? userData.governorate : "";
+    const lang = typeof userData.lang === "string" ? userData.lang : "ar";
+    const over18Confirmed = userData.over18Confirmed === true;
+    const createdAt = userData.createdAt || admin.firestore.FieldValue.serverTimestamp();
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    await db.runTransaction(async (tx) => {
+      tx.set(
+        usersRef,
+        {
+          uid: userId,
+          name: "Deleted User",
+          email: null,
+          phone: null,
+          photoUrl: null,
+          role: userRole,
+          username: null,
+          usernameLower: null,
+          gender: null,
+          birthYear: null,
+          age: null,
+          governorate,
+          lang,
+          profileCompleted: false,
+          over18Confirmed,
+          blockedUsers: [],
+          interests: [],
+          fcmToken: null,
+          lastSeen: now,
+          status: "deleted",
+          deletionRequestedAt: now,
+          deletedAt: now,
+          createdAt,
+          updatedAt: now,
+        },
+        { merge: true },
+      );
+      tx.delete(publicRef);
+      tx.set(
+        deletedRef,
+        {
+          userId,
+          usernameLower,
+          status: "deleted",
+          requestedAt: now,
+          cleanedUpAt: null,
+          authDeleted: false,
+          updatedAt: now,
+        },
+        { merge: true },
+      );
+      tx.set(jobRef, {
+        userId,
+        usernameLower,
+        status: "queued",
+        requestedAt: now,
+        updatedAt: now,
+        error: null,
+      });
+    });
+
     try {
-      const userDoc = await db.collection("users").doc(userId).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data() || {};
-        if (typeof userData.usernameLower === "string") {
-          usernameLower = userData.usernameLower;
-        }
-      }
+      await admin.auth().revokeRefreshTokens(userId);
+      await admin.auth().updateUser(userId, { disabled: true });
     } catch (_) {
-      // Best-effort lookup.
+      // Firestore tombstone is the source of truth; auth disable is best effort.
     }
 
-    summary.deletedNotifications += await deleteDocsByQuery(
-      db.collection("notifications").where("userId", "==", userId),
-    );
-    summary.deletedFavorites += await deleteDocsByQuery(
-      db.collection("favorites").where("userId", "==", userId),
-    );
-    summary.deletedFavorites += await deleteDocsByQuery(
-      db.collection("favorites").where("photographerId", "==", userId),
-    );
-    summary.deletedFollowing += await deleteDocsByQuery(
-      db.collection("following").where("followerId", "==", userId),
-    );
-    summary.deletedFollowing += await deleteDocsByQuery(
-      db.collection("following").where("followingId", "==", userId),
-    );
-    summary.deletedReports += await deleteDocsByQuery(
-      db.collection("reports").where("reporterId", "==", userId),
-    );
-    summary.deletedAchievements += await deleteDocsByQuery(
-      db.collection("user_achievements").where("userId", "==", userId),
-    );
-    summary.deletedReviews += await deleteDocsByQuery(
-      db.collection("reviews").where("reviewerId", "==", userId),
-    );
+    return { ok: true, queued: true, status: "queued" };
+  });
 
-    const storySummary = await cleanupOwnedStories(userId);
-    summary.deletedStories += storySummary.deletedStories;
-    summary.deletedStoryViews += storySummary.deletedViews;
-    summary.deletedStoryFiles += storySummary.deletedFiles;
+exports.processAccountDeletionJob = functions
+  .runWith({ timeoutSeconds: 540, memory: "1GB" })
+  .firestore.document("account_deletion_jobs/{userId}")
+  .onCreate(async (snapshot, context) => {
+    const userId =
+      typeof context.params.userId === "string" ? context.params.userId : "";
+    if (!userId) {
+      return null;
+    }
 
-    const reelSummary = await cleanupOwnedReels(userId);
-    summary.deletedReels += reelSummary.deletedReels;
-    summary.deletedReelComments += reelSummary.deletedComments;
-    summary.deletedReelLikes += reelSummary.deletedLikes;
-    summary.deletedReelFiles += reelSummary.deletedFiles;
-
-    const portfolioSummary = await cleanupPortfolio(userId);
-    summary.deletedPortfolios += portfolioSummary.deletedPortfolios;
-    summary.deletedPortfolioFiles += portfolioSummary.deletedFiles;
-
-    const requestSummary = await cleanupRequestsForDeletedUser(userId);
-    summary.deletedRequests += requestSummary.deletedRequests;
-    summary.scrubbedRequests += requestSummary.scrubbedRequests;
-    summary.deletedOffers += requestSummary.deletedOffers;
-    summary.deletedRequestReferenceFiles +=
-      requestSummary.deletedReferenceFiles;
-
-    summary.scrubbedBookings += await scrubHistoricalBookings(userId);
-
-    const privateRef = db.collection("users").doc(userId).collection("private");
-    summary.deletedPrivateDocs += await deleteCollectionDocs(privateRef);
+    const jobRef = snapshot.ref;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    await jobRef.set(
+      {
+        status: "running",
+        startedAt: now,
+        updatedAt: now,
+        error: null,
+      },
+      { merge: true },
+    );
 
     try {
-      await db.collection("loyalty_points").doc(userId).delete();
-    } catch (_) {
-      // Best-effort cleanup.
-    }
-    try {
-      await db.collection("trust_stats").doc(userId).delete();
-    } catch (_) {
-      // Best-effort cleanup.
-    }
-    try {
-      await db.collection("photographers").doc(userId).delete();
-    } catch (_) {
-      // Best-effort cleanup.
-    }
-    try {
-      await db.collection("users_public").doc(userId).delete();
-    } catch (_) {
-      // Best-effort cleanup.
-    }
-    try {
-      await db.collection("users").doc(userId).delete();
-    } catch (_) {
-      // Best-effort cleanup.
-    }
-    if (usernameLower) {
-      try {
-        await db.collection("username_claims").doc(usernameLower).delete();
-        summary.deletedUsernameClaims += 1;
-      } catch (_) {
-        // Best-effort cleanup.
-      }
+      const summary = await runAccountDeletionCleanup(userId, snapshot.data());
+      await jobRef.set(
+        {
+          status: "completed",
+          completedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          error: null,
+          summary,
+        },
+        { merge: true },
+      );
+    } catch (error) {
+      await jobRef.set(
+        {
+          status: "failed",
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          error: error instanceof Error ? error.message : String(error),
+        },
+        { merge: true },
+      );
+      throw error;
     }
 
-    summary.deletedProfileFiles += await deleteFilesWithPrefix(
-      `users/${userId}/profile/`,
-    );
-
-    await admin.auth().deleteUser(userId);
-
-    return { ok: true, summary };
+    return null;
   });
 
 async function cleanupStoriesInternal({

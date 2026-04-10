@@ -2,7 +2,14 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && !isDeletedUser(request.auth.uid);
+    }
+
+    function isDeletedUser(userId) {
+      let deletedDoc = firestore.get(
+        /databases/(default)/documents/deleted_users/$(userId)
+      );
+      return deletedDoc != null && deletedDoc.data != null;
     }
 
     function isOwner(userId) {

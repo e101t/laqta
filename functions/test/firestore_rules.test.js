@@ -145,6 +145,33 @@ function publicUserDocData({ name, role, governorate }) {
   };
 }
 
+function privateUserDocData({ userId, role = 'customer' }) {
+  const now = Timestamp.fromDate(new Date());
+  return {
+    uid: userId,
+    name: 'User',
+    email: null,
+    phone: null,
+    photoUrl: null,
+    role,
+    username: null,
+    usernameLower: null,
+    gender: null,
+    birthYear: null,
+    age: null,
+    governorate: 'Baghdad',
+    lang: 'ar',
+    profileCompleted: false,
+    over18Confirmed: true,
+    blockedUsers: [],
+    interests: [],
+    fcmToken: null,
+    lastSeen: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 async function seedVerifiedPhotographer(uid, { governorates = ['Baghdad'], name = 'Photographer' } = {}) {
   const now = Timestamp.fromDate(new Date());
   await testEnv.withSecurityRulesDisabled(async (context) => {
@@ -395,6 +422,57 @@ test('users_public read is denied for unauthenticated clients', async () => {
 
   const anonDb = testEnv.unauthenticatedContext().firestore();
   await assertFails(anonDb.collection('users_public').doc('public-user-1').get());
+});
+
+test('deleted users cannot create new requests', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, 'deleted_users/deleted-client'), {
+      userId: 'deleted-client',
+      status: 'deleted',
+      requestedAt: Timestamp.fromDate(new Date()),
+    });
+  });
+
+  const deletedDb = authedDb('deleted-client');
+  await assertFails(
+    deletedDb
+      .collection('requests')
+      .doc('req-deleted-user')
+      .set(requestDocData({ clientId: 'deleted-client', withLocation: false })),
+  );
+});
+
+test('users delete is denied for the document owner', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, 'users/user-own-delete'),
+      privateUserDocData({ userId: 'user-own-delete' }),
+    );
+  });
+
+  const ownerDb = authedDb('user-own-delete');
+  await assertFails(ownerDb.collection('users').doc('user-own-delete').delete());
+});
+
+test('users_public delete is denied for the document owner', async () => {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, 'users_public/user-public-delete'),
+      publicUserDocData({
+        name: 'Public User',
+        role: 'customer',
+        governorate: 'Baghdad',
+      }),
+    );
+  });
+
+  const ownerDb = authedDb('user-public-delete');
+  await assertFails(
+    ownerDb.collection('users_public').doc('user-public-delete').delete(),
+  );
 });
 
 test('requests query allows photographer to fetch open requests with matching rule filters', async () => {

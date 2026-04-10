@@ -38,16 +38,17 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCurrentUserId();
-    _loadMessages();
+    _initializeChat();
   }
 
-  Future<void> _loadCurrentUserId() async {
+  Future<void> _initializeChat() async {
     final result = await AuthDependencies.getCurrentUser().call();
     if (!mounted) return;
+    final currentUserId = result.valueOrNull?.id ?? '';
     setState(() {
-      _currentUserId = result.valueOrNull?.id ?? '';
+      _currentUserId = currentUserId;
     });
+    await _loadMessages();
   }
 
   @override
@@ -88,7 +89,46 @@ class _ChatScreenState extends State<ChatScreen> {
     });
     if (!hasError) {
       _scrollToBottom();
+      _markMessagesAsRead();
     }
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty || _messages.isEmpty) {
+      return;
+    }
+
+    final unreadIncomingIndexes = <int>[];
+    for (var index = 0; index < _messages.length; index++) {
+      final message = _messages[index];
+      if (message.senderId != currentUserId &&
+          !message.isSeenBy(currentUserId)) {
+        unreadIncomingIndexes.add(index);
+      }
+    }
+
+    if (unreadIncomingIndexes.isEmpty) {
+      return;
+    }
+
+    final result = await ChatDependencies.markChatMessagesRead().call(
+      chatId: widget.chatId,
+      userId: currentUserId,
+      messages: List<ChatMessage>.unmodifiable(_messages),
+    );
+    if (!result.isSuccess || !mounted) {
+      return;
+    }
+
+    setState(() {
+      for (final index in unreadIncomingIndexes) {
+        final message = _messages[index];
+        _messages[index] = message.copyWith(
+          seenBy: {...message.seenBy, currentUserId}.toList(),
+        );
+      }
+    });
   }
 
   void _scrollToBottom() {
