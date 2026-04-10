@@ -8,6 +8,9 @@ import 'package:laqta/features/search/domain/usecases/search_photographers.dart'
 class SearchDependencies {
   static final SearchRemoteDataSource _remoteDataSource =
       FirestoreSearchRemoteDataSource();
+  static final SearchRepository _defaultRepository = SearchRepositoryImpl(
+    _remoteDataSource,
+  );
   static SearchRepository? _repositoryOverride;
 
   @visibleForTesting
@@ -16,7 +19,7 @@ class SearchDependencies {
   }
 
   static SearchRepository get _repository =>
-      _repositoryOverride ?? SearchRepositoryImpl(_remoteDataSource);
+      _repositoryOverride ?? _defaultRepository;
 
   static SearchPhotographers searchPhotographers() =>
       SearchPhotographers(_repository);
