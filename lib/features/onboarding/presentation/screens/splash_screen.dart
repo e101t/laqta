@@ -122,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Laqta',
+                          'LAQTA',
                           style: textTheme.titleLarge?.copyWith(
                             color: scheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
