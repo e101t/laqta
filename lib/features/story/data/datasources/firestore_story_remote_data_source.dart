@@ -1,25 +1,19 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:laqta/core/models/story_model.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
-import 'package:laqta/core/security/secure_storage.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/features/story/data/datasources/story_remote_data_source.dart';
 
 class FirestoreStoryRemoteDataSource implements StoryRemoteDataSource {
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
   final SecureFirestore _secure;
-  final SecureStorage _secureStorage;
+  final BackendMediaService _backendMediaService;
 
   FirestoreStoryRemoteDataSource({
     FirebaseFirestore? firestore,
-    FirebaseStorage? storage,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance,
        _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
+       _backendMediaService = BackendMediaService();
 
   CollectionReference<Map<String, dynamic>> get _storiesCollection =>
       _firestore.collection('stories');
@@ -38,31 +32,11 @@ class FirestoreStoryRemoteDataSource implements StoryRemoteDataSource {
     required String filePath,
     required String contentType,
   }) async {
-    final extension = _extensionForContentType(contentType);
-    final fileName =
-        'story_${DateTime.now().millisecondsSinceEpoch}$extension';
-    final storageRef = _storage
-        .ref()
-        .child('stories')
-        .child(photographerId)
-        .child(storyId)
-        .child(fileName);
-
-    await _secureStorage.guard(
-      () => storageRef.putFile(
-        File(filePath),
-        SettableMetadata(contentType: contentType),
-      ),
+    return _backendMediaService.uploadFile(
+      entityType: 'story',
+      entityId: photographerId,
+      filePath: filePath,
+      publicContent: true,
     );
-
-    return _secureStorage.guard(() => storageRef.getDownloadURL());
-  }
-
-  String _extensionForContentType(String contentType) {
-    if (contentType.contains('png')) return '.png';
-    if (contentType.contains('jpeg') || contentType.contains('jpg')) {
-      return '.jpg';
-    }
-    return '.jpg';
   }
 }
