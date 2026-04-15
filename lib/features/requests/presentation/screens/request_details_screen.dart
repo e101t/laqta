@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/backend_media_image.dart';
 import 'package:laqta/core/widgets/empty_states.dart';
 import 'package:laqta/core/widgets/loading_widgets.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
@@ -715,11 +716,12 @@ class _RequestSummaryCard extends StatelessWidget {
                     final url = request.referenceImages[index];
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        url,
+                      child: BackendMediaImage(
+                        url: url,
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     );
                   },

@@ -42,4 +42,14 @@ class BackendConfig {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     return Uri.parse('$baseUrl/api/v1$normalizedPath');
   }
+
+  static Uri mediaApiUri(String mediaId) => apiUri('/media/$mediaId');
+
+  static String mediaApiUrl(String mediaId) => mediaApiUri(mediaId).toString();
+
+  static Uri mediaContentUri(String mediaId) =>
+      apiUri('/media/$mediaId/content');
+
+  static String mediaContentUrl(String mediaId) =>
+      mediaContentUri(mediaId).toString();
 }

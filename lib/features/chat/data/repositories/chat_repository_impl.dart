@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
 import 'package:laqta/features/chat/data/mappers/chat_mapper.dart';
@@ -11,8 +12,12 @@ import 'package:laqta/features/chat/domain/repositories/chat_repository.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final ChatRemoteDataSource _remoteDataSource;
+  final BackendMediaService _mediaService;
 
-  const ChatRepositoryImpl(this._remoteDataSource);
+  ChatRepositoryImpl(
+    this._remoteDataSource, {
+    BackendMediaService? mediaService,
+  }) : _mediaService = mediaService ?? BackendMediaService();
 
   @override
   String createMessageId({required String chatId}) {
@@ -144,15 +149,12 @@ class ChatRepositoryImpl implements ChatRepository {
     int? fileSize,
   }) async {
     try {
-      final storagePath = _resolveStoragePath(
-        type: type,
-        chatId: chatId,
-        messageId: messageId,
-        fileName: fileName,
-      );
-      final downloadUrl = await _remoteDataSource.uploadFile(
-        storagePath: storagePath,
+      final downloadUrl = await _mediaService.uploadFile(
+        entityType: 'chat',
+        entityId: chatId,
         filePath: filePath,
+        publicContent: false,
+        fileName: fileName,
       );
 
       final content = type == 'document'
@@ -414,24 +416,5 @@ class ChatRepositoryImpl implements ChatRepository {
       return segments[1].trim();
     }
     return 'Document';
-  }
-
-  static String _resolveStoragePath({
-    required String type,
-    required String chatId,
-    required String messageId,
-    String? fileName,
-  }) {
-    switch (type) {
-      case 'image':
-        return 'chat_images/$chatId/$messageId.jpg';
-      case 'video':
-        return 'chat_videos/$chatId/$messageId.mp4';
-      case 'document':
-        final safeName = fileName?.isNotEmpty == true ? fileName! : 'document';
-        return 'chat_documents/$chatId/${messageId}_$safeName';
-      default:
-        return 'chat_files/$chatId/$messageId';
-    }
   }
 }

@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/core/security/secure_storage.dart';
 import 'package:laqta/core/utils/user_public_fields.dart';
@@ -16,16 +15,19 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
   final FirebaseStorage _storage;
   final SecureFirestore _secure;
   final SecureStorage _secureStorage;
+  final BackendMediaService _backendMedia;
 
   FirestoreProfileRemoteDataSource({
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
     FirebaseStorage? storage,
+    BackendMediaService? backendMediaService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _functions = functions ?? FirebaseFunctions.instance,
        _storage = storage ?? FirebaseStorage.instance,
        _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
+       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance),
+       _backendMedia = backendMediaService ?? BackendMediaService();
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
@@ -81,20 +83,11 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
 
   @override
   Future<String> uploadProfilePhoto(String userId, String filePath) async {
-    final storageRef = _storage
-        .ref()
-        .child('users')
-        .child(userId)
-        .child('profile')
-        .child('profile_$userId.jpg');
-
-    await _secureStorage.guard(
-      () => storageRef.putFile(
-        File(filePath),
-        SettableMetadata(contentType: 'image/jpeg'),
-      ),
+    return _uploadImageToBackend(
+      entityType: 'user',
+      entityId: userId,
+      filePath: filePath,
     );
-    return _secureStorage.guard(() => storageRef.getDownloadURL());
   }
 
   @override
@@ -142,25 +135,20 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
     String photographerId,
     String filePath,
   ) async {
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final storageRef = _storage
-        .ref()
-        .child('photographers')
-        .child(photographerId)
-        .child('portfolio')
-        .child(fileName);
-
-    await _secureStorage.guard(
-      () => storageRef.putFile(
-        File(filePath),
-        SettableMetadata(contentType: 'image/jpeg'),
-      ),
+    return _uploadImageToBackend(
+      entityType: 'portfolio',
+      entityId: photographerId,
+      filePath: filePath,
     );
-    return _secureStorage.guard(() => storageRef.getDownloadURL());
   }
 
   @override
   Future<void> deleteFileByUrl(String url) async {
+    if (BackendMediaService.extractMediaId(url) != null) {
+      await _backendMedia.deleteByUrl(url);
+      return;
+    }
+
     final ref = _storage.refFromURL(url);
     await _secureStorage.guard(() => ref.delete());
   }
@@ -202,5 +190,18 @@ class FirestoreProfileRemoteDataSource implements ProfileRemoteDataSource {
       'createIfMissing': createIfMissing,
       'profile': profile,
     });
+  }
+
+  Future<String> _uploadImageToBackend({
+    required String entityType,
+    required String entityId,
+    required String filePath,
+  }) async {
+    return _backendMedia.uploadFile(
+      entityType: entityType,
+      entityId: entityId,
+      filePath: filePath,
+      publicContent: true,
+    );
   }
 }

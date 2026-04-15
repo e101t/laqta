@@ -8,6 +8,7 @@ import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/utils/governorate_utils.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/widgets/backend_media_image.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
 import 'package:laqta/features/notifications/notifications_dependencies.dart';
@@ -711,11 +712,12 @@ class _CreateRequestScreenState extends State<CreateRequestScreen> {
                     if (index < _existingReferenceUrls.length) {
                       final url = _existingReferenceUrls[index];
                       return _ReferenceThumbnail(
-                        child: Image.network(
-                          url,
+                        child: BackendMediaImage(
+                          url: url,
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         onRemove: () => _removeExistingReference(index),
                       );

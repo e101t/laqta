@@ -1,14 +1,11 @@
-import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
-import 'package:laqta/core/security/secure_storage.dart';
 import 'package:laqta/core/utils/governorate_utils.dart';
 import 'package:laqta/features/booking/data/dtos/booking_dto.dart';
 import 'package:laqta/features/requests/data/datasources/requests_remote_data_source.dart';
@@ -18,19 +15,17 @@ import 'package:laqta/features/requests/data/dtos/request_offer_dto.dart';
 class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
-  final FirebaseStorage _storage;
   final SecureFirestore _secure;
-  final SecureStorage _secureStorage;
+  final BackendMediaService _backendMedia;
 
   FirestoreRequestsRemoteDataSource({
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
-    FirebaseStorage? storage,
+    BackendMediaService? backendMediaService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _functions = functions ?? FirebaseFunctions.instance,
-       _storage = storage ?? FirebaseStorage.instance,
        _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
+       _backendMedia = backendMediaService ?? BackendMediaService();
 
   CollectionReference<Map<String, dynamic>> get _requestsCollection =>
       _firestore.collection('requests');
@@ -241,17 +236,12 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
     required String requestId,
     required String filePath,
   }) async {
-    final extension = _fileExtension(filePath);
-    final fileName = 'ref_${DateTime.now().millisecondsSinceEpoch}$extension';
-    final storageRef = _storage
-        .ref()
-        .child('requests')
-        .child(requestId)
-        .child('references')
-        .child(fileName);
-
-    await _secureStorage.guard(() => storageRef.putFile(File(filePath)));
-    return _secureStorage.guard(() => storageRef.getDownloadURL());
+    return _backendMedia.uploadFile(
+      entityType: 'request',
+      entityId: requestId,
+      filePath: filePath,
+      publicContent: false,
+    );
   }
 
   @override
@@ -274,12 +264,5 @@ class FirestoreRequestsRemoteDataSource implements RequestsRemoteDataSource {
       return value;
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
-  }
-
-  String _fileExtension(String filePath) {
-    final lower = filePath.toLowerCase();
-    if (lower.endsWith('.png')) return '.png';
-    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return '.jpg';
-    return '';
   }
 }

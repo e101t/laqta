@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
+import 'package:laqta/core/widgets/backend_media_image.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/core/widgets/empty_states.dart';
 import 'package:laqta/features/settings/presentation/screens/report_screen.dart';
@@ -742,13 +743,33 @@ class _MessageBubble extends StatefulWidget {
 }
 
 class _MessageBubbleState extends State<_MessageBubble> {
+  final BackendMediaService _mediaService = BackendMediaService();
   VideoPlayerController? _videoController;
 
   @override
   void initState() {
     super.initState();
-    if (widget.message.type == 'video') {
+    if (_shouldInitializeVideo(widget.message)) {
       _initializeVideoPlayer();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _MessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.message.type == widget.message.type &&
+        oldWidget.message.content == widget.message.content) {
+      return;
+    }
+
+    if (widget.message.type == 'video') {
+      _videoController?.dispose();
+      _videoController = null;
+      if (_shouldInitializeVideo(widget.message)) {
+        _initializeVideoPlayer();
+      } else if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -759,11 +780,53 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 
   Future<void> _initializeVideoPlayer() async {
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(widget.message.content),
-    );
-    await _videoController!.initialize();
-    if (mounted) setState(() {});
+    final sourceUrl = _extractPrimaryUrl(widget.message.content);
+    if (sourceUrl == null) {
+      return;
+    }
+
+    try {
+      final resolvedUrl = await _mediaService.resolveDisplayUrl(sourceUrl);
+      final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
+      await controller.initialize();
+
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+
+      setState(() {
+        _videoController?.dispose();
+        _videoController = controller;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error preparing video message: $e');
+      }
+    }
+  }
+
+  bool _shouldInitializeVideo(ChatMessage message) {
+    return message.type == 'video' && _looksLikeUrl(_extractPrimaryUrl(message.content));
+  }
+
+  String? _extractPrimaryUrl(String content) {
+    if (content.trim().isEmpty) {
+      return null;
+    }
+    if (widget.message.type == 'document') {
+      return content.split('|').first.trim();
+    }
+    return content.trim();
+  }
+
+  bool _looksLikeUrl(String? value) {
+    final normalized = value?.trim() ?? '';
+    if (normalized.isEmpty) {
+      return false;
+    }
+    final uri = Uri.tryParse(normalized);
+    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
   }
 
   String _formatTime(DateTime createdAt) {
@@ -781,16 +844,23 @@ class _MessageBubbleState extends State<_MessageBubble> {
 
     return InkWell(
       onTap: () async {
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${localizations.cannotOpenFile} $fileName'),
-              ),
-            );
+        try {
+          final resolvedUrl = await _mediaService.resolveDisplayUrl(url);
+          final uri = Uri.parse(resolvedUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return;
           }
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('Error opening document message: $e');
+          }
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${localizations.cannotOpenFile} $fileName')),
+          );
         }
       },
       child: Container(
@@ -892,27 +962,30 @@ class _MessageBubbleState extends State<_MessageBubble> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (widget.message.type == 'image') ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: widget.message.content,
+                    if (_looksLikeUrl(_extractPrimaryUrl(widget.message.content)))
+                      BackendMediaImage(
+                        url: widget.message.content,
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => const SizedBox(
-                          width: 200,
-                          height: 200,
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (context, url, error) => const SizedBox(
-                          width: 200,
-                          height: 200,
-                          child: Icon(Icons.error),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    else
+                      Text(
+                        widget.message.content,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: widget.isMe ? Colors.white : scheme.onSurface,
                         ),
                       ),
-                    ),
                   ] else if (widget.message.type == 'video') ...[
-                    if (_videoController != null &&
+                    if (!_looksLikeUrl(_extractPrimaryUrl(widget.message.content))) ...[
+                      Text(
+                        widget.message.content,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: widget.isMe ? Colors.white : scheme.onSurface,
+                        ),
+                      ),
+                    ] else if (_videoController != null &&
                         _videoController!.value.isInitialized) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -943,7 +1016,15 @@ class _MessageBubbleState extends State<_MessageBubble> {
                       ),
                     ],
                   ] else if (widget.message.type == 'document') ...[
-                    _buildDocumentWidget(widget.message),
+                    if (_looksLikeUrl(_extractPrimaryUrl(widget.message.content)))
+                      _buildDocumentWidget(widget.message)
+                    else
+                      Text(
+                        widget.message.content,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: widget.isMe ? Colors.white : scheme.onSurface,
+                        ),
+                      ),
                   ] else ...[
                     Text(
                       widget.message.content,
