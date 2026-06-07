@@ -18,6 +18,8 @@ abstract class ChatRemoteDataSource {
     String lastMessageSenderId = '',
   });
 
+  Future<ChatDto> createDirectChat({required String participantId});
+
   Future<List<ChatMessageDto>> getMessages(String chatId);
 
   Future<ChatMessageDto?> getLastMessage(String chatId);
@@ -55,9 +57,4 @@ abstract class ChatRemoteDataSource {
   Future<void> deleteChat(String chatId);
 
   Future<void> deleteChatWithMessages(String chatId);
-
-  Future<String> uploadFile({
-    required String storagePath,
-    required String filePath,
-  });
 }

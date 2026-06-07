@@ -125,7 +125,9 @@ class LaqtaTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: LaqtaColors.accent,
           foregroundColor: Colors.black,
-          textStyle: textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+          textStyle: textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       cardTheme: CardThemeData(

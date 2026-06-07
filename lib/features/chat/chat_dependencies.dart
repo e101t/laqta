@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/features/chat/data/datasources/api_chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
-import 'package:laqta/features/chat/data/datasources/firestore_chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/repositories/chat_repository_impl.dart';
 import 'package:laqta/features/chat/domain/repositories/chat_repository.dart';
 import 'package:laqta/features/chat/domain/usecases/delete_chat.dart';
@@ -11,6 +9,7 @@ import 'package:laqta/features/chat/domain/usecases/generate_message_id.dart';
 import 'package:laqta/features/chat/domain/usecases/get_or_create_booking_chat.dart';
 import 'package:laqta/features/chat/domain/usecases/get_chat_messages.dart';
 import 'package:laqta/features/chat/domain/usecases/get_chat_threads.dart';
+import 'package:laqta/features/chat/domain/usecases/get_or_create_direct_chat.dart';
 import 'package:laqta/features/chat/domain/usecases/get_other_participant_id.dart';
 import 'package:laqta/features/chat/domain/usecases/mark_chat_messages_read.dart';
 import 'package:laqta/features/chat/domain/usecases/send_chat_media_message.dart';
@@ -30,9 +29,9 @@ class ChatDependencies {
       _repositoryOverride ?? ChatRepositoryImpl(_remote);
 
   static ChatRemoteDataSource get _remote =>
-      _remoteDataSource ??= (BackendConfig.useBackendChat
-      ? ApiChatRemoteDataSource()
-      : FirestoreChatRemoteDataSource());
+      _remoteDataSource ??= _buildRemote();
+
+  static ChatRemoteDataSource _buildRemote() => ApiChatRemoteDataSource();
 
   static GetChatThreads getChatThreads() => GetChatThreads(_repository);
 
@@ -61,4 +60,7 @@ class ChatDependencies {
 
   static GetOrCreateBookingChat getOrCreateBookingChat() =>
       GetOrCreateBookingChat(_repository);
+
+  static GetOrCreateDirectChat getOrCreateDirectChat() =>
+      GetOrCreateDirectChat(_repository);
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
+import 'package:laqta/core/widgets/backend_media_image.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/features/deliveries/deliveries_dependencies.dart';
@@ -26,6 +28,8 @@ class DeliveryUploadScreen extends StatefulWidget {
 
 class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
   final TextEditingController _noteController = TextEditingController();
+  final List<String> _photoMediaIds = [];
+  final List<String> _videoMediaIds = [];
   final List<String> _photoUrls = [];
   final List<String> _videoUrls = [];
   bool _isUploading = false;
@@ -34,6 +38,8 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
   void initState() {
     super.initState();
     if (widget.existingDelivery != null) {
+      _photoMediaIds.addAll(widget.existingDelivery!.photoMediaIds);
+      _videoMediaIds.addAll(widget.existingDelivery!.videoMediaIds);
       _photoUrls.addAll(widget.existingDelivery!.photoUrls);
       _videoUrls.addAll(widget.existingDelivery!.videoUrls);
       _noteController.text = widget.existingDelivery!.note ?? '';
@@ -60,7 +66,9 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
           filePath: file.path,
         );
         if (result.isSuccess && result.valueOrNull != null) {
-          _photoUrls.add(result.valueOrNull!);
+          final stableUrl = result.valueOrNull!;
+          _photoUrls.add(stableUrl);
+          _photoMediaIds.add(BackendMediaService.requireMediaId(stableUrl));
         }
       }
     } finally {
@@ -81,7 +89,9 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
         filePath: file.path,
       );
       if (result.isSuccess && result.valueOrNull != null) {
-        _videoUrls.add(result.valueOrNull!);
+        final stableUrl = result.valueOrNull!;
+        _videoUrls.add(stableUrl);
+        _videoMediaIds.add(BackendMediaService.requireMediaId(stableUrl));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -106,6 +116,9 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
         photographerId: widget.photographerId,
         customerId: widget.customerId,
         status: 'submitted',
+        photoMediaIds: List<String>.from(_photoMediaIds),
+        videoMediaIds: List<String>.from(_videoMediaIds),
+        otherMediaIds: const [],
         photoUrls: List<String>.from(_photoUrls),
         videoUrls: List<String>.from(_videoUrls),
         otherUrls: const [],
@@ -118,8 +131,9 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
         updatedAt: now,
       );
 
-      final result =
-          await DeliveriesDependencies.upsertDelivery().call(delivery);
+      final result = await DeliveriesDependencies.upsertDelivery().call(
+        delivery,
+      );
       if (!result.isSuccess) {
         throw StateError('Delivery upload failed');
       }
@@ -151,7 +165,9 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
           children: [
             Text(
               localizations.filesLabel,
-              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -183,8 +199,8 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, index) => ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      _photoUrls[index],
+                    child: BackendMediaImage(
+                      url: _photoUrls[index],
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
@@ -205,7 +221,11 @@ class _DeliveryUploadScreenState extends State<DeliveryUploadScreen> {
                     .map(
                       (url) => ListTile(
                         leading: const Icon(Icons.video_file),
-                        title: Text(url, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        title: Text(
+                          url,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     )
                     .toList(),

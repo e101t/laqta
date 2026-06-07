@@ -27,10 +27,7 @@ class RequestOffer {
     required this.updatedAt,
   });
 
-  RequestOffer copyWith({
-    String? status,
-    DateTime? updatedAt,
-  }) {
+  RequestOffer copyWith({String? status, DateTime? updatedAt}) {
     return RequestOffer(
       id: id,
       requestId: requestId,

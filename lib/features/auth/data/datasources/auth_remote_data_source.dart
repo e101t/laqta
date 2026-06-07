@@ -1,40 +1,52 @@
 import 'package:laqta/features/auth/data/dtos/auth_user_dto.dart';
 
-typedef AuthPhoneCodeSent =
-    void Function(String verificationId, int? resendToken);
-typedef AuthPhoneVerificationCompleted = void Function(AuthUserDto user);
-typedef AuthPhoneVerificationFailed = void Function(Object error);
-typedef AuthPhoneCodeAutoRetrievalTimeout =
-    void Function(String verificationId);
+class AuthOtpStartDto {
+  const AuthOtpStartDto({
+    required this.requestId,
+    required this.expiresInSeconds,
+    required this.resendAfterSeconds,
+    this.message,
+  });
+
+  final String requestId;
+  final int expiresInSeconds;
+  final int resendAfterSeconds;
+  final String? message;
+}
 
 abstract class AuthRemoteDataSource {
-  AuthUserDto? getCurrentUser();
-
-  Future<AuthUserDto> signInWithGoogle();
-
-  Future<AuthUserDto> signInWithApple();
+  Future<AuthUserDto?> getCurrentUser();
 
   Future<AuthUserDto> signInWithPassword({
-    required String email,
+    required String identifier,
     required String password,
   });
 
-  Future<AuthUserDto> signUpWithPassword({
-    required String email,
+  Future<AuthOtpStartDto> startRegistration({
+    required String role,
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String gender,
+    required String birthdate,
+    required String province,
+    required String phone,
+  });
+
+  Future<AuthUserDto> completeRegistration({
+    required String requestId,
+    required String code,
     required String password,
+    required String confirmPassword,
   });
 
-  Future<AuthUserDto> signInWithPhoneCredential({
-    required String verificationId,
-    required String smsCode,
-  });
+  Future<AuthOtpStartDto> forgotPassword({required String phone});
 
-  Future<void> verifyPhoneNumber({
-    required String phoneNumber,
-    required AuthPhoneVerificationCompleted onVerificationCompleted,
-    required AuthPhoneVerificationFailed onVerificationFailed,
-    required AuthPhoneCodeSent onCodeSent,
-    required AuthPhoneCodeAutoRetrievalTimeout onCodeAutoRetrievalTimeout,
+  Future<AuthUserDto> resetPassword({
+    required String requestId,
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
   });
 
   Future<void> signOut();

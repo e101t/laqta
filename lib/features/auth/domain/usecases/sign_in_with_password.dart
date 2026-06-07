@@ -8,10 +8,12 @@ class SignInWithPassword {
   const SignInWithPassword(this._repository);
 
   Future<Result<AuthUser>> call({
-    required String email,
+    required String identifier,
     required String password,
   }) {
-    return _repository.signInWithPassword(email: email, password: password);
+    return _repository.signInWithPassword(
+      identifier: identifier,
+      password: password,
+    );
   }
 }
-

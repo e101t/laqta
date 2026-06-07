@@ -1,18 +1,51 @@
-import 'dart:io';
-
-import 'package:http/http.dart' as http;
+import 'package:laqta/core/media/media_upload_service.dart';
 import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/core/services/backend_config.dart';
+
+class BackendMediaUploadResult {
+  const BackendMediaUploadResult({
+    required this.mediaId,
+    required this.stableUrl,
+  });
+
+  final String mediaId;
+  final String stableUrl;
+}
 
 class BackendMediaService {
   BackendMediaService({
     BackendApiClient? backendApiClient,
-    http.Client? httpClient,
+    MediaUploadService? uploadService,
   }) : _backendApi = backendApiClient ?? BackendApiClient(),
-       _httpClient = httpClient ?? http.Client();
+       _uploadService =
+           uploadService ??
+           MediaUploadService(backendApiClient: backendApiClient);
 
   final BackendApiClient _backendApi;
-  final http.Client _httpClient;
+  final MediaUploadService _uploadService;
+  static const int _maxDisplayUrlCacheEntries = 256;
+  static final Map<String, Future<String>> _displayUrlCache =
+      <String, Future<String>>{};
+
+  Future<BackendMediaUploadResult> uploadFileReference({
+    required String entityType,
+    required String entityId,
+    required String filePath,
+    required bool publicContent,
+    String? fileName,
+  }) async {
+    final result = await _uploadService.upload(
+      entityType: entityType,
+      entityId: entityId,
+      filePath: filePath,
+      publicContent: publicContent,
+      fileName: fileName,
+    );
+    return BackendMediaUploadResult(
+      mediaId: result.mediaId,
+      stableUrl: result.stableUrl,
+    );
+  }
 
   Future<String> uploadFile({
     required String entityType,
@@ -21,51 +54,14 @@ class BackendMediaService {
     required bool publicContent,
     String? fileName,
   }) async {
-    final file = File(filePath);
-    final mimeType = _detectMimeType(filePath);
-    final size = await file.length();
-
-    final uploadResponse = await _backendApi.post(
-      '/media/upload-url',
-      body: {
-        'entityType': entityType,
-        'entityId': entityId,
-        'mimeType': mimeType,
-        'size': size,
-        if (fileName != null && fileName.trim().isNotEmpty) 'fileName': fileName,
-      },
+    final result = await uploadFileReference(
+      entityType: entityType,
+      entityId: entityId,
+      filePath: filePath,
+      publicContent: publicContent,
+      fileName: fileName,
     );
-
-    final uploadMap = _asMap(uploadResponse, 'Invalid upload URL response.');
-    final uploadUrl = _asString(uploadMap['uploadUrl'], 'Missing upload URL.');
-    final uploadToken = _asString(
-      uploadMap['uploadToken'],
-      'Missing upload token.',
-    );
-
-    final uploadResult = await _httpClient.put(
-      Uri.parse(uploadUrl),
-      headers: {'Content-Type': mimeType},
-      body: await file.readAsBytes(),
-    );
-
-    if (uploadResult.statusCode < 200 || uploadResult.statusCode >= 300) {
-      throw StateError(
-        'Direct upload failed with status ${uploadResult.statusCode}',
-      );
-    }
-
-    final completeResponse = await _backendApi.post(
-      '/media/complete',
-      body: {'uploadToken': uploadToken},
-    );
-    final completeMap = _asMap(completeResponse, 'Invalid upload completion.');
-    final media = _asMap(completeMap['media'], 'Missing media payload.');
-    final mediaId = _asString(media['id'], 'Missing media id.');
-
-    return publicContent
-        ? BackendConfig.mediaContentUrl(mediaId)
-        : BackendConfig.mediaApiUrl(mediaId);
+    return result.stableUrl;
   }
 
   Future<void> deleteByUrl(String url) async {
@@ -74,6 +70,7 @@ class BackendMediaService {
       throw StateError('Not a backend-managed media URL.');
     }
     await _backendApi.delete('/media/$mediaId');
+    _displayUrlCache.remove(url);
   }
 
   Future<String> resolveDisplayUrl(String url) async {
@@ -82,9 +79,33 @@ class BackendMediaService {
       return url;
     }
 
-    final response = await _backendApi.get('/media/$mediaId');
-    final responseMap = _asMap(response, 'Invalid media response.');
-    return _asString(responseMap['downloadUrl'], 'Missing download URL.');
+    final cached = _displayUrlCache[url];
+    if (cached != null) {
+      return cached;
+    }
+
+    if (_displayUrlCache.length >= _maxDisplayUrlCacheEntries) {
+      _displayUrlCache.remove(_displayUrlCache.keys.first);
+    }
+
+    final future = _resolvePrivateDisplayUrl(mediaId, url);
+    _displayUrlCache[url] = future;
+    return future;
+  }
+
+  Future<String> _resolvePrivateDisplayUrl(String mediaId, String url) async {
+    try {
+      final response = await _backendApi.get('/media/$mediaId');
+      final responseMap = _asMap(response, 'Invalid media response.');
+      return _asString(responseMap['downloadUrl'], 'Missing download URL.');
+    } catch (_) {
+      _displayUrlCache.remove(url);
+      rethrow;
+    }
+  }
+
+  static void clearDisplayUrlCache() {
+    _displayUrlCache.clear();
   }
 
   static String? extractMediaId(String url) {
@@ -103,6 +124,22 @@ class BackendMediaService {
     return mediaId.isEmpty ? null : mediaId;
   }
 
+  static String requireMediaId(String url) {
+    final mediaId = extractMediaId(url);
+    if (mediaId == null) {
+      throw StateError('Missing backend media id in URL.');
+    }
+    return mediaId;
+  }
+
+  static String mediaApiUrlFromId(String mediaId) {
+    return BackendConfig.mediaApiUrl(mediaId);
+  }
+
+  static String mediaContentUrlFromId(String mediaId) {
+    return BackendConfig.mediaContentUrl(mediaId);
+  }
+
   static bool _isPublicContentUrl(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null) {
@@ -114,50 +151,6 @@ class BackendMediaService {
       return false;
     }
     return segments[mediaIndex + 2] == 'content';
-  }
-
-  static String _detectMimeType(String filePath) {
-    final normalized = filePath.toLowerCase();
-    if (normalized.endsWith('.png')) {
-      return 'image/png';
-    }
-    if (normalized.endsWith('.webp')) {
-      return 'image/webp';
-    }
-    if (normalized.endsWith('.mp4')) {
-      return 'video/mp4';
-    }
-    if (normalized.endsWith('.mov')) {
-      return 'video/quicktime';
-    }
-    if (normalized.endsWith('.zip')) {
-      return 'application/zip';
-    }
-    if (normalized.endsWith('.pdf')) {
-      return 'application/pdf';
-    }
-    if (normalized.endsWith('.txt')) {
-      return 'text/plain';
-    }
-    if (normalized.endsWith('.doc')) {
-      return 'application/msword';
-    }
-    if (normalized.endsWith('.docx')) {
-      return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    }
-    if (normalized.endsWith('.xls')) {
-      return 'application/vnd.ms-excel';
-    }
-    if (normalized.endsWith('.xlsx')) {
-      return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    }
-    if (normalized.endsWith('.ppt')) {
-      return 'application/vnd.ms-powerpoint';
-    }
-    if (normalized.endsWith('.pptx')) {
-      return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-    }
-    return 'image/jpeg';
   }
 
   static Map<String, dynamic> _asMap(dynamic value, String message) {

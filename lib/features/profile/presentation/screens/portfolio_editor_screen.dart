@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:laqta/core/media/image_picker_service.dart';
 import 'package:laqta/core/models/portfolio_model.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
@@ -61,8 +62,9 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       return;
     }
 
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePickerService().pickImageToTemp(
+      source: ImageSource.gallery,
+    );
 
     if (pickedFile != null && mounted) {
       setState(() => _isUploading = true);
@@ -77,7 +79,9 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
           filePath: pickedFile.path,
         );
         if (!result.isSuccess || result.valueOrNull == null) {
-          throw StateError('Upload failed');
+          throw StateError(
+            _portfolioUploadErrorMessage(result.failureOrNull?.message),
+          );
         }
         final downloadUrl = result.valueOrNull!;
 
@@ -98,14 +102,33 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
         }
       } catch (e) {
         if (mounted) {
+          final message = e is StateError
+              ? e.message.toString()
+              : 'Failed to add image';
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Failed to add image')));
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
       } finally {
-        setState(() => _isUploading = false);
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
       }
     }
+  }
+
+  String _portfolioUploadErrorMessage(String? rawMessage) {
+    final normalized = rawMessage?.toLowerCase().trim() ?? '';
+    if (normalized.contains('active subscription')) {
+      return 'يتطلب رفع المزيد من أعمالك اشتراكًا نشطًا.';
+    }
+    if (normalized.contains('only photographers')) {
+      return 'رفع معرض الأعمال متاح لحسابات المصورين فقط.';
+    }
+    if (normalized.contains('limit')) {
+      return 'وصلت إلى حد معرض الأعمال في خطتك الحالية.';
+    }
+    return 'Failed to add image';
   }
 
   Future<void> _removeImage(int index) async {

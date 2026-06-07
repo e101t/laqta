@@ -48,4 +48,8 @@ abstract class ChatRepository {
     required String bookingId,
     required List<String> participants,
   });
+
+  Future<Result<ChatThread>> getOrCreateDirectChat({
+    required String participantId,
+  });
 }

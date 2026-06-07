@@ -12,4 +12,3 @@ ImageProvider? resolveImageProvider(String? source) {
   }
   return NetworkImage(trimmed);
 }
-

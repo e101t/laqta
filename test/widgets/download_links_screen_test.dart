@@ -5,8 +5,9 @@ import '../helpers/test_app.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('shows not available state when provider missing',
-      (tester) async {
+  testWidgets('shows not available state when provider missing', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       wrapWithMaterial(
         const DownloadLinksScreen(

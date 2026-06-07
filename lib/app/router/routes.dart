@@ -31,9 +31,19 @@ class Routes {
   static const String favorites = '/favorites';
   static const String search = '/search';
   static const String explore = '/explore';
+  static const String venues = '/venues';
+  static const String venueDetails = '/venues/:id';
+  static const String venueBooking = '/venues/:id/book';
+  static const String locationDetails = '/locations/:id';
+  static const String subscriptionPlans = '/plans';
+  static const String sponsoredAd = '/sponsored-ad';
+  static const String campaignAnalytics = '/campaigns/:id/analytics';
+  static const String photographerVerification = '/photographer-verification';
 
   static const String policy = '/policy';
   static const String terms = '/terms';
+  static const String deleteAccountPolicy = '/delete-account-policy';
+  static const String contentPolicy = '/content-policy';
 
   static const String loyalty = '/loyalty';
   static const String analytics = '/analytics';
@@ -79,9 +89,19 @@ class Routes {
   static const String nFavorites = 'favorites';
   static const String nSearch = 'search';
   static const String nExplore = 'explore';
+  static const String nVenues = 'venues';
+  static const String nVenueDetails = 'venue_details';
+  static const String nVenueBooking = 'venue_booking';
+  static const String nLocationDetails = 'location_details';
+  static const String nSubscriptionPlans = 'subscription_plans';
+  static const String nSponsoredAd = 'sponsored_ad';
+  static const String nCampaignAnalytics = 'campaign_analytics';
+  static const String nPhotographerVerification = 'photographer_verification';
 
   static const String nPolicy = 'policy';
   static const String nTerms = 'terms';
+  static const String nDeleteAccountPolicy = 'delete_account_policy';
+  static const String nContentPolicy = 'content_policy';
 
   static const String nLoyalty = 'loyalty';
   static const String nAnalytics = 'analytics';

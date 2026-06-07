@@ -1,35 +1,40 @@
-import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/features/auth/data/datasources/auth_remote_data_source.dart';
 import '../entities/auth_user.dart';
 
 abstract class AuthRepository {
   Future<Result<AuthUser?>> getCurrentUser();
 
-  Future<Result<AuthUser>> signInWithGoogle();
-
-  Future<Result<AuthUser>> signInWithApple();
-
   Future<Result<AuthUser>> signInWithPassword({
-    required String email,
+    required String identifier,
     required String password,
   });
 
-  Future<Result<AuthUser>> signUpWithPassword({
-    required String email,
+  Future<Result<AuthOtpStartDto>> startRegistration({
+    required String role,
+    required String firstName,
+    required String lastName,
+    required String username,
+    required String gender,
+    required String birthdate,
+    required String province,
+    required String phone,
+  });
+
+  Future<Result<AuthUser>> completeRegistration({
+    required String requestId,
+    required String code,
     required String password,
+    required String confirmPassword,
   });
 
-  Future<Result<AuthUser>> signInWithPhoneCredential({
-    required String verificationId,
-    required String smsCode,
-  });
+  Future<Result<AuthOtpStartDto>> forgotPassword({required String phone});
 
-  Future<Result<void>> verifyPhoneNumber({
-    required String phoneNumber,
-    required void Function(String verificationId, int? resendToken) onCodeSent,
-    required void Function(AuthUser user) onVerificationCompleted,
-    required void Function(Failure failure) onVerificationFailed,
-    required void Function(String verificationId) onCodeAutoRetrievalTimeout,
+  Future<Result<AuthUser>> resetPassword({
+    required String requestId,
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
   });
 
   Future<Result<void>> signOut();

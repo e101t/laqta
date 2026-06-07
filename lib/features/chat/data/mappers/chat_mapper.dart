@@ -19,6 +19,9 @@ class ChatMapper {
       senderId: dto.senderId,
       type: dto.type,
       content: dto.content,
+      mediaId: dto.mediaId,
+      fileName: dto.fileName,
+      fileSize: dto.fileSize,
       createdAt: dto.createdAt,
       seenBy: dto.seenBy,
     );
@@ -31,6 +34,9 @@ class ChatMapper {
       senderId: message.senderId,
       type: message.type,
       content: message.content,
+      mediaId: message.mediaId,
+      fileName: message.fileName,
+      fileSize: message.fileSize,
       createdAt: message.createdAt,
       seenBy: message.seenBy,
     );

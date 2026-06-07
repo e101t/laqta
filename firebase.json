@@ -3,11 +3,21 @@
                       "rules":  "firestore.rules",
                       "indexes":  "firestore.indexes.json"
                   },
-    "storage":  {
-                    "rules":  "storage.rules"
-                },
     "functions":  {
                       "source":  "functions"
+                  },
+    "emulators":  {
+                      "singleProjectMode":  true,
+                      "auth":  {
+                                   "port":  9099
+                               },
+                      "firestore":  {
+                                        "port":  8080
+                                    },
+                      "ui":  {
+                                 "enabled":  true,
+                                 "port":  4002
+                             }
                   },
     "flutter":  {
                     "platforms":  {

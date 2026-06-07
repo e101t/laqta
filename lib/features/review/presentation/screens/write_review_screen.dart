@@ -48,8 +48,11 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
 
   int _averageRating() {
     final avg =
-        (_onTimeRating + _communicationRating + _qualityRating + _deliverySpeedRating) /
-            4;
+        (_onTimeRating +
+            _communicationRating +
+            _qualityRating +
+            _deliverySpeedRating) /
+        4;
     return avg.round().clamp(1, 5);
   }
 
@@ -151,7 +154,10 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(widget.photographerName, style: textTheme.titleMedium),
+                        Text(
+                          widget.photographerName,
+                          style: textTheme.titleMedium,
+                        ),
                         Text(
                           localizations.smartReviewSubtitle,
                           style: textTheme.bodySmall?.copyWith(

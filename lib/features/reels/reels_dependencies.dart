@@ -1,5 +1,5 @@
+import 'package:laqta/features/reels/data/datasources/api_reels_remote_data_source.dart';
 import 'package:flutter/foundation.dart';
-import 'package:laqta/features/reels/data/datasources/firestore_reels_remote_data_source.dart';
 import 'package:laqta/features/reels/data/datasources/reels_remote_data_source.dart';
 import 'package:laqta/features/reels/data/repositories/reels_repository_impl.dart';
 import 'package:laqta/features/reels/domain/repositories/reels_repository.dart';
@@ -13,7 +13,7 @@ import 'package:laqta/features/reels/domain/usecases/update_reel_shares.dart';
 
 class ReelsDependencies {
   static final ReelsRemoteDataSource _remoteDataSource =
-      FirestoreReelsRemoteDataSource();
+      ApiReelsRemoteDataSource();
   static ReelsRepository? _repositoryOverride;
 
   @visibleForTesting

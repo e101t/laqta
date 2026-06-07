@@ -20,14 +20,22 @@ import 'package:laqta/features/chat/domain/entities/chat_thread.dart';
 import 'package:laqta/features/chat/domain/entities/chat_message.dart';
 
 class MockAuthRepository extends Mock implements AuthRepository {}
+
 class MockRequestsRepository extends Mock implements RequestsRepository {}
+
 class MockBookingRepository extends Mock implements BookingRepository {}
+
 class MockReelsRepository extends Mock implements ReelsRepository {}
+
 class MockSearchRepository extends Mock implements SearchRepository {}
+
 class MockProfileRepository extends Mock implements ProfileRepository {}
+
 class MockNotificationsRepository extends Mock
     implements NotificationsRepository {}
+
 class MockStoryRepository extends Mock implements StoryRepository {}
+
 class MockChatRepository extends Mock implements ChatRepository {}
 
 void registerFallbacks() {

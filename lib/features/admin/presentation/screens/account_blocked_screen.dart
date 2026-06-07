@@ -28,7 +28,9 @@ class AccountBlockedScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 localizations.accountBlocked,
-                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),

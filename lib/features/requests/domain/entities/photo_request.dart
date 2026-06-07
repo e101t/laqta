@@ -14,6 +14,7 @@ class PhotoRequest {
   final String? style;
   final RequestDeliverables deliverables;
   final String? notes;
+  final List<String> referenceImageMediaIds;
   final List<String> referenceImages;
   final String status;
   final int offersCount;
@@ -40,6 +41,7 @@ class PhotoRequest {
     this.style,
     required this.deliverables,
     this.notes,
+    this.referenceImageMediaIds = const [],
     required this.referenceImages,
     required this.status,
     required this.offersCount,
@@ -77,6 +79,7 @@ class PhotoRequest {
       style: style,
       deliverables: deliverables,
       notes: notes,
+      referenceImageMediaIds: referenceImageMediaIds,
       referenceImages: referenceImages,
       status: status ?? this.status,
       offersCount: offersCount ?? this.offersCount,

@@ -11,12 +11,14 @@ class Portfolio {
 }
 
 class PortfolioImage {
+  final String? mediaId;
   final String url;
   final int? width;
   final int? height;
   final DateTime createdAt;
 
   const PortfolioImage({
+    this.mediaId,
     required this.url,
     this.width,
     this.height,

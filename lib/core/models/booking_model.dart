@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
@@ -290,13 +290,21 @@ class BookingTimeline {
 
   Map<String, dynamic> toMap() {
     return {
-      'confirmedAt': confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
-      'inProgressAt': inProgressAt != null ? Timestamp.fromDate(inProgressAt!) : null,
-      'deliveredAt': deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
+      'confirmedAt': confirmedAt != null
+          ? Timestamp.fromDate(confirmedAt!)
+          : null,
+      'inProgressAt': inProgressAt != null
+          ? Timestamp.fromDate(inProgressAt!)
+          : null,
+      'deliveredAt': deliveredAt != null
+          ? Timestamp.fromDate(deliveredAt!)
+          : null,
       'revisionRequestedAt': revisionRequestedAt != null
           ? Timestamp.fromDate(revisionRequestedAt!)
           : null,
-      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'completedAt': completedAt != null
+          ? Timestamp.fromDate(completedAt!)
+          : null,
       'canceledAt': canceledAt != null ? Timestamp.fromDate(canceledAt!) : null,
     };
   }

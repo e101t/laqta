@@ -99,12 +99,7 @@ class ErrorState extends StatelessWidget {
   final String? message;
   final VoidCallback? onRetry;
 
-  const ErrorState({
-    super.key,
-    this.title,
-    this.message,
-    this.onRetry,
-  });
+  const ErrorState({super.key, this.title, this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -128,9 +123,7 @@ class ErrorState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               effectiveTitle,
-              style: textTheme.headlineSmall?.copyWith(
-                color: scheme.onSurface,
-              ),
+              style: textTheme.headlineSmall?.copyWith(color: scheme.onSurface),
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[

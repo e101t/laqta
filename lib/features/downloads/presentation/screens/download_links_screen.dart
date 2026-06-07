@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
 import 'package:laqta/features/downloads/presentation/providers/download_provider.dart';
 import 'package:provider/provider.dart';
@@ -216,13 +217,28 @@ class _DownloadBatchHeader extends StatelessWidget {
 class _DownloadLinkCard extends StatelessWidget {
   final DownloadLinkEntity link;
   final Future<void> Function()? onExtend;
+  static final BackendMediaService _mediaService = BackendMediaService();
 
   const _DownloadLinkCard({required this.link, required this.onExtend});
 
-  Future<void> _openLink() async {
-    final uri = Uri.tryParse(link.temporaryUrl);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+  Future<void> _openLink(BuildContext context) async {
+    try {
+      final resolvedUrl = await _mediaService.resolveDisplayUrl(
+        link.temporaryUrl,
+      );
+      final uri = Uri.tryParse(resolvedUrl);
+      if (uri != null && await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    } catch (_) {
+      // Fall through to the generic error below.
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر فتح رابط التحميل حالياً')),
+      );
     }
   }
 
@@ -264,7 +280,7 @@ class _DownloadLinkCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: _openLink,
+                  onPressed: () => _openLink(context),
                   icon: const Icon(Icons.open_in_new),
                 ),
               ],

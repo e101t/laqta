@@ -66,18 +66,14 @@ Required Info.plist keys (user-visible strings):
 - `NSPhotoLibraryAddUsageDescription`
 
 ## Payments (Stripe)
-- Create PaymentIntents on a backend (Cloud Functions or server).
+- Create PaymentIntents on the LAQTA backend API.
 - Never create or confirm PaymentIntents with secret keys on device.
 - Update booking payment status server-side after Stripe webhooks succeed.
 
-Cloud Functions setup (recommended):
-1) Install dependencies:
-   - `cd functions`
-   - `npm install`
-2) Configure Stripe secret:
-   - `firebase functions:config:set stripe.secret="sk_live_..."` (or `sk_test_...`)
-3) Deploy:
-   - `firebase deploy --only functions`
+Backend setup:
+1) Configure Stripe server credentials in the backend production environment.
+2) Confirm webhook signing secret is configured on the backend.
+3) Deploy/restart the backend API and verify payment endpoints.
 
 App config (build-time):
 - `--dart-define=ENABLE_PAYMENTS=true`
@@ -88,6 +84,5 @@ Use the release helper script:
 - `tool/release_check.ps1`
 
 ## Notes
-- Keep `firestore.rules` and `storage.rules` deployed with deny-by-default
-  defaults.
+- Keep `firestore.rules` deployed with deny-by-default defaults.
 - Review and update `AppConstants.stripePublishableKey` for production.

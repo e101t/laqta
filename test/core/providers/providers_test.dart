@@ -17,7 +17,10 @@ void main() {
 
     expect(provider.isDarkMode, isTrue);
     expect(provider.themeMode, ThemeMode.dark);
-    expect(provider.darkThemeFor(const Locale('en')).brightness, Brightness.dark);
+    expect(
+      provider.darkThemeFor(const Locale('en')).brightness,
+      Brightness.dark,
+    );
     expect(provider.themeFor(const Locale('en')).brightness, Brightness.light);
   });
 

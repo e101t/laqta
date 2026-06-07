@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
@@ -40,9 +40,17 @@ class ReviewModel {
       targetId: readString(data, 'targetId'),
       rating: readInt(data, 'rating', defaultValue: 5),
       qualityRating: readInt(data, 'qualityRating', defaultValue: 5),
-      communicationRating: readInt(data, 'communicationRating', defaultValue: 5),
+      communicationRating: readInt(
+        data,
+        'communicationRating',
+        defaultValue: 5,
+      ),
       onTimeRating: readInt(data, 'onTimeRating', defaultValue: 5),
-      deliverySpeedRating: readInt(data, 'deliverySpeedRating', defaultValue: 5),
+      deliverySpeedRating: readInt(
+        data,
+        'deliverySpeedRating',
+        defaultValue: 5,
+      ),
       recommend: data['recommend'] is bool ? data['recommend'] as bool : null,
       comment: readNullableString(data, 'comment'),
       createdAt: readDateTime(data, 'createdAt'),

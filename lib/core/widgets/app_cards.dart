@@ -260,18 +260,30 @@ class PhotographerCard extends StatelessWidget {
             runSpacing: 6,
             children: [
               if (verified)
-                _InfoChip(icon: Icons.shield, label: localizations.verifiedBadge),
+                _InfoChip(
+                  icon: Icons.shield,
+                  label: localizations.verifiedBadge,
+                ),
               if (pro)
-                _InfoChip(icon: Icons.workspace_premium, label: localizations.proBadge),
+                _InfoChip(
+                  icon: Icons.workspace_premium,
+                  label: localizations.proBadge,
+                ),
               if (recommended)
                 _InfoChip(
                   icon: Icons.recommend,
                   label: localizations.recommendedBadge,
                 ),
               if (isNew)
-                _InfoChip(icon: Icons.new_releases, label: localizations.newBadge),
+                _InfoChip(
+                  icon: Icons.new_releases,
+                  label: localizations.newBadge,
+                ),
               if (availableToday)
-                _InfoChip(icon: Icons.bolt, label: localizations.availableTodayBadge),
+                _InfoChip(
+                  icon: Icons.bolt,
+                  label: localizations.availableTodayBadge,
+                ),
               if (hasOffer)
                 _InfoChip(
                   icon: Icons.local_offer,
@@ -357,11 +369,7 @@ class PhotographerCard extends StatelessWidget {
     return Container(
       color: scheme.surfaceContainerHighest,
       child: Center(
-        child: Icon(
-          Icons.camera_alt,
-          size: 48,
-          color: scheme.onSurfaceVariant,
-        ),
+        child: Icon(Icons.camera_alt, size: 48, color: scheme.onSurfaceVariant),
       ),
     );
   }
@@ -475,11 +483,7 @@ class BookingCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(date, style: textTheme.bodyMedium),
               const SizedBox(width: 16),
-              Icon(
-                Icons.access_time,
-                size: 16,
-                color: scheme.onSurfaceVariant,
-              ),
+              Icon(Icons.access_time, size: 16, color: scheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(time, style: textTheme.bodyMedium),
             ],

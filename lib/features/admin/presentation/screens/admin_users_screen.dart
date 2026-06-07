@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
@@ -14,7 +14,7 @@ class AdminUsersScreen extends StatefulWidget {
 }
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LegacyDataStore _firestore = LegacyDataStore.instance;
   late final SecureFirestore _secure = SecureFirestore(_firestore);
 
   bool _isBlocked(List<dynamic>? blockedUsers) {

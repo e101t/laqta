@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
+import 'package:go_router/go_router.dart';
+import 'package:laqta/app/router/routes.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/utils/responsive.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
-import 'package:laqta/features/booking/presentation/screens/my_bookings_screen.dart';
 import 'package:laqta/features/dashboard/presentation/screens/customer_dashboard_screen.dart';
-import 'package:laqta/features/dashboard/presentation/screens/photographer_dashboard_screen.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_disputes_screen.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_reports_screen.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_users_screen.dart';
 import 'package:laqta/features/profile/profile_dependencies.dart';
-import 'package:laqta/features/booking/presentation/screens/photographer_bookings_screen.dart';
-import 'package:laqta/features/requests/presentation/screens/photographer_requests_screen.dart';
-import 'package:laqta/features/store/presentation/screens/store_screen.dart';
 import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:laqta/features/profile/presentation/screens/profile_screen.dart';
 import 'package:laqta/features/explore/presentation/screens/explore_screen.dart';
@@ -30,6 +27,7 @@ class MainAppScreen extends StatefulWidget {
 }
 
 class _MainAppScreenState extends State<MainAppScreen> {
+  static const int _centerActionIndex = 2;
   int _currentIndex = 0;
   String _userRole = '';
   bool _isLoadingRole = true;
@@ -41,7 +39,17 @@ class _MainAppScreenState extends State<MainAppScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _dismissTransientInput();
+      }
+    });
     _loadRole();
+  }
+
+  void _dismissTransientInput() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
   }
 
   Future<void> _loadRole() async {
@@ -90,10 +98,9 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
     if (_userRole == AppConstants.rolePhotographer) {
       return [
-        (context) => const PhotographerDashboardScreen(),
+        (context) => const CustomerDashboardScreen(),
         buildExploreScreen,
-        (context) => const PhotographerRequestsScreen(),
-        (context) => const PhotographerBookingsScreen(),
+        (context) => const SizedBox.shrink(),
         (context) => const ChatListScreen(),
         (context) => const ProfileScreen(),
       ];
@@ -101,8 +108,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
     return [
       (context) => const CustomerDashboardScreen(),
       buildExploreScreen,
-      (context) => const StoreScreen(),
-      (context) => const MyBookingsScreen(),
+      (context) => const SizedBox.shrink(),
       (context) => const ChatListScreen(),
       (context) => const ProfileScreen(),
     ];
@@ -141,34 +147,30 @@ class _MainAppScreenState extends State<MainAppScreen> {
     if (_userRole == AppConstants.rolePhotographer) {
       return [
         BottomNavItem(
-          icon: FluentIcons.grid_24_regular,
-          activeIcon: FluentIcons.grid_24_filled,
-          label: localizations.dashboard,
+          icon: FluentIcons.home_24_regular,
+          activeIcon: FluentIcons.home_24_filled,
+          label: 'الرئيسية',
         ),
         BottomNavItem(
           icon: FluentIcons.compass_northwest_24_regular,
           activeIcon: FluentIcons.compass_northwest_24_filled,
-          label: localizations.explore,
+          label: 'اكتشف',
         ),
         BottomNavItem(
-          icon: FluentIcons.list_24_regular,
-          activeIcon: FluentIcons.list_24_filled,
-          label: localizations.requests,
-        ),
-        BottomNavItem(
-          icon: FluentIcons.calendar_24_regular,
-          activeIcon: FluentIcons.calendar_24_filled,
-          label: localizations.myBookings,
+          icon: FluentIcons.add_24_regular,
+          activeIcon: FluentIcons.add_24_filled,
+          label: 'إنشاء',
+          isPrimaryAction: true,
         ),
         BottomNavItem(
           icon: FluentIcons.chat_24_regular,
           activeIcon: FluentIcons.chat_24_filled,
-          label: localizations.messages,
+          label: 'الرسائل',
         ),
         BottomNavItem(
           icon: FluentIcons.person_24_regular,
           activeIcon: FluentIcons.person_24_filled,
-          label: localizations.accountSection,
+          label: 'الملف الشخصي',
         ),
       ];
     }
@@ -177,32 +179,28 @@ class _MainAppScreenState extends State<MainAppScreen> {
       BottomNavItem(
         icon: FluentIcons.home_24_regular,
         activeIcon: FluentIcons.home_24_filled,
-        label: localizations.home,
+        label: 'الرئيسية',
       ),
       BottomNavItem(
         icon: FluentIcons.compass_northwest_24_regular,
         activeIcon: FluentIcons.compass_northwest_24_filled,
-        label: localizations.explore,
+        label: 'اكتشف',
       ),
       BottomNavItem(
-        icon: FluentIcons.shopping_bag_24_regular,
-        activeIcon: FluentIcons.shopping_bag_24_filled,
-        label: localizations.shop,
-      ),
-      BottomNavItem(
-        icon: FluentIcons.calendar_24_regular,
-        activeIcon: FluentIcons.calendar_24_filled,
-        label: localizations.myBookings,
+        icon: FluentIcons.add_24_regular,
+        activeIcon: FluentIcons.add_24_filled,
+        label: 'إنشاء',
+        isPrimaryAction: true,
       ),
       BottomNavItem(
         icon: FluentIcons.chat_24_regular,
         activeIcon: FluentIcons.chat_24_filled,
-        label: localizations.messages,
+        label: 'الرسائل',
       ),
       BottomNavItem(
         icon: FluentIcons.person_24_regular,
         activeIcon: FluentIcons.person_24_filled,
-        label: localizations.accountSection,
+        label: 'الملف الشخصي',
       ),
     ];
   }
@@ -268,6 +266,11 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   void _setTab(int index) {
+    _dismissTransientInput();
+    if (_userRole != AppConstants.roleAdmin && index == _centerActionIndex) {
+      _showCreateSheet();
+      return;
+    }
     if (index == _currentIndex) return;
     setState(() {
       _tabHistory.add(_currentIndex);
@@ -339,22 +342,18 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   Widget _buildBottomNav(List<BottomNavItem> navItems) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: const Color(0xFF111317),
         border: Border(
-          top: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.6),
-            width: 1,
-          ),
+          top: BorderSide(color: const Color(0xFF23262D), width: 1),
         ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           child: Row(
+            textDirection: TextDirection.ltr,
             children: List.generate(
               navItems.length,
               (index) => Expanded(child: _buildNavItem(index, navItems)),
@@ -367,15 +366,14 @@ class _MainAppScreenState extends State<MainAppScreen> {
 
   Widget _buildNavItem(int index, List<BottomNavItem> navItems) {
     final item = navItems[index];
+    if (item.isPrimaryAction) {
+      return _buildPrimaryActionNavItem(item);
+    }
     final isActive = _currentIndex == index;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final iconColor = isActive
-        ? colorScheme.primary
-        : colorScheme.onSurfaceVariant;
+    final iconColor = isActive ? const Color(0xFFD6A44A) : Colors.white54;
 
     return SizedBox(
-      height: 50,
+      height: 54,
       child: Semantics(
         button: true,
         selected: isActive,
@@ -388,59 +386,98 @@ class _MainAppScreenState extends State<MainAppScreen> {
             child: Container(
               width: double.infinity,
               alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
-                border: isActive
-                    ? Border.all(
-                        color: colorScheme.primary.withValues(alpha: 0.28),
-                        width: 1,
-                      )
-                    : null,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    isActive ? item.activeIcon : item.icon,
-                    color: iconColor,
-                    size: isActive ? 26 : 24,
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(
+                        isActive ? item.activeIcon : item.icon,
+                        color: iconColor,
+                        size: isActive ? 23 : 22,
+                      ),
+                      if (item.badge != null && item.badge! > 0)
+                        PositionedDirectional(
+                          top: -5,
+                          end: -8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.redAccent,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 14,
+                              minHeight: 14,
+                            ),
+                            child: Text(
+                              item.badge! > 9 ? '9+' : '${item.badge}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                                height: 1,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  if (item.badge != null && item.badge! > 0)
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(start: 4),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              colorScheme.error,
-                              colorScheme.error.withValues(alpha: 0.85),
-                            ],
-                          ),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 14,
-                          minHeight: 14,
-                        ),
-                        child: Text(
-                          item.badge! > 9 ? '9+' : '${item.badge}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onError,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
-                            height: 1,
-                          ),
-                          textAlign: TextAlign.center,
+                  const SizedBox(height: 3),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        item.label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: iconColor,
+                          fontSize: 9.0,
+                          fontWeight: isActive
+                              ? FontWeight.w800
+                              : FontWeight.w600,
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryActionNavItem(BottomNavItem item) {
+    return SizedBox(
+      height: 56,
+      child: Center(
+        child: GestureDetector(
+          onTap: () => _setTab(_centerActionIndex),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD6A44A),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD6A44A).withValues(alpha: 0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
           ),
         ),
       ),
@@ -493,6 +530,98 @@ class _MainAppScreenState extends State<MainAppScreen> {
       ],
     );
   }
+
+  Future<void> _showCreateSheet() async {
+    if (!mounted) return;
+    final actions = _userRole == AppConstants.rolePhotographer
+        ? const [
+            _CreateAction(
+              title: 'ريل جديد',
+              icon: Icons.ondemand_video_rounded,
+              route: Routes.createPost,
+            ),
+            _CreateAction(
+              title: 'ستوري جديدة',
+              icon: Icons.bolt_outlined,
+              route: Routes.createStory,
+            ),
+            _CreateAction(
+              title: 'إعلان ممول',
+              icon: Icons.campaign_outlined,
+              route: Routes.sponsoredAd,
+            ),
+            _CreateAction(
+              title: 'الباقات',
+              icon: Icons.workspace_premium_outlined,
+              route: Routes.subscriptionPlans,
+            ),
+          ]
+        : const [
+            _CreateAction(
+              title: 'طلب جديد',
+              icon: Icons.add_box_outlined,
+              route: Routes.requestCreate,
+            ),
+            _CreateAction(
+              title: 'القاعات',
+              icon: Icons.chair_alt_outlined,
+              route: Routes.venues,
+            ),
+            _CreateAction(
+              title: 'أماكن التصوير',
+              icon: Icons.landscape_outlined,
+              route: '/locations/salam-garden',
+            ),
+          ];
+
+    final selected = await showModalBottomSheet<_CreateAction>(
+      context: context,
+      backgroundColor: const Color(0xFF111317),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ماذا تريد أن تنشئ؟',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...actions.map(
+                (action) => ListTile(
+                  onTap: () => Navigator.of(context).pop(action),
+                  leading: CircleAvatar(
+                    backgroundColor: const Color(
+                      0xFFD6A44A,
+                    ).withValues(alpha: 0.15),
+                    child: Icon(action.icon, color: const Color(0xFFD6A44A)),
+                  ),
+                  title: Text(
+                    action.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (!mounted || selected == null) return;
+    context.push(selected.route);
+  }
 }
 
 class BottomNavItem {
@@ -500,11 +629,25 @@ class BottomNavItem {
   final IconData activeIcon;
   final String label;
   final int? badge;
+  final bool isPrimaryAction;
 
   const BottomNavItem({
     required this.icon,
     required this.activeIcon,
     required this.label,
     this.badge,
+    this.isPrimaryAction = false,
+  });
+}
+
+class _CreateAction {
+  final String title;
+  final IconData icon;
+  final String route;
+
+  const _CreateAction({
+    required this.title,
+    required this.icon,
+    required this.route,
   });
 }

@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,9 +7,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/widgets/loading_widgets.dart';
 import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/backend_media_image.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/booking/booking_dependencies.dart';
 import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
@@ -48,6 +51,7 @@ class BookingDetailsScreen extends StatefulWidget {
 }
 
 class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
+  final BackendMediaService _backendMediaService = BackendMediaService();
   BookingModel? _booking;
   Delivery? _delivery;
   Dispute? _dispute;
@@ -122,7 +126,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       _dispute = disputeResult.valueOrNull;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error loading booking details: $e');
+        AppLogger.d('runtime', 'Error loading booking details: $e');
       }
       _hasError = true;
     }
@@ -709,7 +713,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   }
 
   Future<void> _openFile(String url) async {
-    final uri = Uri.parse(url);
+    final resolvedUrl = await _backendMediaService.resolveDisplayUrl(url);
+    final uri = Uri.parse(resolvedUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -1297,8 +1302,8 @@ class _DeliverySection extends StatelessWidget {
                         onTap: () => onOpenFile(url),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            url,
+                          child: BackendMediaImage(
+                            url: url,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -1488,3 +1493,4 @@ class _DisputeBanner extends StatelessWidget {
     );
   }
 }
+

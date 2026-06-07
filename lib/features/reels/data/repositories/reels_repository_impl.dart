@@ -48,9 +48,7 @@ class ReelsRepositoryImpl implements ReelsRepository {
       );
       return Result.success(url);
     } catch (_) {
-      return Result.failure(
-        const Failure(message: 'Failed to upload media'),
-      );
+      return Result.failure(const Failure(message: 'Failed to upload media'));
     }
   }
 

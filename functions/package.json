@@ -3,10 +3,10 @@
   "description": "Firebase Cloud Functions for Laqta",
   "main": "index.js",
   "engines": {
-    "node": "18"
+    "node": "20"
   },
   "scripts": {
-    "test": "firebase emulators:exec --project demo-no-project --config ../firebase.emulators.json --only firestore,storage \"node --test --test-concurrency=1 \\\"./test/*.test.js\\\"\"",
+    "test": "firebase emulators:exec --project demo-no-project --config ../firebase.emulators.json --only firestore \"node --test --test-concurrency=1 \\\"./test/*.test.js\\\"\"",
     "test:functions": "npm run test",
     "test:rules": "npm run test"
   },

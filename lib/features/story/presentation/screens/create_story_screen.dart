@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/models/story_model.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
@@ -34,10 +35,9 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final picked =
-        widget.imagePicker != null
-            ? await widget.imagePicker!(source)
-            : await picker.pickImage(source: source);
+    final picked = widget.imagePicker != null
+        ? await widget.imagePicker!(source)
+        : await picker.pickImage(source: source);
     if (!mounted) return;
     if (picked != null) {
       setState(() => _selectedImage = picked);
@@ -87,6 +87,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         _showSnackBar(localizations.error);
         return;
       }
+      final stableUrl = uploadResult.valueOrNull!;
+      final mediaId = BackendMediaService.requireMediaId(stableUrl);
 
       final now = DateTime.now();
       final caption = _captionController.text.trim();
@@ -95,7 +97,8 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
         photographerId: userId,
         photographerName: profile.name,
         photographerPhotoUrl: profile.photoUrl,
-        imageUrl: uploadResult.valueOrNull!,
+        mediaId: mediaId,
+        imageUrl: stableUrl,
         caption: caption.isEmpty ? null : caption,
         createdAt: now,
         expiresAt: now.add(const Duration(hours: 24)),

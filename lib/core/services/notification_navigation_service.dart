@@ -24,7 +24,8 @@ class NotificationNavigationService {
     }
 
     _initialized = true;
-    _pendingLaunchMessage = await FirebaseMessaging.instance.getInitialMessage();
+    _pendingLaunchMessage = await FirebaseMessaging.instance
+        .getInitialMessage();
     _messageOpenedSubscription = FirebaseMessaging.onMessageOpenedApp.listen(
       _handleRemoteMessage,
     );
@@ -37,6 +38,10 @@ class NotificationNavigationService {
     }
 
     _pendingLaunchMessage = null;
+    _handleRemoteMessage(message);
+  }
+
+  void openRemoteMessage(RemoteMessage message) {
     _handleRemoteMessage(message);
   }
 
@@ -72,7 +77,10 @@ class NotificationNavigationService {
       return normalizedRoute;
     }
 
-    final chatId = _readString(data, 'chatId');
+    final chatId =
+        _readString(data, 'room_id') ??
+        _readString(data, 'roomId') ??
+        _readString(data, 'chatId');
     if (chatId != null && chatId.isNotEmpty) {
       final otherUserName =
           _readString(data, 'otherUserName') ?? _readString(data, 'name') ?? '';
@@ -101,6 +109,30 @@ class NotificationNavigationService {
     }
 
     switch ((type ?? '').trim()) {
+      case 'chat':
+        final roomId =
+            _readString(data, 'room_id') ??
+            _readString(data, 'roomId') ??
+            _readString(data, 'chatId');
+        return roomId == null || roomId.isEmpty
+            ? Routes.notifications
+            : _buildChatPath(roomId, _readString(data, 'name') ?? '');
+      case 'like':
+      case 'comment':
+        return Routes.main;
+      case 'follow':
+        final username =
+            _readString(data, 'username') ?? _readString(data, 'userId');
+        return username == null || username.isEmpty
+            ? Routes.notifications
+            : Routes.photographer.replaceFirst(
+                ':id',
+                Uri.encodeComponent(username),
+              );
+      case 'payment':
+        return Routes.payment;
+      case 'system':
+        return Routes.notifications;
       case 'message':
         return Routes.main;
       default:

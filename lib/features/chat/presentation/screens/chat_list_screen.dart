@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:laqta/core/localization/app_localizations.dart';
+
 import 'package:laqta/app/router/app_router.dart';
-import 'package:laqta/core/widgets/loading_widgets.dart';
-import 'package:laqta/core/widgets/empty_states.dart';
-import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
+import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/chat/chat_dependencies.dart';
 import 'package:laqta/features/chat/domain/entities/chat_thread_preview.dart';
@@ -16,16 +15,38 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  bool _isLoading = true;
-  bool _hasError = false;
-  final List<ChatThreadPreview> _chats = [];
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  final List<String> _filters = const [
+    'الكل',
+    'المصورون',
+    'القاعات',
+    'الترتيبات',
+  ];
+  String _selectedFilter = 'الكل';
+  String _search = '';
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<ChatThreadPreview> _conversations = const [];
+
+  List<ChatThreadPreview> get _visibleConversations {
+    final filtered = _conversations.where(_matchesSelectedFilter).toList();
+    final query = _search.trim();
+    if (query.isEmpty) {
+      return filtered;
+    }
+    return filtered
+        .where(
+          (conversation) =>
+              conversation.userName.contains(query) ||
+              conversation.lastMessage.contains(query),
+        )
+        .toList();
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadChats();
+    _loadConversations();
   }
 
   @override
@@ -34,316 +55,294 @@ class _ChatListScreenState extends State<ChatListScreen> {
     super.dispose();
   }
 
-  List<ChatThreadPreview> get _filteredChats {
-    if (_searchQuery.trim().isEmpty) return _chats;
-    final query = _searchQuery.toLowerCase();
-    return _chats
-        .where(
-          (chat) =>
-              chat.userName.toLowerCase().contains(query) ||
-              chat.lastMessage.toLowerCase().contains(query),
-        )
-        .toList();
-  }
-
-  Future<void> _loadChats() async {
+  Future<void> _loadConversations() async {
     setState(() {
       _isLoading = true;
-      _hasError = false;
+      _errorMessage = null;
     });
 
     try {
       final userResult = await AuthDependencies.getCurrentUser().call();
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) {
-        if (!mounted) return;
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-        });
-        return;
+        throw StateError('Missing current user');
       }
 
       final result = await ChatDependencies.getChatThreads().call(
         userId: userId,
       );
-      final chatPreviews = result.valueOrNull ?? [];
-
-      if (!mounted) return;
-      setState(() {
-        _chats.clear();
-        _chats.addAll(chatPreviews);
-        _isLoading = false;
-        _hasError = false;
-      });
-    } catch (e) {
-      // Handle error - for now, just set loading to false
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
-    }
-  }
-
-  Future<void> _deleteChat(String chatId) async {
-    final localizations = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(localizations.deleteChatTitle),
-        content: Text(localizations.deleteConversationPrompt),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(localizations.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(localizations.delete),
-          ),
-        ],
-      ),
-    );
-    if (!mounted) return;
-
-    if (confirmed == true) {
-      try {
-        final result = await ChatDependencies.deleteChat().call(chatId: chatId);
-        if (!result.isSuccess) {
-          throw StateError('Delete chat failed');
-        }
-
-        // Remove from local list
-        if (mounted) {
-          setState(() {
-            _chats.removeWhere((chat) => chat.chatId == chatId);
-          });
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(localizations.chatDeleted)));
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(localizations.chatDeleteFailed)),
-          );
-        }
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load chats',
+        );
       }
+
+      if (!mounted) return;
+      setState(() {
+        _conversations = result.valueOrNull ?? const [];
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _conversations = const [];
+        _isLoading = false;
+        _errorMessage = 'تعذر تحميل الرسائل';
+      });
     }
   }
 
-  String _formatTimestamp(DateTime timestamp) {
+  bool _matchesSelectedFilter(ChatThreadPreview conversation) {
+    if (_selectedFilter == 'الكل') return true;
+    final name = conversation.userName.toLowerCase();
+    final message = conversation.lastMessage.toLowerCase();
+    if (_selectedFilter == 'القاعات') {
+      return name.contains('قاعة') ||
+          name.contains('hall') ||
+          name.contains('venue');
+    }
+    if (_selectedFilter == 'الترتيبات') {
+      return message.contains('حجز') ||
+          message.contains('طلب') ||
+          message.contains('booking') ||
+          message.contains('request');
+    }
+    if (_selectedFilter == 'المصورون') {
+      return !name.contains('قاعة') &&
+          !name.contains('hall') &&
+          !name.contains('venue');
+    }
+    return true;
+  }
+
+  String _displayName(ChatThreadPreview conversation) {
+    final name = conversation.userName.trim();
+    return name.isEmpty ? 'محادثة' : name;
+  }
+
+  String _lastMessage(ChatThreadPreview conversation) {
+    final message = conversation.lastMessage.trim();
+    return message.isEmpty ? 'لا توجد رسائل بعد' : message;
+  }
+
+  String _timeLabel(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d';
-    } else {
-      return '${timestamp.day}/${timestamp.month}';
+    if (difference.inDays >= 1) {
+      return 'أمس';
     }
+    final hour = timestamp.hour % 12 == 0 ? 12 : timestamp.hour % 12;
+    final minute = timestamp.minute.toString().padLeft(2, '0');
+    final suffix = timestamp.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $suffix';
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-    final chats = _filteredChats;
-    final scheme = Theme.of(context).colorScheme;
+  ImageProvider? _avatarProvider(ChatThreadPreview conversation) {
+    final image = conversation.userImage.trim();
+    final uri = Uri.tryParse(image);
+    if (uri != null && uri.hasScheme && uri.host.isNotEmpty) {
+      return NetworkImage(image);
+    }
+    return null;
+  }
 
-    return Scaffold(
-      appBar: AppBar(title: Text(localizations.messages)),
-      body: _isLoading
-          ? const LoadingIndicator()
-          : _hasError && _chats.isEmpty
-          ? EmptyStates.error(onRetry: _loadChats)
-          : Column(
+  Widget _buildConversationRow(ChatThreadPreview chat) {
+    final avatar = _avatarProvider(chat);
+    return Column(
+      children: [
+        InkWell(
+          onTap: () =>
+              AppRouter.goToChat(context, chat.chatId, _displayName(chat)),
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              textDirection: TextDirection.ltr,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: AppSearchField(
-                    controller: _searchController,
-                    hintText: localizations.search,
-                    enableSuggestions: false,
-                    debounceDuration: const Duration(milliseconds: 250),
-                    onChanged: (value) {
-                      setState(() => _searchQuery = value);
-                    },
-                    onClear: () => setState(() => _searchQuery = ''),
+                CircleAvatar(
+                  radius: 26,
+                  backgroundImage: avatar,
+                  child: avatar == null
+                      ? const Icon(Icons.person, color: Colors.white70)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _displayName(chat),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _lastMessage(chat),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: chats.isEmpty
-                      ? Center(
-                          child: EmptyState(
-                            icon: Icons.chat_bubble_outline,
-                            title: _chats.isEmpty
-                                ? localizations.noMessagesTitle
-                                : localizations.noChatResults,
-                            message: _chats.isEmpty
-                                ? localizations
-                                      .startConversationWithPhotographer
-                                : localizations.tryAnotherNameOrKeyword,
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadChats,
-                          child: ListView.builder(
-                            itemCount: chats.length,
-                            itemBuilder: (context, index) {
-                              final chat = chats[index];
-                              return Dismissible(
-                                key: Key(chat.chatId),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  color: scheme.error,
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 16),
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                onDismissed: (direction) {
-                                  _deleteChat(chat.chatId);
-                                },
-                                child: _ChatListItem(
-                                  chat: chat,
-                                  onTap: () {
-                                    AppRouter.goToChat(
-                                      context,
-                                      chat.chatId,
-                                      chat.userName,
-                                    );
-                                  },
-                                  formatTimestamp: _formatTimestamp,
-                                ),
-                              );
-                            },
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      _timeLabel(chat.timestamp),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (chat.unreadCount > 0)
+                      Container(
+                        width: 22,
+                        height: 22,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          color: LaqtaColors.accent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '${chat.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
                           ),
                         ),
+                      )
+                    else
+                      const SizedBox(height: 22),
+                  ],
                 ),
               ],
             ),
+          ),
+        ),
+        const Divider(color: Color(0xFF1D2027), height: 1),
+      ],
     );
   }
-}
 
-class _ChatListItem extends StatelessWidget {
-  final ChatThreadPreview chat;
-  final VoidCallback onTap;
-  final String Function(DateTime) formatTimestamp;
+  Widget _buildBodyContent() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 80),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-  const _ChatListItem({
-    required this.chat,
-    required this.onTap,
-    required this.formatTimestamp,
-  });
+    if (_errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 80),
+        child: Column(
+          children: [
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.white70, fontSize: 15),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: _loadConversations,
+              child: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final visible = _visibleConversations;
+    if (visible.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 80),
+        child: Center(
+          child: Text(
+            'لا توجد محادثات بعد',
+            style: TextStyle(color: Colors.white70, fontSize: 15),
+          ),
+        ),
+      );
+    }
+
+    return Column(children: visible.map(_buildConversationRow).toList());
+  }
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: scheme.primary.withValues(alpha: 0.12),
-            child: Icon(Icons.person, color: scheme.primary),
-          ),
-          if (chat.isOnline)
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: scheme.tertiary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: scheme.surface, width: 2),
+    return Scaffold(
+      backgroundColor: const Color(0xFF0E1014),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+          children: [
+            Row(
+              textDirection: TextDirection.ltr,
+              children: [
+                const LaqtaTopIconButton(icon: Icons.search_rounded),
+                const Spacer(),
+                Text(
+                  'الرسائل',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                const LaqtaTopIconButton(icon: Icons.edit_outlined),
+              ],
+            ),
+            SizedBox(
+              height: 0,
+              child: Opacity(
+                opacity: 0,
+                child: IgnorePointer(
+                  child: LaqtaLuxurySearchBar(
+                    hint: 'ابحث في الرسائل',
+                    controller: _searchController,
+                    readOnly: false,
+                    onChanged: (value) => setState(() => _search = value),
+                  ),
                 ),
               ),
             ),
-        ],
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              chat.userName,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: chat.unreadCount > 0
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          Text(
-            formatTimestamp(chat.timestamp),
-            style: textTheme.labelSmall?.copyWith(
-              color: chat.unreadCount > 0
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-      subtitle: Row(
-        children: [
-          Expanded(
-            child: Text(
-              chat.lastMessage,
-              style: textTheme.bodySmall?.copyWith(
-                color: chat.unreadCount > 0
-                    ? scheme.onSurface
-                    : scheme.onSurfaceVariant,
-                fontWeight: chat.unreadCount > 0
-                    ? FontWeight.w600
-                    : FontWeight.normal,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (chat.unreadCount > 0) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: scheme.primary,
-                shape: BoxShape.circle,
-              ),
-              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-              child: Text(
-                chat.unreadCount.toString(),
-                style: textTheme.labelSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 38,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _filters.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final filter = _filters[index];
+                    return LaqtaFilterPill(
+                      label: filter,
+                      selected: filter == _selectedFilter,
+                      onTap: () => setState(() => _selectedFilter = filter),
+                    );
+                  },
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
+            const SizedBox(height: 14),
+            _buildBodyContent(),
           ],
-        ],
+        ),
       ),
-      onTap: onTap,
     );
   }
 }

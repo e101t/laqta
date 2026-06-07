@@ -10,6 +10,7 @@ Map<String, dynamic> buildUserPublicData(Map<String, dynamic> data) {
   copyIfPresent('name');
   copyIfPresent('username');
   copyIfPresent('usernameLower');
+  copyIfPresent('photoMediaId');
   copyIfPresent('photoUrl');
   copyIfPresent('governorate');
   copyIfPresent('role');

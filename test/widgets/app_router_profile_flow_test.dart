@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -7,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_session_service.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/auth/domain/entities/auth_user.dart';
@@ -17,15 +17,13 @@ import 'package:laqta/features/auth/presentation/screens/sign_up_details_screen.
 
 import '../helpers/mocks.dart';
 
-class MockFirebaseAuth extends Mock implements FirebaseAuth {}
-
-class MockUser extends Mock implements User {}
+class MockBackendSessionService extends Mock implements BackendSessionService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   tearDown(() {
-    AppRouter.setAuthOverride(null);
+    AppRouter.setSessionServiceOverride(null);
     AppRouter.setSplashDelayCompleteForTest(false);
     AppRouter.invalidateProfileCache();
     AuthDependencies.setRepositoryOverride(null);
@@ -35,14 +33,12 @@ void main() {
   testWidgets('signed in without role routes to basic info', (tester) async {
     SharedPreferences.setMockInitialValues({'language': 'en'});
 
-    final auth = MockFirebaseAuth();
-    final user = MockUser();
+    final session = MockBackendSessionService();
     final profileRepo = MockProfileRepository();
     final authRepo = MockAuthRepository();
 
-    when(() => user.uid).thenReturn('user1');
-    when(() => auth.currentUser).thenReturn(user);
-    when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(user));
+    when(() => session.hasValidToken()).thenAnswer((_) async => true);
+    when(() => session.getUserId()).thenAnswer((_) async => 'user1');
 
     when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
       (_) async => Result.success(
@@ -58,7 +54,7 @@ void main() {
       ),
     );
 
-    AppRouter.setAuthOverride(auth);
+    AppRouter.setSessionServiceOverride(session);
     AppRouter.setSplashDelayCompleteForTest(true);
     ProfileDependencies.setRepositoryOverride(profileRepo);
     AuthDependencies.setRepositoryOverride(authRepo);
@@ -66,7 +62,7 @@ void main() {
       (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
     );
 
-    final router = AppRouter.createRouter(authOverride: auth);
+    final router = AppRouter.createRouter(sessionOverride: session);
 
     await tester.pumpWidget(
       MaterialApp.router(
@@ -89,14 +85,12 @@ void main() {
   testWidgets('signed in with role routes to basic info', (tester) async {
     SharedPreferences.setMockInitialValues({'language': 'en'});
 
-    final auth = MockFirebaseAuth();
-    final user = MockUser();
+    final session = MockBackendSessionService();
     final profileRepo = MockProfileRepository();
     final authRepo = MockAuthRepository();
 
-    when(() => user.uid).thenReturn('user1');
-    when(() => auth.currentUser).thenReturn(user);
-    when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(user));
+    when(() => session.hasValidToken()).thenAnswer((_) async => true);
+    when(() => session.getUserId()).thenAnswer((_) async => 'user1');
 
     when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
       (_) async => Result.success(
@@ -112,7 +106,7 @@ void main() {
       ),
     );
 
-    AppRouter.setAuthOverride(auth);
+    AppRouter.setSessionServiceOverride(session);
     AppRouter.setSplashDelayCompleteForTest(true);
     ProfileDependencies.setRepositoryOverride(profileRepo);
     AuthDependencies.setRepositoryOverride(authRepo);
@@ -120,7 +114,7 @@ void main() {
       (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
     );
 
-    final router = AppRouter.createRouter(authOverride: auth);
+    final router = AppRouter.createRouter(sessionOverride: session);
 
     await tester.pumpWidget(
       MaterialApp.router(
@@ -145,14 +139,12 @@ void main() {
     (tester) async {
       SharedPreferences.setMockInitialValues({'language': 'en'});
 
-      final auth = MockFirebaseAuth();
-      final user = MockUser();
+      final session = MockBackendSessionService();
       final profileRepo = MockProfileRepository();
       final authRepo = MockAuthRepository();
 
-      when(() => user.uid).thenReturn('user1');
-      when(() => auth.currentUser).thenReturn(user);
-      when(() => auth.authStateChanges()).thenAnswer((_) => Stream.value(user));
+      when(() => session.hasValidToken()).thenAnswer((_) async => true);
+      when(() => session.getUserId()).thenAnswer((_) async => 'user1');
 
       when(() => profileRepo.getUserProfile(userId: 'user1')).thenAnswer(
         (_) async => Result.success(
@@ -168,7 +160,7 @@ void main() {
         ),
       );
 
-      AppRouter.setAuthOverride(auth);
+      AppRouter.setSessionServiceOverride(session);
       AppRouter.setSplashDelayCompleteForTest(true);
       ProfileDependencies.setRepositoryOverride(profileRepo);
       AuthDependencies.setRepositoryOverride(authRepo);
@@ -176,7 +168,7 @@ void main() {
         (_) async => Result.success(AuthUser(id: 'user1', isAnonymous: false)),
       );
 
-      final router = AppRouter.createRouter(authOverride: auth);
+      final router = AppRouter.createRouter(sessionOverride: session);
       router.go('/sign-up');
 
       await tester.pumpWidget(

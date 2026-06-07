@@ -21,7 +21,13 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
   int updateChatPreviewCalls = 0;
   List<ChatMessageDto> lastMarkedMessages = const [];
   ChatMessageDto? lastSentMessage;
-  ({String chatId, DateTime timestamp, String lastMessage, String lastMessageType, String senderId})?
+  ({
+    String chatId,
+    DateTime timestamp,
+    String lastMessage,
+    String lastMessageType,
+    String senderId,
+  })?
   lastPreviewUpdate;
 
   _FakeChatRemoteDataSource({
@@ -44,6 +50,11 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
     String lastMessageType = 'text',
     String lastMessageSenderId = '',
   }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ChatDto> createDirectChat({required String participantId}) async {
     throw UnimplementedError();
   }
 
@@ -144,23 +155,25 @@ class _FakeChatRemoteDataSource implements ChatRemoteDataSource {
     String userId,
     List<String> blockedUsers,
   ) async => throw UnimplementedError();
-
-  @override
-  Future<String> uploadFile({
-    required String storagePath,
-    required String filePath,
-  }) async => throw UnimplementedError();
 }
 
 class _FakeBackendMediaService extends BackendMediaService {
-  _FakeBackendMediaService(this.uploadedUrl);
+  _FakeBackendMediaService(this.uploadedUrl, {String? mediaId})
+    : uploadedMediaId = mediaId ?? 'media-test-1';
 
   final String uploadedUrl;
-  ({String entityType, String entityId, String filePath, bool publicContent, String? fileName})?
+  final String uploadedMediaId;
+  ({
+    String entityType,
+    String entityId,
+    String filePath,
+    bool publicContent,
+    String? fileName,
+  })?
   lastUpload;
 
   @override
-  Future<String> uploadFile({
+  Future<BackendMediaUploadResult> uploadFileReference({
     required String entityType,
     required String entityId,
     required String filePath,
@@ -174,7 +187,10 @@ class _FakeBackendMediaService extends BackendMediaService {
       publicContent: publicContent,
       fileName: fileName,
     );
-    return uploadedUrl;
+    return BackendMediaUploadResult(
+      mediaId: uploadedMediaId,
+      stableUrl: uploadedUrl,
+    );
   }
 }
 
@@ -501,67 +517,79 @@ void main() {
   });
 
   group('ChatRepositoryImpl.sendMediaMessage', () {
-    test('uploads chat images through backend media and persists the returned URL', () async {
-      final remote = _FakeChatRemoteDataSource(
-        chats: const [],
-        publicUserDataById: const {},
-      );
-      final mediaService = _FakeBackendMediaService(
-        'https://api.laqta.cloud/api/v1/media/media-image-1',
-      );
-      final repository = ChatRepositoryImpl(
-        remote,
-        mediaService: mediaService,
-      );
+    test(
+      'uploads chat images through backend media and persists a structured media reference',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: const [],
+          publicUserDataById: const {},
+        );
+        final mediaService = _FakeBackendMediaService(
+          'https://api.laqta.cloud/api/v1/media/media-image-1',
+          mediaId: 'media-image-1',
+        );
+        final repository = ChatRepositoryImpl(
+          remote,
+          mediaService: mediaService,
+        );
 
-      final result = await repository.sendMediaMessage(
-        chatId: 'chat_9',
-        senderId: 'user_1',
-        type: 'image',
-        filePath: 'C:/tmp/photo.jpg',
-        messageId: 'msg_image',
-      );
+        final result = await repository.sendMediaMessage(
+          chatId: 'chat_9',
+          senderId: 'user_1',
+          type: 'image',
+          filePath: 'C:/tmp/photo.jpg',
+          messageId: 'msg_image',
+        );
 
-      expect(result.isSuccess, isTrue);
-      expect(mediaService.lastUpload, isNotNull);
-      expect(mediaService.lastUpload!.entityType, 'chat');
-      expect(mediaService.lastUpload!.entityId, 'chat_9');
-      expect(mediaService.lastUpload!.publicContent, isFalse);
-      expect(remote.sendMessageCalls, 1);
-      expect(remote.lastSentMessage?.content, mediaService.uploadedUrl);
-      expect(remote.updateChatPreviewCalls, 1);
-      expect(remote.lastPreviewUpdate?.lastMessageType, 'image');
-      expect(remote.lastPreviewUpdate?.lastMessage, 'Image');
-    });
+        expect(result.isSuccess, isTrue);
+        expect(mediaService.lastUpload, isNotNull);
+        expect(mediaService.lastUpload!.entityType, 'chat');
+        expect(mediaService.lastUpload!.entityId, 'chat_9');
+        expect(mediaService.lastUpload!.publicContent, isFalse);
+        expect(remote.sendMessageCalls, 1);
+        expect(remote.lastSentMessage?.content, isEmpty);
+        expect(remote.lastSentMessage?.mediaId, 'media-image-1');
+        expect(remote.updateChatPreviewCalls, 1);
+        expect(remote.lastPreviewUpdate?.lastMessageType, 'image');
+        expect(remote.lastPreviewUpdate?.lastMessage, 'Image');
+      },
+    );
 
-    test('stores backend media URLs inside document messages with file metadata', () async {
-      final remote = _FakeChatRemoteDataSource(
-        chats: const [],
-        publicUserDataById: const {},
-      );
-      final mediaService = _FakeBackendMediaService(
-        'https://api.laqta.cloud/api/v1/media/media-doc-1',
-      );
-      final repository = ChatRepositoryImpl(
-        remote,
-        mediaService: mediaService,
-      );
+    test(
+      'stores backend media ids inside document messages with file metadata',
+      () async {
+        final remote = _FakeChatRemoteDataSource(
+          chats: const [],
+          publicUserDataById: const {},
+        );
+        final mediaService = _FakeBackendMediaService(
+          'https://api.laqta.cloud/api/v1/media/media-doc-1',
+          mediaId: 'media-doc-1',
+        );
+        final repository = ChatRepositoryImpl(
+          remote,
+          mediaService: mediaService,
+        );
 
-      final result = await repository.sendMediaMessage(
-        chatId: 'chat_10',
-        senderId: 'user_1',
-        type: 'document',
-        filePath: 'C:/tmp/brief.pdf',
-        messageId: 'msg_doc',
-        fileName: 'brief.pdf',
-        fileSize: 4096,
-      );
+        final result = await repository.sendMediaMessage(
+          chatId: 'chat_10',
+          senderId: 'user_1',
+          type: 'document',
+          filePath: 'C:/tmp/brief.pdf',
+          messageId: 'msg_doc',
+          fileName: 'brief.pdf',
+          fileSize: 4096,
+        );
 
-      expect(result.isSuccess, isTrue);
-      expect(mediaService.lastUpload?.fileName, 'brief.pdf');
-      expect(remote.lastSentMessage?.content, '${mediaService.uploadedUrl}|brief.pdf|4096');
-      expect(remote.lastPreviewUpdate?.lastMessageType, 'document');
-      expect(remote.lastPreviewUpdate?.lastMessage, 'brief.pdf');
-    });
+        expect(result.isSuccess, isTrue);
+        expect(mediaService.lastUpload?.fileName, 'brief.pdf');
+        expect(remote.lastSentMessage?.content, isEmpty);
+        expect(remote.lastSentMessage?.mediaId, 'media-doc-1');
+        expect(remote.lastSentMessage?.fileName, 'brief.pdf');
+        expect(remote.lastSentMessage?.fileSize, 4096);
+        expect(remote.lastPreviewUpdate?.lastMessageType, 'document');
+        expect(remote.lastPreviewUpdate?.lastMessage, 'brief.pdf');
+      },
+    );
   });
 }

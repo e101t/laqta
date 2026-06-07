@@ -58,9 +58,7 @@ class EmptyState extends StatelessWidget {
         // Title
         Text(
           title,
-          style: textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
@@ -80,10 +78,7 @@ class EmptyState extends StatelessWidget {
             icon: const Icon(Icons.add_circle_outline),
             label: Text(actionLabel!),
             style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

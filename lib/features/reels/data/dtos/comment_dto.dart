@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 class CommentDto {
   final String id;
@@ -35,6 +35,19 @@ class CommentDto {
     );
   }
 
+  factory CommentDto.fromJson(Map<String, dynamic> data) {
+    return CommentDto(
+      id: _readString(data, 'id'),
+      reelId: _readString(data, 'reelId'),
+      userId: _readString(data, 'userId'),
+      userName: _readString(data, 'userName', fallback: 'Unknown User'),
+      userPhotoUrl: _readNullableString(data, 'userPhotoUrl'),
+      text: _readString(data, 'text'),
+      createdAt: _readDateTime(data['createdAt']),
+      likes: _readInt(data, 'likes'),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'reelId': reelId,
@@ -45,6 +58,10 @@ class CommentDto {
       'createdAt': Timestamp.fromDate(createdAt),
       'likes': likes,
     };
+  }
+
+  Map<String, dynamic> toBackendJson() {
+    return {'id': id, 'text': text};
   }
 
   static String _readString(
@@ -87,6 +104,9 @@ class CommentDto {
     }
     if (value is DateTime) {
       return value;
+    }
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value) ?? DateTime.now();
     }
     return DateTime.now();
   }

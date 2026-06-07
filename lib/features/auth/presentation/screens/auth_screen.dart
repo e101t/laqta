@@ -1,19 +1,14 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:laqta/core/constants/app_constants.dart';
-import 'package:laqta/core/localization/app_localizations.dart';
-import 'package:laqta/app/router/app_router.dart';
-import 'package:laqta/core/utils/responsive.dart';
-import 'package:laqta/core/widgets/app_buttons.dart';
-import 'package:laqta/core/widgets/iraqi_phone_number_field.dart';
-import 'package:laqta/core/widgets/app_text_field.dart';
-import 'package:laqta/features/auth/auth_dependencies.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
-enum AuthMode { signIn, signUp }
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+
+enum _AuthMode { login, register, forgotPassword }
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -23,582 +18,108 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  static Future<void>? _googleSignInInit;
-  bool _isLoading = false;
-  bool _showPhoneAuth = false; // Start with social auth options
-  bool _showOTPVerification = false;
-  late AuthMode _mode;
-  final _identifierController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _loginIdentifierController = TextEditingController();
+  final _loginPasswordController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
-  int _resendTimer = 0;
-  String? _verificationId;
-  Timer? _timer;
-  bool _obscurePassword = true;
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _forgotPhoneController = TextEditingController();
+  final _forgotOtpController = TextEditingController();
+  final _forgotPasswordController = TextEditingController();
+  final _forgotConfirmPasswordController = TextEditingController();
 
-  bool get _isArabic =>
-      Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
+  _AuthMode _mode = _AuthMode.login;
+  int _step = 0;
+  bool _isLoading = false;
+  bool _passwordVisible = false;
+  bool _confirmPasswordVisible = false;
+  bool _forgotPasswordVisible = false;
+  bool _forgotConfirmPasswordVisible = false;
+  String _selectedRole = 'customer';
+  String? _selectedGender;
+  DateTime? _birthdate;
+  String? _selectedProvince;
+  String? _registrationRequestId;
+  String? _forgotRequestId;
+  int _registrationResendSeconds = 0;
+  int _forgotResendSeconds = 0;
+  Timer? _registrationTimer;
+  Timer? _forgotTimer;
 
-  String _tr({required String ar, required String en}) => _isArabic ? ar : en;
+  static const _roleOptions = <_RoleOption>[
+    _RoleOption('customer', 'عميل', Icons.person_outline_rounded),
+    _RoleOption('photographer', 'مصور', Icons.photo_camera_outlined),
+    _RoleOption('venue_owner', 'صاحب قاعة', Icons.apartment_rounded),
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    const devAuthMode = String.fromEnvironment(
-      'LAQTA_DEV_AUTH_MODE',
-      defaultValue: '',
-    );
-    final normalized = devAuthMode.trim().toLowerCase();
-    _mode = kDebugMode && (normalized == 'signup' || normalized == 'sign_up')
-        ? AuthMode.signUp
-        : AuthMode.signIn;
-  }
-
-  void _trackTap(String action) {
-    if (kDebugMode) {
-      debugPrint("AUTH_TAP:$action");
-    }
-  }
-
-  bool get _isSignUp => _mode == AuthMode.signUp;
-
-  void _handleBackFromPhone() {
-    if (_isLoading) return;
-    _timer?.cancel();
-    _timer = null;
-    setState(() {
-      _showPhoneAuth = false;
-      _showOTPVerification = false;
-      _phoneController.clear();
-      _otpController.clear();
-      _resendTimer = 0;
-      _verificationId = null;
-    });
-  }
-
-  void _handleBackFromOTP() {
-    if (_isLoading) return;
-    setState(() {
-      _showOTPVerification = false;
-      _otpController.clear();
-      _verificationId = null;
-    });
-  }
+  static const _provinceOptions = <_ProvinceOption>[
+    _ProvinceOption('baghdad', 'بغداد'),
+    _ProvinceOption('basra', 'البصرة'),
+    _ProvinceOption('nineveh', 'نينوى'),
+    _ProvinceOption('erbil', 'أربيل'),
+    _ProvinceOption('najaf', 'النجف'),
+    _ProvinceOption('karbala', 'كربلاء'),
+    _ProvinceOption('kirkuk', 'كركوك'),
+    _ProvinceOption('dhi_qar', 'ذي قار'),
+    _ProvinceOption('sulaymaniyah', 'السليمانية'),
+    _ProvinceOption('anbar', 'الأنبار'),
+    _ProvinceOption('diyala', 'ديالى'),
+    _ProvinceOption('saladin', 'صلاح الدين'),
+    _ProvinceOption('maysan', 'ميسان'),
+    _ProvinceOption('wasit', 'واسط'),
+    _ProvinceOption('muthanna', 'المثنى'),
+    _ProvinceOption('qadisiyah', 'القادسية'),
+    _ProvinceOption('babil', 'بابل'),
+    _ProvinceOption('duhok', 'دهوك'),
+  ];
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _identifierController.dispose();
-    _passwordController.dispose();
+    _registrationTimer?.cancel();
+    _forgotTimer?.cancel();
+    _loginIdentifierController.dispose();
+    _loginPasswordController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _usernameController.dispose();
     _phoneController.dispose();
     _otpController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _forgotPhoneController.dispose();
+    _forgotOtpController.dispose();
+    _forgotPasswordController.dispose();
+    _forgotConfirmPasswordController.dispose();
     super.dispose();
-  }
-
-  bool get _isGoogleSignInSupported {
-    if (!GoogleSignIn.instance.supportsAuthenticate()) {
-      return false;
-    }
-    if (kIsWeb) {
-      return true;
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  bool get _isPhoneAuthSupported {
-    // Phone authentication is only supported on Android and iOS
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-      case TargetPlatform.iOS:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  bool get _isAppleSignInSupported {
-    if (kIsWeb) {
-      return true;
-    }
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.iOS:
-      case TargetPlatform.macOS:
-        return true;
-      default:
-        return false;
-    }
-  }
-
-  Future<void> _ensureGoogleSignInInitialized() {
-    return _googleSignInInit ??= GoogleSignIn.instance.initialize();
-  }
-
-  Future<void> _signInWithGoogle() async {
-    _trackTap("google");
-    final localizations = AppLocalizations.of(context);
-
-    if (!_isGoogleSignInSupported) {
-      _showSnackBar(localizations.googleSignInUnsupported);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      await _ensureGoogleSignInInitialized();
-      final result = await AuthDependencies.signInWithGoogle().call();
-      if (!result.isSuccess) {
-        final failure = result.failureOrNull;
-        if (kDebugMode) {
-          final code = failure?.code;
-          debugPrint('Google sign-in failed: ${code ?? 'unknown'}');
-        }
-        if (failure?.code == 'canceled') {
-          return;
-        }
-        if (!mounted) return;
-        _showSnackBar(
-          _formatErrorMessage(
-            localizations.googleSignInFailed,
-            failure?.message,
-          ),
-        );
-        return;
-      }
-      if (!mounted) return;
-      AppRouter.goToProfileSetup(context);
-    } catch (e) {
-      if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(localizations.googleSignInFailed, e.toString()),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithApple() async {
-    _trackTap("apple");
-    final localizations = AppLocalizations.of(context);
-    final isAvailable = await SignInWithApple.isAvailable();
-    if (!isAvailable) {
-      _showSnackBar(localizations.appleSignInUnavailable);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await AuthDependencies.signInWithApple().call();
-      if (!result.isSuccess) {
-        final failure = result.failureOrNull;
-        if (failure?.code == 'canceled') {
-          return;
-        }
-        if (!mounted) return;
-        _showSnackBar(
-          _formatErrorMessage(
-            localizations.appleSignInFailed,
-            failure?.message,
-          ),
-        );
-        return;
-      }
-      if (!mounted) return;
-      AppRouter.goToProfileSetup(context);
-    } catch (e) {
-      if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(localizations.appleSignInFailed, e.toString()),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _signInWithPassword() async {
-    _trackTap("password");
-    final localizations = AppLocalizations.of(context);
-
-    final identifier = _identifierController.text.trim();
-    final password = _passwordController.text;
-
-    if (identifier.isEmpty) {
-      _showSnackBar(
-        _tr(
-          ar: 'يرجى إدخال اسم المستخدم أو البريد الإلكتروني',
-          en: 'Please enter your username or email',
-        ),
-      );
-      return;
-    }
-    if (password.isEmpty) {
-      _showSnackBar(
-        _tr(ar: 'يرجى إدخال كلمة المرور', en: 'Please enter your password'),
-      );
-      return;
-    }
-
-    final normalized = identifier.replaceAll(' ', '');
-    final looksLikePhone = RegExp(r'^\+?\d{7,}$').hasMatch(normalized);
-    if (looksLikePhone && !normalized.contains('@')) {
-      _showSnackBar(
-        _tr(
-          ar: 'للدخول برقم الهاتف استخدم التحقق بالرمز (OTP)',
-          en: 'Use phone verification (OTP) to sign in with a phone number',
-        ),
-      );
-      setState(() {
-        _showPhoneAuth = true;
-        _showOTPVerification = false;
-        _phoneController.text = identifier;
-      });
-      return;
-    }
-
-    final email = normalized.contains('@')
-        ? normalized
-        : '${normalized.toLowerCase()}@laqta.app';
-
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await AuthDependencies.signInWithPassword().call(
-        email: email,
-        password: password,
-      );
-      if (!result.isSuccess) {
-        final failure = result.failureOrNull;
-        if (kDebugMode) {
-          debugPrint('Password sign-in failed: ${failure?.code ?? 'unknown'}');
-        }
-        _showSnackBar(
-          _formatErrorMessage(
-            localizations.somethingWentWrong,
-            failure?.message,
-          ),
-        );
-        return;
-      }
-      if (!mounted) return;
-      AppRouter.goToProfileSetup(context);
-    } catch (e) {
-      if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(localizations.somethingWentWrong, e.toString()),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _signInWithPhone() async {
-
-    _trackTap("phone");
-    final localizations = AppLocalizations.of(context);
-
-    if (!_isPhoneAuthSupported) {
-      _showSnackBar(localizations.phoneAuthUnsupported);
-      return;
-    }
-
-    if (_phoneController.text.isEmpty) {
-      _showSnackBar(localizations.phoneNumberRequired);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await AuthDependencies.verifyPhoneNumber().call(
-        phoneNumber: _phoneController.text,
-        onVerificationCompleted: (_) {
-          if (!mounted) return;
-          setState(() => _isLoading = false);
-          AppRouter.goToProfileSetup(context);
-        },
-        onVerificationFailed: (failure) {
-          if (!mounted) return;
-          if (kDebugMode) {
-            final code = failure.code;
-            debugPrint('Phone verification failed: ${code ?? 'unknown'}');
-          }
-          _showSnackBar(
-            _formatErrorMessage(
-              localizations.verificationFailed,
-              failure.message,
-            ),
-          );
-          setState(() => _isLoading = false);
-        },
-        onCodeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          if (!mounted) return;
-          setState(() {
-            _isLoading = false;
-            _showOTPVerification = true;
-            _resendTimer = AppConstants.otpResendSeconds;
-          });
-          _startResendTimer();
-        },
-        onCodeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
-      if (!result.isSuccess) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        _showSnackBar(
-          _formatErrorMessage(
-            localizations.phoneAuthError,
-            result.failureOrNull?.message,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(localizations.phoneAuthError, e.toString()),
-      );
-    }
-  }
-
-  Future<void> _verifyOTP() async {
-    _trackTap("otp_verify");
-    final localizations = AppLocalizations.of(context);
-
-    if (_otpController.text.length != AppConstants.otpLength) {
-      _showSnackBar(localizations.otpInvalid);
-      return;
-    }
-
-    if (_verificationId == null) {
-      _showSnackBar(localizations.verificationIdMissing);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await AuthDependencies.signInWithPhoneCredential().call(
-        verificationId: _verificationId!,
-        smsCode: _otpController.text,
-      );
-      setState(() => _isLoading = false);
-      if (!result.isSuccess) {
-        if (!mounted) return;
-        if (kDebugMode) {
-          final code = result.failureOrNull?.code;
-          debugPrint('OTP verification failed: ${code ?? 'unknown'}');
-        }
-        _showSnackBar(
-          _formatErrorMessage(
-            localizations.otpVerificationFailed,
-            result.failureOrNull?.message,
-          ),
-        );
-        return;
-      }
-
-      if (!mounted) return;
-      AppRouter.goToProfileSetup(context);
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(localizations.otpVerificationFailed, e.toString()),
-      );
-    }
-  }
-
-  void _startResendTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() => _resendTimer--);
-      if (_resendTimer <= 0) {
-        timer.cancel();
-      }
-    });
-  }
-
-  Future<void> _resendOTP() async {
-    _trackTap("otp_resend");
-    final localizations = AppLocalizations.of(context);
-
-    if (!_isPhoneAuthSupported) {
-      _showSnackBar(localizations.phoneAuthUnsupported);
-      return;
-    }
-
-    if (_resendTimer > 0) return;
-
-    setState(() {
-      _isLoading = true;
-      _resendTimer = AppConstants.otpResendSeconds;
-    });
-
-    try {
-      final result = await AuthDependencies.verifyPhoneNumber().call(
-        phoneNumber: _phoneController.text,
-        onVerificationCompleted: (_) {
-          if (!mounted) return;
-          setState(() => _isLoading = false);
-          AppRouter.goToProfileSetup(context);
-        },
-        onVerificationFailed: (failure) {
-          if (!mounted) return;
-          if (kDebugMode) {
-            final code = failure.code;
-            debugPrint('Resend OTP failed: ${code ?? 'unknown'}');
-          }
-          _showSnackBar(
-            _formatErrorMessage(localizations.resendFailed, failure.message),
-          );
-          setState(() => _isLoading = false);
-        },
-        onCodeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          if (!mounted) return;
-          setState(() => _isLoading = false);
-          _startResendTimer();
-          _showSnackBar(localizations.otpSentSuccess);
-        },
-        onCodeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
-      if (!result.isSuccess) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        _showSnackBar(
-          _formatErrorMessage(
-            localizations.resendError,
-            result.failureOrNull?.message,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      _showSnackBar(
-        _formatErrorMessage(localizations.resendError, e.toString()),
-      );
-    }
-  }
-
-  void _showSnackBar(String message) {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        showCloseIcon: true,
-      ),
-    );
-  }
-
-  void _setAuthMode(AuthMode mode) {
-    if (_mode == mode) return;
-    setState(() {
-      _mode = mode;
-      _showPhoneAuth = false;
-      _showOTPVerification = false;
-      _verificationId = null;
-      _identifierController.clear();
-      _passwordController.clear();
-      _phoneController.clear();
-      _otpController.clear();
-    });
-  }
-
-  String _formatErrorMessage(String base, String? details) {
-    if (!kDebugMode || details == null || details.trim().isEmpty) {
-      return base;
-    }
-    return '$base: $details';
   }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        if (_isLoading) return;
-        if (_showOTPVerification) {
-          _handleBackFromOTP();
-          return;
-        }
-        if (_showPhoneAuth) {
-          _handleBackFromPhone();
-          return;
-        }
-
-        // Auth is part of onboarding; go back to language selector instead of exiting.
-        AppRouter.goToLanguage(context);
-      },
+    return Directionality(
+      textDirection: TextDirection.rtl,
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         body: Stack(
           children: [
             const _AuthBackdrop(),
             SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Center(
-                        child: SizedBox(
-                          width: Responsive.isWideLayout(context)
-                              ? 520
-                              : double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildHeader(localizations),
-                              const SizedBox(height: 20),
-                              _AuthGlassCard(
-                                padding: const EdgeInsets.all(18),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    _buildModeToggle(localizations),
-                                    const SizedBox(height: 20),
-                                    _buildAuthContent(localizations),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: _AuthGlassCard(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        child: _buildModeContent(),
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
             if (_isLoading) const _AuthLoadingBarrier(),
@@ -608,485 +129,748 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildHeader(AppLocalizations localizations) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final title = _isSignUp
-        ? localizations.signUpTitle
-        : localizations.signInTitle;
+  Widget _buildModeContent() {
+    switch (_mode) {
+      case _AuthMode.login:
+        return _buildLogin();
+      case _AuthMode.register:
+        return _buildRegister();
+      case _AuthMode.forgotPassword:
+        return _buildForgotPassword();
+    }
+  }
 
+  Widget _buildLogin() {
     return Column(
+      key: const ValueKey('login'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          height: 72,
-          width: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [scheme.primary, scheme.secondary],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: scheme.primary.withValues(alpha: 0.25),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.camera_alt, size: 32, color: Colors.white),
+        const _AuthHeader(
+          title: 'مرحباً بك في LAQTA',
+          subtitle: 'سجّل الدخول للوصول إلى حسابك',
         ),
-        const SizedBox(height: 16),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 220),
-          child: Text(
-            title,
-            key: ValueKey(title),
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+        const SizedBox(height: 28),
+        _LabeledField(
+          controller: _loginIdentifierController,
+          label: 'رقم الهاتف أو اسم المستخدم',
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 14),
+        _LabeledField(
+          controller: _loginPasswordController,
+          label: 'كلمة المرور',
+          obscureText: !_passwordVisible,
+          suffixIcon: IconButton(
+            onPressed: () =>
+                setState(() => _passwordVisible = !_passwordVisible),
+            icon: Icon(
+              _passwordVisible
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
             ),
-            textAlign: TextAlign.center,
+          ),
+          onSubmitted: (_) => _login(),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: _isLoading
+                ? null
+                : () => setState(() => _mode = _AuthMode.forgotPassword),
+            child: const Text('نسيت كلمة المرور؟'),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          localizations.authSubtitle,
-          style: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-          textAlign: TextAlign.center,
+        const SizedBox(height: 12),
+        _PrimaryActionButton(
+          label: 'تسجيل الدخول',
+          onPressed: _isLoading ? null : _login,
+        ),
+        const SizedBox(height: 18),
+        _SwitchModeButton(
+          prompt: 'ليس لديك حساب؟',
+          action: 'إنشاء حساب',
+          onPressed: _isLoading
+              ? null
+              : () => setState(() {
+                  _mode = _AuthMode.register;
+                  _step = 0;
+                }),
         ),
       ],
     );
   }
 
-  Widget _buildModeToggle(AppLocalizations localizations) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ModeChip(
-              label: localizations.signInTitle,
-              isActive: !_isSignUp,
-              onTap: () => _setAuthMode(AuthMode.signIn),
-              textTheme: textTheme,
-              scheme: scheme,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _ModeChip(
-              label: localizations.signUpTitle,
-              isActive: _isSignUp,
-              onTap: () {
-                if (_isLoading) return;
-                _setAuthMode(AuthMode.signIn);
-                AppRouter.goToSignUpDetails(context);
-              },
-              textTheme: textTheme,
-              scheme: scheme,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAuthContent(AppLocalizations localizations) {
-    final contentKey = _showOTPVerification
-        ? 'otp'
-        : _showPhoneAuth
-        ? 'phone'
-        : 'social';
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 280),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) {
-        final slide =
-            Tween<Offset>(
-              begin: const Offset(0, 0.04),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-            );
-
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(position: slide, child: child),
-        );
-      },
-      child: KeyedSubtree(
-        key: ValueKey(contentKey),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (!_showPhoneAuth && !_showOTPVerification)
-              ..._buildSocialAuth(localizations)
-            else if (_showPhoneAuth && !_showOTPVerification)
-              ..._buildPhoneAuth(localizations)
-            else
-              ..._buildOTPVerification(localizations),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<Widget> _buildSocialAuth(AppLocalizations localizations) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    if (_isSignUp) {
-      return [
-        CTAButton(
-          text: localizations.signUpTitle,
-          icon: Icons.person_add_alt_1_rounded,
-          onPressed: _isLoading
-              ? null
-              : () => AppRouter.goToSignUpDetails(context),
+  Widget _buildRegister() {
+    return Column(
+      key: ValueKey('register_$_step'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const _AuthHeader(
+          title: 'مرحباً بك في LAQTA',
+          subtitle: 'أنشئ حسابك بخطوات قصيرة وآمنة',
         ),
         const SizedBox(height: 18),
+        _StepProgress(currentStep: _step + 1, totalSteps: 4),
+        const SizedBox(height: 24),
+        _buildRegisterStep(),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            if (_step > 0)
+              Expanded(
+                child: _SecondaryActionButton(
+                  label: 'رجوع',
+                  onPressed: _isLoading ? null : () => setState(() => _step--),
+                ),
+              ),
+            if (_step > 0) const SizedBox(width: 12),
+            Expanded(
+              child: _PrimaryActionButton(
+                label: _step == 3 ? 'إنشاء الحساب' : 'التالي',
+                onPressed: _isLoading ? null : _nextRegistrationStep,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        _SwitchModeButton(
+          prompt: 'لديك حساب؟',
+          action: 'تسجيل الدخول',
+          onPressed: _isLoading
+              ? null
+              : () => setState(() {
+                  _mode = _AuthMode.login;
+                  _step = 0;
+                }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegisterStep() {
+    switch (_step) {
+      case 0:
+        return _buildRoleStep();
+      case 1:
+        return _buildBasicInfoStep();
+      case 2:
+        return _buildPersonalDetailsStep();
+      case 3:
+      default:
+        return _buildPhonePasswordStep();
+    }
+  }
+
+  Widget _buildRoleStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle('اختر نوع الحساب'),
+        const SizedBox(height: 12),
+        for (final option in _roleOptions) ...[
+          _ChoiceCard(
+            selected: _selectedRole == option.value,
+            icon: option.icon,
+            label: option.label,
+            onTap: () => setState(() => _selectedRole = option.value),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBasicInfoStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle('المعلومات الأساسية'),
+        const SizedBox(height: 12),
+        _LabeledField(
+          controller: _firstNameController,
+          label: 'الاسم الأول',
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 12),
+        _LabeledField(
+          controller: _lastNameController,
+          label: 'اسم العائلة',
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: 12),
+        _LabeledField(
+          controller: _usernameController,
+          label: 'اسم المستخدم',
+          hint: 'مثال: ali.photography',
+          textDirection: TextDirection.ltr,
+          inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPersonalDetailsStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle('المعلومات الشخصية'),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
-              child: Divider(
-                color: scheme.outlineVariant.withValues(alpha: 0.7),
+              child: _ChoiceCard(
+                selected: _selectedGender == 'male',
+                icon: Icons.male_rounded,
+                label: 'ذكر',
+                onTap: () => setState(() => _selectedGender = 'male'),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Text(
-                localizations.or,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+            const SizedBox(width: 12),
             Expanded(
-              child: Divider(
-                color: scheme.outlineVariant.withValues(alpha: 0.7),
+              child: _ChoiceCard(
+                selected: _selectedGender == 'female',
+                icon: Icons.female_rounded,
+                label: 'أنثى',
+                onTap: () => setState(() => _selectedGender = 'female'),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        ..._buildProviderButtons(localizations),
-      ];
-    }
+        const SizedBox(height: 12),
+        _PickerTile(
+          label: 'تاريخ الميلاد',
+          value: _birthdate == null
+              ? 'اختر تاريخ الميلاد'
+              : DateFormat('yyyy-MM-dd').format(_birthdate!),
+          icon: Icons.calendar_month_outlined,
+          onTap: _pickBirthdate,
+        ),
+        const SizedBox(height: 12),
+        _DropdownTile(
+          label: 'المحافظة',
+          value: _selectedProvince,
+          items: _provinceOptions,
+          onChanged: (value) => setState(() => _selectedProvince = value),
+        ),
+      ],
+    );
+  }
 
-    return [
-      AppTextField(
-        controller: _identifierController,
-        label: _tr(ar: 'اسم المستخدم / البريد الإلكتروني', en: 'Username / Email'),
-        hint: _tr(ar: 'مثال: ahmedphoto23', en: 'Example: ahmedphoto23'),
-        prefixIcon: Icons.person_outline,
-        enabled: !_isLoading,
-        textInputAction: TextInputAction.next,
-      ),
-      const SizedBox(height: 12),
-      AppTextField(
-        controller: _passwordController,
-        label: _tr(ar: 'كلمة المرور', en: 'Password'),
-        hint: '********',
-        prefixIcon: Icons.lock_outline,
-        enabled: !_isLoading,
-        obscureText: _obscurePassword,
-        suffixIcon: _obscurePassword
-            ? Icons.visibility_outlined
-            : Icons.visibility_off_outlined,
-        onSuffixTap: () => setState(() => _obscurePassword = !_obscurePassword),
-        textInputAction: TextInputAction.done,
-        onFieldSubmitted: (_) => _signInWithPassword(),
-      ),
-      const SizedBox(height: 16),
-      PrimaryButton(
-        text: localizations.signInTitle,
-        icon: Icons.login_rounded,
-        onPressed: _isLoading ? null : _signInWithPassword,
-        isLoading: _isLoading,
-      ),
-      const SizedBox(height: 18),
-      Row(
-        children: [
-          Expanded(
-            child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+  Widget _buildPhonePasswordStep() {
+    final otpSent = _registrationRequestId != null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _SectionTitle('التحقق من الهاتف'),
+        const SizedBox(height: 12),
+        _LabeledField(
+          controller: _phoneController,
+          label: 'رقم الهاتف',
+          hint: '077xxxxxxxx',
+          keyboardType: TextInputType.phone,
+          textDirection: TextDirection.ltr,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _SecondaryActionButton(
+          label: _registrationResendSeconds > 0
+              ? 'إعادة الإرسال خلال $_registrationResendSeconds ثانية'
+              : 'إرسال رمز التحقق عبر SMS',
+          onPressed: _isLoading || _registrationResendSeconds > 0
+              ? null
+              : _sendRegistrationOtp,
+        ),
+        if (otpSent) ...[
+          const SizedBox(height: 12),
+          _InfoText('تم إرسال رمز التحقق عبر رسالة SMS'),
+          const SizedBox(height: 12),
+          _LabeledField(
+            controller: _otpController,
+            label: 'أدخل رمز التحقق',
+            keyboardType: TextInputType.number,
+            textDirection: TextDirection.ltr,
+            maxLength: AppConstants.otpLength,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Text(
-              localizations.or,
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
+        ],
+        const SizedBox(height: 12),
+        _LabeledField(
+          controller: _passwordController,
+          label: 'كلمة المرور',
+          obscureText: !_passwordVisible,
+          suffixIcon: IconButton(
+            onPressed: () =>
+                setState(() => _passwordVisible = !_passwordVisible),
+            icon: Icon(
+              _passwordVisible
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _LabeledField(
+          controller: _confirmPasswordController,
+          label: 'تأكيد كلمة المرور',
+          obscureText: !_confirmPasswordVisible,
+          suffixIcon: IconButton(
+            onPressed: () => setState(
+              () => _confirmPasswordVisible = !_confirmPasswordVisible,
+            ),
+            icon: Icon(
+              _confirmPasswordVisible
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForgotPassword() {
+    final otpSent = _forgotRequestId != null;
+    return Column(
+      key: const ValueKey('forgot'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const _AuthHeader(
+          title: 'نسيت كلمة المرور',
+          subtitle: 'سنرسل رمز تحقق برسالة SMS لإعادة تعيينها',
+        ),
+        const SizedBox(height: 24),
+        _LabeledField(
+          controller: _forgotPhoneController,
+          label: 'رقم الهاتف',
+          hint: '077xxxxxxxx',
+          keyboardType: TextInputType.phone,
+          textDirection: TextDirection.ltr,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
+          ],
+        ),
+        const SizedBox(height: 10),
+        _SecondaryActionButton(
+          label: _forgotResendSeconds > 0
+              ? 'إعادة الإرسال خلال $_forgotResendSeconds ثانية'
+              : 'إرسال رمز التحقق عبر SMS',
+          onPressed: _isLoading || _forgotResendSeconds > 0
+              ? null
+              : _sendForgotOtp,
+        ),
+        if (otpSent) ...[
+          const SizedBox(height: 12),
+          _InfoText('تم إرسال رمز التحقق عبر رسالة SMS'),
+          const SizedBox(height: 12),
+          _LabeledField(
+            controller: _forgotOtpController,
+            label: 'أدخل رمز التحقق',
+            keyboardType: TextInputType.number,
+            textDirection: TextDirection.ltr,
+            maxLength: AppConstants.otpLength,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 12),
+          _LabeledField(
+            controller: _forgotPasswordController,
+            label: 'كلمة المرور الجديدة',
+            obscureText: !_forgotPasswordVisible,
+            suffixIcon: IconButton(
+              onPressed: () => setState(
+                () => _forgotPasswordVisible = !_forgotPasswordVisible,
+              ),
+              icon: Icon(
+                _forgotPasswordVisible
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
               ),
             ),
           ),
-          Expanded(
-            child: Divider(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+          const SizedBox(height: 12),
+          _LabeledField(
+            controller: _forgotConfirmPasswordController,
+            label: 'تأكيد كلمة المرور',
+            obscureText: !_forgotConfirmPasswordVisible,
+            suffixIcon: IconButton(
+              onPressed: () => setState(
+                () => _forgotConfirmPasswordVisible =
+                    !_forgotConfirmPasswordVisible,
+              ),
+              icon: Icon(
+                _forgotConfirmPasswordVisible
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
+              ),
+            ),
           ),
         ],
-      ),
-      const SizedBox(height: 18),
-      ..._buildProviderButtons(localizations),
-    ];
-  }
-
-  List<Widget> _buildProviderButtons(AppLocalizations localizations) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-    final googleLabel = _isSignUp
-        ? localizations.signUpWithGoogle
-        : localizations.signInWithGoogle;
-    final appleLabel = _isSignUp
-        ? localizations.signUpWithApple
-        : localizations.signInWithApple;
-    final phoneLabel = _isSignUp
-        ? localizations.signUpWithPhone
-        : localizations.signInWithPhone;
-
-    return [
-      _AuthProviderButton(
-        onPressed: _isLoading ? null : _signInWithGoogle,
-        backgroundColor: theme.brightness == Brightness.dark
-            ? const Color(0xFFF8FAFC)
-            : scheme.surface,
-        foregroundColor: Colors.black,
-        border: BorderSide(color: scheme.outlineVariant),
-        icon: const _AuthBadge(
-          backgroundColor: Colors.white,
-          child: Icon(Icons.g_mobiledata_rounded, color: Color(0xFF4285F4)),
-        ),
-        label: googleLabel,
-        textStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-      ),
-
-      const SizedBox(height: 14),
-
-      if (_isAppleSignInSupported) ...[
-        _AuthProviderButton(
-          onPressed: _isLoading ? null : _signInWithApple,
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          icon: const _AuthBadge(
-            backgroundColor: Colors.black,
-            child: Icon(Icons.apple, color: Colors.white),
-          ),
-          label: appleLabel,
-          textStyle: textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
+        const SizedBox(height: 22),
+        _PrimaryActionButton(
+          label: 'تعيين كلمة المرور',
+          onPressed: _isLoading || !otpSent ? null : _resetPassword,
         ),
         const SizedBox(height: 18),
-      ],
-
-      if (_isPhoneAuthSupported)
-        _AuthProviderButton(
+        _SwitchModeButton(
+          prompt: 'تذكرت كلمة المرور؟',
+          action: 'تسجيل الدخول',
           onPressed: _isLoading
               ? null
-              : () {
-                  _trackTap("phone_start");
-                  setState(() {
-                    _showPhoneAuth = true;
-                    _showOTPVerification = false;
-                  });
-                },
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
-          icon: const _AuthBadge(
-            backgroundColor: Colors.black,
-            child: Icon(Icons.phone_iphone_rounded, color: Colors.white),
-          ),
-          label: phoneLabel,
-          textStyle: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w800),
-        )
-      else
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, color: scheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  localizations.phoneAuthSupportInfo,
-                  style: textTheme.bodySmall?.copyWith(color: scheme.primary),
-                ),
-              ),
-            ],
-          ),
+              : () => setState(() => _mode = _AuthMode.login),
         ),
-    ];
+      ],
+    );
   }
 
-  List<Widget> _buildPhoneAuth(AppLocalizations localizations) {
-    return [
-      Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _handleBackFromPhone,
-        ),
-      ),
-      const SizedBox(height: 4),
-      IraqiPhoneNumberField(
-        context: context,
-        controller: _phoneController,
-        label: localizations.phoneNumber,
-        hint: '07XXXXXXXXX',
-        enabled: !_isLoading,
-      ),
-
-      const SizedBox(height: 24),
-
-      PrimaryButton(
-        text: _showOTPVerification ? localizations.verify : localizations.next,
-        onPressed: _isLoading ? null : _signInWithPhone,
-        isLoading: _isLoading,
-      ),
-    ];
+  Future<void> _login() async {
+    final identifier = _loginIdentifierController.text.trim();
+    final password = _loginPasswordController.text;
+    if (identifier.isEmpty || password.isEmpty) {
+      _showSnackBar('يرجى إدخال رقم الهاتف أو اسم المستخدم وكلمة المرور');
+      return;
+    }
+    await _runAuthAction(() async {
+      final result = await AuthDependencies.signInWithPassword().call(
+        identifier: identifier,
+        password: password,
+      );
+      if (!result.isSuccess) {
+        throw _AuthUiException('بيانات الدخول غير صحيحة');
+      }
+      if (!mounted) return;
+      AppRouter.goToHome(context);
+    });
   }
 
-  List<Widget> _buildOTPVerification(AppLocalizations localizations) {
-    return [
-      // Back Button
-      Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _handleBackFromOTP,
-        ),
-      ),
+  Future<void> _nextRegistrationStep() async {
+    if (_step == 0) {
+      setState(() => _step = 1);
+      return;
+    }
+    if (_step == 1 && !_validateBasicInfo()) return;
+    if (_step == 2 && !_validatePersonalDetails()) return;
+    if (_step < 3) {
+      setState(() => _step++);
+      return;
+    }
+    await _completeRegistration();
+  }
 
-      const SizedBox(height: 16),
+  bool _validateBasicInfo() {
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final username = _usernameController.text.trim().toLowerCase();
+    if (firstName.isEmpty) {
+      _showSnackBar('الاسم الأول مطلوب');
+      return false;
+    }
+    if (lastName.isEmpty) {
+      _showSnackBar('اسم العائلة مطلوب');
+      return false;
+    }
+    if (username.length < 3 || username.length > 30) {
+      _showSnackBar('اسم المستخدم يجب أن يكون بين 3 و30 حرفاً');
+      return false;
+    }
+    if (username.contains(RegExp(r'\s'))) {
+      _showSnackBar('اسم المستخدم لا يجب أن يحتوي على مسافات');
+      return false;
+    }
+    if (!RegExp(r'^[\u0600-\u06FFA-Za-z0-9_.]+$').hasMatch(username)) {
+      _showSnackBar('اسم المستخدم يحتوي على أحرف غير مسموحة');
+      return false;
+    }
+    _usernameController.text = username;
+    return true;
+  }
 
-      // OTP Info
-      Text(
-        localizations.enterOTP,
-        style: Theme.of(context).textTheme.bodyMedium,
-        textAlign: TextAlign.center,
-      ),
+  bool _validatePersonalDetails() {
+    if (_selectedGender == null) {
+      _showSnackBar('يرجى اختيار الجنس');
+      return false;
+    }
+    if (_birthdate == null) {
+      _showSnackBar('يرجى اختيار تاريخ الميلاد');
+      return false;
+    }
+    if (!_isAdult(_birthdate!)) {
+      _showSnackBar('عذراً، يجب أن يكون عمرك 18 سنة أو أكثر لاستخدام LAQTA.');
+      return false;
+    }
+    if (_selectedProvince == null) {
+      _showSnackBar('يرجى اختيار المحافظة');
+      return false;
+    }
+    return true;
+  }
 
-      const SizedBox(height: 8),
+  bool _validatePhonePassword({required bool requireOtp}) {
+    if (_phoneController.text.trim().isEmpty) {
+      _showSnackBar('رقم الهاتف غير صحيح');
+      return false;
+    }
+    if (requireOtp &&
+        _otpController.text.trim().length != AppConstants.otpLength) {
+      _showSnackBar('أدخل رمز التحقق');
+      return false;
+    }
+    final password = _passwordController.text;
+    if (!_isValidPassword(password)) {
+      _showSnackBar('كلمة المرور يجب أن تكون 8 أحرف وتحتوي حرفاً ورقماً');
+      return false;
+    }
+    if (password != _confirmPasswordController.text) {
+      _showSnackBar('كلمة المرور غير متطابقة');
+      return false;
+    }
+    return true;
+  }
 
-      Text(
-        _phoneController.text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        textAlign: TextAlign.center,
-      ),
+  Future<void> _sendRegistrationOtp() async {
+    if (!_validateBasicInfo() || !_validatePersonalDetails()) return;
+    if (_phoneController.text.trim().isEmpty) {
+      _showSnackBar('رقم الهاتف غير صحيح');
+      return;
+    }
+    await _runAuthAction(() async {
+      final result = await AuthDependencies.startRegistration().call(
+        role: _selectedRole,
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        username: _usernameController.text.trim().toLowerCase(),
+        gender: _selectedGender!,
+        birthdate: DateFormat('yyyy-MM-dd').format(_birthdate!),
+        province: _selectedProvince!,
+        phone: _phoneController.text.trim(),
+      );
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw _AuthUiException(
+          _mapFailureMessage(result.failureOrNull?.message),
+        );
+      }
+      final otp = result.valueOrNull!;
+      setState(() {
+        _registrationRequestId = otp.requestId;
+        _registrationResendSeconds = otp.resendAfterSeconds;
+      });
+      _startRegistrationTimer();
+      _showSnackBar('تم إرسال رمز التحقق عبر رسالة SMS');
+    });
+  }
 
-      const SizedBox(height: 32),
+  Future<void> _completeRegistration() async {
+    if (_registrationRequestId == null) {
+      _showSnackBar('أرسل رمز التحقق عبر SMS أولاً');
+      return;
+    }
+    if (!_validatePhonePassword(requireOtp: true)) return;
+    await _runAuthAction(() async {
+      final result = await AuthDependencies.completeRegistration().call(
+        requestId: _registrationRequestId!,
+        code: _otpController.text.trim(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
+      if (!result.isSuccess) {
+        throw _AuthUiException(
+          _mapFailureMessage(result.failureOrNull?.message),
+        );
+      }
+      if (!mounted) return;
+      AppRouter.goToHome(context);
+    });
+  }
 
-      // OTP Input
-      AppTextField(
-        controller: _otpController,
-        label: localizations.verifyOTP,
-        hint: '000000',
-        keyboardType: TextInputType.number,
-        textInputAction: TextInputAction.done,
-        maxLength: AppConstants.otpLength,
-        textAlign: TextAlign.center,
-        textStyle: Theme.of(context).textTheme.headlineSmall,
-        autofillHints: const [AutofillHints.oneTimeCode],
-        onFieldSubmitted: (_) => _verifyOTP(),
-      ),
+  Future<void> _sendForgotOtp() async {
+    if (_forgotPhoneController.text.trim().isEmpty) {
+      _showSnackBar('رقم الهاتف غير صحيح');
+      return;
+    }
+    await _runAuthAction(() async {
+      final result = await AuthDependencies.forgotPassword().call(
+        phone: _forgotPhoneController.text.trim(),
+      );
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw _AuthUiException('تعذر إرسال رمز التحقق عبر SMS');
+      }
+      final otp = result.valueOrNull!;
+      setState(() {
+        _forgotRequestId = otp.requestId;
+        _forgotResendSeconds = otp.resendAfterSeconds;
+      });
+      _startForgotTimer();
+      _showSnackBar('تم إرسال رمز التحقق عبر رسالة SMS');
+    });
+  }
 
-      const SizedBox(height: 24),
+  Future<void> _resetPassword() async {
+    if (_forgotRequestId == null) {
+      _showSnackBar('أرسل رمز التحقق عبر SMS أولاً');
+      return;
+    }
+    if (_forgotOtpController.text.trim().length != AppConstants.otpLength) {
+      _showSnackBar('أدخل رمز التحقق');
+      return;
+    }
+    if (!_isValidPassword(_forgotPasswordController.text)) {
+      _showSnackBar('كلمة المرور يجب أن تكون 8 أحرف وتحتوي حرفاً ورقماً');
+      return;
+    }
+    if (_forgotPasswordController.text !=
+        _forgotConfirmPasswordController.text) {
+      _showSnackBar('كلمة المرور غير متطابقة');
+      return;
+    }
+    await _runAuthAction(() async {
+      final result = await AuthDependencies.resetPassword().call(
+        requestId: _forgotRequestId!,
+        code: _forgotOtpController.text.trim(),
+        newPassword: _forgotPasswordController.text,
+        confirmPassword: _forgotConfirmPasswordController.text,
+      );
+      if (!result.isSuccess) {
+        throw _AuthUiException(
+          _mapFailureMessage(result.failureOrNull?.message),
+        );
+      }
+      if (!mounted) return;
+      AppRouter.goToHome(context);
+    });
+  }
 
-      // Verify Button
-      PrimaryButton(
-        text: localizations.verify,
-        onPressed: _isLoading ? null : _verifyOTP,
-        isLoading: _isLoading,
-      ),
+  Future<void> _runAuthAction(Future<void> Function() action) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      await action();
+    } on _AuthUiException catch (error) {
+      _showSnackBar(error.message);
+    } catch (_) {
+      _showSnackBar('يرجى المحاولة لاحقاً');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
-      const SizedBox(height: 16),
+  Future<void> _pickBirthdate() async {
+    final now = DateTime.now();
+    final initial = _birthdate ?? DateTime(now.year - 22, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1920),
+      lastDate: DateTime(now.year, now.month, now.day),
+      helpText: 'تاريخ الميلاد',
+      cancelText: 'إلغاء',
+      confirmText: 'اختيار',
+    );
+    if (picked != null) {
+      setState(() => _birthdate = picked);
+    }
+  }
 
-      // Resend OTP
-      TextButton(
-        onPressed: _resendTimer > 0 ? null : _resendOTP,
-        child: Text(
-          _resendTimer > 0
-              ? '${localizations.resendCode} ($_resendTimer)'
-              : localizations.resendCode,
-        ),
-      ),
-    ];
+  void _startRegistrationTimer() {
+    _registrationTimer?.cancel();
+    _registrationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_registrationResendSeconds <= 1) {
+        timer.cancel();
+        setState(() => _registrationResendSeconds = 0);
+        return;
+      }
+      setState(() => _registrationResendSeconds--);
+    });
+  }
+
+  void _startForgotTimer() {
+    _forgotTimer?.cancel();
+    _forgotTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_forgotResendSeconds <= 1) {
+        timer.cancel();
+        setState(() => _forgotResendSeconds = 0);
+        return;
+      }
+      setState(() => _forgotResendSeconds--);
+    });
+  }
+
+  bool _isAdult(DateTime birthdate) {
+    final now = DateTime.now();
+    var age = now.year - birthdate.year;
+    if (now.month < birthdate.month ||
+        (now.month == birthdate.month && now.day < birthdate.day)) {
+      age--;
+    }
+    return age >= 18;
+  }
+
+  bool _isValidPassword(String value) {
+    return value.length >= 8 &&
+        RegExp(r'[A-Za-z\u0600-\u06FF]').hasMatch(value) &&
+        RegExp(r'\d').hasMatch(value);
+  }
+
+  String _mapFailureMessage(String? raw) {
+    final message = raw ?? '';
+    final lowered = message.toLowerCase();
+    if (lowered.contains('route not found') ||
+        lowered.contains('page not found') ||
+        lowered.contains('not found') ||
+        lowered.contains('backend request failed')) {
+      return 'الخدمة غير متاحة حالياً. يرجى تحديث التطبيق أو المحاولة لاحقاً.';
+    }
+    if (message.contains('username') || message.contains('اسم المستخدم')) {
+      return 'اسم المستخدم مستخدم بالفعل';
+    }
+    if (message.contains('phone') || message.contains('رقم الهاتف')) {
+      return 'رقم الهاتف مستخدم بالفعل';
+    }
+    if (message.contains('expired') || message.contains('صلاحية')) {
+      return 'انتهت صلاحية الرمز';
+    }
+    if (message.contains('Invalid') || message.contains('رمز')) {
+      return 'رمز التحقق غير صحيح';
+    }
+    if (message.contains('Too many') || message.contains('wait')) {
+      return 'يرجى الانتظار قبل طلب رمز جديد';
+    }
+    return message.isEmpty ? 'يرجى المحاولة لاحقاً' : message;
+  }
+
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 
-class _ModeChip extends StatelessWidget {
+class _RoleOption {
+  const _RoleOption(this.value, this.label, this.icon);
+
+  final String value;
   final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final TextTheme textTheme;
-  final ColorScheme scheme;
+  final IconData icon;
+}
 
-  const _ModeChip({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    required this.textTheme,
-    required this.scheme,
-  });
+class _ProvinceOption {
+  const _ProvinceOption(this.value, this.label);
 
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        color: isActive ? scheme.primary : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : null,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Center(
-            child: AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style:
-                  textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: isActive ? scheme.onPrimary : scheme.onSurface,
-                  ) ??
-                  TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: isActive ? scheme.onPrimary : scheme.onSurface,
-                  ),
-              child: Text(label),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  final String value;
+  final String label;
+}
+
+class _AuthUiException implements Exception {
+  const _AuthUiException(this.message);
+
+  final String message;
 }
 
 class _AuthBackdrop extends StatelessWidget {
@@ -1094,51 +878,25 @@ class _AuthBackdrop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final base = brightness == Brightness.dark
-        ? const Color(0xFF14110D)
-        : const Color(0xFFF8F1E7);
-    final mid = brightness == Brightness.dark
-        ? const Color(0xFF1B1711)
-        : const Color(0xFFF2E7DA);
-    final coolGlow = brightness == Brightness.dark
-        ? const Color(0xFF2A2E3A).withValues(alpha: 0.12)
-        : const Color(0xFFF7EFE5).withValues(alpha: 0.45);
-    final warmGlow = brightness == Brightness.dark
-        ? const Color(0xFF8A5A2B).withValues(alpha: 0.25)
-        : const Color(0xFFF1D8B5).withValues(alpha: 0.75);
-    final roseGlow = brightness == Brightness.dark
-        ? const Color(0xFF6E3D2B).withValues(alpha: 0.16)
-        : const Color(0xFFF3E1CB).withValues(alpha: 0.6);
-
-    return IgnorePointer(
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [Color(0xFF07111A), Color(0xFF0B1F2E), Color(0xFF05070B)],
+        ),
+      ),
       child: Stack(
         children: [
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [base, mid, base],
-                ),
-              ),
-            ),
+          Positioned(
+            top: -110,
+            right: -90,
+            child: _GlowOrb(color: Color(0xFFB98B3D).withValues(alpha: .32)),
           ),
           Positioned(
-            top: -140,
-            right: -80,
-            child: _SoftGlow(size: 260, color: coolGlow),
-          ),
-          Positioned(
-            bottom: -160,
+            bottom: -130,
             left: -90,
-            child: _SoftGlow(size: 300, color: warmGlow),
-          ),
-          Positioned(
-            top: 140,
-            left: -120,
-            child: _SoftGlow(size: 220, color: roseGlow),
+            child: _GlowOrb(color: Color(0xFF2B6C7A).withValues(alpha: .24)),
           ),
         ],
       ),
@@ -1146,141 +904,260 @@ class _AuthBackdrop extends StatelessWidget {
   }
 }
 
-class _SoftGlow extends StatelessWidget {
-  final double size;
-  final Color color;
+class _GlowOrb extends StatelessWidget {
+  const _GlowOrb({required this.color});
 
-  const _SoftGlow({required this.size, required this.color});
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: size,
-      width: size,
+      width: 260,
+      height: 260,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
+        color: color,
+        boxShadow: [BoxShadow(color: color, blurRadius: 90, spreadRadius: 30)],
       ),
     );
   }
 }
 
 class _AuthGlassCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
+  const _AuthGlassCard({required this.child});
 
-  const _AuthGlassCard({
-    required this.child,
-    this.padding = const EdgeInsets.all(20),
-  });
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
-
-    final borderColor = brightness == Brightness.dark
-        ? Colors.white.withValues(alpha: 0.12)
-        : scheme.outlineVariant.withValues(alpha: 0.7);
-    final gradientStart = brightness == Brightness.dark
-        ? Colors.white.withValues(alpha: 0.07)
-        : Colors.white.withValues(alpha: 0.95);
-    final gradientEnd = brightness == Brightness.dark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.white.withValues(alpha: 0.8);
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.32),
-            blurRadius: 32,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: borderColor, width: 1),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [gradientStart, gradientEnd],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xFF111827).withValues(alpha: .72),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withValues(alpha: .08)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .32),
+                blurRadius: 40,
+                offset: const Offset(0, 24),
               ),
-            ),
-            child: child,
+            ],
           ),
+          child: child,
         ),
       ),
     );
   }
 }
 
-class _AuthProviderButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final Color backgroundColor;
-  final Color foregroundColor;
-  final BorderSide? border;
-  final Widget icon;
-  final String label;
-  final TextStyle? textStyle;
+class _AuthHeader extends StatelessWidget {
+  const _AuthHeader({required this.title, required this.subtitle});
 
-  const _AuthProviderButton({
-    required this.onPressed,
-    required this.backgroundColor,
-    required this.foregroundColor,
-    this.border,
-    required this.icon,
-    required this.label,
-    this.textStyle,
-  });
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final effectiveBorder = border ?? BorderSide(color: scheme.outlineVariant);
-    final effectiveForeground = onPressed == null
-        ? foregroundColor.withValues(alpha: 0.55)
-        : foregroundColor;
-    final resolvedTextStyle =
-        (textStyle ?? Theme.of(context).textTheme.bodyLarge)?.copyWith(
-          color: effectiveForeground,
-        );
+    return Column(
+      children: [
+        Container(
+          width: 62,
+          height: 62,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [Color(0xFFE7B85A), Color(0xFF8A6426)],
+            ),
+          ),
+          child: const Icon(
+            Icons.camera_alt_outlined,
+            color: Color(0xFF0B0F14),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Color(0xFFB8C0CC), fontSize: 14),
+        ),
+      ],
+    );
+  }
+}
 
-    return SizedBox(
-      height: 52,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: effectiveForeground,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: effectiveBorder,
+class _StepProgress extends StatelessWidget {
+  const _StepProgress({required this.currentStep, required this.totalSteps});
+
+  final int currentStep;
+  final int totalSteps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'الخطوة $currentStep من $totalSteps',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Color(0xFFE7B85A)),
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            minHeight: 6,
+            value: currentStep / totalSteps,
+            backgroundColor: Colors.white.withValues(alpha: .08),
+            valueColor: const AlwaysStoppedAnimation(Color(0xFFE7B85A)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.w800,
+      ),
+    );
+  }
+}
+
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({
+    required this.controller,
+    required this.label,
+    this.hint,
+    this.obscureText = false,
+    this.keyboardType,
+    this.textInputAction,
+    this.textDirection,
+    this.maxLength,
+    this.suffixIcon,
+    this.inputFormatters,
+    this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String? hint;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final TextDirection? textDirection;
+  final int? maxLength;
+  final Widget? suffixIcon;
+  final List<TextInputFormatter>? inputFormatters;
+  final ValueChanged<String>? onSubmitted;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      textDirection: textDirection,
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      onSubmitted: onSubmitted,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        counterStyle: const TextStyle(color: Color(0xFF6B7280)),
+        labelStyle: const TextStyle(color: Color(0xFFB8C0CC)),
+        hintStyle: const TextStyle(color: Color(0xFF657080)),
+        suffixIcon: suffixIcon,
+        suffixIconColor: const Color(0xFFE7B85A),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: .055),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: .08)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFFE7B85A)),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChoiceCard extends StatelessWidget {
+  const _ChoiceCard({
+    required this.selected,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: selected
+              ? const Color(0xFFE7B85A).withValues(alpha: .16)
+              : Colors.white.withValues(alpha: .05),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFFE7B85A)
+                : Colors.white.withValues(alpha: .08),
           ),
         ),
         child: Row(
           children: [
-            icon,
+            Icon(icon, color: const Color(0xFFE7B85A)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 label,
-                style: resolvedTextStyle,
-                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            const SizedBox(width: 36),
+            if (selected)
+              const Icon(Icons.check_circle_rounded, color: Color(0xFFE7B85A)),
           ],
         ),
       ),
@@ -1288,29 +1165,182 @@ class _AuthProviderButton extends StatelessWidget {
   }
 }
 
-class _AuthBadge extends StatelessWidget {
-  final Widget child;
-  final Color backgroundColor;
+class _PickerTile extends StatelessWidget {
+  const _PickerTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.onTap,
+  });
 
-  const _AuthBadge({required this.child, required this.backgroundColor});
+  final String label;
+  final String value;
+  final IconData icon;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 32,
-      width: 32,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Color(0xFFB8C0CC)),
+          filled: true,
+          fillColor: Colors.white.withValues(alpha: .055),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: BorderSide(color: Colors.white.withValues(alpha: .08)),
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFFE7B85A)),
+            const SizedBox(width: 12),
+            Text(value, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
       ),
-      child: Center(child: child),
+    );
+  }
+}
+
+class _DropdownTile extends StatelessWidget {
+  const _DropdownTile({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String? value;
+  final List<_ProvinceOption> items;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      dropdownColor: const Color(0xFF111827),
+      iconEnabledColor: const Color(0xFFE7B85A),
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFFB8C0CC)),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: .055),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: .08)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFFE7B85A)),
+        ),
+      ),
+      items: items
+          .map(
+            (item) => DropdownMenuItem<String>(
+              value: item.value,
+              child: Text(item.label),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+}
+
+class _InfoText extends StatelessWidget {
+  const _InfoText(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: Color(0xFFE7B85A), fontSize: 13),
+    );
+  }
+}
+
+class _PrimaryActionButton extends StatelessWidget {
+  const _PrimaryActionButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFFE7B85A),
+        foregroundColor: const Color(0xFF0B0F14),
+        disabledBackgroundColor: const Color(0xFF6B7280),
+        minimumSize: const Size.fromHeight(54),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
+    );
+  }
+}
+
+class _SecondaryActionButton extends StatelessWidget {
+  const _SecondaryActionButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFFE7B85A),
+        side: BorderSide(color: Colors.white.withValues(alpha: .14)),
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      child: Text(label),
+    );
+  }
+}
+
+class _SwitchModeButton extends StatelessWidget {
+  const _SwitchModeButton({
+    required this.prompt,
+    required this.action,
+    required this.onPressed,
+  });
+
+  final String prompt;
+  final String action;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onPressed,
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Color(0xFFB8C0CC)),
+          children: [
+            TextSpan(text: '$prompt '),
+            TextSpan(
+              text: action,
+              style: const TextStyle(
+                color: Color(0xFFE7B85A),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1320,53 +1350,11 @@ class _AuthLoadingBarrier extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-
-    return Positioned.fill(
-      child: Stack(
-        children: [
-          const ModalBarrier(dismissible: false, color: Color(0x66000000)),
-          Center(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.surface.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: scheme.outlineVariant.withValues(alpha: 0.7),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 16,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.4,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          scheme.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      localizations.loading,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+    return ColoredBox(
+      color: Colors.black54,
+      child: const Center(
+        child: CircularProgressIndicator(color: Color(0xFFE7B85A)),
       ),
     );
   }
 }
-

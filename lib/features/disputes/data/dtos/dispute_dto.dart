@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 class DisputeDto {
   final String id;
@@ -71,7 +71,9 @@ class DisputeDto {
       resolution: json['resolution'] as String?,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      closedAt: json['closedAt'] != null ? DateTime.parse(json['closedAt']) : null,
+      closedAt: json['closedAt'] != null
+          ? DateTime.parse(json['closedAt'])
+          : null,
       decidedBy: json['decidedBy'] as String?,
     );
   }

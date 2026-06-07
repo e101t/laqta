@@ -66,12 +66,42 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
   bool _isLoading = false;
   bool _isLoadingInitial = true;
 
+  String _normalizeUserFacingError(String? message) {
+    final normalized = message?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return AppLocalizations.of(context).somethingWentWrong;
+    }
+
+    final lowered = normalized.toLowerCase();
+    const rawCodes = {
+      'not_found',
+      'not-found',
+      'user not found',
+      'route not found',
+      'page not found',
+      'save failed',
+      'check failed',
+      'backend request failed',
+      'backend request failed.',
+    };
+
+    if (rawCodes.contains(lowered)) {
+      return AppLocalizations.of(context).somethingWentWrong;
+    }
+
+    return normalized;
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedRole = widget.userRole.trim().isEmpty
         ? null
         : widget.userRole.trim();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+    });
     _loadExistingUser();
   }
 
@@ -249,6 +279,7 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
       if (phoneTail.isNotEmpty) 'user$phoneTail',
       if (selectedRole == AppConstants.rolePhotographer) 'photo',
       if (selectedRole == AppConstants.roleCustomer) 'client',
+      if (selectedRole == AppConstants.roleVenueOwner) 'venue',
       'user',
     };
 
@@ -367,13 +398,11 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             e is StateError
-                ? e.message.toString()
+                ? _normalizeUserFacingError(e.message.toString())
                 : 'حدث خطأ أثناء الحفظ',
           ),
         ),
@@ -461,6 +490,17 @@ class _BasicInfoScreenState extends State<BasicInfoScreen> {
                             selectedRole == AppConstants.rolePhotographer,
                         onTap: () => setState(
                           () => _selectedRole = AppConstants.rolePhotographer,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _GenderOption(
+                        icon: Icons.apartment,
+                        label: 'صاحب قاعة',
+                        isSelected: selectedRole == AppConstants.roleVenueOwner,
+                        onTap: () => setState(
+                          () => _selectedRole = AppConstants.roleVenueOwner,
                         ),
                       ),
                     ),
@@ -842,4 +882,3 @@ class _GenderOption extends StatelessWidget {
     );
   }
 }
-

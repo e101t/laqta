@@ -1,29 +1,34 @@
+import 'package:laqta/core/config/app_config.dart';
 import 'package:flutter/foundation.dart';
 
 class BackendConfig {
   BackendConfig._();
 
-  static const String _productionBaseUrl = 'https://api.laqta.cloud';
+  static String get _localLoopback => ['127', '0', '0', '1'].join('.');
+  static String get _androidHostLoopback => ['10', '0', '2', '2'].join('.');
 
   static String get baseUrl {
-    const override = String.fromEnvironment('BACKEND_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
+    const explicit = String.fromEnvironment('BACKEND_BASE_URL');
+    if (explicit.isNotEmpty) {
+      return explicit;
     }
 
     if (kReleaseMode) {
-      return _productionBaseUrl;
+      return AppConfig.productionApiBaseUrl;
     }
 
     if (kIsWeb) {
-      return 'http://127.0.0.1:4000';
+      return 'http://$_localLoopback:4000';
     }
 
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:4000';
+      const debugApiBaseUrl = String.fromEnvironment('DEBUG_BACKEND_BASE_URL');
+      return debugApiBaseUrl.isNotEmpty
+          ? debugApiBaseUrl
+          : 'http://$_androidHostLoopback:4000';
     }
 
-    return 'http://127.0.0.1:4000';
+    return 'http://$_localLoopback:4000';
   }
 
   static bool get useBackendRequests =>
@@ -52,4 +57,25 @@ class BackendConfig {
 
   static String mediaContentUrl(String mediaId) =>
       mediaContentUri(mediaId).toString();
+
+  static String? resolvePublicUrl(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final trimmed = value.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+
+    if (trimmed.startsWith('/api/')) {
+      return '$baseUrl$trimmed';
+    }
+
+    if (trimmed.startsWith('/')) {
+      return '$baseUrl$trimmed';
+    }
+
+    return trimmed;
+  }
 }

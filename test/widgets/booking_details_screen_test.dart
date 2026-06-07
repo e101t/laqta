@@ -35,8 +35,9 @@ void main() {
     );
   }
 
-  testWidgets('photographer sees start job action for confirmed booking',
-      (tester) async {
+  testWidgets('photographer sees start job action for confirmed booking', (
+    tester,
+  ) async {
     final booking = buildBooking(
       status: AppConstants.bookingConfirmed,
       customerId: 'cust1',
@@ -58,11 +59,15 @@ void main() {
 
     final context = tester.element(find.byType(BookingDetailsScreen));
     final localizations = AppLocalizations.of(context);
-    expect(find.text(localizations.startJob, skipOffstage: false), findsOneWidget);
+    expect(
+      find.text(localizations.startJob, skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('customer sees accept delivery and request revision actions',
-      (tester) async {
+  testWidgets('customer sees accept delivery and request revision actions', (
+    tester,
+  ) async {
     final booking = buildBooking(
       status: AppConstants.bookingDelivered,
       customerId: 'cust1',

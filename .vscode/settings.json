@@ -25,19 +25,71 @@
     "**/.dart_tool/**": true,
     "**/build/**": true,
     "**/.firebase/**": true,
-    "**/.flutter-plugins-dependencies": true
+    "**/.flutter-plugins-dependencies": true,
+    "**/.tools/**": true,
+    "**/.idea/**": true,
+    "**/android/.gradle/**": true,
+    "**/android/.kotlin/**": true
+  },
+  "files.exclude": {
+    "**/.dart_tool/**": true,
+    "**/build/**": true,
+    "**/.firebase/**": true,
+    "**/.flutter-plugins-dependencies": true,
+    "**/.tools/**": true,
+    "**/.idea/**": true,
+    "**/android/.gradle/**": true,
+    "**/android/.kotlin/**": true
   },
   "search.exclude": {
     "**/.dart_tool/**": true,
-    "**/build/**": true
+    "**/build/**": true,
+    "**/.tools/**": true,
+    "**/.idea/**": true,
+    "**/android/.gradle/**": true,
+    "**/android/.kotlin/**": true
   },
+  "dart.analysisExcludedFolders": [
+    ".tools",
+    ".dart_tool",
+    "build",
+    "android/.gradle",
+    "android/.kotlin"
+  ],
+  "java.project.resourceFilters": [
+    "node_modules",
+    "\\.git",
+    "\\.tools",
+    "\\.dart_tool",
+    "build",
+    "\\.firebase",
+    "\\.idea",
+    "android/\\.gradle",
+    "android/\\.kotlin"
+  ],
+  "java.project.importOnFirstTimeStartup": "disabled",
+  "java.import.maven.enabled": false,
+  "java.import.gradle.enabled": false,
+  "java.import.projectSelection": "manual",
+  "java.import.exclusions": [
+    "**/.tools/**",
+    "**/.dart_tool/**",
+    "**/build/**",
+    "**/android/.gradle/**",
+    "**/android/.kotlin/**"
+  ],
+  "java.import.gradle.wrapper.enabled": true,
+  "java.gradle.buildServer.enabled": "off",
+  "java.jdt.ls.androidSupport.enabled": "off",
+  "gradle.autoDetect": "off",
+  "gradle.nestedProjects": false,
 
   // VS Code networking: your environment currently has HTTP(S)_PROXY set to 127.0.0.1:9.
   // Keep this empty unless you actually use a proxy.
   "http.proxy": "",
   "http.systemCertificates": true,
 
-  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.configuration.updateBuildConfiguration": "automatic",
 
   // Fix: Gradle/Flutter Android builds require Java 11+. Use Android Studio's JBR.
   "java.jdt.ls.java.home": "C:\\Program Files\\Android\\Android Studio\\jbr",

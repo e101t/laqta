@@ -60,11 +60,7 @@ class AppLocalizations {
       'authSubtitle': EnTranslations.authSubtitle,
       'signInTitle': EnTranslations.signInTitle,
       'signUpTitle': EnTranslations.signUpTitle,
-      'signInWithGoogle': EnTranslations.signInWithGoogle,
-      'signInWithApple': EnTranslations.signInWithApple,
       'signInWithPhone': EnTranslations.signInWithPhone,
-      'signUpWithGoogle': EnTranslations.signUpWithGoogle,
-      'signUpWithApple': EnTranslations.signUpWithApple,
       'signUpWithPhone': EnTranslations.signUpWithPhone,
       'phoneNumber': EnTranslations.phoneNumber,
       'verifyOTP': EnTranslations.verifyOTP,
@@ -72,10 +68,6 @@ class AppLocalizations {
       'resendCode': EnTranslations.resendCode,
       'verify': EnTranslations.verify,
       'or': EnTranslations.or,
-      'googleSignInUnsupported': EnTranslations.googleSignInUnsupported,
-      'googleSignInFailed': EnTranslations.googleSignInFailed,
-      'appleSignInUnavailable': EnTranslations.appleSignInUnavailable,
-      'appleSignInFailed': EnTranslations.appleSignInFailed,
       'phoneAuthUnsupported': EnTranslations.phoneAuthUnsupported,
       'phoneAuthSupportInfo': EnTranslations.phoneAuthSupportInfo,
       'phoneNumberRequired': EnTranslations.phoneNumberRequired,
@@ -545,11 +537,7 @@ class AppLocalizations {
       'authSubtitle': ArTranslations.authSubtitle,
       'signInTitle': ArTranslations.signInTitle,
       'signUpTitle': ArTranslations.signUpTitle,
-      'signInWithGoogle': ArTranslations.signInWithGoogle,
-      'signInWithApple': ArTranslations.signInWithApple,
       'signInWithPhone': ArTranslations.signInWithPhone,
-      'signUpWithGoogle': ArTranslations.signUpWithGoogle,
-      'signUpWithApple': ArTranslations.signUpWithApple,
       'signUpWithPhone': ArTranslations.signUpWithPhone,
       'phoneNumber': ArTranslations.phoneNumber,
       'verifyOTP': ArTranslations.verifyOTP,
@@ -557,10 +545,6 @@ class AppLocalizations {
       'resendCode': ArTranslations.resendCode,
       'verify': ArTranslations.verify,
       'or': ArTranslations.or,
-      'googleSignInUnsupported': ArTranslations.googleSignInUnsupported,
-      'googleSignInFailed': ArTranslations.googleSignInFailed,
-      'appleSignInUnavailable': ArTranslations.appleSignInUnavailable,
-      'appleSignInFailed': ArTranslations.appleSignInFailed,
       'phoneAuthUnsupported': ArTranslations.phoneAuthUnsupported,
       'phoneAuthSupportInfo': ArTranslations.phoneAuthSupportInfo,
       'phoneNumberRequired': ArTranslations.phoneNumberRequired,
@@ -1030,11 +1014,7 @@ class AppLocalizations {
   String get authSubtitle => translate('authSubtitle');
   String get signInTitle => translate('signInTitle');
   String get signUpTitle => translate('signUpTitle');
-  String get signInWithGoogle => translate('signInWithGoogle');
-  String get signInWithApple => translate('signInWithApple');
   String get signInWithPhone => translate('signInWithPhone');
-  String get signUpWithGoogle => translate('signUpWithGoogle');
-  String get signUpWithApple => translate('signUpWithApple');
   String get signUpWithPhone => translate('signUpWithPhone');
   String get phoneNumber => translate('phoneNumber');
   String get verifyOTP => translate('verifyOTP');
@@ -1042,10 +1022,6 @@ class AppLocalizations {
   String get resendCode => translate('resendCode');
   String get verify => translate('verify');
   String get orLabel => translate('or');
-  String get googleSignInUnsupported => translate('googleSignInUnsupported');
-  String get googleSignInFailed => translate('googleSignInFailed');
-  String get appleSignInUnavailable => translate('appleSignInUnavailable');
-  String get appleSignInFailed => translate('appleSignInFailed');
   String get phoneAuthUnsupported => translate('phoneAuthUnsupported');
   String get phoneAuthSupportInfo => translate('phoneAuthSupportInfo');
   String get phoneNumberRequired => translate('phoneNumberRequired');

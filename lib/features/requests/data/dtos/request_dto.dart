@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+import 'package:laqta/core/services/backend_config.dart';
 
 class RequestDto {
   final String id;
@@ -14,6 +15,7 @@ class RequestDto {
   final String? style;
   final Map<String, dynamic>? deliverables;
   final String? notes;
+  final List<String> referenceImageMediaIds;
   final List<String> referenceImages;
   final String status;
   final int offersCount;
@@ -41,6 +43,7 @@ class RequestDto {
     this.style,
     this.deliverables,
     this.notes,
+    this.referenceImageMediaIds = const [],
     required this.referenceImages,
     required this.status,
     required this.offersCount,
@@ -71,7 +74,8 @@ class RequestDto {
       style: _readNullableString(data, 'style'),
       deliverables: _readMap(data['deliverables']),
       notes: _readNullableString(data, 'notes'),
-      referenceImages: _readStringList(data['referenceImages']),
+      referenceImageMediaIds: _readStringList(data['referenceImageMediaIds']),
+      referenceImages: _resolveReferenceImages(data),
       status: _readString(data, 'status', fallback: 'draft'),
       offersCount: _readInt(data, 'offersCount', fallback: 0),
       selectedOfferId: _readNullableString(data, 'selectedOfferId'),
@@ -119,7 +123,8 @@ class RequestDto {
       style: _readNullableString(json, 'style'),
       deliverables: _readMap(json['deliverables']),
       notes: _readNullableString(json, 'notes'),
-      referenceImages: _readStringList(json['referenceImages']),
+      referenceImageMediaIds: _readStringList(json['referenceImageMediaIds']),
+      referenceImages: _resolveReferenceImages(json),
       status: _readString(json, 'status', fallback: 'draft'),
       offersCount: _readInt(json, 'offersCount', fallback: 0),
       selectedOfferId: _readNullableString(json, 'selectedOfferId'),
@@ -152,6 +157,8 @@ class RequestDto {
       'style': style,
       'deliverables': deliverables,
       'notes': notes,
+      if (referenceImageMediaIds.isNotEmpty)
+        'referenceImageMediaIds': referenceImageMediaIds,
       'referenceImages': referenceImages,
       'status': status,
       'offersCount': offersCount,
@@ -182,6 +189,7 @@ class RequestDto {
       'style': style,
       'deliverables': deliverables,
       'notes': notes,
+      'referenceImageMediaIds': referenceImageMediaIds,
       'referenceImages': referenceImages,
       'status': status,
       'offersCount': offersCount,
@@ -210,6 +218,8 @@ class RequestDto {
       'style': style,
       'deliverables': deliverables,
       'notes': notes,
+      if (referenceImageMediaIds.isNotEmpty)
+        'referenceImageMediaIds': referenceImageMediaIds,
       'referenceImages': referenceImages,
       'expiresAt': expiresAt?.toIso8601String(),
       'location': {
@@ -287,6 +297,14 @@ class RequestDto {
       return value.whereType<String>().toList();
     }
     return <String>[];
+  }
+
+  static List<String> _resolveReferenceImages(Map<String, dynamic> data) {
+    final mediaIds = _readStringList(data['referenceImageMediaIds']);
+    if (mediaIds.isNotEmpty) {
+      return mediaIds.map(BackendConfig.mediaContentUrl).toList();
+    }
+    return _readStringList(data['referenceImages']);
   }
 
   static DateTime _readDateTime(dynamic value) {

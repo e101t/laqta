@@ -3,6 +3,7 @@ class ReelModel {
   final String photographerId;
   final String photographerName;
   final String? photographerPhotoUrl;
+  final String? mediaId;
   final String videoUrl;
   final String? thumbnailUrl;
   final String caption;
@@ -19,6 +20,7 @@ class ReelModel {
     required this.photographerId,
     required this.photographerName,
     this.photographerPhotoUrl,
+    this.mediaId,
     required this.videoUrl,
     this.thumbnailUrl,
     required this.caption,
@@ -57,6 +59,7 @@ class ReelModel {
       photographerId: photographerId,
       photographerName: photographerName,
       photographerPhotoUrl: photographerPhotoUrl,
+      mediaId: mediaId,
       videoUrl: videoUrl,
       thumbnailUrl: thumbnailUrl,
       caption: caption,

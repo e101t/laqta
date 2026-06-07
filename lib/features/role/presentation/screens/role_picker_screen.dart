@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
@@ -48,7 +49,7 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
       if (!result.isSuccess || result.valueOrNull == null) {
         if (kDebugMode) {
           final code = result.failureOrNull?.code;
-          debugPrint('Save role failed: ${code ?? 'unknown'}');
+          AppLogger.d('runtime', 'Save role failed: ${code ?? 'unknown'}');
         }
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to save role',
@@ -302,9 +303,7 @@ class _RoleCard extends StatelessWidget {
                   Text(
                     title,
                     style: textTheme.titleLarge?.copyWith(
-                      color: isSelected
-                          ? scheme.primary
-                          : scheme.onSurface,
+                      color: isSelected ? scheme.primary : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -318,14 +317,11 @@ class _RoleCard extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: scheme.primary,
-                size: 28,
-              ),
+              Icon(Icons.check_circle, color: scheme.primary, size: 28),
           ],
         ),
       ),
     );
   }
 }
+

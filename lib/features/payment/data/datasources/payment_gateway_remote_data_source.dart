@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/features/payment/data/dtos/payment_intent_dto.dart';
 
 abstract class PaymentGatewayRemoteDataSource {
@@ -9,13 +9,13 @@ abstract class PaymentGatewayRemoteDataSource {
   });
 }
 
-class FirebaseFunctionsPaymentGatewayRemoteDataSource
+class BackendFunctionClientPaymentGatewayRemoteDataSource
     implements PaymentGatewayRemoteDataSource {
-  final FirebaseFunctions _functions;
+  final BackendFunctionClient _functions;
 
-  FirebaseFunctionsPaymentGatewayRemoteDataSource({
-    FirebaseFunctions? functions,
-  }) : _functions = functions ?? FirebaseFunctions.instance;
+  BackendFunctionClientPaymentGatewayRemoteDataSource({
+    BackendFunctionClient? functions,
+  }) : _functions = functions ?? BackendFunctionClient.instance;
 
   @override
   Future<PaymentIntentDto> createPaymentIntent({

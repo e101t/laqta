@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -78,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       // Handle error - could show a snackbar or log
       if (kDebugMode) {
-        debugPrint('Error loading messages: $e');
+        AppLogger.d('runtime', 'Error loading messages: $e');
       }
       hasError = true;
     }
@@ -176,7 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error blocking user: $e');
+        AppLogger.d('runtime', 'Error blocking user: $e');
       }
     }
   }
@@ -227,7 +228,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error deleting chat: $e');
+        AppLogger.d('runtime', 'Error deleting chat: $e');
       }
       if (mounted) {
         ScaffoldMessenger.of(
@@ -374,7 +375,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } catch (e) {
       // Handle error - could show a snackbar or log
       if (kDebugMode) {
-        debugPrint('Error sending message: $e');
+        AppLogger.d('runtime', 'Error sending message: $e');
       }
       // Remove the message from UI if sending failed
       if (mounted) {
@@ -435,7 +436,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error sending image: $e');
+        AppLogger.d('runtime', 'Error sending image: $e');
       }
       // Remove the temporary message on error
       if (mounted) {
@@ -501,7 +502,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error sending video: $e');
+        AppLogger.d('runtime', 'Error sending video: $e');
       }
       // Remove the temporary message on error
       if (mounted) {
@@ -582,7 +583,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error sending document: $e');
+        AppLogger.d('runtime', 'Error sending document: $e');
       }
       // Remove the temporary message on error
       if (mounted) {
@@ -758,7 +759,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
   void didUpdateWidget(covariant _MessageBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.message.type == widget.message.type &&
-        oldWidget.message.content == widget.message.content) {
+        oldWidget.message.content == widget.message.content &&
+        oldWidget.message.mediaId == widget.message.mediaId) {
       return;
     }
 
@@ -780,14 +782,16 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 
   Future<void> _initializeVideoPlayer() async {
-    final sourceUrl = _extractPrimaryUrl(widget.message.content);
+    final sourceUrl = _resolveMediaSource(widget.message);
     if (sourceUrl == null) {
       return;
     }
 
     try {
       final resolvedUrl = await _mediaService.resolveDisplayUrl(sourceUrl);
-      final controller = VideoPlayerController.networkUrl(Uri.parse(resolvedUrl));
+      final controller = VideoPlayerController.networkUrl(
+        Uri.parse(resolvedUrl),
+      );
       await controller.initialize();
 
       if (!mounted) {
@@ -801,20 +805,26 @@ class _MessageBubbleState extends State<_MessageBubble> {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error preparing video message: $e');
+        AppLogger.d('runtime', 'Error preparing video message: $e');
       }
     }
   }
 
   bool _shouldInitializeVideo(ChatMessage message) {
-    return message.type == 'video' && _looksLikeUrl(_extractPrimaryUrl(message.content));
+    return message.type == 'video' &&
+        _looksLikeUrl(_resolveMediaSource(message));
   }
 
-  String? _extractPrimaryUrl(String content) {
+  String? _resolveMediaSource(ChatMessage message) {
+    if (message.mediaId != null && message.mediaId!.trim().isNotEmpty) {
+      return BackendMediaService.mediaApiUrlFromId(message.mediaId!);
+    }
+
+    final content = message.content;
     if (content.trim().isEmpty) {
       return null;
     }
-    if (widget.message.type == 'document') {
+    if (message.type == 'document') {
       return content.split('|').first.trim();
     }
     return content.trim();
@@ -838,9 +848,12 @@ class _MessageBubbleState extends State<_MessageBubble> {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final parts = message.content.split('|');
-    final url = parts[0];
-    final fileName = parts.length > 1 ? parts[1] : 'Document';
-    final fileSize = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;
+    final url = _resolveMediaSource(message) ?? '';
+    final fileName =
+        message.fileName ?? (parts.length > 1 ? parts[1] : 'Document');
+    final fileSize =
+        message.fileSize ??
+        (parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0);
 
     return InkWell(
       onTap: () async {
@@ -853,13 +866,15 @@ class _MessageBubbleState extends State<_MessageBubble> {
           }
         } catch (e) {
           if (kDebugMode) {
-            debugPrint('Error opening document message: $e');
+            AppLogger.d('runtime', 'Error opening document message: $e');
           }
         }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${localizations.cannotOpenFile} $fileName')),
+            SnackBar(
+              content: Text('${localizations.cannotOpenFile} $fileName'),
+            ),
           );
         }
       },
@@ -962,9 +977,9 @@ class _MessageBubbleState extends State<_MessageBubble> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (widget.message.type == 'image') ...[
-                    if (_looksLikeUrl(_extractPrimaryUrl(widget.message.content)))
+                    if (_looksLikeUrl(_resolveMediaSource(widget.message)))
                       BackendMediaImage(
-                        url: widget.message.content,
+                        url: _resolveMediaSource(widget.message)!,
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
@@ -978,9 +993,13 @@ class _MessageBubbleState extends State<_MessageBubble> {
                         ),
                       ),
                   ] else if (widget.message.type == 'video') ...[
-                    if (!_looksLikeUrl(_extractPrimaryUrl(widget.message.content))) ...[
+                    if (!_looksLikeUrl(
+                      _resolveMediaSource(widget.message),
+                    )) ...[
                       Text(
-                        widget.message.content,
+                        widget.message.content.isNotEmpty
+                            ? widget.message.content
+                            : 'Video',
                         style: textTheme.bodyMedium?.copyWith(
                           color: widget.isMe ? Colors.white : scheme.onSurface,
                         ),
@@ -1016,11 +1035,14 @@ class _MessageBubbleState extends State<_MessageBubble> {
                       ),
                     ],
                   ] else if (widget.message.type == 'document') ...[
-                    if (_looksLikeUrl(_extractPrimaryUrl(widget.message.content)))
+                    if (_looksLikeUrl(_resolveMediaSource(widget.message)))
                       _buildDocumentWidget(widget.message)
                     else
                       Text(
-                        widget.message.content,
+                        widget.message.fileName ??
+                            (widget.message.content.isNotEmpty
+                                ? widget.message.content
+                                : 'Document'),
                         style: textTheme.bodyMedium?.copyWith(
                           color: widget.isMe ? Colors.white : scheme.onSurface,
                         ),
@@ -1059,3 +1081,4 @@ class _MessageBubbleState extends State<_MessageBubble> {
     );
   }
 }
+

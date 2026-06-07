@@ -1,15 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/features/loyalty/data/datasources/loyalty_remote_data_source.dart';
 import 'package:laqta/features/loyalty/data/dtos/loyalty_points_dto.dart';
 
 class FirestoreLoyaltyRemoteDataSource implements LoyaltyRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
 
-  FirestoreLoyaltyRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+  FirestoreLoyaltyRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('loyalty_points');

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum PolicyType { privacy, terms }
+enum PolicyType { privacy, terms, deleteAccount, content }
 
 class PolicyTermsScreen extends StatelessWidget {
   final PolicyType type;
@@ -13,24 +13,28 @@ class PolicyTermsScreen extends StatelessWidget {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final title = type == PolicyType.privacy
-        ? (isArabic ? 'سياسة الخصوصية' : 'Privacy Policy')
-        : (isArabic ? 'الشروط والأحكام' : 'Terms & Conditions');
+    final title = switch (type) {
+      PolicyType.privacy => isArabic ? 'سياسة الخصوصية' : 'Privacy Policy',
+      PolicyType.terms => isArabic ? 'الشروط والأحكام' : 'Terms & Conditions',
+      PolicyType.deleteAccount =>
+        isArabic ? 'سياسة حذف الحساب' : 'Delete Account Policy',
+      PolicyType.content => isArabic ? 'سياسة المحتوى' : 'Content Policy',
+    };
     final lastUpdated = isArabic
         ? 'آخر تحديث: 26 يناير 2026'
         : 'Last updated: January 26, 2026';
     final supportTitle = isArabic ? 'هل تحتاج مساعدة؟' : 'Need help?';
     final supportText = isArabic ? 'تواصل مع فريق الدعم:' : 'Contact support:';
 
-    final sections = type == PolicyType.privacy
-        ? _privacySections(isArabic)
-        : _termsSections(isArabic);
+    final sections = switch (type) {
+      PolicyType.privacy => _privacySections(isArabic),
+      PolicyType.terms => _termsSections(isArabic),
+      PolicyType.deleteAccount => _deleteAccountSections(isArabic),
+      PolicyType.content => _contentSections(isArabic),
+    };
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(title), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -72,9 +76,7 @@ class PolicyTermsScreen extends StatelessWidget {
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: scheme.primary.withValues(alpha: 0.30),
-              ),
+              border: Border.all(color: scheme.primary.withValues(alpha: 0.30)),
             ),
             child: Column(
               children: [
@@ -213,6 +215,90 @@ class PolicyTermsScreen extends StatelessWidget {
       _PolicySection(
         '6) Payments',
         'Payments are not enabled in this version. A separate policy will be published once activated.',
+      ),
+    ];
+  }
+
+  List<_PolicySection> _deleteAccountSections(bool isArabic) {
+    if (isArabic) {
+      return const [
+        _PolicySection(
+          '1) طريقة طلب الحذف',
+          'يمكنك طلب حذف الحساب من الإعدادات أو عبر التواصل مع الدعم على support@laqta.cloud.',
+        ),
+        _PolicySection(
+          '2) ما يتم حذفه',
+          'نحذف بيانات الحساب والملف الشخصي والمحتوى غير المطلوب للاحتفاظ التشغيلي أو القانوني.',
+        ),
+        _PolicySection(
+          '3) ما قد نحتفظ به مؤقتًا',
+          'قد نحتفظ بسجلات محدودة متعلقة بالأمان، النزاعات، أو الالتزامات القانونية لفترة ضرورية فقط.',
+        ),
+        _PolicySection(
+          '4) مدة التنفيذ',
+          'نهدف إلى تنفيذ طلبات الحذف خلال 30 يومًا ما لم توجد التزامات قانونية أو نزاعات مفتوحة.',
+        ),
+      ];
+    }
+
+    return const [
+      _PolicySection(
+        '1) How to request deletion',
+        'You can request account deletion from settings or by contacting support@laqta.cloud.',
+      ),
+      _PolicySection(
+        '2) What is deleted',
+        'We delete account, profile, and content data that is not required for legal or operational retention.',
+      ),
+      _PolicySection(
+        '3) Temporary retention',
+        'Limited security, dispute, or legal records may be retained only as needed.',
+      ),
+      _PolicySection(
+        '4) Timeline',
+        'We aim to process deletion requests within 30 days unless legal obligations or open disputes apply.',
+      ),
+    ];
+  }
+
+  List<_PolicySection> _contentSections(bool isArabic) {
+    if (isArabic) {
+      return const [
+        _PolicySection(
+          '1) المحتوى المحظور',
+          'يُمنع نشر محتوى عنيف، بالغ، مسيء، مضلل، أو ينتهك خصوصية الآخرين.',
+        ),
+        _PolicySection(
+          '2) الصور المسروقة والانتحال',
+          'يُمنع استخدام صور لا تملك حقوقها أو انتحال هوية مصور، قاعة، أو مستخدم آخر.',
+        ),
+        _PolicySection(
+          '3) الاحتيال والمضايقة',
+          'يُمنع الاحتيال، التحرش، التهديد، أو محاولة نقل المستخدمين خارج المنصة بطرق مخالفة.',
+        ),
+        _PolicySection(
+          '4) البلاغات والإجراءات',
+          'يمكن للمستخدمين الإبلاغ عن المحتوى أو الحسابات، وتراجع الإدارة البلاغات لاتخاذ إجراء مناسب.',
+        ),
+      ];
+    }
+
+    return const [
+      _PolicySection(
+        '1) Prohibited content',
+        'Violent, adult, abusive, misleading, or privacy-invasive content is prohibited.',
+      ),
+      _PolicySection(
+        '2) Stolen photos and impersonation',
+        'Do not use photos you do not own or impersonate another creator, venue, or user.',
+      ),
+      _PolicySection(
+        '3) Fraud and harassment',
+        'Fraud, harassment, threats, and abusive off-platform solicitation are prohibited.',
+      ),
+      _PolicySection(
+        '4) Reports and enforcement',
+        'Users can report content or accounts. LAQTA reviews reports and may take action.',
       ),
     ];
   }

@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 class BookingDto {
   final String id;
@@ -353,9 +353,16 @@ class BookingDeliverablesDto {
     return BookingDeliverablesDto(
       photosCount: BookingDto._readNullableInt(map, 'photosCount'),
       videoMinutes: BookingDto._readNullableInt(map, 'videoMinutes'),
-      includesEditing:
-          BookingDto._readBool(map, 'includesEditing', fallback: false),
-      includesVideo: BookingDto._readBool(map, 'includesVideo', fallback: false),
+      includesEditing: BookingDto._readBool(
+        map,
+        'includesEditing',
+        fallback: false,
+      ),
+      includesVideo: BookingDto._readBool(
+        map,
+        'includesVideo',
+        fallback: false,
+      ),
       notes: BookingDto._readNullableString(map, 'notes'),
     );
   }
@@ -418,9 +425,7 @@ class BookingTimelineDto {
       'completedAt': completedAt != null
           ? Timestamp.fromDate(completedAt!)
           : null,
-      'canceledAt': canceledAt != null
-          ? Timestamp.fromDate(canceledAt!)
-          : null,
+      'canceledAt': canceledAt != null ? Timestamp.fromDate(canceledAt!) : null,
     };
   }
 }

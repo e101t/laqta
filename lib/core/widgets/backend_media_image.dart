@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/services/backend_media_service.dart';
 
@@ -67,16 +68,37 @@ class _BackendMediaImageState extends State<BackendMediaImage> {
         }
 
         return _wrap(
-          Image.network(
-            snapshot.data!,
+          CachedNetworkImage(
+            imageUrl: snapshot.data!,
             width: widget.width,
             height: widget.height,
             fit: widget.fit,
-            errorBuilder: (context, error, stackTrace) => _errorPlaceholder(),
+            memCacheWidth: _cacheDimension(context, widget.width),
+            memCacheHeight: _cacheDimension(context, widget.height),
+            placeholder: (context, url) => Container(
+              width: widget.width,
+              height: widget.height,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            ),
+            errorWidget: (context, url, error) => _errorPlaceholder(),
           ),
         );
       },
     );
+  }
+
+  int? _cacheDimension(BuildContext context, double? logicalPixels) {
+    if (logicalPixels == null ||
+        logicalPixels <= 0 ||
+        !logicalPixels.isFinite) {
+      return null;
+    }
+    final physicalPixels =
+        (logicalPixels * MediaQuery.devicePixelRatioOf(context)).round().clamp(
+          1,
+          4096,
+        );
+    return physicalPixels.toInt();
   }
 
   Widget _errorPlaceholder() {

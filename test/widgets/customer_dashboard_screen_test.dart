@@ -1,125 +1,45 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
-import 'package:laqta/core/domain/result/result.dart';
-import 'package:laqta/core/domain/failures/failure.dart';
-import 'package:laqta/features/auth/auth_dependencies.dart';
-import 'package:laqta/features/auth/domain/entities/auth_user.dart';
-import 'package:laqta/features/booking/booking_dependencies.dart';
-import 'package:laqta/features/booking/domain/entities/booking.dart';
-import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/features/dashboard/presentation/screens/customer_dashboard_screen.dart';
-import '../helpers/mocks.dart';
 import '../helpers/test_app.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-  registerFallbacks();
-
-  tearDown(() {
-    AuthDependencies.setRepositoryOverride(null);
-    BookingDependencies.setRepositoryOverride(null);
-  });
-
-  testWidgets('shows empty states and create request CTA', (tester) async {
-    final authRepo = MockAuthRepository();
-    final bookingRepo = MockBookingRepository();
-
-    AuthDependencies.setRepositoryOverride(authRepo);
-    BookingDependencies.setRepositoryOverride(bookingRepo);
-
-    when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async =>
-          Result.success(AuthUser(id: 'user1', isAnonymous: false)),
-    );
-    when(() => bookingRepo.getMyBookings(userId: 'user1')).thenAnswer(
-      (_) async => Result.success(<Booking>[]),
-    );
-
+  testWidgets('customer dashboard renders luxury home feed shell', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrapWithMaterial(const CustomerDashboardScreen()));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
-    final context = tester.element(find.byType(CustomerDashboardScreen));
-    final localizations = AppLocalizations.of(context);
-
-    expect(
-      find.text(localizations.createRequest, skipOffstage: false),
-      findsOneWidget,
-    );
-
-    final mainList = find.byWidgetPredicate(
-      (widget) => widget is ListView && widget.scrollDirection == Axis.vertical,
-    );
-
-    await tester.dragUntilVisible(
-      find.text(localizations.noProducts),
-      mainList,
-      const Offset(0, -300),
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.text(localizations.noProducts, skipOffstage: false),
-      findsOneWidget,
-    );
-
-    await tester.dragUntilVisible(
-      find.text(localizations.noBookings),
-      mainList,
-      const Offset(0, -300),
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.text(localizations.noBookings, skipOffstage: false),
-      findsOneWidget,
-    );
+    expect(find.text('LAQTA'), findsOneWidget);
+    expect(find.text('ابحث عن مصور، قاعة، مكان...'), findsOneWidget);
+    expect(find.text('الأماكن'), findsOneWidget);
+    expect(find.text('القاعات'), findsOneWidget);
+    expect(find.text('المصورين'), findsOneWidget);
+    expect(find.text('تابع'), findsOneWidget);
+    expect(find.text('لك'), findsOneWidget);
+    expect(find.text('الأكثر مشاهدة'), findsOneWidget);
+    expect(find.text('جلسات'), findsOneWidget);
+    expect(find.text('زفاف'), findsOneWidget);
+    expect(find.text('جلسة في الطبيعة'), findsNothing);
+    expect(find.text('قاعة رويال لايف'), findsNothing);
   });
 
-  testWidgets('shows error state when auth load fails', (tester) async {
-    final authRepo = MockAuthRepository();
-    final bookingRepo = MockBookingRepository();
+  testWidgets(
+    'customer dashboard switching tabs does not require mock feed rows',
+    (tester) async {
+      await tester.pumpWidget(
+        wrapWithMaterial(const CustomerDashboardScreen()),
+      );
+      await tester.pump(const Duration(seconds: 1));
 
-    AuthDependencies.setRepositoryOverride(authRepo);
-    BookingDependencies.setRepositoryOverride(bookingRepo);
+      await tester.tap(find.text('جلسات'));
+      await tester.pump();
+      await tester.tap(find.text('زفاف'));
+      await tester.pump();
+      await tester.tap(find.text('لك'));
+      await tester.pump();
 
-    when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async => Result.failure(Failure(message: 'auth failed')),
-    );
-    when(() => bookingRepo.getMyBookings(userId: 'user1')).thenAnswer(
-      (_) async => Result.success(<Booking>[]),
-    );
-
-    await tester.pumpWidget(wrapWithMaterial(const CustomerDashboardScreen()));
-    await tester.pumpAndSettle();
-
-    expect(find.text('حدث خطأ'), findsOneWidget);
-  });
-
-  testWidgets('async load after dispose does not crash', (tester) async {
-    final authRepo = MockAuthRepository();
-    final bookingRepo = MockBookingRepository();
-
-    AuthDependencies.setRepositoryOverride(authRepo);
-    BookingDependencies.setRepositoryOverride(bookingRepo);
-
-    final completer = Completer<Result<List<Booking>>>();
-
-    when(() => authRepo.getCurrentUser()).thenAnswer(
-      (_) async =>
-          Result.success(AuthUser(id: 'user1', isAnonymous: false)),
-    );
-    when(() => bookingRepo.getMyBookings(userId: 'user1'))
-        .thenAnswer((_) => completer.future);
-
-    await tester.pumpWidget(wrapWithMaterial(const CustomerDashboardScreen()));
-    await tester.pump();
-
-    await tester.pumpWidget(wrapWithMaterial(const SizedBox.shrink()));
-    await tester.pump();
-
-    completer.complete(Result.success(<Booking>[]));
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('جلسة في الطبيعة'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

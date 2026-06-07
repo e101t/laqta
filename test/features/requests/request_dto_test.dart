@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:laqta/features/requests/data/dtos/request_dto.dart';
 
@@ -73,6 +73,34 @@ void main() {
     expect(dto.longitude, 44.3615);
     expect(dto.locationLabel, 'Baghdad');
   });
+
+  test(
+    'RequestDto prefers backend media routes when media ids are present',
+    () {
+      final dto = RequestDto.fromJson({
+        'id': 'req_backend',
+        'clientId': 'user1',
+        'type': 'Wedding',
+        'sessionDate': '2026-02-01',
+        'sessionTime': '10:00',
+        'governorate': 'Baghdad',
+        'durationHours': 2,
+        'referenceImageMediaIds': ['media-request-1'],
+        'referenceImages': [
+          'https://firebasestorage.googleapis.com/v0/b/legacy/o/request.jpg',
+        ],
+        'status': 'open',
+        'offersCount': 0,
+        'createdAt': '2026-01-28T10:00:00.000',
+        'updatedAt': '2026-01-28T10:00:00.000',
+      });
+
+      expect(dto.referenceImageMediaIds, ['media-request-1']);
+      expect(dto.referenceImages, [
+        contains('/api/v1/media/media-request-1/content'),
+      ]);
+    },
+  );
 
   test('RequestDto.toBackendCreateJson uses backend field names', () {
     final now = DateTime(2026, 1, 28, 10, 0);

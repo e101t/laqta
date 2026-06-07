@@ -38,10 +38,7 @@ class BookingPoliciesScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('سياسات غرف الحجز'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('سياسات غرف الحجز'), centerTitle: true),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: sections.length,
@@ -54,7 +51,9 @@ class BookingPoliciesScreen extends StatelessWidget {
               children: [
                 Text(
                   sections[index].title,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -76,8 +75,5 @@ class _PolicySection {
   final String title;
   final String content;
 
-  const _PolicySection({
-    required this.title,
-    required this.content,
-  });
+  const _PolicySection({required this.title, required this.content});
 }

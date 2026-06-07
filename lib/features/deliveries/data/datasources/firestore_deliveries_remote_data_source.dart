@@ -1,26 +1,21 @@
-import 'dart:io';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
-import 'package:laqta/core/security/secure_storage.dart';
 import 'package:laqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
 import 'package:laqta/features/deliveries/data/dtos/delivery_dto.dart';
 
 class FirestoreDeliveriesRemoteDataSource
     implements DeliveriesRemoteDataSource {
-  final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
-  final SecureStorage _secureStorage;
+  final BackendMediaService _backendMedia;
 
   FirestoreDeliveriesRemoteDataSource({
-    FirebaseFirestore? firestore,
-    FirebaseStorage? storage,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance,
-       _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
+    LegacyDataStore? firestore,
+    BackendMediaService? backendMediaService,
+  }) : _firestore = firestore ?? LegacyDataStore.instance,
+       _secure = SecureFirestore(firestore ?? LegacyDataStore.instance),
+       _backendMedia = backendMediaService ?? BackendMediaService();
 
   CollectionReference<Map<String, dynamic>> get _deliveriesCollection =>
       _firestore.collection('deliveries');
@@ -50,27 +45,12 @@ class FirestoreDeliveriesRemoteDataSource
     required String bookingId,
     required String deliveryId,
     required String filePath,
-  }) async {
-    final extension = _fileExtension(filePath);
-    final fileName =
-        'delivery_${DateTime.now().millisecondsSinceEpoch}$extension';
-    final storageRef = _storage
-        .ref()
-        .child('deliveries')
-        .child(bookingId)
-        .child(deliveryId)
-        .child(fileName);
-
-    await _secureStorage.guard(() => storageRef.putFile(File(filePath)));
-    return _secureStorage.guard(() => storageRef.getDownloadURL());
-  }
-
-  String _fileExtension(String filePath) {
-    final lower = filePath.toLowerCase();
-    if (lower.endsWith('.png')) return '.png';
-    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return '.jpg';
-    if (lower.endsWith('.mp4') || lower.endsWith('.mov')) return '.mp4';
-    if (lower.endsWith('.pdf')) return '.pdf';
-    return '';
+  }) {
+    return _backendMedia.uploadFile(
+      entityType: 'delivery',
+      entityId: bookingId,
+      filePath: filePath,
+      publicContent: false,
+    );
   }
 }

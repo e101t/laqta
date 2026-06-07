@@ -296,7 +296,7 @@ void main() {
     AuthDependencies.setRepositoryOverride(authRepo);
 
     when(
-      () => authRepo.verifyPhoneNumber(
+      () => authRepo.requestOtp(
         phoneNumber: any(named: 'phoneNumber'),
         onCodeSent: any(named: 'onCodeSent'),
         onVerificationCompleted: any(named: 'onVerificationCompleted'),
@@ -461,3 +461,4 @@ void main() {
     verify(() => storyRepo.createStory(story: any(named: 'story'))).called(1);
   });
 }
+

@@ -1,5 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart'
-    show FirebaseFunctionsException;
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/features/settings/data/datasources/settings_remote_data_source.dart';
@@ -26,7 +25,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       await _remoteDataSource.deleteUserData(userId);
       return Result.success(null);
-    } on FirebaseFunctionsException catch (error) {
+    } on BackendFunctionException catch (error) {
       return Result.failure(
         Failure(
           message: error.message ?? 'Failed to delete user data',

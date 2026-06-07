@@ -1,15 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 /// Handles follow/unfollow workflows against Firestore.
 class FollowService {
-  FollowService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+  FollowService({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
 
   CollectionReference<Map<String, dynamic>> get _collection =>

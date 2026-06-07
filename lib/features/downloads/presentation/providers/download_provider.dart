@@ -89,5 +89,4 @@ class DownloadProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
   }
-
 }

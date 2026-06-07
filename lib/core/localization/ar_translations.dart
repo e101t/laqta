@@ -46,14 +46,11 @@ class ArTranslations {
   // Auth
   static const String welcomeBack = 'مرحبًا بك مجددًا';
   static const String signInWith = 'تسجيل الدخول بـ';
-  static const String signInWithGoogle = 'تسجيل الدخول بجوجل';
   static const String signInWithPhone = 'تسجيل الدخول بالهاتف';
-  static const String signUpWithGoogle = 'إنشاء حساب بجوجل';
-  static const String signUpWithApple = 'إنشاء حساب عبر Apple';
   static const String signUpWithPhone = 'إنشاء حساب بالهاتف';
   static const String phoneNumber = 'رقم الهاتف';
   static const String verifyOTP = 'تحقق من الرمز';
-  static const String enterOTP = 'أدخل رمز التحقق المرسل إلى';
+  static const String enterOTP = 'أدخل رمز التحقق';
   static const String resendCode = 'إعادة إرسال الرمز';
   static const String verify = 'تحقق';
 
@@ -315,14 +312,7 @@ class ArTranslations {
       'منصة تربط العملاء مع أفضل المصورين في العراق';
   static const String signInTitle = 'تسجيل الدخول';
   static const String signUpTitle = 'إنشاء حساب';
-  static const String signInWithApple = 'تسجيل الدخول عبر Apple';
   static const String or = 'أو';
-  static const String googleSignInUnsupported =
-      'تسجيل الدخول عبر Google غير مدعوم على هذا الجهاز حتى الآن.';
-  static const String googleSignInFailed = 'فشل تسجيل الدخول عبر Google';
-  static const String appleSignInUnavailable =
-      'تسجيل الدخول عبر Apple غير متاح حالياً.';
-  static const String appleSignInFailed = 'فشل تسجيل الدخول عبر Apple';
   static const String phoneAuthUnsupported =
       'المصادقة عبر الهاتف متاحة فقط على أجهزة Android وiOS.';
   static const String phoneAuthSupportInfo =
@@ -336,7 +326,7 @@ class ArTranslations {
   static const String otpVerificationFailed = 'فشل التحقق من رمز OTP';
   static const String resendFailed = 'فشل إعادة إرسال الرمز';
   static const String resendError = 'حدث خطأ أثناء إعادة الإرسال';
-  static const String otpSentSuccess = 'تم إرسال رمز التحقق بنجاح';
+  static const String otpSentSuccess = 'تم إرسال رمز التحقق عبر رسالة SMS';
   static const String missingReviewInfo =
       'بيانات الحجز غير مكتملة. يرجى المحاولة مجدداً.';
 

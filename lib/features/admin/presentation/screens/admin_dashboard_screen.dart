@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
@@ -18,7 +18,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _hasError = false;
   _AdminStats? _stats;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LegacyDataStore _firestore = LegacyDataStore.instance;
   late final SecureFirestore _secure = SecureFirestore(_firestore);
 
   @override
@@ -55,8 +55,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             .get(),
       );
       final disputesSnapshot = await _secure.guard(
-        () =>
-            _firestore.collection('disputes').where('status', isEqualTo: 'open').get(),
+        () => _firestore
+            .collection('disputes')
+            .where('status', isEqualTo: 'open')
+            .get(),
       );
 
       _stats = _AdminStats(
@@ -150,10 +152,7 @@ class _StatsGrid extends StatelessWidget {
   final _AdminStats stats;
   final AppLocalizations localizations;
 
-  const _StatsGrid({
-    required this.stats,
-    required this.localizations,
-  });
+  const _StatsGrid({required this.stats, required this.localizations});
 
   @override
   Widget build(BuildContext context) {
@@ -165,10 +164,22 @@ class _StatsGrid extends StatelessWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 1.6,
       children: [
-        _StatCard(label: localizations.requestsToday, value: stats.requestsToday),
-        _StatCard(label: localizations.totalBookings, value: stats.bookingsTotal),
-        _StatCard(label: localizations.cancellations, value: stats.cancellations),
-        _StatCard(label: localizations.openDisputesCount, value: stats.openDisputes),
+        _StatCard(
+          label: localizations.requestsToday,
+          value: stats.requestsToday,
+        ),
+        _StatCard(
+          label: localizations.totalBookings,
+          value: stats.bookingsTotal,
+        ),
+        _StatCard(
+          label: localizations.cancellations,
+          value: stats.cancellations,
+        ),
+        _StatCard(
+          label: localizations.openDisputesCount,
+          value: stats.openDisputes,
+        ),
       ],
     );
   }

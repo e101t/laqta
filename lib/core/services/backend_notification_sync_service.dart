@@ -24,11 +24,10 @@ class BackendNotificationSyncService {
     }
 
     _initialized = true;
-    await _messaging.requestPermission();
     await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
+      alert: false,
+      badge: false,
+      sound: false,
     );
 
     _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((_) {
@@ -36,6 +35,14 @@ class BackendNotificationSyncService {
     });
 
     await syncCurrentDeviceToken();
+  }
+
+  Future<void> requestPermissionAndSync() async {
+    final settings = await _messaging.requestPermission();
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      await syncCurrentDeviceToken();
+    }
   }
 
   Future<void> syncCurrentDeviceToken() async {
@@ -51,11 +58,30 @@ class BackendNotificationSyncService {
 
     try {
       await _apiClient.post(
-        '/notifications/devices',
+        '/users/fcm-token',
         body: {'token': fcmToken, 'platform': _platform},
       );
     } catch (_) {
-      // Best effort; background re-sync can retry later.
+      try {
+        await _apiClient.post(
+          '/notifications/devices',
+          body: {'token': fcmToken, 'platform': _platform},
+        );
+      } catch (_) {
+        // Best effort; background re-sync can retry later.
+      }
+    }
+  }
+
+  Future<void> deleteCurrentDeviceToken() async {
+    final backendToken = await _sessionService.getToken();
+    if (backendToken == null || backendToken.isEmpty) {
+      return;
+    }
+    try {
+      await _apiClient.delete('/users/fcm-token');
+    } catch (_) {
+      // Logout must not be blocked by notification cleanup.
     }
   }
 

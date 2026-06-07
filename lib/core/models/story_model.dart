@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
+import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class StoryModel {
@@ -7,6 +8,7 @@ class StoryModel {
   final String photographerId;
   final String photographerName;
   final String? photographerPhotoUrl;
+  final String? mediaId;
   final String imageUrl;
   final String? caption;
   final DateTime createdAt;
@@ -19,6 +21,7 @@ class StoryModel {
     required this.photographerId,
     required this.photographerName,
     this.photographerPhotoUrl,
+    this.mediaId,
     required this.imageUrl,
     this.caption,
     required this.createdAt,
@@ -38,7 +41,8 @@ class StoryModel {
       photographerId: readString(data, 'photographerId'),
       photographerName: readString(data, 'photographerName'),
       photographerPhotoUrl: readNullableString(data, 'photographerPhotoUrl'),
-      imageUrl: readString(data, 'imageUrl'),
+      mediaId: readNullableString(data, 'mediaId'),
+      imageUrl: _resolveImageUrl(data),
       caption: readNullableString(data, 'caption'),
       createdAt: createdAt,
       expiresAt: expiresAt,
@@ -47,17 +51,43 @@ class StoryModel {
     );
   }
 
+  factory StoryModel.fromJson(Map<String, dynamic> json) {
+    final createdAt = DateTime.parse(json['createdAt'] as String);
+    final expiresAt = DateTime.parse(json['expiresAt'] as String);
+
+    return StoryModel(
+      storyId: json['id'] as String,
+      photographerId:
+          (json['photographerId'] ?? json['userId'] ?? '') as String,
+      photographerName: (json['photographerName'] ?? '') as String,
+      photographerPhotoUrl: json['photographerPhotoUrl'] as String?,
+      mediaId: json['mediaId'] as String?,
+      imageUrl: _resolveImageUrlFromJson(json),
+      caption: json['caption'] as String?,
+      createdAt: createdAt,
+      expiresAt: expiresAt,
+      views: _parseViews(json['views']),
+      isActive:
+          (json['isActive'] as bool?) ?? DateTime.now().isBefore(expiresAt),
+    );
+  }
+
   Map<String, dynamic> toFirestore() {
     return {
       'photographerId': photographerId,
       'photographerName': photographerName,
       'photographerPhotoUrl': photographerPhotoUrl,
-      'imageUrl': imageUrl,
+      'mediaId': mediaId,
+      if (mediaId == null || mediaId!.isEmpty) 'imageUrl': imageUrl,
       'caption': caption,
       'createdAt': Timestamp.fromDate(createdAt),
       'expiresAt': Timestamp.fromDate(expiresAt),
       'isActive': isActive,
     };
+  }
+
+  Map<String, dynamic> toBackendJson() {
+    return {'id': storyId, 'mediaId': mediaId, 'caption': caption};
   }
 
   bool hasUserViewed(String userId) {
@@ -72,6 +102,28 @@ class StoryModel {
         .whereType<Map<dynamic, dynamic>>()
         .map((view) => StoryView.fromMap(Map<String, dynamic>.from(view)))
         .toList();
+  }
+
+  static String _resolveImageUrl(Map<String, dynamic> data) {
+    final mediaId = readNullableString(data, 'mediaId');
+    if (mediaId != null && mediaId.isNotEmpty) {
+      return BackendConfig.mediaContentUrl(mediaId);
+    }
+    return readString(data, 'imageUrl');
+  }
+
+  static String _resolveImageUrlFromJson(Map<String, dynamic> data) {
+    final mediaId = data['mediaId'] as String?;
+    if (mediaId != null && mediaId.isNotEmpty) {
+      return BackendConfig.mediaContentUrl(mediaId);
+    }
+
+    final imageUrl = data['imageUrl'];
+    if (imageUrl is String) {
+      return imageUrl;
+    }
+
+    return '';
   }
 
   String getTimeAgo() {

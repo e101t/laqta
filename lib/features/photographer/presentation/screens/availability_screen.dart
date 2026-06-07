@@ -1,8 +1,5 @@
 import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +13,6 @@ class AvailabilityScreen extends StatefulWidget {
 
 class _AvailabilityScreenState extends State<AvailabilityScreen> {
   static const String _prefsKey = 'photographer_availability_v1';
-  static const String _profileField = 'availabilitySettings';
 
   final List<_DayAvailability> _days = _defaultDays();
   bool _allowSameDayBookings = false;
@@ -105,27 +101,6 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   Future<Map<String, dynamic>?> _loadProfileAvailability() async {
-    final userId = _firebaseUserId;
-    if (userId == null) {
-      return null;
-    }
-
-    try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-      final data = doc.data();
-      final payload = data?[_profileField];
-      if (payload is Map<String, dynamic>) {
-        return payload;
-      }
-      if (payload is Map) {
-        return Map<String, dynamic>.from(payload);
-      }
-    } catch (_) {
-      // Keep using local cache when cloud sync is unavailable.
-    }
     return null;
   }
 
@@ -135,20 +110,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   Future<bool> _saveProfileAvailability(Map<String, dynamic> payload) async {
-    final userId = _firebaseUserId;
-    if (userId == null) {
-      return false;
-    }
-
-    try {
-      await FirebaseFirestore.instance.collection('users').doc(userId).set({
-        _profileField: payload,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      return true;
-    } catch (_) {
-      return false;
-    }
+    return false;
   }
 
   void _applyPayload(Map<String, dynamic> decoded) {
@@ -176,13 +138,6 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         }
       }
     }
-  }
-
-  String? get _firebaseUserId {
-    if (Firebase.apps.isEmpty) {
-      return null;
-    }
-    return FirebaseAuth.instance.currentUser?.uid;
   }
 
   Future<void> _pickTime({required int dayIndex, required bool isStart}) async {
@@ -409,13 +364,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
               _localizedText(
                 ar: _isSyncedToProfile
                     ? 'هذه الإعدادات مرتبطة الآن بملفك الشخصي وتبقى محفوظة على هذا الجهاز أيضًا.'
-                    : _firebaseUserId != null
-                    ? 'سيتم حفظ هذه الإعدادات على جهازك ومزامنتها مع ملفك الشخصي عند نجاح الاتصال.'
                     : 'سيتم حفظ هذه الإعدادات على هذا الجهاز إلى حين تسجيل الدخول.',
                 en: _isSyncedToProfile
                     ? 'These settings are synced to your profile and also cached on this device.'
-                    : _firebaseUserId != null
-                    ? 'These settings are saved on this device and sync to your profile when the connection succeeds.'
                     : 'These settings stay on this device until you sign in.',
               ),
               style: textTheme.bodySmall?.copyWith(

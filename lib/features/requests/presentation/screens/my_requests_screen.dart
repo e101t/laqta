@@ -131,9 +131,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen>
       ),
       body: _isLoading
           ? const LoadingIndicator()
-          : _hasError &&
-                _activeRequests.isEmpty &&
-                _closedRequests.isEmpty
+          : _hasError && _activeRequests.isEmpty && _closedRequests.isEmpty
           ? EmptyStates.error(onRetry: _loadRequests)
           : RefreshIndicator(
               onRefresh: _loadRequests,

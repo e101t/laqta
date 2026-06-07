@@ -66,9 +66,7 @@ class BookingRepositoryImpl implements BookingRepository {
       await _remoteDataSource.updateBooking(bookingId, updates);
       return Result.success(null);
     } catch (_) {
-      return Result.failure(
-        const Failure(message: 'Failed to update booking'),
-      );
+      return Result.failure(const Failure(message: 'Failed to update booking'));
     }
   }
 

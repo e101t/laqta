@@ -1,16 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/core/utils/user_public_fields.dart';
 import 'package:laqta/features/profile/data/dtos/user_profile_dto.dart';
 import 'package:laqta/features/role/data/datasources/role_remote_data_source.dart';
 
 class FirestoreRoleRemoteDataSource implements RoleRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
 
-  FirestoreRoleRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+  FirestoreRoleRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
   CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
@@ -70,7 +70,7 @@ class FirestoreRoleRemoteDataSource implements RoleRemoteDataSource {
         final savedDoc = await _secure.guard(() => userDocRef.get());
         await _syncPublicProfile(userId, savedDoc.data());
         return UserProfileDto.fromFirestore(savedDoc);
-      } on FirebaseException catch (e) {
+      } on BackendDataException catch (e) {
         final shouldRetry =
             e.code == 'unavailable' && attempt < maxAttempts - 1;
         if (shouldRetry) {
@@ -82,8 +82,8 @@ class FirestoreRoleRemoteDataSource implements RoleRemoteDataSource {
       }
     }
 
-    throw FirebaseException(
-      plugin: 'cloud_firestore',
+    throw BackendDataException(
+      plugin: 'backend',
       message: 'Unable to save role after multiple attempts',
     );
   }

@@ -47,7 +47,7 @@ String normalizePhoneNumberForLocalInput(String rawPhoneNumber) {
   return localNumber.substring(0, localNumber.length.clamp(0, 11));
 }
 
-String normalizePhoneNumberForFirebase(String rawPhoneNumber) {
+String normalizePhoneNumberForOtp(String rawPhoneNumber) {
   final trimmed = _normalizeNumerals(rawPhoneNumber.trim());
   if (trimmed.isEmpty) {
     return trimmed;

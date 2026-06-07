@@ -5,6 +5,7 @@ class UserProfile {
   final String? username;
   final String? email;
   final String? phone;
+  final String? photoMediaId;
   final String? photoUrl;
   final String governorate;
   final String? gender;
@@ -27,6 +28,7 @@ class UserProfile {
     this.username,
     this.email,
     this.phone,
+    this.photoMediaId,
     this.photoUrl,
     required this.governorate,
     this.gender,

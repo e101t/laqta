@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -6,28 +5,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_session_service.dart';
 import 'package:laqta/features/auth/presentation/screens/auth_screen.dart';
 
-class MockFirebaseAuth extends Mock implements FirebaseAuth {}
+class MockBackendSessionService extends Mock implements BackendSessionService {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   tearDown(() {
-    AppRouter.setAuthOverride(null);
+    AppRouter.setSessionServiceOverride(null);
     AppRouter.setSplashDelayCompleteForTest(false);
   });
 
   testWidgets('routes to auth when signed out', (tester) async {
     SharedPreferences.setMockInitialValues({'language': 'en'});
 
-    final auth = MockFirebaseAuth();
-    when(() => auth.authStateChanges()).thenAnswer((_) => Stream<User?>.value(null));
-    when(() => auth.currentUser).thenReturn(null);
+    final session = MockBackendSessionService();
+    when(() => session.hasValidToken()).thenAnswer((_) async => false);
+    when(() => session.getUserId()).thenAnswer((_) async => null);
 
-    AppRouter.setAuthOverride(auth);
+    AppRouter.setSessionServiceOverride(session);
     AppRouter.setSplashDelayCompleteForTest(true);
-    final router = AppRouter.createRouter(authOverride: auth);
+    final router = AppRouter.createRouter(sessionOverride: session);
 
     await tester.pumpWidget(
       MaterialApp.router(

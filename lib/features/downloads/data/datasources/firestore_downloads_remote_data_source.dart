@@ -1,23 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
-import 'package:laqta/core/security/secure_storage.dart';
 import 'package:laqta/features/downloads/data/datasources/downloads_remote_data_source.dart';
 import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
 
 class FirestoreDownloadsRemoteDataSource implements DownloadsRemoteDataSource {
-  final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
-  final SecureStorage _secureStorage;
 
-  FirestoreDownloadsRemoteDataSource({
-    FirebaseFirestore? firestore,
-    FirebaseStorage? storage,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance,
-       _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
+  FirestoreDownloadsRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('download_links');
@@ -59,39 +51,11 @@ class FirestoreDownloadsRemoteDataSource implements DownloadsRemoteDataSource {
     required String bookingId,
     required String fileReference,
   }) async {
-    final ref = _resolveStorageRef(
-      bookingId: bookingId,
-      fileReference: fileReference,
-    );
-    return _secureStorage.guard(() => ref.getDownloadURL());
-  }
-
-  Reference _resolveStorageRef({
-    required String bookingId,
-    required String fileReference,
-  }) {
     final trimmed = fileReference.trim();
-    final uri = Uri.tryParse(trimmed);
-
-    if (uri != null &&
-        uri.scheme == 'https' &&
-        uri.host.contains('firebasestorage.googleapis.com')) {
-      return _storage.refFromURL(trimmed);
+    if (trimmed.isEmpty) {
+      throw StateError('Missing file reference for booking $bookingId');
     }
 
-    if (trimmed.startsWith('gs://')) {
-      return _storage.refFromURL(trimmed);
-    }
-
-    if (trimmed.contains('/')) {
-      return _storage.ref().child(trimmed);
-    }
-
-    return _storage
-        .ref()
-        .child('deliveries')
-        .child(bookingId)
-        .child(bookingId)
-        .child(trimmed);
+    return trimmed;
   }
 }

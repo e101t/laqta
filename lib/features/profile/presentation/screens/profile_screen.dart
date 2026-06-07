@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/media/image_picker_service.dart';
 import 'package:laqta/core/models/user_model.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
@@ -36,9 +37,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authUser = authResult.valueOrNull;
     if (authUser == null) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = 'الرجاء تسجيل الدخول لعرض الحساب';
-        _isLoading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          AppRouter.goToAuth(context);
+        }
       });
       return;
     }
@@ -116,8 +118,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _uploadPhoto() async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await ImagePickerService().pickImageToTemp(
+        source: ImageSource.gallery,
+      );
       if (!mounted) return;
 
       if (pickedFile != null) {
@@ -450,6 +453,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.photo_library,
                 onPressed: () {
                   AppRouter.goToPortfolioEditor(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                text: 'الباقات والاشتراكات',
+                icon: Icons.workspace_premium_outlined,
+                onPressed: () {
+                  AppRouter.goToSubscriptionPlans(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                text: 'إعلان ممول',
+                icon: Icons.campaign_outlined,
+                onPressed: () {
+                  AppRouter.goToSponsoredAd(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                text: 'توثيق الحساب',
+                icon: Icons.verified_user_outlined,
+                onPressed: () {
+                  AppRouter.goToPhotographerVerification(context);
                 },
               ),
             ] else ...[

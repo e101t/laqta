@@ -12,6 +12,7 @@ class ProfileMapper {
       username: dto.username,
       email: dto.email,
       phone: dto.phone,
+      photoMediaId: dto.photoMediaId,
       photoUrl: dto.photoUrl,
       governorate: dto.governorate,
       gender: dto.gender,
@@ -36,6 +37,7 @@ class ProfileMapper {
       images: dto.images
           .map(
             (img) => PortfolioImage(
+              mediaId: img.mediaId,
               url: img.url,
               width: img.width,
               height: img.height,

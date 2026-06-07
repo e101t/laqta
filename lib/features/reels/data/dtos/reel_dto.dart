@@ -1,10 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 class ReelDto {
   final String id;
   final String photographerId;
   final String photographerName;
   final String? photographerPhotoUrl;
+  final String? mediaId;
   final String videoUrl;
   final String? thumbnailUrl;
   final String caption;
@@ -21,6 +23,7 @@ class ReelDto {
     required this.photographerId,
     required this.photographerName,
     this.photographerPhotoUrl,
+    this.mediaId,
     required this.videoUrl,
     this.thumbnailUrl,
     required this.caption,
@@ -40,7 +43,28 @@ class ReelDto {
       photographerId: _readString(data, 'photographerId'),
       photographerName: _readString(data, 'photographerName'),
       photographerPhotoUrl: _readNullableString(data, 'photographerPhotoUrl'),
-      videoUrl: _readString(data, 'videoUrl'),
+      mediaId: _readNullableString(data, 'mediaId'),
+      videoUrl: _resolveMediaUrl(data),
+      thumbnailUrl: _readNullableString(data, 'thumbnailUrl'),
+      caption: _readString(data, 'caption'),
+      tags: _readStringList(data['tags']),
+      views: _readInt(data, 'views'),
+      likes: _readInt(data, 'likes'),
+      comments: _readInt(data, 'comments'),
+      shares: _readInt(data, 'shares'),
+      createdAt: _readDateTime(data['createdAt']),
+      isVerified: _readBool(data, 'isVerified'),
+    );
+  }
+
+  factory ReelDto.fromJson(Map<String, dynamic> data) {
+    return ReelDto(
+      id: _readString(data, 'id'),
+      photographerId: _readString(data, 'photographerId'),
+      photographerName: _readString(data, 'photographerName'),
+      photographerPhotoUrl: _readNullableString(data, 'photographerPhotoUrl'),
+      mediaId: _readNullableString(data, 'mediaId'),
+      videoUrl: _resolveMediaUrl(data),
       thumbnailUrl: _readNullableString(data, 'thumbnailUrl'),
       caption: _readString(data, 'caption'),
       tags: _readStringList(data['tags']),
@@ -58,8 +82,9 @@ class ReelDto {
       'photographerId': photographerId,
       'photographerName': photographerName,
       'photographerPhotoUrl': photographerPhotoUrl,
-      'videoUrl': videoUrl,
-      'thumbnailUrl': thumbnailUrl,
+      'mediaId': mediaId,
+      if (mediaId == null || mediaId!.isEmpty) 'videoUrl': videoUrl,
+      if (mediaId == null || mediaId!.isEmpty) 'thumbnailUrl': thumbnailUrl,
       'caption': caption,
       'tags': tags,
       'views': views,
@@ -67,6 +92,16 @@ class ReelDto {
       'comments': comments,
       'shares': shares,
       'createdAt': Timestamp.fromDate(createdAt),
+      'isVerified': isVerified,
+    };
+  }
+
+  Map<String, dynamic> toBackendJson() {
+    return {
+      'id': id,
+      'mediaId': mediaId,
+      'caption': caption,
+      'tags': tags,
       'isVerified': isVerified,
     };
   }
@@ -89,6 +124,14 @@ class ReelDto {
       return value;
     }
     return null;
+  }
+
+  static String _resolveMediaUrl(Map<String, dynamic> data) {
+    final mediaId = _readNullableString(data, 'mediaId');
+    if (mediaId != null && mediaId.isNotEmpty) {
+      return BackendConfig.mediaContentUrl(mediaId);
+    }
+    return _readString(data, 'videoUrl');
   }
 
   static List<String> _readStringList(dynamic value) {
@@ -126,6 +169,9 @@ class ReelDto {
     }
     if (value is DateTime) {
       return value;
+    }
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value) ?? DateTime.now();
     }
     return DateTime.now();
   }

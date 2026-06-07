@@ -622,8 +622,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
   Widget? _buildPrefix(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final searchIcon =
-        widget.leading ??
-        Icon(Icons.search, color: scheme.onSurfaceVariant);
+        widget.leading ?? Icon(Icons.search, color: scheme.onSurfaceVariant);
 
     final showBack = widget.showBackButton || widget.onBack != null;
     if (!showBack) return searchIcon;
@@ -667,7 +666,10 @@ class _AppSearchFieldState extends State<AppSearchField> {
       width: clearButton == null ? 40 : 88,
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [...?(clearButton == null ? null : [clearButton]), widget.trailing!],
+        children: [
+          ...?(clearButton == null ? null : [clearButton]),
+          widget.trailing!,
+        ],
       ),
     );
   }

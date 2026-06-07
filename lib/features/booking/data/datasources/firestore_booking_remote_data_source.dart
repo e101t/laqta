@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/foundation.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
@@ -6,20 +6,22 @@ import 'package:laqta/features/booking/data/datasources/booking_remote_data_sour
 import 'package:laqta/features/booking/data/dtos/booking_dto.dart';
 
 class FirestoreBookingRemoteDataSource implements BookingRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
 
-  FirestoreBookingRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+  FirestoreBookingRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('bookings');
 
   @override
   Future<List<BookingDto>> getMyBookings(String userId) async {
-    Query<Map<String, dynamic>> query =
-        _collection.where('customerId', isEqualTo: userId);
+    Query<Map<String, dynamic>> query = _collection.where(
+      'customerId',
+      isEqualTo: userId,
+    );
     if (!kDebugMode) {
       query = query.orderBy('createdAt', descending: true);
     }

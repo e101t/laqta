@@ -17,7 +17,9 @@ class TrustRepositoryImpl implements TrustRepository {
       final stats = dto == null ? null : TrustStatsMapper.toDomain(dto);
       return Result.success(stats);
     } catch (_) {
-      return Result.failure(const Failure(message: 'Failed to load trust stats'));
+      return Result.failure(
+        const Failure(message: 'Failed to load trust stats'),
+      );
     }
   }
 

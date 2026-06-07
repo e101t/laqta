@@ -55,11 +55,11 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
   }
 
   Set<Marker> get _markers => {
-        Marker(
-          markerId: const MarkerId('selected-location'),
-          position: _selectedPosition,
-        ),
-      };
+    Marker(
+      markerId: const MarkerId('selected-location'),
+      position: _selectedPosition,
+    ),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +90,9 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
           ],
           Expanded(
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: _selectedPosition,
@@ -117,7 +119,8 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                 TextField(
                   controller: _labelController,
                   decoration: InputDecoration(
-                    hintText: 'مثلاً: قاعة الريان، نفس الموقع المدخل في الخريطة',
+                    hintText:
+                        'مثلاً: قاعة الريان، نفس الموقع المدخل في الخريطة',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -155,8 +158,5 @@ class LocationSelectionResult {
   final LatLng position;
   final String? label;
 
-  LocationSelectionResult({
-    required this.position,
-    this.label,
-  });
+  LocationSelectionResult({required this.position, this.label});
 }

@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:laqta/app/router/routes.dart';
+import 'package:laqta/core/auth/token_manager.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,6 +18,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  Timer? _authFallbackTimer;
 
   @override
   void initState() {
@@ -34,10 +40,17 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
+    _authFallbackTimer = Timer(const Duration(seconds: 10), () async {
+      await TokenManager().clearAllTokens();
+      if (mounted) {
+        context.go(Routes.auth);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _authFallbackTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

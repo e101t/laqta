@@ -1,19 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/models/story_model.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/features/story/data/datasources/story_remote_data_source.dart';
 
 class FirestoreStoryRemoteDataSource implements StoryRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
   final BackendMediaService _backendMediaService;
 
-  FirestoreStoryRemoteDataSource({
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _backendMediaService = BackendMediaService();
+  FirestoreStoryRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance),
+      _backendMediaService = BackendMediaService();
 
   CollectionReference<Map<String, dynamic>> get _storiesCollection =>
       _firestore.collection('stories');

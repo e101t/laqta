@@ -26,8 +26,7 @@ class OfferSubmitScreen extends StatefulWidget {
 
 class _OfferSubmitScreenState extends State<OfferSubmitScreen> {
   final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _deliveryDaysController =
-      TextEditingController();
+  final TextEditingController _deliveryDaysController = TextEditingController();
   final TextEditingController _photosCountController = TextEditingController();
   final TextEditingController _videoMinutesController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
@@ -100,9 +99,9 @@ class _OfferSubmitScreenState extends State<OfferSubmitScreen> {
       await _notifyClient(offer);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizations.offerSent)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(localizations.offerSent)));
         if (widget.onOfferSubmitted != null) {
           await widget.onOfferSubmitted!();
         } else if (Navigator.of(context).canPop()) {
@@ -111,9 +110,9 @@ class _OfferSubmitScreenState extends State<OfferSubmitScreen> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizations.offerFailed)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(localizations.offerFailed)));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

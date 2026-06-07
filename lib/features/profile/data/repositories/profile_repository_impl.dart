@@ -1,7 +1,8 @@
-import 'package:cloud_functions/cloud_functions.dart'
-    show FirebaseFunctionsException;
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/security/integrity_checker.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/profile/data/datasources/profile_remote_data_source.dart';
 import 'package:laqta/features/profile/data/dtos/portfolio_dto.dart';
 import 'package:laqta/features/profile/data/mappers/profile_mapper.dart';
@@ -40,9 +41,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
       if (updates.isEmpty) {
         return Result.success(null);
       }
+      await IntegrityChecker.instance.verifyForOperation('profile_update');
       await _remoteDataSource.updateUserProfile(userId, updates);
       return Result.success(null);
-    } on FirebaseFunctionsException catch (e) {
+    } on BackendFunctionException catch (e) {
       return Result.failure(
         Failure(
           message: e.message ?? 'Failed to update user profile',
@@ -63,6 +65,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }) async {
     try {
       final normalized = data.username.trim().toLowerCase();
+      await IntegrityChecker.instance.verifyForOperation('profile_update');
       await _remoteDataSource.saveBasicInfo(userId, {
         'role': data.role,
         'name': data.name,
@@ -78,7 +81,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         'profileCompleted': data.profileCompleted,
       });
       return Result.success(null);
-    } on FirebaseFunctionsException catch (e) {
+    } on BackendFunctionException catch (e) {
       return Result.failure(
         Failure(
           message: e.message ?? 'Failed to save basic info',
@@ -174,6 +177,13 @@ class ProfileRepositoryImpl implements ProfileRepository {
         filePath,
       );
       return Result.success(url);
+    } on BackendApiException catch (e) {
+      return Result.failure(
+        Failure(
+          message: e.message,
+          code: e.statusCode == null ? null : '${e.statusCode}',
+        ),
+      );
     } catch (e) {
       return Result.failure(
         Failure(

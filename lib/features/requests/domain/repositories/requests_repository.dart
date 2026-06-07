@@ -6,9 +6,7 @@ import '../entities/request_offer.dart';
 abstract class RequestsRepository {
   Future<Result<List<PhotoRequest>>> getMyRequests({required String clientId});
 
-  Future<Result<List<PhotoRequest>>> getOpenRequests({
-    String? governorate,
-  });
+  Future<Result<List<PhotoRequest>>> getOpenRequests({String? governorate});
 
   Future<Result<PhotoRequest>> getRequestById(String requestId);
 

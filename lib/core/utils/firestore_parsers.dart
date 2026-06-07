@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 Map<String, dynamic> firestoreMap(dynamic data) {
   if (data is Map<String, dynamic>) return data;

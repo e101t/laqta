@@ -8,6 +8,7 @@ import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:logger/logger.dart';
 import 'package:laqta/features/payment/payment_dependencies.dart';
 import 'package:laqta/features/payment/domain/entities/payment_intent.dart';
+import 'package:laqta/features/payment/security/payment_security_guard.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String bookingId;
@@ -52,6 +53,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       // Create payment intent on your backend
+      final guardResult = await PaymentSecurityGuard.instance.authorizePayment(
+        context: context,
+        itemId: widget.bookingId,
+        amount: widget.amount,
+        payeeName: widget.photographerName,
+      );
+      if (!guardResult.allowed) {
+        if (!mounted) return;
+        setState(() {
+          _error = guardResult.reason ?? localizations.paymentFailed;
+        });
+        return;
+      }
       final paymentIntent = await _createPaymentIntent();
       if (!mounted) return;
 

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:laqta/features/auth/domain/entities/auth_user.dart';
 
 class AuthUserDto {
@@ -18,14 +17,18 @@ class AuthUserDto {
     required this.isAnonymous,
   });
 
-  factory AuthUserDto.fromFirebaseUser(User user) {
+  factory AuthUserDto.fromBackendJson(Map<String, dynamic> json) {
+    final id = json['id'];
+    if (id is! String || id.isEmpty) {
+      throw StateError('Backend auth response is missing user.id');
+    }
     return AuthUserDto(
-      id: user.uid,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      displayName: user.displayName,
-      photoUrl: user.photoURL,
-      isAnonymous: user.isAnonymous,
+      id: id,
+      email: json['email'] as String?,
+      phoneNumber: json['phone'] as String?,
+      displayName: json['name'] as String?,
+      photoUrl: json['photoUrl'] as String?,
+      isAnonymous: false,
     );
   }
 

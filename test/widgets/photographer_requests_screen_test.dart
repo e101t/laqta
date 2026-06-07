@@ -17,20 +17,21 @@ void main() {
     RequestsDependencies.setRepositoryOverride(null);
   });
 
-  testWidgets('photographer requests fall back to empty state on load failure', (
-    tester,
-  ) async {
-    AuthDependencies.setRepositoryOverride(_FakeAuthRepository());
-    RequestsDependencies.setRepositoryOverride(_FailingRequestsRepository());
+  testWidgets(
+    'photographer requests fall back to empty state on load failure',
+    (tester) async {
+      AuthDependencies.setRepositoryOverride(_FakeAuthRepository());
+      RequestsDependencies.setRepositoryOverride(_FailingRequestsRepository());
 
-    await tester.pumpWidget(
-      wrapWithMaterial(const PhotographerRequestsScreen()),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        wrapWithMaterial(const PhotographerRequestsScreen()),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('No requests found'), findsOneWidget);
-    expect(find.text('Check back later for new requests.'), findsOneWidget);
-  });
+      expect(find.text('No requests found'), findsOneWidget);
+      expect(find.text('Check back later for new requests.'), findsOneWidget);
+    },
+  );
 }
 
 class _FakeAuthRepository implements AuthRepository {

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/models/booking_model.dart';
@@ -92,7 +93,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error loading bookings: $e');
+        AppLogger.d('runtime', 'Error loading bookings: $e');
       }
       _hasError = true;
     }
@@ -193,7 +194,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error navigating to chat: $e');
+        AppLogger.d('runtime', 'Error navigating to chat: $e');
       }
       if (mounted) {
         ScaffoldMessenger.of(
@@ -314,7 +315,7 @@ class _BookingCardState extends State<_BookingCard> {
     } catch (e) {
       setState(() => _isLoadingPhotographer = false);
       if (kDebugMode) {
-        debugPrint('Error loading photographer: $e');
+        AppLogger.d('runtime', 'Error loading photographer: $e');
       }
     }
   }
@@ -525,3 +526,4 @@ class _BookingCardState extends State<_BookingCard> {
     );
   }
 }
+

@@ -51,24 +51,14 @@ class EnTranslations {
   static const String signInTitle = 'Sign in';
   static const String signUpTitle = 'Create account';
   static const String signInWith = 'Sign in with';
-  static const String signInWithGoogle = 'Sign in with Google';
-  static const String signInWithApple = 'Sign in with Apple';
   static const String signInWithPhone = 'Sign in with Phone';
-  static const String signUpWithGoogle = 'Sign up with Google';
-  static const String signUpWithApple = 'Sign up with Apple';
   static const String signUpWithPhone = 'Sign up with Phone';
   static const String phoneNumber = 'Phone Number';
   static const String verifyOTP = 'Verify Code';
-  static const String enterOTP = 'Enter verification code sent to';
+  static const String enterOTP = 'Enter verification code';
   static const String resendCode = 'Resend Code';
   static const String verify = 'Verify';
   static const String or = 'OR';
-  static const String googleSignInUnsupported =
-      'Google Sign-In is not supported on this platform yet.';
-  static const String googleSignInFailed = 'Google Sign-In failed';
-  static const String appleSignInUnavailable =
-      'Apple Sign-In is not available on this device.';
-  static const String appleSignInFailed = 'Apple Sign-In failed';
   static const String phoneAuthUnsupported =
       'Phone authentication is only supported on Android and iOS.';
   static const String phoneAuthSupportInfo =
@@ -82,7 +72,7 @@ class EnTranslations {
   static const String otpVerificationFailed = 'OTP verification failed';
   static const String resendFailed = 'Resend failed';
   static const String resendError = 'Resend error';
-  static const String otpSentSuccess = 'OTP sent successfully';
+  static const String otpSentSuccess = 'Verification code sent by SMS';
   static const String missingReviewInfo =
       'Missing booking information. Please try again.';
 

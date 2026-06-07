@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/providers/theme_provider.dart';
 import 'package:laqta/core/providers/locale_provider.dart';
@@ -126,9 +127,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
 
-      // Clear local preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await _clearSessionOnlyPreferences();
 
       // Navigate to auth screen
       if (!mounted) return;
@@ -157,6 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _logout() async {
     try {
+      final currentLanguage = Localizations.localeOf(context).languageCode;
       final result = await AuthDependencies.signOut().call();
       if (!result.isSuccess) {
         if (!mounted) return;
@@ -170,9 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
 
-      // Clear local preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await _clearSessionOnlyPreferences(languageCode: currentLanguage);
 
       // Navigate to auth screen
       if (!mounted) return;
@@ -187,6 +185,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).logoutFailed)),
       );
+    }
+  }
+
+  Future<void> _clearSessionOnlyPreferences({String? languageCode}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final preservedLanguage =
+        languageCode ?? prefs.getString(AppConstants.keyLanguage);
+    await prefs.remove(AppConstants.keyBackendJwt);
+    await prefs.remove(AppConstants.keyBackendUserId);
+    await prefs.remove(AppConstants.keyProfileCacheUserId);
+    await prefs.remove(AppConstants.keyProfileCacheCompleted);
+    await prefs.remove(AppConstants.keyProfileCacheRole);
+    await prefs.remove(AppConstants.keyProfileCacheBlocked);
+    if (preservedLanguage != null && preservedLanguage.isNotEmpty) {
+      await prefs.setString(AppConstants.keyLanguage, preservedLanguage);
     }
   }
 
@@ -294,6 +307,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text(localizations.terms),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => AppRouter.goToTerms(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person_remove_outlined),
+            title: const Text('سياسة حذف الحساب'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => AppRouter.goToDeleteAccountPolicy(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.report_gmailerrorred_outlined),
+            title: const Text('سياسة المحتوى'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => AppRouter.goToContentPolicy(context),
           ),
           const Divider(),
 

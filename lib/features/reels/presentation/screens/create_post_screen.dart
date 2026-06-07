@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
+import 'package:laqta/core/media/video_picker_service.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
@@ -23,8 +25,9 @@ class CreatePostScreen extends StatefulWidget {
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _captionController = TextEditingController();
-  XFile? _selectedImage;
+  XFile? _selectedVideo;
   bool _isSubmitting = false;
+  bool _isPreparingVideo = false;
 
   @override
   void dispose() {
@@ -32,21 +35,34 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked =
-        widget.imagePicker != null
-            ? await widget.imagePicker!(source)
-            : await picker.pickImage(source: source);
-    if (!mounted) return;
-    if (picked != null) {
-      setState(() => _selectedImage = picked);
+  Future<void> _pickVideo(ImageSource source) async {
+    if (_isPreparingVideo || _isSubmitting) return;
+    setState(() => _isPreparingVideo = true);
+
+    try {
+      final picked = await VideoPickerService().pickVideoToTemp(
+        source: source,
+        pickerOverride: widget.imagePicker,
+      );
+      if (!mounted) return;
+      if (picked == null) {
+        _showSnackBar('Could not load video. Please try again.');
+        return;
+      }
+      setState(() => _selectedVideo = picked);
+    } catch (_) {
+      if (!mounted) return;
+      _showSnackBar('Could not load video. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isPreparingVideo = false);
+      }
     }
   }
 
   Future<void> _submitPost() async {
     final localizations = AppLocalizations.of(context);
-    if (_selectedImage == null) {
+    if (_selectedVideo == null) {
       _showSnackBar(localizations.mediaRequired);
       return;
     }
@@ -76,17 +92,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       }
 
       final reelId = const Uuid().v4();
-      final contentType = _selectedImage?.mimeType ?? 'image/jpeg';
+      final contentType = _selectedVideo?.mimeType ?? 'video/mp4';
       final uploadResult = await ReelsDependencies.uploadReelMedia().call(
         photographerId: userId,
         reelId: reelId,
-        filePath: _selectedImage!.path,
+        filePath: _selectedVideo!.path,
         contentType: contentType,
       );
       if (!uploadResult.isSuccess || uploadResult.valueOrNull == null) {
         _showSnackBar(localizations.error);
         return;
       }
+      final stableUrl = uploadResult.valueOrNull!;
+      final mediaId = BackendMediaService.requireMediaId(stableUrl);
 
       final caption = _captionController.text.trim();
       final now = DateTime.now();
@@ -95,8 +113,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         photographerId: userId,
         photographerName: profile.name,
         photographerPhotoUrl: profile.photoUrl,
-        videoUrl: '',
-        thumbnailUrl: uploadResult.valueOrNull,
+        mediaId: mediaId,
+        videoUrl: stableUrl,
+        thumbnailUrl: null,
         caption: caption,
         tags: const [],
         views: 0,
@@ -137,7 +156,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               title: Text(localizations.camera),
               onTap: () {
                 Navigator.of(context).pop();
-                _pickImage(ImageSource.camera);
+                _pickVideo(ImageSource.camera);
               },
             ),
             ListTile(
@@ -145,7 +164,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               title: Text(localizations.gallery),
               onTap: () {
                 Navigator.of(context).pop();
-                _pickImage(ImageSource.gallery);
+                _pickVideo(ImageSource.gallery);
               },
             ),
           ],
@@ -187,7 +206,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: scheme.outlineVariant),
                 ),
-                child: _selectedImage == null
+                child: _isPreparingVideo
+                    ? const Center(child: CircularProgressIndicator())
+                    : _selectedVideo == null
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -205,12 +226,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           ),
                         ],
                       )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.file(
-                          File(_selectedImage!.path),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
+                    : Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.video_file, size: 48),
+                              const SizedBox(height: 12),
+                              Text(
+                                File(
+                                  _selectedVideo!.path,
+                                ).uri.pathSegments.last,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
               ),
@@ -225,7 +258,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             CTAButton(
               text: localizations.sharePost,
               isLoading: _isSubmitting,
-              onPressed: _isSubmitting ? null : _submitPost,
+              onPressed: _isSubmitting || _isPreparingVideo
+                  ? null
+                  : _submitPost,
             ),
           ],
         ),

@@ -90,14 +90,14 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
                               size: 16,
                             ),
                             onTap: () async {
-                              final resolved =
-                                  await Navigator.of(context).push<bool>(
-                                MaterialPageRoute(
-                                  builder: (_) => AdminDisputeDetailsScreen(
-                                    dispute: dispute,
-                                  ),
-                                ),
-                              );
+                              final resolved = await Navigator.of(context)
+                                  .push<bool>(
+                                    MaterialPageRoute(
+                                      builder: (_) => AdminDisputeDetailsScreen(
+                                        dispute: dispute,
+                                      ),
+                                    ),
+                                  );
                               if (resolved == true) {
                                 _loadDisputes();
                               }

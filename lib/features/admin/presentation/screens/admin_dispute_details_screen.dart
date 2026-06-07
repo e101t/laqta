@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
@@ -73,13 +73,16 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
       closedAt: now,
       decidedBy: adminId,
     );
-    final disputeResult =
-        await DisputesDependencies.updateDispute().call(updatedDispute);
+    final disputeResult = await DisputesDependencies.updateDispute().call(
+      updatedDispute,
+    );
 
     if (!disputeResult.isSuccess) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).disputeResolveFailed)),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).disputeResolveFailed),
+          ),
         );
       }
       setState(() => _isResolving = false);
@@ -107,13 +110,13 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
           'completedAt': bookingStatus == AppConstants.bookingCompleted
               ? Timestamp.fromDate(now)
               : (timeline.completedAt != null
-                  ? Timestamp.fromDate(timeline.completedAt!)
-                  : null),
+                    ? Timestamp.fromDate(timeline.completedAt!)
+                    : null),
           'canceledAt': bookingStatus == AppConstants.bookingCanceled
               ? Timestamp.fromDate(now)
               : (timeline.canceledAt != null
-                  ? Timestamp.fromDate(timeline.canceledAt!)
-                  : null),
+                    ? Timestamp.fromDate(timeline.canceledAt!)
+                    : null),
         },
       };
       await BookingDependencies.updateBooking().call(
@@ -151,12 +154,18 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
                       children: [
                         Text(
                           dispute.reason,
-                          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                          style: textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        Text('${localizations.bookingSummary}: ${dispute.bookingId}'),
+                        Text(
+                          '${localizations.bookingSummary}: ${dispute.bookingId}',
+                        ),
                         const SizedBox(height: 8),
-                        Text('${localizations.openedByLabel}: ${dispute.openedBy}'),
+                        Text(
+                          '${localizations.openedByLabel}: ${dispute.openedBy}',
+                        ),
                         const SizedBox(height: 8),
                         Text(dispute.details),
                       ],
@@ -173,12 +182,18 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
                         children: [
                           Text(
                             localizations.bookingSummary,
-                            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text('${localizations.typeLabel}: ${_booking!.type}'),
-                          Text('${localizations.dateLabel}: ${_booking!.date} ${_booking!.time}'),
-                          Text('${localizations.statusLabel}: ${_booking!.status}'),
+                          Text(
+                            '${localizations.dateLabel}: ${_booking!.date} ${_booking!.time}',
+                          ),
+                          Text(
+                            '${localizations.statusLabel}: ${_booking!.status}',
+                          ),
                         ],
                       ),
                     ),
@@ -197,9 +212,9 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
                   onPressed: _isResolving
                       ? null
                       : () => _resolveDispute(
-                            resolutionCode: 'release_to_photographer',
-                            bookingStatus: AppConstants.bookingCompleted,
-                          ),
+                          resolutionCode: 'release_to_photographer',
+                          bookingStatus: AppConstants.bookingCompleted,
+                        ),
                   child: Text(localizations.resolveRelease),
                 ),
                 const SizedBox(height: 12),
@@ -207,9 +222,9 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
                   onPressed: _isResolving
                       ? null
                       : () => _resolveDispute(
-                            resolutionCode: 'refund_full',
-                            bookingStatus: AppConstants.bookingCanceled,
-                          ),
+                          resolutionCode: 'refund_full',
+                          bookingStatus: AppConstants.bookingCanceled,
+                        ),
                   child: Text(localizations.resolveRefund),
                 ),
                 const SizedBox(height: 12),
@@ -217,9 +232,9 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
                   onPressed: _isResolving
                       ? null
                       : () => _resolveDispute(
-                            resolutionCode: 'refund_partial',
-                            bookingStatus: AppConstants.bookingCompleted,
-                          ),
+                          resolutionCode: 'refund_partial',
+                          bookingStatus: AppConstants.bookingCompleted,
+                        ),
                   child: Text(localizations.resolvePartial),
                 ),
               ],

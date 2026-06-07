@@ -1,21 +1,19 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/features/trust/data/datasources/trust_remote_data_source.dart';
 import 'package:laqta/features/trust/data/dtos/trust_stats_dto.dart';
 
 class FirestoreTrustRemoteDataSource implements TrustRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
-  final FirebaseFunctions _functions;
+  final BackendFunctionClient _functions;
 
   FirestoreTrustRemoteDataSource({
-    FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
-  })
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-      _functions = functions ?? FirebaseFunctions.instance;
+    LegacyDataStore? firestore,
+    BackendFunctionClient? functions,
+  }) : _firestore = firestore ?? LegacyDataStore.instance,
+       _secure = SecureFirestore(firestore ?? LegacyDataStore.instance),
+       _functions = functions ?? BackendFunctionClient.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('trust_stats');
@@ -56,7 +54,9 @@ class FirestoreTrustRemoteDataSource implements TrustRemoteDataSource {
     required String bookingId,
     required String photographerId,
   }) async {
-    final callable = _functions.httpsCallable('incrementTrustCompletedBookings');
+    final callable = _functions.httpsCallable(
+      'incrementTrustCompletedBookings',
+    );
     await callable.call({
       'bookingId': bookingId,
       'photographerId': photographerId,

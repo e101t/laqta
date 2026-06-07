@@ -1,3 +1,5 @@
+import 'package:laqta/core/config/app_config.dart';
+
 /// App-wide constants
 class AppConstants {
   // App Info
@@ -121,6 +123,7 @@ class AppConstants {
   // User Roles
   static const String roleCustomer = 'customer';
   static const String rolePhotographer = 'photographer';
+  static const String roleVenueOwner = 'venue_owner';
   static const String roleAdmin = 'admin';
   static const String adminBlockMarker = '__admin_blocked__';
 
@@ -133,10 +136,8 @@ class AppConstants {
   static const String currencyIQD = 'IQD';
 
   // Stripe
-  static const String stripePublishableKey = String.fromEnvironment(
-    'STRIPE_PUBLISHABLE_KEY',
-    defaultValue: 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY',
-  );
+  static String get stripePublishableKey => AppConfig.stripePublishableKey;
+  static String get googleServerClientId => AppConfig.googleServerClientId;
   static const bool enablePayments = bool.fromEnvironment(
     'ENABLE_PAYMENTS',
     defaultValue: false,
@@ -153,7 +154,7 @@ class AppConstants {
   static bool get paymentsConfigured =>
       enablePayments &&
       stripePublishableKey.trim().isNotEmpty &&
-      !stripePublishableKey.contains('YOUR_STRIPE');
+      stripePublishableKey.startsWith('pk_');
   static const bool forceDebugAppCheck = bool.fromEnvironment(
     'FORCE_DEBUG_APP_CHECK',
     defaultValue: false,

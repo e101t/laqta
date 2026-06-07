@@ -17,7 +17,7 @@ class StoreScreen extends StatelessWidget {
       title: 'إطار صور فاخر',
       subtitle: 'خشب طبيعي + زجاج مقاوم للخدش',
       priceIQD: 35000,
-      imageAssetPath: 'assets/images/offers/offer_1.png',
+      imageAssetPath: 'assets/images/hero_auth.png',
       badge: 'جديد',
     ),
     _StoreProduct(
@@ -25,7 +25,7 @@ class StoreScreen extends StatelessWidget {
       title: 'ألبوم مطبوع',
       subtitle: 'ورق عالي الجودة + تصميم أنيق',
       priceIQD: 65000,
-      imageAssetPath: 'assets/images/offers/offer_2.png',
+      imageAssetPath: 'assets/images/hero_role.png',
       badge: 'الأكثر مبيعًا',
     ),
     _StoreProduct(

@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 import 'secure_exceptions.dart';
 
 class SecureFirestore {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final Duration timeout;
 
   const SecureFirestore(
@@ -13,14 +13,14 @@ class SecureFirestore {
     this.timeout = const Duration(seconds: 12),
   });
 
-  FirebaseFirestore get instance => _firestore;
+  LegacyDataStore get instance => _firestore;
 
   Future<T> guard<T>(Future<T> Function() action) async {
     try {
       return await action().timeout(timeout);
     } on TimeoutException {
       throw const SecureException('Request timed out');
-    } on FirebaseException catch (e) {
+    } on BackendDataException catch (e) {
       throw SecureException('Request failed', code: e.code);
     }
   }

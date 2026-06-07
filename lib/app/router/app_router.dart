@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +10,7 @@ import 'routes.dart';
 // core
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_session_service.dart';
 import 'package:laqta/features/profile/profile_dependencies.dart';
 
 // app shell
@@ -48,6 +48,14 @@ import 'package:laqta/features/settings/presentation/screens/settings_screen.dar
 import 'package:laqta/features/settings/presentation/screens/policy_terms_screen.dart';
 import 'package:laqta/features/settings/presentation/screens/booking_policies_screen.dart';
 import 'package:laqta/features/explore/presentation/screens/explore_screen.dart';
+import 'package:laqta/features/venues/presentation/screens/venues_list_screen.dart';
+import 'package:laqta/features/venues/presentation/screens/venue_details_screen.dart';
+import 'package:laqta/features/venues/presentation/screens/venue_booking_screen.dart';
+import 'package:laqta/features/locations/presentation/screens/photo_location_details_screen.dart';
+import 'package:laqta/features/monetization/presentation/screens/subscription_plans_screen.dart';
+import 'package:laqta/features/monetization/presentation/screens/sponsored_ad_screen.dart';
+import 'package:laqta/features/monetization/presentation/screens/campaign_analytics_screen.dart';
+import 'package:laqta/features/verification/presentation/screens/photographer_verification_screen.dart';
 
 import 'package:laqta/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
 import 'package:laqta/features/achievements/presentation/screens/achievements_screen.dart';
@@ -64,11 +72,11 @@ class AppRouter {
   static bool? _cachedProfileBlocked;
   static bool _splashDelayComplete = false;
   static Future<void>? _splashDelayFuture;
-  static FirebaseAuth? _authOverride;
+  static BackendSessionService _sessionService = BackendSessionService();
 
   @visibleForTesting
-  static void setAuthOverride(FirebaseAuth? auth) {
-    _authOverride = auth;
+  static void setSessionServiceOverride(BackendSessionService? sessionService) {
+    _sessionService = sessionService ?? BackendSessionService();
   }
 
   @visibleForTesting
@@ -79,10 +87,10 @@ class AppRouter {
     }
   }
 
-  static FirebaseAuth get _auth => _authOverride ?? FirebaseAuth.instance;
-
-  static GoRouter createRouter({FirebaseAuth? authOverride}) {
-    final auth = authOverride ?? _auth;
+  static GoRouter createRouter({BackendSessionService? sessionOverride}) {
+    if (sessionOverride != null) {
+      _sessionService = sessionOverride;
+    }
     const devStart = String.fromEnvironment(
       'LAQTA_DEV_START',
       defaultValue: '',
@@ -92,7 +100,6 @@ class AppRouter {
         : (devStart.startsWith('/') ? devStart : '/$devStart');
     return GoRouter(
       initialLocation: devStartPath.isNotEmpty ? devStartPath : Routes.splash,
-      refreshListenable: GoRouterRefreshStream(auth.authStateChanges()),
       redirect: _guardRedirect,
       routes: [
         GoRoute(
@@ -135,6 +142,7 @@ class AppRouter {
             final normalizedRole =
                 (role == AppConstants.roleCustomer ||
                     role == AppConstants.rolePhotographer ||
+                    role == AppConstants.roleVenueOwner ||
                     role == AppConstants.roleAdmin)
                 ? role
                 : '';
@@ -255,6 +263,78 @@ class AppRouter {
           builder: (context, state) => const ExploreScreen(),
         ),
         GoRoute(
+          path: Routes.venues,
+          name: Routes.nVenues,
+          builder: (context, state) => const VenuesListScreen(),
+        ),
+        GoRoute(
+          path: Routes.venueDetails,
+          name: Routes.nVenueDetails,
+          builder: (context, state) {
+            final venueId = state.pathParameters['id'];
+            if (venueId == null || venueId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing venue id')),
+              );
+            }
+            return VenueDetailsScreen(venueId: venueId);
+          },
+        ),
+        GoRoute(
+          path: Routes.venueBooking,
+          name: Routes.nVenueBooking,
+          builder: (context, state) {
+            final venueId = state.pathParameters['id'];
+            if (venueId == null || venueId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing venue id')),
+              );
+            }
+            return VenueBookingScreen(venueId: venueId);
+          },
+        ),
+        GoRoute(
+          path: Routes.locationDetails,
+          name: Routes.nLocationDetails,
+          builder: (context, state) {
+            final locationId = state.pathParameters['id'];
+            if (locationId == null || locationId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing location id')),
+              );
+            }
+            return PhotoLocationDetailsScreen(locationId: locationId);
+          },
+        ),
+        GoRoute(
+          path: Routes.subscriptionPlans,
+          name: Routes.nSubscriptionPlans,
+          builder: (context, state) => const SubscriptionPlansScreen(),
+        ),
+        GoRoute(
+          path: Routes.sponsoredAd,
+          name: Routes.nSponsoredAd,
+          builder: (context, state) => const SponsoredAdScreen(),
+        ),
+        GoRoute(
+          path: Routes.campaignAnalytics,
+          name: Routes.nCampaignAnalytics,
+          builder: (context, state) {
+            final campaignId = state.pathParameters['id'];
+            if (campaignId == null || campaignId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing campaign id')),
+              );
+            }
+            return CampaignAnalyticsScreen(campaignId: campaignId);
+          },
+        ),
+        GoRoute(
+          path: Routes.photographerVerification,
+          name: Routes.nPhotographerVerification,
+          builder: (context, state) => const PhotographerVerificationScreen(),
+        ),
+        GoRoute(
           path: Routes.profile,
           name: Routes.nProfile,
           builder: (context, state) => const ProfileScreen(),
@@ -292,6 +372,18 @@ class AppRouter {
           name: Routes.nTerms,
           builder: (context, state) =>
               const PolicyTermsScreen(type: PolicyType.terms),
+        ),
+        GoRoute(
+          path: Routes.deleteAccountPolicy,
+          name: Routes.nDeleteAccountPolicy,
+          builder: (context, state) =>
+              const PolicyTermsScreen(type: PolicyType.deleteAccount),
+        ),
+        GoRoute(
+          path: Routes.contentPolicy,
+          name: Routes.nContentPolicy,
+          builder: (context, state) =>
+              const PolicyTermsScreen(type: PolicyType.content),
         ),
         GoRoute(
           path: Routes.bookingPolicies,
@@ -455,8 +547,9 @@ class AppRouter {
     if (isLanguage) {
       return null;
     }
-    final user = _auth.currentUser;
-    if (user == null) {
+    final hasValidBackendSession = await _sessionService.hasValidToken();
+    final userId = await _sessionService.getUserId();
+    if (!hasValidBackendSession || userId == null || userId.isEmpty) {
       await _clearPersistedProfileStatus();
       _cachedProfileUserId = null;
       _cachedProfileCompleted = null;
@@ -475,7 +568,7 @@ class AppRouter {
       return Routes.auth;
     }
 
-    final profileStatus = await _getProfileStatus(user.uid);
+    final profileStatus = await _getProfileStatus(userId);
     final profileCompleted = profileStatus.completed;
     final role = profileStatus.role.trim();
     final hasRole = role.isNotEmpty;
@@ -629,8 +722,10 @@ class AppRouter {
   static void goToSignUpDetails(BuildContext context) =>
       context.push(Routes.signUpDetails);
   static void goToRole(BuildContext context) => context.go(Routes.role);
-  static void goToProfileSetup(BuildContext context) =>
-      context.go(Routes.basicInfo);
+  static void goToProfileSetup(BuildContext context) {
+    ScaffoldMessenger.maybeOf(context)?.clearSnackBars();
+    context.go(Routes.basicInfo);
+  }
 
   static void goToBookings(BuildContext context) =>
       context.push(Routes.bookings);
@@ -640,8 +735,13 @@ class AppRouter {
   static void goToCreateRequest(BuildContext context) =>
       context.push(Routes.requestCreate);
   static void goToExplore(BuildContext context) => context.go(Routes.explore);
+  static void goToVenues(BuildContext context) => context.push(Routes.venues);
   static void goToPolicy(BuildContext context) => context.push(Routes.policy);
   static void goToTerms(BuildContext context) => context.push(Routes.terms);
+  static void goToDeleteAccountPolicy(BuildContext context) =>
+      context.push(Routes.deleteAccountPolicy);
+  static void goToContentPolicy(BuildContext context) =>
+      context.push(Routes.contentPolicy);
   static void goToBookingPolicies(BuildContext context) =>
       context.push(Routes.bookingPolicies);
   static void goToProfile(BuildContext context) => context.go(Routes.profile);
@@ -691,6 +791,35 @@ class AppRouter {
     assert(photographerId.isNotEmpty, 'photographerId is required');
     context.push(_resolvePath(Routes.photographer, {'id': photographerId}));
   }
+
+  static void goToVenueDetails(BuildContext context, String venueId) {
+    assert(venueId.isNotEmpty, 'venueId is required');
+    context.push(_resolvePath(Routes.venueDetails, {'id': venueId}));
+  }
+
+  static void goToVenueBooking(BuildContext context, String venueId) {
+    assert(venueId.isNotEmpty, 'venueId is required');
+    context.push(_resolvePath(Routes.venueBooking, {'id': venueId}));
+  }
+
+  static void goToLocationDetails(BuildContext context, String locationId) {
+    assert(locationId.isNotEmpty, 'locationId is required');
+    context.push(_resolvePath(Routes.locationDetails, {'id': locationId}));
+  }
+
+  static void goToSubscriptionPlans(BuildContext context) =>
+      context.push(Routes.subscriptionPlans);
+
+  static void goToSponsoredAd(BuildContext context) =>
+      context.push(Routes.sponsoredAd);
+
+  static void goToCampaignAnalytics(BuildContext context, String campaignId) {
+    assert(campaignId.isNotEmpty, 'campaignId is required');
+    context.push(_resolvePath(Routes.campaignAnalytics, {'id': campaignId}));
+  }
+
+  static void goToPhotographerVerification(BuildContext context) =>
+      context.push(Routes.photographerVerification);
 
   static void goToFavorites(BuildContext context) =>
       context.push(Routes.favorites);
@@ -770,20 +899,6 @@ class AppRouter {
       resolved = resolved.replaceFirst(':$key', Uri.encodeComponent(value));
     });
     return resolved;
-  }
-}
-
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.listen((_) => notifyListeners());
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
   }
 }
 

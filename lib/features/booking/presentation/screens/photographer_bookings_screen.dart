@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
@@ -16,7 +17,8 @@ class PhotographerBookingsScreen extends StatefulWidget {
       _PhotographerBookingsScreenState();
 }
 
-class _PhotographerBookingsScreenState extends State<PhotographerBookingsScreen> {
+class _PhotographerBookingsScreenState
+    extends State<PhotographerBookingsScreen> {
   bool _isLoading = true;
   bool _hasError = false;
   final List<DashboardBooking> _bookings = [];
@@ -54,7 +56,7 @@ class _PhotographerBookingsScreenState extends State<PhotographerBookingsScreen>
       setState(() => _isLoading = false);
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Failed to load photographer bookings: $e');
+        AppLogger.d('runtime', 'Failed to load photographer bookings: $e');
       }
       setState(() {
         _isLoading = false;
@@ -165,3 +167,4 @@ class _PhotographerBookingsScreenState extends State<PhotographerBookingsScreen>
     );
   }
 }
+

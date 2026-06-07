@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
@@ -11,7 +11,7 @@ class AdminReportsScreen extends StatefulWidget {
 }
 
 class _AdminReportsScreenState extends State<AdminReportsScreen> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LegacyDataStore _firestore = LegacyDataStore.instance;
   late final SecureFirestore _secure = SecureFirestore(_firestore);
 
   String _formatTimestamp(dynamic value) {
@@ -29,7 +29,9 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
     await _secure.guard(() => ref.update({'status': status}));
   }
 
-  Future<void> _deleteReport(DocumentReference<Map<String, dynamic>> ref) async {
+  Future<void> _deleteReport(
+    DocumentReference<Map<String, dynamic>> ref,
+  ) async {
     await _secure.guard(() => ref.delete());
   }
 

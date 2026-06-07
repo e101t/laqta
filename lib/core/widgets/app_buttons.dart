@@ -29,8 +29,9 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final background = color ?? scheme.primary;
-    final foreground =
-        color == null ? scheme.onPrimary : _onColorForBackground(background);
+    final foreground = color == null
+        ? scheme.onPrimary
+        : _onColorForBackground(background);
     return SizedBox(
       width: isFullWidth ? double.infinity : null,
       child: ElevatedButton(

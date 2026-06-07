@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/widgets/loading_widgets.dart';
@@ -95,7 +96,7 @@ class _PhotographerDashboardScreenState
     } catch (e) {
       // Handle error, perhaps show snackbar
       if (kDebugMode) {
-        debugPrint('Error loading dashboard data: $e');
+        AppLogger.d('runtime', 'Error loading dashboard data: $e');
       }
     }
 
@@ -116,9 +117,9 @@ class _PhotographerDashboardScreenState
         );
       }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(localizations.bookingAcceptedMessage)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.bookingAcceptedMessage)),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -143,9 +144,9 @@ class _PhotographerDashboardScreenState
         );
       }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(localizations.bookingRejectedMessage)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.bookingRejectedMessage)),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -516,3 +517,4 @@ class _BookingCard extends StatelessWidget {
     );
   }
 }
+

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
@@ -95,7 +96,7 @@ class _SearchScreenState extends State<SearchScreen>
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Search error: $e');
+        AppLogger.d('runtime', 'Search error: $e');
       }
       if (!mounted) return;
       _results.clear();
@@ -315,3 +316,4 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 }
+

@@ -1,16 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/features/disputes/data/datasources/disputes_remote_data_source.dart';
 import 'package:laqta/features/disputes/data/dtos/dispute_dto.dart';
 
 class FirestoreDisputesRemoteDataSource implements DisputesRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
 
-  FirestoreDisputesRemoteDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance);
+  FirestoreDisputesRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('disputes');
@@ -18,10 +18,7 @@ class FirestoreDisputesRemoteDataSource implements DisputesRemoteDataSource {
   @override
   Future<DisputeDto?> getDisputeByBooking(String bookingId) async {
     final snapshot = await _secure.guard(
-      () => _collection
-          .where('bookingId', isEqualTo: bookingId)
-          .limit(1)
-          .get(),
+      () => _collection.where('bookingId', isEqualTo: bookingId).limit(1).get(),
     );
     if (snapshot.docs.isEmpty) {
       return null;

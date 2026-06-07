@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/domain/result/result.dart';
@@ -48,7 +49,7 @@ class _PhotographerRequestsScreenState
       setState(() => _isLoading = false);
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Failed to load open requests: $e');
+        AppLogger.d('runtime', 'Failed to load open requests: $e');
       }
       if (!mounted) return;
       setState(() {
@@ -72,7 +73,7 @@ class _PhotographerRequestsScreenState
       return profileResult.valueOrNull?.governorate;
     } catch (error) {
       if (kDebugMode) {
-        debugPrint('Failed to resolve photographer governorate: $error');
+        AppLogger.d('runtime', 'Failed to resolve photographer governorate: $error');
       }
       return null;
     }
@@ -97,7 +98,7 @@ class _PhotographerRequestsScreenState
     }
 
     if (kDebugMode) {
-      debugPrint(
+      AppLogger.d('runtime', 
         'Open requests fallback returned failure: '
         '${result.failureOrNull?.message}',
       );
@@ -135,7 +136,10 @@ class _PhotographerRequestsScreenState
                               '${request.date} - ${request.time}\n${request.governorate}',
                             ),
                             isThreeLine: true,
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                            ),
                             onTap: () => AppRouter.goToRequestDetails(
                               context,
                               request.id,
@@ -148,3 +152,4 @@ class _PhotographerRequestsScreenState
     );
   }
 }
+

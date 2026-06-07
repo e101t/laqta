@@ -1,0 +1,82 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build_and_sign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Restore Android keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64"
+          mkdir -p android/keystore
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/laqta-release.jks
+          cat > android/key.properties <<EOF
+          storeFile=keystore/laqta-release.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - run: flutter pub get
+      - run: flutter analyze --fatal-infos
+      - run: flutter test
+
+      - name: Build production app bundle
+        run: >-
+          flutter build appbundle
+          --flavor production
+          --release
+          --obfuscate
+          --split-debug-info=build/debug-info
+          --dart-define=FLAVOR=prod
+          --dart-define=BACKEND_BASE_URL=${{ secrets.API_BASE_URL }}
+
+      - name: Build, align, and sign production APK
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: bash build_and_sign.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laqta-android-release
+          path: |
+            build/app/outputs/bundle/productionRelease/app-production-release.aab
+            build/app/outputs/flutter-apk/app-release-signed.apk
+            build/debug-info
+
+  github_release:
+    runs-on: ubuntu-latest
+    needs: build_and_sign
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: laqta-android-release
+          path: release-artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release-artifacts/**

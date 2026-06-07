@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/core/services/backend_media_service.dart';
@@ -149,7 +149,7 @@ class ChatRepositoryImpl implements ChatRepository {
     int? fileSize,
   }) async {
     try {
-      final downloadUrl = await _mediaService.uploadFile(
+      final upload = await _mediaService.uploadFileReference(
         entityType: 'chat',
         entityId: chatId,
         filePath: filePath,
@@ -157,16 +157,15 @@ class ChatRepositoryImpl implements ChatRepository {
         fileName: fileName,
       );
 
-      final content = type == 'document'
-          ? '$downloadUrl|${fileName ?? 'Document'}|${fileSize ?? 0}'
-          : downloadUrl;
-
       final message = ChatMessage(
         id: messageId,
         chatId: chatId,
         senderId: senderId,
         type: type,
-        content: content,
+        content: type == 'text' ? fileName ?? '' : '',
+        mediaId: upload.mediaId,
+        fileName: fileName,
+        fileSize: fileSize,
         createdAt: DateTime.now(),
       );
 
@@ -176,7 +175,8 @@ class ChatRepositoryImpl implements ChatRepository {
         timestamp: message.createdAt,
         lastMessage: _buildPreviewContentFromMessage(
           type: type,
-          content: content,
+          content: message.content,
+          fileName: fileName,
         ),
         lastMessageType: type,
         senderId: senderId,
@@ -304,6 +304,22 @@ class ChatRepositoryImpl implements ChatRepository {
     }
   }
 
+  @override
+  Future<Result<ChatThread>> getOrCreateDirectChat({
+    required String participantId,
+  }) async {
+    try {
+      final chatDto = await _remoteDataSource.createDirectChat(
+        participantId: participantId,
+      );
+      return Result.success(ChatMapper.toThread(chatDto));
+    } catch (e) {
+      return Result.failure(
+        Failure(message: 'Failed to open chat', code: e.toString()),
+      );
+    }
+  }
+
   static String _readString(dynamic value) {
     if (value is String) {
       return value;
@@ -357,22 +373,35 @@ class ChatRepositoryImpl implements ChatRepository {
     final userData = results[0] as Map<String, dynamic>?;
     final fallbackLastMessage = results[1] as ChatMessageDto?;
 
-    final userName = _readString(userData?['name']);
-    final userImage = _readString(userData?['photoUrl']);
-    final lastSeen = _readDateTime(userData?['lastSeen']);
+    final userName = chat.otherUserName.isNotEmpty
+        ? chat.otherUserName
+        : _readString(userData?['name']);
+    final userImage = chat.otherUserImage.isNotEmpty
+        ? chat.otherUserImage
+        : _readString(userData?['photoUrl']);
+    final lastSeen =
+        chat.otherUserLastSeen ?? _readDateTime(userData?['lastSeen']);
     final isOnline =
         lastSeen != null && DateTime.now().difference(lastSeen).inMinutes < 5;
 
     final lastMessage = chat.lastMessage.isNotEmpty
         ? chat.lastMessage
-        : (fallbackLastMessage?.content ?? '');
+        : fallbackLastMessage == null
+        ? ''
+        : _buildPreviewContentFromMessage(
+            type: fallbackLastMessage.type,
+            content: fallbackLastMessage.content,
+            fileName: fallbackLastMessage.fileName,
+          );
     final lastMessageSenderId = chat.lastMessageSenderId.isNotEmpty
         ? chat.lastMessageSenderId
         : (fallbackLastMessage?.senderId ?? '');
     final timestamp = fallbackLastMessage?.createdAt ?? chat.lastMessageAt;
 
-    var unreadCount = 0;
-    if (lastMessage.isNotEmpty && lastMessageSenderId != userId) {
+    var unreadCount = chat.unreadCount;
+    if (unreadCount == 0 &&
+        lastMessage.isNotEmpty &&
+        lastMessageSenderId != userId) {
       final otherMessages = await _remoteDataSource.getMessagesFromOtherUser(
         chat.id,
         userId,
@@ -397,6 +426,7 @@ class ChatRepositoryImpl implements ChatRepository {
   static String _buildPreviewContentFromMessage({
     required String type,
     required String content,
+    String? fileName,
   }) {
     switch (type) {
       case 'image':
@@ -404,7 +434,9 @@ class ChatRepositoryImpl implements ChatRepository {
       case 'video':
         return 'Video';
       case 'document':
-        return _extractDocumentName(content);
+        return fileName?.trim().isNotEmpty == true
+            ? fileName!.trim()
+            : _extractDocumentName(content);
       default:
         return content.trim();
     }

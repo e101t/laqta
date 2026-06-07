@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+import 'package:laqta/core/services/backend_config.dart';
 
 class UserProfileDto {
   final String id;
@@ -7,6 +8,7 @@ class UserProfileDto {
   final String? username;
   final String? email;
   final String? phone;
+  final String? photoMediaId;
   final String? photoUrl;
   final String governorate;
   final String? gender;
@@ -29,6 +31,7 @@ class UserProfileDto {
     this.username,
     this.email,
     this.phone,
+    this.photoMediaId,
     this.photoUrl,
     required this.governorate,
     this.gender,
@@ -49,14 +52,19 @@ class UserProfileDto {
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final data = doc.data() ?? <String, dynamic>{};
+    return UserProfileDto.fromMap(doc.id, data);
+  }
+
+  factory UserProfileDto.fromMap(String id, Map<String, dynamic> data) {
     return UserProfileDto(
-      id: doc.id,
+      id: id,
       role: _readString(data, 'role', fallback: 'customer'),
       name: _readString(data, 'name'),
       username: _readNullableString(data, 'username'),
       email: _readNullableString(data, 'email'),
       phone: _readNullableString(data, 'phone'),
-      photoUrl: _readNullableString(data, 'photoUrl'),
+      photoMediaId: _readNullableString(data, 'photoMediaId'),
+      photoUrl: _resolvePhotoUrl(data),
       governorate: _readString(data, 'governorate'),
       gender: _readNullableString(data, 'gender'),
       age: _readNullableInt(data, 'age'),
@@ -91,6 +99,15 @@ class UserProfileDto {
       return value;
     }
     return null;
+  }
+
+  static String? _resolvePhotoUrl(Map<String, dynamic> data) {
+    final mediaId = _readNullableString(data, 'photoMediaId');
+    if (mediaId != null && mediaId.isNotEmpty) {
+      return BackendConfig.mediaContentUrl(mediaId);
+    }
+
+    return _readNullableString(data, 'photoUrl');
   }
 
   static int? _readNullableInt(Map<String, dynamic> data, String key) {

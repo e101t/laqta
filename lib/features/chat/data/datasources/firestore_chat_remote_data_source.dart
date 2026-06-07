@@ -1,27 +1,17 @@
-import 'dart:io';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
-import 'package:laqta/core/security/secure_storage.dart';
 import 'package:laqta/features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:laqta/features/chat/data/dtos/chat_dto.dart';
 
 class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
-  final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
-  final SecureStorage _secureStorage;
 
-  FirestoreChatRemoteDataSource({
-    FirebaseFirestore? firestore,
-    FirebaseStorage? storage,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _storage = storage ?? FirebaseStorage.instance,
-       _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-       _secureStorage = SecureStorage(storage ?? FirebaseStorage.instance);
+  FirestoreChatRemoteDataSource({LegacyDataStore? firestore})
+    : _firestore = firestore ?? LegacyDataStore.instance,
+      _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
 
   CollectionReference<Map<String, dynamic>> get _chatsCollection =>
       _firestore.collection('chats');
@@ -97,6 +87,11 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
     );
     await _secure.guard(() => docRef.set(chat.toMap()));
     return chat;
+  }
+
+  @override
+  Future<ChatDto> createDirectChat({required String participantId}) {
+    throw UnsupportedError('Direct chat creation is backend-only.');
   }
 
   @override
@@ -264,16 +259,5 @@ class FirestoreChatRemoteDataSource implements ChatRemoteDataSource {
     batch.delete(_chatsCollection.doc(chatId));
 
     await _secure.guard(() => batch.commit());
-  }
-
-  @override
-  Future<String> uploadFile({
-    required String storagePath,
-    required String filePath,
-  }) async {
-    final storageRef = _storage.ref().child(storagePath);
-    final file = File(filePath);
-    await _secureStorage.guard(() => storageRef.putFile(file));
-    return _secureStorage.guard(() => storageRef.getDownloadURL());
   }
 }

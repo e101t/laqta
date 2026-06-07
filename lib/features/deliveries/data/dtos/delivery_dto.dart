@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+import 'package:laqta/core/services/backend_config.dart';
 
 class DeliveryDto {
   final String id;
@@ -6,6 +7,9 @@ class DeliveryDto {
   final String photographerId;
   final String customerId;
   final String status;
+  final List<String> photoMediaIds;
+  final List<String> videoMediaIds;
+  final List<String> otherMediaIds;
   final List<String> photoUrls;
   final List<String> videoUrls;
   final List<String> otherUrls;
@@ -21,6 +25,9 @@ class DeliveryDto {
     required this.photographerId,
     required this.customerId,
     required this.status,
+    this.photoMediaIds = const [],
+    this.videoMediaIds = const [],
+    this.otherMediaIds = const [],
     required this.photoUrls,
     required this.videoUrls,
     required this.otherUrls,
@@ -41,9 +48,21 @@ class DeliveryDto {
       photographerId: _readString(data, 'photographerId'),
       customerId: _readString(data, 'customerId'),
       status: _readString(data, 'status', fallback: 'submitted'),
-      photoUrls: _readStringList(data['photoUrls']),
-      videoUrls: _readStringList(data['videoUrls']),
-      otherUrls: _readStringList(data['otherUrls']),
+      photoMediaIds: _readStringList(data['photoMediaIds']),
+      videoMediaIds: _readStringList(data['videoMediaIds']),
+      otherMediaIds: _readStringList(data['otherMediaIds']),
+      photoUrls: _resolveUrls(
+        _readStringList(data['photoUrls']),
+        _readStringList(data['photoMediaIds']),
+      ),
+      videoUrls: _resolveUrls(
+        _readStringList(data['videoUrls']),
+        _readStringList(data['videoMediaIds']),
+      ),
+      otherUrls: _resolveUrls(
+        _readStringList(data['otherUrls']),
+        _readStringList(data['otherMediaIds']),
+      ),
       note: _readNullableString(data, 'note'),
       revisionNote: _readNullableString(data, 'revisionNote'),
       revisionCount: _readInt(data, 'revisionCount', fallback: 0),
@@ -53,18 +72,52 @@ class DeliveryDto {
   }
 
   factory DeliveryDto.fromJson(Map<String, dynamic> json) {
+    final photoMediaIds =
+        (json['photoMediaIds'] as List<dynamic>?)
+            ?.whereType<String>()
+            .toList() ??
+        const <String>[];
+    final videoMediaIds =
+        (json['videoMediaIds'] as List<dynamic>?)
+            ?.whereType<String>()
+            .toList() ??
+        const <String>[];
+    final otherMediaIds =
+        (json['otherMediaIds'] as List<dynamic>?)
+            ?.whereType<String>()
+            .toList() ??
+        const <String>[];
+    final photoUrls = _resolveUrls(
+      (json['photoUrls'] as List<dynamic>?)?.whereType<String>().toList() ??
+          const <String>[],
+      photoMediaIds,
+    );
+    final videoUrls = _resolveUrls(
+      (json['videoUrls'] as List<dynamic>?)?.whereType<String>().toList() ??
+          const <String>[],
+      videoMediaIds,
+    );
+    final otherUrls = _resolveUrls(
+      (json['otherUrls'] as List<dynamic>?)?.whereType<String>().toList() ??
+          const <String>[],
+      otherMediaIds,
+    );
+
     return DeliveryDto(
       id: json['id'] as String,
       bookingId: json['bookingId'] as String,
       photographerId: json['photographerId'] as String,
       customerId: json['customerId'] as String,
       status: json['status'] as String,
-      photoUrls: (json['photoUrls'] as List<dynamic>).cast<String>(),
-      videoUrls: (json['videoUrls'] as List<dynamic>).cast<String>(),
-      otherUrls: (json['otherUrls'] as List<dynamic>).cast<String>(),
+      photoMediaIds: photoMediaIds,
+      videoMediaIds: videoMediaIds,
+      otherMediaIds: otherMediaIds,
+      photoUrls: photoUrls,
+      videoUrls: videoUrls,
+      otherUrls: otherUrls,
       note: json['note'] as String?,
       revisionNote: json['revisionNote'] as String?,
-      revisionCount: json['revisionCount'] as int,
+      revisionCount: (json['revisionCount'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
@@ -76,9 +129,12 @@ class DeliveryDto {
       'photographerId': photographerId,
       'customerId': customerId,
       'status': status,
-      'photoUrls': photoUrls,
-      'videoUrls': videoUrls,
-      'otherUrls': otherUrls,
+      'photoMediaIds': photoMediaIds,
+      'videoMediaIds': videoMediaIds,
+      'otherMediaIds': otherMediaIds,
+      if (photoMediaIds.isEmpty) 'photoUrls': photoUrls,
+      if (videoMediaIds.isEmpty) 'videoUrls': videoUrls,
+      if (otherMediaIds.isEmpty) 'otherUrls': otherUrls,
       'note': note,
       'revisionNote': revisionNote,
       'revisionCount': revisionCount,
@@ -94,6 +150,9 @@ class DeliveryDto {
       'photographerId': photographerId,
       'customerId': customerId,
       'status': status,
+      'photoMediaIds': photoMediaIds,
+      'videoMediaIds': videoMediaIds,
+      'otherMediaIds': otherMediaIds,
       'photoUrls': photoUrls,
       'videoUrls': videoUrls,
       'otherUrls': otherUrls,
@@ -102,6 +161,19 @@ class DeliveryDto {
       'revisionCount': revisionCount,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toBackendJson() {
+    return {
+      'bookingId': bookingId,
+      'status': status,
+      'photoMediaIds': photoMediaIds,
+      'videoMediaIds': videoMediaIds,
+      'otherMediaIds': otherMediaIds,
+      'note': note,
+      'revisionNote': revisionNote,
+      'revisionCount': revisionCount,
     };
   }
 
@@ -148,6 +220,16 @@ class DeliveryDto {
       return value.whereType<String>().toList();
     }
     return <String>[];
+  }
+
+  static List<String> _resolveUrls(List<String> urls, List<String> mediaIds) {
+    if (urls.isNotEmpty) {
+      return urls;
+    }
+    if (mediaIds.isEmpty) {
+      return const [];
+    }
+    return mediaIds.map(BackendConfig.mediaApiUrl).toList();
   }
 
   static DateTime _readDateTime(dynamic value) {

@@ -1,7 +1,5 @@
-import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/features/deliveries/data/datasources/api_deliveries_remote_data_source.dart';
 import 'package:laqta/features/deliveries/data/datasources/deliveries_remote_data_source.dart';
-import 'package:laqta/features/deliveries/data/datasources/firestore_deliveries_remote_data_source.dart';
 import 'package:laqta/features/deliveries/data/repositories/deliveries_repository_impl.dart';
 import 'package:laqta/features/deliveries/domain/repositories/deliveries_repository.dart';
 import 'package:laqta/features/deliveries/domain/usecases/get_delivery_by_booking.dart';
@@ -13,9 +11,10 @@ class DeliveriesDependencies {
   static DeliveriesRepository? _repository;
 
   static DeliveriesRemoteDataSource get _remote =>
-      _remoteDataSource ??= (BackendConfig.useBackendDeliveries
-      ? ApiDeliveriesRemoteDataSource()
-      : FirestoreDeliveriesRemoteDataSource());
+      _remoteDataSource ??= _buildRemote();
+
+  static DeliveriesRemoteDataSource _buildRemote() =>
+      ApiDeliveriesRemoteDataSource();
 
   static DeliveriesRepository get _resolvedRepository =>
       _repository ??= DeliveriesRepositoryImpl(_remote);

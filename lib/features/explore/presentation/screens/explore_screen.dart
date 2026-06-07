@@ -1,32 +1,18 @@
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:uuid/uuid.dart';
+import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
-import 'package:laqta/core/constants/app_constants.dart';
-import 'package:laqta/core/localization/app_localizations.dart';
-import 'package:laqta/core/services/follow_service.dart';
-import 'package:laqta/core/services/report_service.dart';
-import 'package:laqta/core/utils/runtime_env.dart';
-import 'package:laqta/core/widgets/empty_states.dart';
-import 'package:laqta/core/widgets/loading_widgets.dart';
-import 'package:laqta/core/widgets/post_card.dart';
-import 'package:laqta/core/widgets/photographer_card.dart';
-import 'package:laqta/features/auth/auth_dependencies.dart';
-import 'package:laqta/features/profile/profile_dependencies.dart';
-import 'package:laqta/features/reels/domain/entities/comment_model.dart';
-import 'package:laqta/features/reels/domain/entities/reel_model.dart';
-import 'package:laqta/features/reels/reels_dependencies.dart';
-import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
-import 'package:laqta/features/search/domain/entities/search_result_photographer.dart';
-import 'package:laqta/features/search/search_dependencies.dart';
+import 'package:laqta/core/constants/marketplace_assets.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
+import 'package:laqta/core/widgets/laqta_async_widgets.dart';
+import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
+import 'package:laqta/features/marketplace/marketplace_dependencies.dart';
+import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
+import 'package:laqta/features/marketplace/presentation/controllers/marketplace_controllers.dart';
 
 class ExploreScreen extends StatefulWidget {
-  final FollowService? followService;
-  final ReportService? reportService;
+  final dynamic followService;
+  final dynamic reportService;
   final Future<Set<String>> Function(String userId)? fetchFollowingOverride;
   final Future<void> Function({
     required String reporterId,
@@ -49,1205 +35,494 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-bool _exploreIsArabic(BuildContext context) =>
-    Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
-
-String _exploreTr(
-  BuildContext context, {
-  required String ar,
-  required String en,
-}) => _exploreIsArabic(context) ? ar : en;
-
 class _ExploreScreenState extends State<ExploreScreen> {
-  FollowService? _followService;
-  ReportService? _reportService;
-
-  String _userId = '';
-  String _userName = 'User';
-  String? _userAvatar;
-  String _userRole = AppConstants.roleCustomer;
-
-  Set<String> _followingIds = {};
-
-  bool _postsLoading = true;
-  String? _postsError;
-  List<ReelModel> _posts = [];
-
-  bool _photographersLoading = true;
-  String? _photographersError;
-  List<SearchResultPhotographer> _photographers = [];
-
-  final Set<String> _likedReels = {};
-  final Map<String, DateTime> _lastLike = {};
-
-  bool get _isCustomer => _userRole == AppConstants.roleCustomer;
-  bool get _isPhotographer => _userRole == AppConstants.rolePhotographer;
-  bool get _useDemoContent =>
-      AppConstants.enableDemoContent && kDebugMode && !isFlutterTestEnv();
-
-  String _tr({required String ar, required String en}) =>
-      _exploreTr(context, ar: ar, en: en);
-
   @override
-  void initState() {
-    super.initState();
-    _followService = widget.followService;
-    _reportService = widget.reportService;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_initialize());
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  Future<void> _initialize() async {
-    await Future.wait<void>([_loadUser(), _loadPosts(), _loadPhotographers()]);
-  }
-
-  Future<void> _loadUser() async {
-    try {
-      final authResult = await AuthDependencies.getCurrentUser().call();
-      final userId = authResult.valueOrNull?.id ?? '';
-      if (userId.isEmpty) {
-        return;
-      }
-      _userId = userId;
-      final profileResult = await ProfileDependencies.getUserProfile().call(
-        userId: userId,
-      );
-      final profile = profileResult.valueOrNull;
-      if (profile != null) {
-        _userName = profile.name;
-        _userAvatar = profile.photoUrl;
-        _userRole = profile.role;
-      }
-      if (widget.fetchFollowingOverride != null) {
-        _followingIds = await widget.fetchFollowingOverride!(userId);
-      } else {
-        final service = _followService ?? FollowService();
-        _followService = service;
-        _followingIds = await service.fetchFollowing(userId);
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Explore init error: $e');
-      }
-    } finally {
-      if (mounted) setState(() {});
-    }
-  }
-
-  Future<void> _loadPosts() async {
-    setState(() {
-      _postsLoading = true;
-      _postsError = null;
-    });
-    try {
-      final result = await ReelsDependencies.getReels().call();
-      if (!result.isSuccess) {
-        throw StateError(result.failureOrNull?.message ?? 'Failed to load');
-      }
-      if (!mounted) return;
-      setState(() {
-        final data = result.valueOrNull ?? [];
-        _posts = data.isEmpty && _useDemoContent ? _buildDemoPosts() : data;
-        _postsLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      if (_useDemoContent) {
-        setState(() {
-          _posts = _buildDemoPosts();
-          _postsLoading = false;
-          _postsError = null;
-        });
-      } else {
-        setState(() {
-          _postsLoading = false;
-          _postsError = _tr(
-            ar: '\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062a',
-            en: 'Failed to load posts',
-          );
-        });
-      }
-    }
-  }
-
-  Future<void> _loadPhotographers() async {
-    setState(() {
-      _photographersLoading = true;
-      _photographersError = null;
-    });
-    try {
-      final result = await SearchDependencies.searchPhotographers().call(
-        query: '',
-      );
-      if (!result.isSuccess) {
-        throw StateError(result.failureOrNull?.message ?? 'Failed to load');
-      }
-      final data = result.valueOrNull ?? [];
-      if (!mounted) return;
-      setState(() {
-        final list = data.isEmpty && _useDemoContent
-            ? _buildDemoPhotographers()
-            : data;
-        _photographers = list.take(12).toList();
-        _photographersLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      if (_useDemoContent) {
-        setState(() {
-          _photographers = _buildDemoPhotographers().take(12).toList();
-          _photographersLoading = false;
-          _photographersError = null;
-        });
-      } else {
-        setState(() {
-          _photographersLoading = false;
-          _photographersError = _tr(
-            ar: '\u062a\u0639\u0630\u0631 \u062a\u062d\u0645\u064a\u0644 \u0627\u0644\u0645\u0635\u0648\u0631\u064a\u0646',
-            en: 'Failed to load photographers',
-          );
-        });
-      }
-    }
-  }
-
-  List<SearchResultPhotographer> _buildDemoPhotographers() {
-    return const [
-      SearchResultPhotographer(
-        id: 'demo_ph_1',
-        name: 'مروة الحربي',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['بورتريه', 'موضة'],
-        rating: 4.8,
-        reviewCount: 124,
-        startingPrice: 120000,
-        governorate: 'بغداد',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_2',
-        name: 'سيف الكعبي',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['مناسبات', 'زفاف'],
-        rating: 4.6,
-        reviewCount: 89,
-        startingPrice: 150000,
-        governorate: 'البصرة',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_3',
-        name: 'نور الهادي',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['منتجات', 'تجاري'],
-        rating: 4.9,
-        reviewCount: 156,
-        startingPrice: 90000,
-        governorate: 'أربيل',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_4',
-        name: 'رنيم البغدادي',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['جلسات عائلية', 'أسلوب طبيعي'],
-        rating: 4.7,
-        reviewCount: 72,
-        startingPrice: 105000,
-        governorate: 'كربلاء',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_5',
-        name: 'عمر السعدي',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['طعام', 'إعلاني'],
-        rating: 4.5,
-        reviewCount: 58,
-        startingPrice: 98000,
-        governorate: 'النجف',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_6',
-        name: 'زهراء سالم',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['أطفال', 'مواليد'],
-        rating: 4.8,
-        reviewCount: 143,
-        startingPrice: 115000,
-        governorate: 'نينوى',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_7',
-        name: 'علي شاكر',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['معماري', 'عقارات'],
-        rating: 4.6,
-        reviewCount: 81,
-        startingPrice: 130000,
-        governorate: 'السليمانية',
-      ),
-      SearchResultPhotographer(
-        id: 'demo_ph_8',
-        name: 'هدى جابر',
-        image: 'assets/images/placeholder.jpg',
-        specialties: ['أزياء', 'تحريري'],
-        rating: 4.9,
-        reviewCount: 167,
-        startingPrice: 160000,
-        governorate: 'بابل',
-      ),
-    ];
-  }
-
-  List<ReelModel> _buildDemoPosts() {
-    final now = DateTime.now();
-    return [
-      ReelModel(
-        reelId: 'demo_reel_1',
-        photographerId: 'demo_ph_1',
-        photographerName: 'مروة الحربي',
-        photographerPhotoUrl: 'assets/images/placeholder.jpg',
-        videoUrl: 'assets/images/hero_auth.png',
-        thumbnailUrl: 'assets/images/hero_auth.png',
-        caption: 'إضاءة دافئة ولقطة قريبة تُبرز التفاصيل.',
-        tags: const ['portrait', 'golden'],
-        views: 1240,
-        likes: 320,
-        comments: 28,
-        shares: 12,
-        createdAt: now.subtract(const Duration(days: 1)),
-        isVerified: true,
-      ),
-      ReelModel(
-        reelId: 'demo_reel_2',
-        photographerId: 'demo_ph_2',
-        photographerName: 'سيف الكعبي',
-        photographerPhotoUrl: 'assets/images/placeholder.jpg',
-        videoUrl: 'assets/images/hero_role.png',
-        thumbnailUrl: 'assets/images/hero_role.png',
-        caption: 'مناسبات بأسلوب سينمائي متوازن.',
-        tags: const ['event', 'cinematic'],
-        views: 980,
-        likes: 210,
-        comments: 16,
-        shares: 7,
-        createdAt: now.subtract(const Duration(days: 2)),
-      ),
-      ReelModel(
-        reelId: 'demo_reel_3',
-        photographerId: 'demo_ph_3',
-        photographerName: 'نور الهادي',
-        photographerPhotoUrl: 'assets/images/placeholder.jpg',
-        videoUrl: 'assets/images/hero_welcome.png',
-        thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'منتجات بخلفية نظيفة ولمسة فاخرة.',
-        tags: const ['product', 'premium'],
-        views: 1560,
-        likes: 402,
-        comments: 35,
-        shares: 19,
-        createdAt: now.subtract(const Duration(hours: 20)),
-      ),
-      ReelModel(
-        reelId: 'demo_reel_4',
-        photographerId: 'demo_ph_4',
-        photographerName: 'رنيم البغدادي',
-        photographerPhotoUrl: 'assets/images/placeholder.jpg',
-        videoUrl: 'assets/images/hero_auth.png',
-        thumbnailUrl: 'assets/images/hero_auth.png',
-        caption: 'جلسة عائلية بدفء ألوان هادئ.',
-        tags: const ['family', 'warm'],
-        views: 820,
-        likes: 188,
-        comments: 14,
-        shares: 5,
-        createdAt: now.subtract(const Duration(hours: 30)),
-      ),
-      ReelModel(
-        reelId: 'demo_reel_5',
-        photographerId: 'demo_ph_5',
-        photographerName: 'عمر السعدي',
-        photographerPhotoUrl: 'assets/images/placeholder.jpg',
-        videoUrl: 'assets/images/hero_role.png',
-        thumbnailUrl: 'assets/images/hero_role.png',
-        caption: 'تصوير طعام بتباين لطيف وتفاصيل واضحة.',
-        tags: const ['food', 'studio'],
-        views: 1340,
-        likes: 276,
-        comments: 22,
-        shares: 11,
-        createdAt: now.subtract(const Duration(hours: 12)),
-      ),
-      ReelModel(
-        reelId: 'demo_reel_6',
-        photographerId: 'demo_ph_6',
-        photographerName: 'زهراء سالم',
-        photographerPhotoUrl: 'assets/images/placeholder.jpg',
-        videoUrl: 'assets/images/hero_welcome.png',
-        thumbnailUrl: 'assets/images/hero_welcome.png',
-        caption: 'لقطات أطفال طبيعية بإضاءة لطيفة.',
-        tags: const ['kids', 'soft'],
-        views: 1120,
-        likes: 310,
-        comments: 19,
-        shares: 9,
-        createdAt: now.subtract(const Duration(hours: 8)),
-      ),
-    ];
-  }
-
-  Future<void> _toggleFollow(String photographerId) async {
-    if (_userId.isEmpty || photographerId.isEmpty) return;
-    final wasFollowing = _followingIds.contains(photographerId);
-    setState(() {
-      if (wasFollowing) {
-        _followingIds.remove(photographerId);
-      } else {
-        _followingIds.add(photographerId);
-      }
-    });
-
-    try {
-      final service = _followService ?? FollowService();
-      _followService = service;
-      await service.setFollowStatus(
-        followerId: _userId,
-        targetId: photographerId,
-        follow: !wasFollowing,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        if (wasFollowing) {
-          _followingIds.add(photographerId);
-        } else {
-          _followingIds.remove(photographerId);
-        }
-      });
-      _showSnackBar('تعذر تحديث المتابعة');
-    }
-  }
-
-  Future<void> _toggleLike(ReelModel reel) async {
-    if (_userId.isEmpty) return;
-    final now = DateTime.now();
-    final last = _lastLike[reel.reelId];
-    if (last != null && now.difference(last).inSeconds < 2) {
-      return;
-    }
-    _lastLike[reel.reelId] = now;
-
-    final alreadyLiked = _likedReels.contains(reel.reelId);
-    setState(() {
-      if (alreadyLiked) {
-        _likedReels.remove(reel.reelId);
-      } else {
-        _likedReels.add(reel.reelId);
-      }
-      _posts = _posts
-          .map(
-            (item) => item.reelId == reel.reelId
-                ? item.copyWith(likes: item.likes + (alreadyLiked ? -1 : 1))
-                : item,
-          )
-          .toList();
-    });
-
-    final result = await ReelsDependencies.updateReelLikes().call(
-      reelId: reel.reelId,
-      delta: alreadyLiked ? -1 : 1,
-    );
-    if (!result.isSuccess) {
-      if (!mounted) return;
-      setState(() {
-        if (alreadyLiked) {
-          _likedReels.add(reel.reelId);
-        } else {
-          _likedReels.remove(reel.reelId);
-        }
-        _posts = _posts
-            .map(
-              (item) => item.reelId == reel.reelId
-                  ? item.copyWith(likes: item.likes + (alreadyLiked ? 1 : -1))
-                  : item,
-            )
-            .toList();
-      });
-      _showSnackBar('تعذر تحديث الإعجاب');
-    }
-  }
-
-  Future<void> _openComments(ReelModel reel) async {
-    if (_userId.isEmpty) {
-      _showSnackBar('يجب تسجيل الدخول أولاً');
-      return;
-    }
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => _CommentsSheet(
-        reel: reel,
-        userId: _userId,
-        userName: _userName,
-        userAvatarUrl: _userAvatar,
-        onCommentAdded: () {
-          setState(() {
-            _posts = _posts
-                .map(
-                  (item) => item.reelId == reel.reelId
-                      ? item.copyWith(comments: item.comments + 1)
-                      : item,
-                )
-                .toList();
-          });
-        },
-      ),
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) =>
+          ExploreMarketplaceController(MarketplaceDependencies.repository)
+            ..load(),
+      child: const _ExploreMarketplaceView(),
     );
   }
+}
 
-  void _openCreateRequestFromPost(ReelModel reel) {
-    if (!_isCustomer) return;
-    final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateRequestScreen(
-          prefillNotes: 'مرجع من منشور المصور ${reel.photographerName}',
-          prefillReferenceImages: imageUrl.isNotEmpty ? [imageUrl] : const [],
-          prefillSelectedPhotographerId: reel.photographerId,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _shareReel(ReelModel reel) async {
-    final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
-    final buffer = StringBuffer()
-      ..writeln('Laqta')
-      ..writeln(reel.photographerName)
-      ..writeln(reel.caption);
-    if (imageUrl.isNotEmpty) {
-      buffer.writeln(imageUrl);
-    }
-    await SharePlus.instance.share(ShareParams(text: buffer.toString().trim()));
-  }
-
-  Future<void> _reportContent({
-    required String targetId,
-    required String targetType,
-    required String targetOwnerId,
-  }) async {
-    if (_userId.isEmpty) return;
-    final isArabic =
-        Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
-    final reasons = isArabic
-        ? AppConstants.reportReasonsAr
-        : AppConstants.reportReasonsEn;
-
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            const SizedBox(height: 8),
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...reasons.map(
-              (reason) => ListTile(
-                title: Text(reason),
-                onTap: () => Navigator.of(context).pop(reason),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-
-    if (selected == null || selected.isEmpty) return;
-
-    try {
-      if (widget.submitReportOverride != null) {
-        await widget.submitReportOverride!(
-          reporterId: _userId,
-          targetId: targetId,
-          targetType: targetType,
-          targetOwnerId: targetOwnerId,
-          reason: selected,
-        );
-      } else {
-        final service = _reportService ?? ReportService();
-        _reportService = service;
-        await service.submitReport(
-          reporterId: _userId,
-          targetId: targetId,
-          targetType: targetType,
-          targetOwnerId: targetOwnerId,
-          reason: selected,
-        );
-      }
-      _showSnackBar('تم إرسال البلاغ');
-    } catch (_) {
-      _showSnackBar('تعذر إرسال البلاغ');
-    }
-  }
-
-  void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
+class _ExploreMarketplaceView extends StatelessWidget {
+  const _ExploreMarketplaceView();
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+    final controller = context.watch<ExploreMarketplaceController>();
+    final data = controller.data;
+    final featuredVenues = data?.featuredVenues ?? const <MarketplaceVenue>[];
+    final nearbyPlaces = data?.nearbyPlaces ?? const <MarketplaceVenue>[];
+    final recommendedCreators =
+        data?.recommendedCreators ?? const <MarketplacePhotographerSummary>[];
+    final hasAnyResults =
+        featuredVenues.isNotEmpty ||
+        nearbyPlaces.isNotEmpty ||
+        recommendedCreators.isNotEmpty ||
+        (data?.trendingPhotographers.isNotEmpty ?? false) ||
+        (data?.trendingReels.isNotEmpty ?? false);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(localizations.explore),
-        actions: [
-          if (_isPhotographer)
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () => AppRouter.goToCreatePost(context),
-            ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadPhotographers();
-          await _loadPosts();
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (_isPhotographer) _buildCreateSection(),
-            const SizedBox(height: 24),
-            _buildPhotographersSection(),
-            const SizedBox(height: 24),
-            _buildPostsSection(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateSection() {
-    final localizations = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _tr(ar: '\u0625\u0646\u0634\u0627\u0621', en: 'Create'),
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => AppRouter.goToCreatePost(context),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: Text(localizations.createPost),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () => AppRouter.goToCreateStory(context),
-                icon: const Icon(Icons.bolt_outlined),
-                label: Text(localizations.createStory),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-
-  Widget _buildPhotographersSection() {
-    if (_photographersLoading) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _tr(
-              ar: '\u0627\u0644\u0645\u0635\u0648\u0631\u0648\u0646',
-              en: 'Photographers',
-            ),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          const LoadingIndicator(),
-        ],
-      );
-    }
-
-    if (_photographersError != null) {
-      return EmptyStates.error(
-        message: _photographersError,
-        onRetry: _loadPhotographers,
-      );
-    }
-
-    if (_photographers.isEmpty) {
-      return EmptyState(
-        icon: Icons.photo_camera_outlined,
-        title: _tr(
-          ar: '\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0635\u0648\u0631\u0648\u0646 \u0627\u0644\u0622\u0646',
-          en: 'No photographers found',
-        ),
-        message: _tr(
-          ar: '\u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649 \u0644\u0627\u062d\u0642\u064b\u0627',
-          en: 'Try again later',
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _tr(
-            ar: '\u0627\u0644\u0645\u0635\u0648\u0631\u0648\u0646',
-            en: 'Photographers',
-          ),
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        ..._photographers.map((photographer) {
-          final isFollowing = _followingIds.contains(photographer.id);
-          final canFollow = photographer.id != _userId;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              children: [
-                PhotographerCard(
-                  name: photographer.name,
-                  location: photographer.governorate,
-                  rating: photographer.rating,
-                  price: photographer.startingPrice.toString(),
-                  avatarUrl: photographer.image.isNotEmpty
-                      ? photographer.image
-                      : null,
-                  onTap: () => AppRouter.goToPhotographerProfile(
-                    context,
-                    photographer.id,
+      backgroundColor: const Color(0xFF0E1014),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: controller.load,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+            children: [
+              Row(
+                textDirection: TextDirection.ltr,
+                children: [
+                  const LaqtaHeaderBackButton(),
+                  const Spacer(),
+                  Text(
+                    'اكتشف',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
+                  const Spacer(),
+                  const SizedBox(width: 36),
+                ],
+              ),
+              const SizedBox(height: 14),
+              LaqtaLuxurySearchBar(
+                hint: 'ابحث عن مصور، قاعة، مكان...',
+                onTap: () => AppRouter.goToSearch(context),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                textDirection: TextDirection.ltr,
+                children: [
+                  Expanded(
+                    child: _CategoryCard(
+                      title: 'المصورون',
+                      icon: Icons.camera_alt_outlined,
+                      onTap: () => AppRouter.goToExplore(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _CategoryCard(
+                      title: 'القاعات',
+                      icon: Icons.location_city_outlined,
+                      onTap: () => AppRouter.goToVenues(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _CategoryCard(
+                      title: 'أماكن التصوير',
+                      icon: Icons.landscape_outlined,
+                      onTap: () {
+                        final first = nearbyPlaces.firstOrNull;
+                        if (first != null) {
+                          AppRouter.goToLocationDetails(context, first.id);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              if (controller.isLoading && data == null)
+                const LaqtaSkeletonBox(
+                  height: 230,
+                  borderRadius: BorderRadius.all(Radius.circular(24)),
+                )
+              else if (controller.error != null && data == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: _ExploreStateMessage(message: controller.error!),
+                )
+              else if (!hasAnyResults)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: _ExploreStateMessage(
+                    message: 'لا توجد نتائج حالياً',
+                    subtitle: 'جرّب تحديث الصفحة أو البحث بكلمة مختلفة',
+                  ),
+                )
+              else if (featuredVenues.isNotEmpty) ...[
+                LaqtaSectionHeader(
+                  title: 'القاعات المميزة',
+                  action: 'عرض الكل',
+                  onAction: () => AppRouter.goToVenues(context),
                 ),
-                if (canFollow)
-                  Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: TextButton(
-                      onPressed: () => _toggleFollow(photographer.id),
-                      child: Text(
-                        isFollowing
-                            ? _tr(
-                                ar: '\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629',
-                                en: 'Unfollow',
-                              )
-                            : _tr(
-                                ar: '\u0645\u062a\u0627\u0628\u0639\u0629',
-                                en: 'Follow',
-                              ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 232,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: ListView.separated(
+                      key: const ValueKey('featured-venues-scroll'),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: featuredVenues.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) => SizedBox(
+                        width: 300,
+                        child: _FeaturedVenueCard(venue: featuredVenues[index]),
                       ),
                     ),
                   ),
+                ),
               ],
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildPostsSection() {
-    if (_postsLoading) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _tr(
-              ar: '\u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062a',
-              en: 'Posts',
-            ),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          const LoadingIndicator(),
-        ],
-      );
-    }
-
-    if (_postsError != null) {
-      return EmptyStates.error(message: _postsError, onRetry: _loadPosts);
-    }
-
-    if (_posts.isEmpty) {
-      return EmptyState(
-        icon: Icons.photo_library_outlined,
-        title: _tr(
-          ar: '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u0634\u0648\u0631\u0627\u062a \u0628\u0639\u062f',
-          en: 'No posts yet',
-        ),
-        message: _tr(
-          ar: '\u062a\u0627\u0628\u0639 \u0627\u0644\u0645\u0635\u0648\u0631\u064a\u0646 \u0644\u062a\u0638\u0647\u0631 \u0645\u0646\u0634\u0648\u0631\u0627\u062a\u0647\u0645 \u0647\u0646\u0627.',
-          en: 'Follow photographers to see posts here.',
-        ),
-      );
-    }
-
-    final followed = _posts
-        .where((p) => _followingIds.contains(p.photographerId))
-        .toList();
-    final suggested = _posts
-        .where((p) => !_followingIds.contains(p.photographerId))
-        .toList();
-
-    final sections = <_PostSection>[
-      if (followed.isNotEmpty)
-        _PostSection(
-          _tr(
-            ar: '\u0623\u062a\u0627\u0628\u0639\u0647\u0645',
-            en: 'Following',
-          ),
-          followed,
-        ),
-      if (suggested.isNotEmpty)
-        _PostSection(
-          _tr(ar: '\u0645\u0642\u062a\u0631\u062d', en: 'Suggested'),
-          suggested,
-        ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _tr(
-            ar: '\u0627\u0644\u0645\u0646\u0634\u0648\u0631\u0627\u062a',
-            en: 'Posts',
-          ),
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        ...sections.map(
-          (section) => Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (sections.length > 1) ...[
-                Text(
-                  section.title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+              const SizedBox(height: 24),
+              const LaqtaSectionHeader(
+                title: 'أماكن تصوير مميزة',
+                action: 'عرض الكل',
+              ),
+              const SizedBox(height: 12),
+              if (controller.isLoading && data == null)
+                SizedBox(
+                  height: 192,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) => const LaqtaSkeletonBox(
+                      width: 178,
+                      height: 192,
+                      borderRadius: BorderRadius.all(Radius.circular(22)),
+                    ),
+                  ),
+                )
+              else if (nearbyPlaces.isEmpty && hasAnyResults)
+                const _ExploreStateMessage(
+                  message: 'لا توجد أماكن تصوير حالياً',
+                )
+              else
+                SizedBox(
+                  height: 192,
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: ListView.separated(
+                      key: const ValueKey('featured-locations-scroll'),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: nearbyPlaces.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        final location = nearbyPlaces[index];
+                        return InkWell(
+                          onTap: () => AppRouter.goToLocationDetails(
+                            context,
+                            location.id,
+                          ),
+                          borderRadius: BorderRadius.circular(22),
+                          child: SizedBox(
+                            width: 146,
+                            child: LaqtaLuxurySurface(
+                              padding: const EdgeInsets.all(10),
+                              radius: 22,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: LaqtaRemoteImage(
+                                      imageUrl: location.coverUrl,
+                                      fallbackAssetPath:
+                                          MarketplaceAssets.heroLocation,
+                                      height: 92,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    location.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        color: LaqtaColors.accent,
+                                        size: 14,
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Expanded(
+                                        child: Text(
+                                          location.city,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(color: Colors.white60),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              if (recommendedCreators.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                const LaqtaSectionHeader(
+                  title: 'المبدعون المقترحون',
+                  action: 'عرض الكل',
                 ),
                 const SizedBox(height: 12),
-              ],
-              ...section.items.map(
-                (reel) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _ExplorePostCard(
-                    reel: reel,
-                    isCustomer: _isCustomer,
-                    isLiked: _likedReels.contains(reel.reelId),
-                    onLike: () => _toggleLike(reel),
-                    onComment: () => _openComments(reel),
-                    onCreateRequest: () => _openCreateRequestFromPost(reel),
-                    onViewPhotographer: () => AppRouter.goToPhotographerProfile(
-                      context,
-                      reel.photographerId,
+                ...recommendedCreators.map(
+                  (creator) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
+                      onTap: () => AppRouter.goToPhotographerProfile(
+                        context,
+                        creator.id,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      child: LaqtaLuxurySurface(
+                        padding: const EdgeInsets.all(12),
+                        radius: 20,
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: const Color(0xFF1C1E23),
+                              backgroundImage: const AssetImage(
+                                MarketplaceAssets.avatar,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    creator.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    creator.governorate ?? 'العراق',
+                                    style: const TextStyle(
+                                      color: Colors.white60,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: LaqtaColors.accent,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    onShare: () => _shareReel(reel),
-                    onReport: () => _reportContent(
-                      targetId: reel.reelId,
-                      targetType: 'reel',
-                      targetOwnerId: reel.photographerId,
-                    ),
-                    onFollow: () => _toggleFollow(reel.photographerId),
-                    isFollowing: _followingIds.contains(reel.photographerId),
-                    canFollow: reel.photographerId != _userId,
                   ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _CategoryCard({
+    required this.title,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 96,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF17191F), Color(0xFF13151A)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF2A2D33)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: LaqtaColors.accent),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeaturedVenueCard extends StatelessWidget {
+  final MarketplaceVenue venue;
+
+  const _FeaturedVenueCard({required this.venue});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => AppRouter.goToVenueDetails(context, venue.id),
+      borderRadius: BorderRadius.circular(24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: SizedBox(
+          height: 230,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              LaqtaRemoteImage(
+                imageUrl: venue.coverUrl,
+                fallbackAssetPath: MarketplaceAssets.heroVenue,
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.62),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Align(
+                      alignment: AlignmentDirectional.topEnd,
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.favorite_border_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      venue.name,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          color: Color(0xFFD6A44A),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          venue.area == null
+                              ? venue.city
+                              : '${venue.city} - ${venue.area}',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Colors.white70),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _PostSection {
-  final String title;
-  final List<ReelModel> items;
+class _ExploreStateMessage extends StatelessWidget {
+  final String message;
+  final String? subtitle;
 
-  const _PostSection(this.title, this.items);
-}
-
-class _ExplorePostCard extends StatelessWidget {
-  final ReelModel reel;
-  final bool isCustomer;
-  final bool isLiked;
-  final bool isFollowing;
-  final bool canFollow;
-  final VoidCallback onLike;
-  final VoidCallback onComment;
-  final VoidCallback onCreateRequest;
-  final VoidCallback onViewPhotographer;
-  final VoidCallback onReport;
-  final VoidCallback onFollow;
-  final VoidCallback onShare;
-
-  const _ExplorePostCard({
-    required this.reel,
-    required this.isCustomer,
-    required this.isLiked,
-    required this.onLike,
-    required this.onComment,
-    required this.onCreateRequest,
-    required this.onViewPhotographer,
-    required this.onReport,
-    required this.onFollow,
-    required this.onShare,
-    required this.isFollowing,
-    required this.canFollow,
-  });
-
-  String _tr(BuildContext context, {required String ar, required String en}) =>
-      _exploreTr(context, ar: ar, en: en);
+  const _ExploreStateMessage({required this.message, this.subtitle});
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = reel.thumbnailUrl ?? reel.videoUrl;
     final textTheme = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        PostCard(
-          authorName: reel.photographerName,
-          authorAvatarUrl: reel.photographerPhotoUrl,
-          imageUrl: imageUrl,
-          caption: reel.caption,
-          onLike: onLike,
-          onComment: onComment,
-          onShare: onShare,
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text('${reel.likes} likes', style: textTheme.bodySmall),
-            Text('${reel.comments} comments', style: textTheme.bodySmall),
-            if (canFollow)
-              TextButton(
-                onPressed: onFollow,
-                child: Text(
-                  isFollowing
-                      ? _tr(
-                          context,
-                          ar: '\u0625\u0644\u063a\u0627\u0621 \u0627\u0644\u0645\u062a\u0627\u0628\u0639\u0629',
-                          en: 'Unfollow',
-                        )
-                      : _tr(
-                          context,
-                          ar: '\u0645\u062a\u0627\u0628\u0639\u0629',
-                          en: 'Follow',
-                        ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton(
-                    onPressed: onViewPhotographer,
-                    child: Text(
-                      _tr(
-                        context,
-                        ar: '\u0639\u0631\u0636 \u0645\u0644\u0641 \u0627\u0644\u0645\u0635\u0648\u0631',
-                        en: 'View photographer',
-                      ),
-                    ),
-                  ),
-                  if (isCustomer)
-                    ElevatedButton(
-                      onPressed: onCreateRequest,
-                      child: Text(
-                        _tr(
-                          context,
-                          ar: '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646',
-                          en: 'Request now',
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+    return Center(
+      child: Column(
+        children: [
+          Text(
+            message,
+            style: textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
             ),
-            IconButton(
-              onPressed: onReport,
-              icon: const Icon(Icons.flag_outlined),
-              tooltip: _tr(
-                context,
-                ar: '\u0628\u0644\u0627\u063a',
-                en: 'Report',
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _CommentsSheet extends StatefulWidget {
-  final ReelModel reel;
-  final String userId;
-  final String userName;
-  final String? userAvatarUrl;
-  final VoidCallback onCommentAdded;
-
-  const _CommentsSheet({
-    required this.reel,
-    required this.userId,
-    required this.userName,
-    required this.userAvatarUrl,
-    required this.onCommentAdded,
-  });
-
-  @override
-  State<_CommentsSheet> createState() => _CommentsSheetState();
-}
-
-class _CommentsSheetState extends State<_CommentsSheet> {
-  final TextEditingController _controller = TextEditingController();
-  final List<CommentModel> _comments = [];
-  bool _loading = true;
-  bool _submitting = false;
-  DateTime? _lastCommentAt;
-
-  static const List<String> _blockedWords = [
-    'رقم',
-    'واتساب',
-    'whatsapp',
-    'telegram',
-    'tel',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadComments();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadComments() async {
-    setState(() => _loading = true);
-    try {
-      final result = await ReelsDependencies.getReelComments().call(
-        reelId: widget.reel.reelId,
-      );
-      if (result.isSuccess) {
-        _comments
-          ..clear()
-          ..addAll(result.valueOrNull ?? []);
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _submitComment() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-
-    if (_containsPhone(text) || _containsUrl(text) || _containsBlocked(text)) {
-      _showSnackBar('يمنع مشاركة أرقام أو روابط أو محتوى مخالف.');
-      return;
-    }
-
-    final now = DateTime.now();
-    if (_lastCommentAt != null &&
-        now.difference(_lastCommentAt!).inSeconds < 3) {
-      _showSnackBar('الرجاء الانتظار قبل إرسال تعليق آخر.');
-      return;
-    }
-
-    setState(() => _submitting = true);
-    _lastCommentAt = now;
-
-    final comment = CommentModel(
-      commentId: const Uuid().v4(),
-      reelId: widget.reel.reelId,
-      userId: widget.userId,
-      userName: widget.userName,
-      userPhotoUrl: widget.userAvatarUrl,
-      text: text,
-      createdAt: DateTime.now(),
-    );
-
-    final result = await ReelsDependencies.addReelComment().call(
-      comment: comment,
-    );
-    if (result.isSuccess) {
-      _controller.clear();
-      setState(() => _comments.insert(0, comment));
-      widget.onCommentAdded();
-    } else {
-      _showSnackBar('تعذر إرسال التعليق.');
-    }
-
-    if (mounted) {
-      setState(() => _submitting = false);
-    }
-  }
-
-  bool _containsPhone(String text) {
-    final digits = RegExp(r'\d{7,}');
-    return digits.hasMatch(text);
-  }
-
-  bool _containsUrl(String text) {
-    final url = RegExp(r'(https?:\\/\\/|www\\.)', caseSensitive: false);
-    return url.hasMatch(text);
-  }
-
-  bool _containsBlocked(String text) {
-    final lower = text.toLowerCase();
-    return _blockedWords.any((word) => lower.contains(word));
-  }
-
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      maxChildSize: 0.95,
-      builder: (context, controller) {
-        return Column(
-          children: [
+            textAlign: TextAlign.center,
+          ),
+          if (subtitle != null) ...[
             const SizedBox(height: 8),
-            Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            const SizedBox(height: 12),
             Text(
-              'التعليقات',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      controller: controller,
-                      itemCount: _comments.length,
-                      itemBuilder: (context, index) {
-                        final comment = _comments[index];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: comment.userPhotoUrl != null
-                                ? NetworkImage(comment.userPhotoUrl!)
-                                : null,
-                            child: comment.userPhotoUrl == null
-                                ? const Icon(Icons.person_outline)
-                                : null,
-                          ),
-                          title: Text(comment.userName),
-                          subtitle: Text(comment.text),
-                        );
-                      },
-                    ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'اكتب تعليقاً...',
-                      ),
-                      minLines: 1,
-                      maxLines: 3,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: _submitting ? null : _submitComment,
-                    icon: const Icon(Icons.send),
-                  ),
-                ],
-              ),
+              subtitle!,
+              style: textTheme.bodyMedium?.copyWith(color: Colors.white60),
+              textAlign: TextAlign.center,
             ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
+}
+
+extension<T> on List<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }

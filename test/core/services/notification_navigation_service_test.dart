@@ -15,10 +15,7 @@ void main() {
     test('resolves chat notifications with encoded name', () {
       final path = NotificationNavigationService.resolveNotificationPath(
         type: 'message',
-        data: const {
-          'chatId': 'chat-42',
-          'otherUserName': 'Ali Hassan',
-        },
+        data: const {'chatId': 'chat-42', 'otherUserName': 'Ali Hassan'},
       );
 
       expect(path, '/chat/chat-42?name=Ali%20Hassan');

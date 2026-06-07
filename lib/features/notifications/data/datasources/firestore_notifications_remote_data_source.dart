@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/features/notifications/data/datasources/notifications_remote_data_source.dart';
@@ -7,17 +6,16 @@ import 'package:laqta/features/notifications/data/dtos/notification_dto.dart';
 
 class FirestoreNotificationsRemoteDataSource
     implements NotificationsRemoteDataSource {
-  final FirebaseFirestore _firestore;
+  final LegacyDataStore _firestore;
   final SecureFirestore _secure;
-  final FirebaseFunctions _functions;
+  final BackendFunctionClient _functions;
 
   FirestoreNotificationsRemoteDataSource({
-    FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
-  })
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _secure = SecureFirestore(firestore ?? FirebaseFirestore.instance),
-      _functions = functions ?? FirebaseFunctions.instance;
+    LegacyDataStore? firestore,
+    BackendFunctionClient? functions,
+  }) : _firestore = firestore ?? LegacyDataStore.instance,
+       _secure = SecureFirestore(firestore ?? LegacyDataStore.instance),
+       _functions = functions ?? BackendFunctionClient.instance;
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('notifications');

@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
 
+import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class PortfolioModel {
@@ -32,12 +33,14 @@ class PortfolioModel {
 }
 
 class PortfolioImage {
+  final String? mediaId;
   final String url;
   final int? width;
   final int? height;
   final DateTime createdAt;
 
   PortfolioImage({
+    this.mediaId,
     required this.url,
     this.width,
     this.height,
@@ -45,8 +48,12 @@ class PortfolioImage {
   });
 
   factory PortfolioImage.fromMap(Map<String, dynamic> map) {
+    final mediaId = readNullableString(map, 'mediaId');
     return PortfolioImage(
-      url: readString(map, 'url'),
+      mediaId: mediaId,
+      url: mediaId != null && mediaId.isNotEmpty
+          ? BackendConfig.mediaContentUrl(mediaId)
+          : readString(map, 'url'),
       width: readNullableInt(map, 'w'),
       height: readNullableInt(map, 'h'),
       createdAt: readDateTime(map, 'createdAt'),
@@ -55,6 +62,7 @@ class PortfolioImage {
 
   Map<String, dynamic> toMap() {
     return {
+      if (mediaId != null && mediaId!.isNotEmpty) 'mediaId': mediaId,
       'url': url,
       'w': width,
       'h': height,

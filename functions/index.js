@@ -1131,15 +1131,9 @@ async function deleteCollectionDocs(collectionRef, batchSize = 250) {
 
 async function deleteFilesWithPrefix(prefix) {
   if (!prefix) return 0;
-  const bucket = admin.storage().bucket();
-  try {
-    const [files] = await bucket.getFiles({ prefix });
-    if (!files.length) return 0;
-    const results = await Promise.allSettled(files.map((f) => f.delete()));
-    return results.filter((r) => r.status === "fulfilled").length;
-  } catch (_) {
-    return 0;
-  }
+  // Firebase Storage is deprecated in the LAQTA migration path.
+  // Legacy Firebase-hosted blobs are left in place until offline cleanup is run.
+  return 0;
 }
 
 async function deleteDocsByQuery(query, batchSize = 250) {
