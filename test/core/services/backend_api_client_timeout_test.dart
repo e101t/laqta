@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   group('BackendApiClient Timeouts', () {
     test('request timeout is set to 20 seconds', () {
-      // Verify timeout constants are properly defined
       const requestTimeout = Duration(seconds: 20);
       const uploadTimeout = Duration(seconds: 60);
 
@@ -25,12 +25,15 @@ void main() {
 
     test('timeout response contains error message', () {
       final response = _createTimeoutResponse();
-      expect(response.body, contains('انتهت مهلة الاتصال'));
+      expect(response.body, contains('Request timeout'));
     });
   });
 }
 
-// Helper function to simulate timeout response
-dynamic _createTimeoutResponse() {
-  return {'statusCode': 408, 'body': '{"message": "انتهت مهلة الاتصال. حاول مرة أخرى."}'};
+http.Response _createTimeoutResponse() {
+  return http.Response(
+    '{"message": "Request timeout"}',
+    408,
+    headers: const {'Content-Type': 'application/json'},
+  );
 }
