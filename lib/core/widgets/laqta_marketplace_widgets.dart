@@ -5,6 +5,7 @@ class LaqtaLuxurySearchBar extends StatelessWidget {
   final String hint;
   final VoidCallback? onTap;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final bool readOnly;
 
@@ -13,6 +14,7 @@ class LaqtaLuxurySearchBar extends StatelessWidget {
     required this.hint,
     this.onTap,
     this.controller,
+    this.focusNode,
     this.onChanged,
     this.readOnly = true,
   });
@@ -30,6 +32,7 @@ class LaqtaLuxurySearchBar extends StatelessWidget {
         textDirection: TextDirection.ltr,
         child: TextField(
           controller: controller,
+          focusNode: focusNode,
           readOnly: readOnly,
           onTap: onTap,
           onChanged: onChanged,

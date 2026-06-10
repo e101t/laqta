@@ -746,13 +746,11 @@ class _MessageBubble extends StatefulWidget {
 class _MessageBubbleState extends State<_MessageBubble> {
   final BackendMediaService _mediaService = BackendMediaService();
   VideoPlayerController? _videoController;
+  bool _isPreparingVideo = false;
 
   @override
   void initState() {
     super.initState();
-    if (_shouldInitializeVideo(widget.message)) {
-      _initializeVideoPlayer();
-    }
   }
 
   @override
@@ -767,11 +765,9 @@ class _MessageBubbleState extends State<_MessageBubble> {
     if (widget.message.type == 'video') {
       _videoController?.dispose();
       _videoController = null;
-      if (_shouldInitializeVideo(widget.message)) {
-        _initializeVideoPlayer();
-      } else if (mounted) {
-        setState(() {});
-      }
+      setState(() {
+        _isPreparingVideo = false;
+      });
     }
   }
 
@@ -782,12 +778,18 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 
   Future<void> _initializeVideoPlayer() async {
+    if (_isPreparingVideo || _videoController != null) {
+      return;
+    }
     final sourceUrl = _resolveMediaSource(widget.message);
     if (sourceUrl == null) {
       return;
     }
 
     try {
+      setState(() {
+        _isPreparingVideo = true;
+      });
       final resolvedUrl = await _mediaService.resolveDisplayUrl(sourceUrl);
       final controller = VideoPlayerController.networkUrl(
         Uri.parse(resolvedUrl),
@@ -802,17 +804,18 @@ class _MessageBubbleState extends State<_MessageBubble> {
       setState(() {
         _videoController?.dispose();
         _videoController = controller;
+        _isPreparingVideo = false;
       });
     } catch (e) {
       if (kDebugMode) {
         AppLogger.d('runtime', 'Error preparing video message: $e');
       }
+      if (mounted) {
+        setState(() {
+          _isPreparingVideo = false;
+        });
+      }
     }
-  }
-
-  bool _shouldInitializeVideo(ChatMessage message) {
-    return message.type == 'video' &&
-        _looksLikeUrl(_resolveMediaSource(message));
   }
 
   String? _resolveMediaSource(ChatMessage message) {
@@ -1028,10 +1031,17 @@ class _MessageBubbleState extends State<_MessageBubble> {
                         },
                       ),
                     ] else ...[
-                      const SizedBox(
+                      SizedBox(
                         width: 200,
                         height: 200,
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: _isPreparingVideo
+                              ? const CircularProgressIndicator()
+                              : IconButton.filled(
+                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  onPressed: _initializeVideoPlayer,
+                                ),
+                        ),
                       ),
                     ],
                   ] else if (widget.message.type == 'document') ...[
@@ -1081,4 +1091,3 @@ class _MessageBubbleState extends State<_MessageBubble> {
     );
   }
 }
-

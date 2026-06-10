@@ -55,6 +55,18 @@ class LaqtaTheme {
           LaqtaTypography.textTheme(isArabic: isArabic).labelSmall,
         ),
       ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: LaqtaColors.ink,
+        contentTextStyle: LaqtaTypography.textTheme(
+          isArabic: isArabic,
+        ).bodyMedium?.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LaqtaRadii.m),
+        ),
+        elevation: 4,
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+      ),
       cardTheme: CardThemeData(
         color: LaqtaColors.surface,
         elevation: 0,
@@ -120,6 +132,16 @@ class LaqtaTheme {
         labelTextStyle: WidgetStateProperty.all(
           textTheme.labelSmall?.copyWith(color: LaqtaColors.inkMutedDark),
         ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF171A20),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(LaqtaRadii.m),
+        ),
+        elevation: 4,
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

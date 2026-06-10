@@ -16,6 +16,7 @@ import 'package:laqta/features/profile/profile_dependencies.dart';
 import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:laqta/features/profile/presentation/screens/profile_screen.dart';
 import 'package:laqta/features/explore/presentation/screens/explore_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MainAppScreen extends StatefulWidget {
   final Widget? exploreScreenOverride;
@@ -56,6 +57,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
     final authResult = await AuthDependencies.getCurrentUser().call();
     final userId = authResult.valueOrNull?.id;
     if (userId == null || userId.isEmpty) {
+      if (!mounted) return;
       setState(() {
         _userRole = AppConstants.roleCustomer;
         _isLoadingRole = false;
@@ -63,22 +65,50 @@ class _MainAppScreenState extends State<MainAppScreen> {
       return;
     }
 
-    final profileResult = await ProfileDependencies.getUserProfile().call(
-      userId: userId,
-    );
-    final role = profileResult.valueOrNull?.role ?? AppConstants.roleCustomer;
+    final cachedRole = await _readCachedRole(userId);
+    if (mounted && cachedRole != null) {
+      setState(() {
+        _userRole = cachedRole;
+        _isLoadingRole = false;
+      });
+    }
+
+    String role = cachedRole ?? AppConstants.roleCustomer;
+    try {
+      final profileResult = await ProfileDependencies.getUserProfile()
+          .call(userId: userId)
+          .timeout(const Duration(seconds: 6));
+      role = profileResult.valueOrNull?.role ?? role;
+    } catch (_) {
+      role = cachedRole ?? AppConstants.roleCustomer;
+    }
 
     if (mounted) {
+      final shouldResetTabs = _isLoadingRole || _userRole != role;
       setState(() {
         _userRole = role;
         _isLoadingRole = false;
-        _currentIndex = 0;
-        _tabHistory.clear();
-        _loadedTabs
-          ..clear()
-          ..add(0);
-        _screenCache.clear();
+        if (shouldResetTabs) {
+          _currentIndex = 0;
+          _tabHistory.clear();
+          _loadedTabs
+            ..clear()
+            ..add(0);
+          _screenCache.clear();
+        }
       });
+    }
+  }
+
+  Future<String?> _readCachedRole(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedUserId = prefs.getString(AppConstants.keyProfileCacheUserId);
+      if (cachedUserId != userId) return null;
+      final role = prefs.getString(AppConstants.keyProfileCacheRole)?.trim();
+      return role == null || role.isEmpty ? null : role;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -472,8 +502,8 @@ class _MainAppScreenState extends State<MainAppScreen> {
               boxShadow: [
                 BoxShadow(
                   color: const Color(0xFFD6A44A).withValues(alpha: 0.35),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
+                  blurRadius: 10,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),

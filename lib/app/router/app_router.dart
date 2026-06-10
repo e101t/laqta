@@ -29,6 +29,7 @@ import 'package:laqta/features/profile/presentation/screens/profile_screen.dart'
 import 'package:laqta/features/admin/presentation/screens/account_blocked_screen.dart';
 
 import 'package:laqta/features/search/presentation/screens/search_screen.dart';
+import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:laqta/features/chat/presentation/screens/chat_screen.dart';
 import 'package:laqta/features/booking/presentation/screens/booking_details_screen.dart';
 import 'package:laqta/features/booking/presentation/screens/my_bookings_screen.dart';
@@ -221,6 +222,11 @@ class AppRouter {
             }
             return OfferSubmitScreen(requestId: requestId);
           },
+        ),
+        GoRoute(
+          path: Routes.chatList,
+          name: Routes.nChatList,
+          builder: (context, state) => const ChatListScreen(),
         ),
         GoRoute(
           path: Routes.chat,
@@ -768,6 +774,9 @@ class AppRouter {
     final encodedName = Uri.encodeComponent(otherUserName);
     context.push('$path?name=$encodedName');
   }
+
+  static void goToChatList(BuildContext context) =>
+      context.push(Routes.chatList);
 
   static void goToBookingDetails(BuildContext context, String bookingId) {
     assert(bookingId.isNotEmpty, 'bookingId is required');

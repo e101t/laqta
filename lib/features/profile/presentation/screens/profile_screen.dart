@@ -7,6 +7,7 @@ import 'package:laqta/core/models/user_model.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/widgets/laqta_async_widgets.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/auth/data/utils/phone_number_utils.dart';
 import 'package:laqta/features/profile/domain/entities/user_profile_update.dart';
@@ -123,12 +124,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       if (!mounted) return;
 
-      if (pickedFile != null) {
-        setState(() => _isUploading = true);
+      if (pickedFile == null) return;
 
+      setState(() => _isUploading = true);
+
+      try {
         final userResult = await AuthDependencies.getCurrentUser().call();
         final userId = userResult.valueOrNull?.id;
-        if (userId == null || userId.isEmpty) return;
+        if (userId == null || userId.isEmpty) {
+          throw StateError('Missing current user');
+        }
 
         final result = await ProfileDependencies.uploadProfilePhoto().call(
           userId: userId,
@@ -142,11 +147,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await _updateUser({'photoUrl': downloadUrl});
 
         if (!mounted) return;
-        setState(() => _isUploading = false);
-
         messenger.showSnackBar(
           const SnackBar(content: Text('تم تحديث صورة الملف الشخصي')),
         );
+      } finally {
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -290,19 +297,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: scheme.primary,
-                    backgroundImage: user.photoUrl != null
-                        ? NetworkImage(user.photoUrl!)
-                        : null,
-                    child: user.photoUrl == null
-                        ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white,
-                          )
-                        : null,
+                  ClipOval(
+                    child: SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: user.photoUrl != null && user.photoUrl!.isNotEmpty
+                          ? LaqtaRemoteImage(
+                              imageUrl: user.photoUrl,
+                              width: 120,
+                              height: 120,
+                              borderRadius: BorderRadius.circular(60),
+                            )
+                          : DecoratedBox(
+                              decoration: BoxDecoration(color: scheme.primary),
+                              child: const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
                   ),
                   Positioned(
                     bottom: 0,
@@ -449,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'Edit Portfolio',
+                text: 'معرض الأعمال',
                 icon: Icons.photo_library,
                 onPressed: () {
                   AppRouter.goToPortfolioEditor(context);
@@ -481,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ] else ...[
               PrimaryButton(
-                text: 'Admin dashboard',
+                text: 'لوحة تحكم الإدارة',
                 icon: Icons.admin_panel_settings,
                 onPressed: () {
                   AppRouter.goToHome(context);

@@ -45,6 +45,8 @@ class BackendApiClient {
   final SessionAnomalyDetector _anomalyDetector;
   final SecurityEventLogger _securityLogger;
   final CacheInterceptor _cacheInterceptor;
+  static const Duration _requestTimeout = Duration(seconds: 20);
+  static const Duration _uploadTimeout = Duration(seconds: 60);
 
   Future<dynamic> get(String path, {bool authorized = true}) {
     return _send(method: 'GET', path: path, authorized: authorized);
@@ -111,8 +113,20 @@ class BackendApiClient {
     request.headers.addAll(headers);
     request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
 
-    final streamedResponse = await _client.send(request);
-    final response = await http.Response.fromStream(streamedResponse);
+    final streamedResponse = await _client
+        .send(request)
+        .timeout(
+          _uploadTimeout,
+          onTimeout: () {
+            throw const BackendApiException('انتهت مهلة رفع الملف.');
+          },
+        );
+    final response = await http.Response.fromStream(streamedResponse).timeout(
+      _uploadTimeout,
+      onTimeout: () {
+        throw const BackendApiException('انتهت مهلة رفع الملف.');
+      },
+    );
     return _decodeOrThrow(response, defaultMessage: 'File upload failed.');
   }
 
@@ -223,16 +237,32 @@ class BackendApiClient {
   }) {
     switch (method) {
       case 'GET':
-        return _client.get(uri, headers: headers);
+        return _client
+            .get(uri, headers: headers)
+            .timeout(_requestTimeout, onTimeout: _timeoutResponse);
       case 'POST':
-        return _client.post(uri, headers: headers, body: encodedBody);
+        return _client
+            .post(uri, headers: headers, body: encodedBody)
+            .timeout(_requestTimeout, onTimeout: _timeoutResponse);
       case 'PATCH':
-        return _client.patch(uri, headers: headers, body: encodedBody);
+        return _client
+            .patch(uri, headers: headers, body: encodedBody)
+            .timeout(_requestTimeout, onTimeout: _timeoutResponse);
       case 'DELETE':
-        return _client.delete(uri, headers: headers);
+        return _client
+            .delete(uri, headers: headers)
+            .timeout(_requestTimeout, onTimeout: _timeoutResponse);
       default:
         throw BackendApiException('Unsupported method: $method');
     }
+  }
+
+  http.Response _timeoutResponse() {
+    return http.Response(
+      jsonEncode({'message': 'انتهت مهلة الاتصال. حاول مرة أخرى.'}),
+      408,
+      headers: const {'Content-Type': 'application/json'},
+    );
   }
 
   dynamic _decodeOrThrow(
@@ -286,7 +316,9 @@ class BackendApiClient {
       ),
     };
 
-    final response = await _client.post(uri, headers: headers, body: body);
+    final response = await _client
+        .post(uri, headers: headers, body: body)
+        .timeout(_requestTimeout, onTimeout: _timeoutResponse);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return false;
     }

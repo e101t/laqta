@@ -18,6 +18,7 @@ class Routes {
   static const String offerSubmit = '/requests/:id/offer';
   static const String shop = '/shop';
 
+  static const String chatList = '/chats';
   static const String chat = '/chat/:id';
 
   static const String dashboard = '/dashboard';
@@ -76,6 +77,7 @@ class Routes {
   static const String nOfferSubmit = 'offer_submit';
   static const String nShop = 'shop';
 
+  static const String nChatList = 'chat_list';
   static const String nChat = 'chat';
 
   static const String nDashboard = 'dashboard';

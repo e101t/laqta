@@ -36,6 +36,9 @@ class _InAppNotificationBannerHostState
   void _onMessage() {
     final message = FcmService.instance.foregroundMessage.value;
     if (message == null || !mounted) return;
+    final title = message.notification?.title ?? '';
+    final body = message.notification?.body ?? _fallbackNotificationBody(message.data);
+    if (title.trim().isEmpty && body.trim().isEmpty) return;
     _timer?.cancel();
     setState(() => _message = message);
     _timer = Timer(const Duration(seconds: 4), () {
@@ -56,7 +59,7 @@ class _InAppNotificationBannerHostState
       children: [
         widget.child,
         PositionedDirectional(
-          top: 0,
+          top: 8,
           start: 0,
           end: 0,
           child: SafeArea(
@@ -87,57 +90,68 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = message?.notification?.title ?? 'LAQTA';
-    final body = message?.notification?.body ?? _fallbackBody(message?.data);
+    final body =
+        message?.notification?.body ?? _fallbackNotificationBody(message?.data);
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Material(
-          color: const Color(0xFF11151B),
-          elevation: 10,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.notifications_active,
-                    color: Color(0xFFF0B85A),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Material(
+              color: const Color(0xF211151B),
+              elevation: 8,
+              shadowColor: Colors.black38,
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (body.isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            body,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFFD7D7D7),
-                              fontSize: 12,
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.notifications_active,
+                        color: Color(0xFFF0B85A),
+                        size: 21,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                        ],
-                      ],
-                    ),
+                            if (body.isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                body,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFFD7D7D7),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -146,8 +160,9 @@ class _Banner extends StatelessWidget {
     );
   }
 
-  String _fallbackBody(Map<String, dynamic>? data) {
-    if (data == null) return '';
-    return (data['body'] as String?) ?? (data['message'] as String?) ?? '';
-  }
+}
+
+String _fallbackNotificationBody(Map<String, dynamic>? data) {
+  if (data == null) return '';
+  return (data['body'] as String?) ?? (data['message'] as String?) ?? '';
 }

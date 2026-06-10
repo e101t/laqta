@@ -130,13 +130,15 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                     ),
                   ),
                   const Spacer(),
-                  const LaqtaTopIconButton(
+                  LaqtaTopIconButton(
                     icon: Icons.notifications_none_rounded,
                     badge: true,
+                    onTap: () => AppRouter.goToNotifications(context),
                   ),
                   const SizedBox(width: 2),
-                  const LaqtaTopIconButton(
+                  LaqtaTopIconButton(
                     icon: Icons.chat_bubble_outline_rounded,
+                    onTap: () => AppRouter.goToChatList(context),
                   ),
                 ],
               ),

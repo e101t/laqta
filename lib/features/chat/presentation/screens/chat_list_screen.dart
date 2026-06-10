@@ -16,6 +16,7 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final List<String> _filters = const [
     'الكل',
     'المصورون',
@@ -52,6 +53,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -291,7 +293,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
             Row(
               textDirection: TextDirection.ltr,
               children: [
-                const LaqtaTopIconButton(icon: Icons.search_rounded),
+                LaqtaTopIconButton(
+                  icon: Icons.search_rounded,
+                  onTap: () {
+                    _searchFocusNode.requestFocus();
+                  },
+                ),
                 const Spacer(),
                 Text(
                   'الرسائل',
@@ -301,21 +308,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   ),
                 ),
                 const Spacer(),
-                const LaqtaTopIconButton(icon: Icons.edit_outlined),
+                LaqtaTopIconButton(
+                  icon: Icons.edit_outlined,
+                  onTap: () => AppRouter.goToExplore(context),
+                ),
               ],
             ),
-            SizedBox(
-              height: 0,
-              child: Opacity(
-                opacity: 0,
-                child: IgnorePointer(
-                  child: LaqtaLuxurySearchBar(
-                    hint: 'ابحث في الرسائل',
-                    controller: _searchController,
-                    readOnly: false,
-                    onChanged: (value) => setState(() => _search = value),
-                  ),
-                ),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: LaqtaLuxurySearchBar(
+                hint: 'ابحث في الرسائل',
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                readOnly: false,
+                onChanged: (value) => setState(() => _search = value),
               ),
             ),
             const SizedBox(height: 10),

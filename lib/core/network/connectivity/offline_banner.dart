@@ -23,6 +23,8 @@ class _OfflineBannerState extends State<OfflineBanner> {
   ConnectivityStateSnapshot? _snapshot;
   bool _visible = false;
   Timer? _hideTimer;
+  Timer? _showTimer;
+  int _consecutiveProblemChecks = 0;
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _showTimer?.cancel();
     _subscription?.cancel();
     if (widget._connectivityService == null) {
       unawaited(_service.dispose());
@@ -44,14 +47,31 @@ class _OfflineBannerState extends State<OfflineBanner> {
 
   void _onConnectivityChanged(ConnectivityStateSnapshot snapshot) {
     _hideTimer?.cancel();
+    _showTimer?.cancel();
     if (!mounted) return;
+
     if (snapshot.isOffline || snapshot.isDegraded) {
-      setState(() {
-        _snapshot = snapshot;
-        _visible = true;
-      });
+      _consecutiveProblemChecks += 1;
+      final shouldDelay = snapshot.isDegraded || _visible;
+      final shouldShow = snapshot.isOffline || _consecutiveProblemChecks >= 2;
+      if (!shouldShow) {
+        setState(() => _snapshot = snapshot);
+        return;
+      }
+      _showTimer = Timer(
+        shouldDelay ? const Duration(milliseconds: 900) : Duration.zero,
+        () {
+          if (!mounted) return;
+          final latest = _snapshot;
+          if (latest != null && (latest.isOffline || latest.isDegraded)) {
+            setState(() => _visible = true);
+          }
+        },
+      );
+      setState(() => _snapshot = snapshot);
       return;
     }
+    _consecutiveProblemChecks = 0;
     setState(() => _snapshot = snapshot);
     _hideTimer = Timer(const Duration(seconds: 2), () {
       if (mounted) setState(() => _visible = false);
@@ -64,7 +84,7 @@ class _OfflineBannerState extends State<OfflineBanner> {
       children: [
         widget.child,
         PositionedDirectional(
-          top: 0,
+          top: 8,
           start: 0,
           end: 0,
           child: SafeArea(
@@ -100,31 +120,44 @@ class _Banner extends StatelessWidget {
     final lastOnline = snapshot?.lastOnlineAt;
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Material(
-        color: isDegraded ? const Color(0xFF9A5B00) : const Color(0xFFB3261E),
+      child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isDegraded
-                    ? Icons.wifi_tethering_error_rounded
-                    : Icons.wifi_off,
-                color: Colors.white,
-                size: 18,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Material(
+            color: isDegraded
+                ? const Color(0xE69A5B00)
+                : const Color(0xE6B3261E),
+            elevation: 8,
+            shadowColor: Colors.black38,
+            borderRadius: BorderRadius.circular(999),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isDegraded
+                        ? Icons.wifi_tethering_error_rounded
+                        : Icons.wifi_off,
+                    color: Colors.white,
+                    size: 17,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      lastOnline == null
+                          ? text
+                          : '$text • آخر اتصال: ${_format(lastOnline)}',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  lastOnline == null
-                      ? text
-                      : '$text • آخر اتصال: ${_format(lastOnline)}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

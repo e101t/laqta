@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'package:laqta/core/services/backend_config.dart';
-import 'package:laqta/core/theme/laqta_tokens.dart';
 
 class LaqtaSkeletonBox extends StatelessWidget {
   final double? width;
@@ -59,39 +58,60 @@ class LaqtaRemoteImage extends StatelessWidget {
     final resolvedUrl = BackendConfig.resolvePublicUrl(imageUrl);
     final radius = borderRadius ?? BorderRadius.circular(16);
     final overlayWidget = overlay;
-    final imageChild = resolvedUrl != null
-        ? CachedNetworkImage(
-            imageUrl: resolvedUrl,
-            fit: fit,
-            placeholder: (context, url) => const DecoratedBox(
-              decoration: BoxDecoration(color: Color(0xFF17191F)),
-              child: Center(
-                child: SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    color: LaqtaColors.accent,
-                  ),
-                ),
-              ),
-            ),
-            errorWidget: (context, url, error) => _fallback(),
-          )
-        : _fallback();
-    final children = <Widget>[imageChild];
-    if (overlayWidget != null) {
-      children.add(overlayWidget);
-    }
-
     return ClipRRect(
       borderRadius: radius,
       child: SizedBox(
         width: width,
         height: height,
-        child: Stack(fit: StackFit.expand, children: children),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cacheWidth = _cacheDimension(
+              context,
+              width ??
+                  (constraints.hasBoundedWidth ? constraints.maxWidth : null),
+            );
+            final cacheHeight = _cacheDimension(
+              context,
+              height ??
+                  (constraints.hasBoundedHeight ? constraints.maxHeight : null),
+            );
+            final imageChild = resolvedUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: resolvedUrl,
+                    fit: fit,
+                    memCacheWidth: cacheWidth,
+                    memCacheHeight: cacheHeight,
+                    fadeInDuration: const Duration(milliseconds: 120),
+                    fadeOutDuration: const Duration(milliseconds: 80),
+                    placeholder: (context, url) => const DecoratedBox(
+                      decoration: BoxDecoration(color: Color(0xFF17191F)),
+                    ),
+                    errorWidget: (context, url, error) => _fallback(),
+                  )
+                : _fallback();
+            final children = <Widget>[imageChild];
+            if (overlayWidget != null) {
+              children.add(overlayWidget);
+            }
+            return Stack(fit: StackFit.expand, children: children);
+          },
+        ),
       ),
     );
+  }
+
+  int? _cacheDimension(BuildContext context, double? logicalPixels) {
+    if (logicalPixels == null ||
+        logicalPixels <= 0 ||
+        !logicalPixels.isFinite) {
+      return null;
+    }
+    final physicalPixels =
+        (logicalPixels * MediaQuery.devicePixelRatioOf(context)).round().clamp(
+          1,
+          4096,
+        );
+    return physicalPixels.toInt();
   }
 
   Widget _fallback() {
