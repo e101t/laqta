@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:laqta/app/main_app_screen.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mocktail/mocktail.dart';
 
 void main() {
   group('MainAppScreen', () {

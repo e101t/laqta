@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:laqta/core/services/backend_api_client.dart';
-import 'package:mocktail/mocktail.dart';
 
 void main() {
   group('BackendApiClient Timeouts', () {

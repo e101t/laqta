@@ -6,7 +6,7 @@ void main() {
     testWidgets('mounted check prevents setState after dispose', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: TestWidgetWithMountedCheck(),
+          home: const TestWidgetWithMountedCheck(),
         ),
       );
 
@@ -34,8 +34,11 @@ void main() {
 }
 
 class TestWidgetWithMountedCheck extends StatefulWidget {
+  const TestWidgetWithMountedCheck({super.key});
+
   @override
-  State<TestWidgetWithMountedCheck> createState() => _TestWidgetWithMountedCheckState();
+  State<TestWidgetWithMountedCheck> createState() =>
+      _TestWidgetWithMountedCheckState();
 }
 
 class _TestWidgetWithMountedCheckState extends State<TestWidgetWithMountedCheck> {
@@ -63,14 +66,14 @@ class _TestWidgetWithMountedCheckState extends State<TestWidgetWithMountedCheck>
 class TestWidgetWithCounter extends StatefulWidget {
   final VoidCallback onUpdate;
 
-  const TestWidgetWithCounter({required this.onUpdate});
+  const TestWidgetWithCounter({super.key, required this.onUpdate});
 
   @override
   State<TestWidgetWithCounter> createState() => _TestWidgetWithCounterState();
 }
 
 class _TestWidgetWithCounterState extends State<TestWidgetWithCounter> {
-  int _count = 0;
+  final int _count = 0;
 
   @override
   void initState() {
