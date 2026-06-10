@@ -75,6 +75,7 @@ class _BackendMediaImageState extends State<BackendMediaImage> {
             fit: widget.fit,
             memCacheWidth: _cacheDimension(context, widget.width),
             memCacheHeight: _cacheDimension(context, widget.height),
+            fadeInDuration: const Duration(milliseconds: 150),
             placeholder: (context, url) => Container(
               width: widget.width,
               height: widget.height,

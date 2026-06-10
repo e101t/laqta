@@ -657,11 +657,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: _messages.length,
+                    addRepaintBoundaries: true,
+                    addAutomaticKeepAlives: true,
+                    cacheExtent: 200,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
                       final isMe = message.senderId == _currentUserId;
 
-                      return _MessageBubble(message: message, isMe: isMe);
+                      return _MessageBubble(
+                        message: message,
+                        isMe: isMe,
+                      );
                     },
                   ),
           ),
