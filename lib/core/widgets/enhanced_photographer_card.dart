@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/constants/app_animations.dart';
+import 'package:laqta/core/constants/app_animations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Enhanced Photographer Card with beautiful design and smooth animations
 class EnhancedPhotographerCard extends StatefulWidget {
@@ -87,6 +87,8 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -100,17 +102,17 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: colorScheme.shadow.withValues(alpha: 0.08),
                     blurRadius: _elevationAnimation.value * 4,
                     offset: Offset(0, _elevationAnimation.value),
                     spreadRadius: _elevationAnimation.value / 2,
                   ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: colorScheme.shadow.withValues(alpha: 0.04),
                     blurRadius: _elevationAnimation.value * 2,
                     offset: Offset(0, _elevationAnimation.value / 2),
                   ),
@@ -131,6 +133,10 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
   }
 
   Widget _buildImageSection() {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Stack(
       children: [
         // Main Image with Gradient Overlay
@@ -204,8 +210,8 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                         const Icon(Icons.stars, size: 16, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          'Top Rated',
-                          style: AppTypography.caption.copyWith(
+                          localizations.topRated,
+                          style: textTheme.labelSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -229,7 +235,7 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
               return Transform.scale(
                 scale: value,
                 child: Material(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: colorScheme.surface.withValues(alpha: 0.92),
                   borderRadius: BorderRadius.circular(12),
                   elevation: 4,
                   child: InkWell(
@@ -252,8 +258,8 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                           key: ValueKey(widget.isFavorite),
                           size: 24,
                           color: widget.isFavorite
-                              ? Colors.red
-                              : AppColors.textSecondary,
+                              ? colorScheme.error
+                              : colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -268,6 +274,10 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
   }
 
   Widget _buildInfoSection() {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -279,7 +289,9 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
               Expanded(
                 child: Text(
                   widget.name,
-                  style: AppTypography.h3.copyWith(fontWeight: FontWeight.bold),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -291,19 +303,19 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.cta.withValues(alpha: 0.1),
+                  color: colorScheme.secondary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star, size: 16, color: AppColors.cta),
+                    Icon(Icons.star, size: 16, color: colorScheme.secondary),
                     const SizedBox(width: 4),
                     Text(
                       widget.rating.toStringAsFixed(1),
-                      style: AppTypography.bodyMedium.copyWith(
+                      style: textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.cta,
+                        color: colorScheme.secondary,
                       ),
                     ),
                   ],
@@ -316,19 +328,19 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
           // Location and Reviews
           Row(
             children: [
-              const Icon(Icons.location_on, size: 14, color: AppColors.primary),
+              Icon(Icons.location_on, size: 14, color: colorScheme.primary),
               const SizedBox(width: 4),
               Text(
                 widget.governorate,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
-                '${widget.reviewsCount} reviews',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                '${widget.reviewsCount} ${localizations.reviews}',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -349,10 +361,15 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                 if (widget.gender != null)
                   _MiniChip(
                     icon: widget.gender == 'female' ? Icons.female : Icons.male,
-                    label: widget.gender == 'female' ? 'أنثى' : 'ذكر',
+                    label: widget.gender == 'female'
+                        ? localizations.female
+                        : localizations.male,
                   ),
                 if (widget.age != null)
-                  _MiniChip(icon: Icons.cake, label: '${widget.age} سنة'),
+                  _MiniChip(
+                    icon: Icons.cake,
+                    label: localizations.yearsOld(widget.age!),
+                  ),
               ],
             ),
           ],
@@ -371,20 +388,20 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.primary.withValues(alpha: 0.15),
-                      AppColors.primary.withValues(alpha: 0.08),
+                      colorScheme.primary.withValues(alpha: 0.15),
+                      colorScheme.primary.withValues(alpha: 0.08),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.3),
+                    color: colorScheme.primary.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
                 child: Text(
                   specialty,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.primary,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -401,16 +418,16 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Starting from',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                    localizations.startingFrom,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${widget.basePrice.toStringAsFixed(0)} IQD',
-                    style: AppTypography.h3.copyWith(
-                      color: AppColors.primary,
+                    style: textTheme.titleMedium?.copyWith(
+                      color: colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -418,13 +435,16 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
               ),
               Container(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.cta, Color(0xFFFF8C42)],
+                  gradient: LinearGradient(
+                    colors: [
+                      colorScheme.secondary,
+                      colorScheme.secondary.withValues(alpha: 0.9),
+                    ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.cta.withValues(alpha: 0.3),
+                      color: colorScheme.secondary.withValues(alpha: 0.28),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -441,8 +461,8 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
                         vertical: 12,
                       ),
                       child: Text(
-                        'Book Now',
-                        style: AppTypography.bodyMedium.copyWith(
+                        localizations.bookNow,
+                        style: textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -459,13 +479,14 @@ class _EnhancedPhotographerCardState extends State<EnhancedPhotographerCard>
   }
 
   Widget _buildImagePlaceholder() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      color: AppColors.divider,
+      color: colorScheme.outlineVariant.withValues(alpha: 0.4),
       child: Center(
         child: Icon(
           Icons.camera_alt,
           size: 64,
-          color: AppColors.textSecondary.withValues(alpha: 0.3),
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -480,18 +501,23 @@ class _MiniChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: colorScheme.primary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.primary),
+          Icon(icon, size: 14, color: colorScheme.primary),
           const SizedBox(width: 4),
-          Text(label, style: AppTypography.caption),
+          Text(
+            label,
+            style: textTheme.labelSmall?.copyWith(color: colorScheme.primary),
+          ),
         ],
       ),
     );

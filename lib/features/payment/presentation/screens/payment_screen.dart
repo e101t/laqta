@@ -1,12 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:logger/logger.dart';
+import 'package:laqta/features/payment/payment_dependencies.dart';
+import 'package:laqta/features/payment/domain/entities/payment_intent.dart';
+import 'package:laqta/features/payment/security/payment_security_guard.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String bookingId;
@@ -27,19 +29,22 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  final Logger _logger = Logger();
+  final Logger _logger = Logger(level: kDebugMode ? Level.debug : Level.off);
   bool _isLoading = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    // Initialize Stripe with your publishable key
-    Stripe.publishableKey = AppConstants.stripePublishableKey;
+    if (AppConstants.paymentsConfigured) {
+      // Initialize Stripe with your publishable key
+      Stripe.publishableKey = AppConstants.stripePublishableKey;
+    }
   }
 
   Future<void> _processPayment() async {
     if (_isLoading) return;
+    final localizations = AppLocalizations.of(context);
 
     setState(() {
       _isLoading = true;
@@ -48,38 +53,53 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       // Create payment intent on your backend
+      final guardResult = await PaymentSecurityGuard.instance.authorizePayment(
+        context: context,
+        itemId: widget.bookingId,
+        amount: widget.amount,
+        payeeName: widget.photographerName,
+      );
+      if (!guardResult.allowed) {
+        if (!mounted) return;
+        setState(() {
+          _error = guardResult.reason ?? localizations.paymentFailed;
+        });
+        return;
+      }
       final paymentIntent = await _createPaymentIntent();
+      if (!mounted) return;
 
       if (paymentIntent == null) {
+        if (!mounted) return;
         setState(() {
-          _error = 'Failed to create payment intent';
+          _error = localizations.paymentFailed;
         });
         return;
       }
 
       // Confirm payment
-      final confirmPayment = await _confirmPayment(
-        paymentIntent['client_secret'],
-      );
+      final confirmPayment = await _confirmPayment(paymentIntent);
+      if (!mounted) return;
 
       if (confirmPayment) {
         // Update booking status to paid
-        await _updateBookingPaymentStatus(paymentIntent['id']);
+        await _updateBookingPaymentStatus(paymentIntent.paymentIntentId);
 
         // Show success and navigate to success screen
         if (mounted) {
           _showPaymentSuccess();
         }
       } else {
+        if (!mounted) return;
         setState(() {
-          _error = 'Payment failed. Please try again.';
+          _error = localizations.paymentFailed;
         });
       }
     } catch (e) {
       _logger.e('Payment error: $e');
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = localizations.paymentFailed;
         });
       }
     } finally {
@@ -91,39 +111,41 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<Map<String, dynamic>?> _createPaymentIntent() async {
+  Future<PaymentIntentData?> _createPaymentIntent() async {
     try {
-      // This should call your backend API to create a payment intent
-      // For now, returning a mock response
-      return {
-        'id': 'pi_mock_payment_intent_id',
-        'client_secret': 'pi_mock_client_secret',
-      };
+      final result = await PaymentDependencies.createPaymentIntent().call(
+        bookingId: widget.bookingId,
+        amount: widget.amount,
+        currency: AppConstants.currencyIQD,
+      );
+      if (!result.isSuccess) {
+        _logger.e('Failed to create payment intent');
+        return null;
+      }
+      return result.valueOrNull;
     } catch (e) {
       _logger.e('Error creating payment intent: $e');
       return null;
     }
   }
 
-  Future<bool> _confirmPayment(String clientSecret) async {
+  Future<bool> _confirmPayment(PaymentIntentData paymentIntent) async {
     try {
-      // Use Stripe's payment sheet to confirm payment
-      final paymentMethod = await _showPaymentSheet(clientSecret);
-      return paymentMethod != null;
+      return await _showPaymentSheet(paymentIntent);
     } catch (e) {
       _logger.e('Error confirming payment: $e');
       return false;
     }
   }
 
-  Future<PaymentMethod?> _showPaymentSheet(String clientSecret) async {
+  Future<bool> _showPaymentSheet(PaymentIntentData paymentIntent) async {
     try {
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'LAQTA',
-          customerId: FirebaseAuth.instance.currentUser?.uid,
-          customerEphemeralKeySecret: null, // Should come from backend
+          paymentIntentClientSecret: paymentIntent.clientSecret,
+          merchantDisplayName: 'Laqta',
+          customerId: paymentIntent.customerId,
+          customerEphemeralKeySecret: paymentIntent.ephemeralKey,
           // Add UI customizations
           style: ThemeMode.light,
         ),
@@ -131,19 +153,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       await Stripe.instance.presentPaymentSheet();
 
-      // Return payment method if successful
-      final paymentIntent = await Stripe.instance.retrievePaymentIntent(
-        clientSecret,
-      );
-      // Use paymentIntent.paymentMethodId instead of paymentIntent.paymentMethod
-      if (paymentIntent.paymentMethodId != null) {
-        // Create a basic PaymentMethod object since we can't access the full details
-        return PaymentMethod.fromJson({
-          'id': paymentIntent.paymentMethodId,
-          'type': 'card', // Default to card
-        });
-      }
-      return null;
+      return true;
     } catch (e) {
       _logger.e('Payment sheet error: $e');
       rethrow;
@@ -151,18 +161,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _updateBookingPaymentStatus(String paymentIntentId) async {
-    final bookingRef = FirebaseFirestore.instance
-        .collection('bookings')
-        .doc(widget.bookingId);
-
-    await bookingRef.update({
-      'payment.status': 'succeeded',
-      'payment.intentId': paymentIntentId,
-      'payment.paidAt': FieldValue.serverTimestamp(),
-      'payment.amount': widget.amount,
-      'status': 'confirmed', // Update booking status to confirmed
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+    final result = await PaymentDependencies.updateBookingPaymentStatus().call(
+      bookingId: widget.bookingId,
+      paymentIntentId: paymentIntentId,
+      amount: widget.amount,
+    );
+    if (!result.isSuccess) {
+      throw StateError(
+        result.failureOrNull?.message ?? 'Failed to update payment status',
+      );
+    }
   }
 
   void _showPaymentSuccess() {
@@ -189,9 +197,101 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
+    if (!AppConstants.paymentsConfigured) {
+      return Scaffold(
+        appBar: AppBar(title: Text(localizations.payment)),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: scheme.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: scheme.error.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline, color: scheme.error),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            localizations.paymentsUnavailable,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (widget.bookingId.isNotEmpty)
+                      Text(
+                        'Booking ID: ${widget.bookingId}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    if (widget.photographerName.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        Icons.camera_alt,
+                        'Photographer',
+                        widget.photographerName,
+                      ),
+                    ],
+                    if (widget.sessionType.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        Icons.event,
+                        'Session Type',
+                        widget.sessionType,
+                      ),
+                    ],
+                    if (widget.amount > 0) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        Icons.attach_money,
+                        'Amount',
+                        '${widget.amount.toStringAsFixed(0)} IQD',
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'This build does not include a live payment gateway yet. You can return to the booking and continue the booking flow normally.',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+              CTAButton(
+                text: 'Back to booking',
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => AppRouter.goToBookingPolicies(context),
+                icon: const Icon(Icons.policy_outlined),
+                label: const Text('Review booking policies'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(localizations.payment)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -202,7 +302,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: scheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -217,7 +317,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 children: [
                   Text(
                     'Payment Details',
-                    style: AppTypography.h3.copyWith(
+                    style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -254,7 +354,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // Payment methods
             Text(
               'Choose Payment Method',
-              style: AppTypography.h4.copyWith(fontWeight: FontWeight.w600),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -269,7 +371,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildPaymentMethod(
               Icons.account_balance,
               'Bank Transfer',
-              'Direct bank transfer (Coming soon)',
+              'Direct bank transfer is not enabled in this build',
               enabled: false,
             ),
             const SizedBox(height: 8),
@@ -277,7 +379,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             _buildPaymentMethod(
               Icons.wallet,
               'Wallet',
-              'Pay from your LAQTA wallet (Coming soon)',
+              'Wallet payments are not enabled in this build',
               enabled: false,
             ),
 
@@ -287,19 +389,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
+                  color: scheme.error.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.error),
+                  border: Border.all(color: scheme.error),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error, color: AppColors.error),
+                    Icon(Icons.error, color: scheme.error),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _error!,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.error,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: scheme.error,
                         ),
                       ),
                     ),
@@ -323,21 +425,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
+                color: scheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
+                  color: scheme.primary.withValues(alpha: 0.25),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock, color: AppColors.info, size: 20),
+                  Icon(Icons.lock, color: scheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Your payment information is secured with bank-level encryption.',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.info,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.primary,
                       ),
                     ),
                   ),
@@ -351,9 +453,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Row(
       children: [
-        Icon(icon, color: AppColors.primary, size: 20),
+        Icon(icon, color: scheme.primary, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -361,14 +465,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
             children: [
               Text(
                 label,
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.textSecondary,
+                style: textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: AppTypography.bodyMedium.copyWith(
+                style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -385,17 +489,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
     String subtitle, {
     bool enabled = true,
   }) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final effectiveSurface = enabled
+        ? scheme.surface
+        : scheme.surface.withValues(alpha: 0.55);
+    final effectiveOutline = enabled
+        ? scheme.outlineVariant
+        : scheme.outlineVariant.withValues(alpha: 0.55);
+
     return Container(
       decoration: BoxDecoration(
-        color: enabled
-            ? AppColors.surface
-            : AppColors.surface.withValues(alpha: 0.5),
+        color: effectiveSurface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: enabled
-              ? AppColors.divider
-              : AppColors.divider.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: effectiveOutline),
       ),
       child: ListTile(
         leading: Container(
@@ -403,28 +510,28 @@ class _PaymentScreenState extends State<PaymentScreen> {
           height: 40,
           decoration: BoxDecoration(
             color: enabled
-                ? AppColors.primary.withValues(alpha: 0.1)
-                : AppColors.divider.withValues(alpha: 0.3),
+                ? scheme.primary.withValues(alpha: 0.12)
+                : scheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
-            color: enabled ? AppColors.primary : AppColors.textSecondary,
+            color: enabled ? scheme.primary : scheme.onSurfaceVariant,
           ),
         ),
         title: Text(
           title,
-          style: AppTypography.bodyMedium.copyWith(
+          style: textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: enabled ? AppColors.textPrimary : AppColors.textSecondary,
+            color: enabled ? scheme.onSurface : scheme.onSurfaceVariant,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: AppTypography.bodySmall.copyWith(
+          style: textTheme.bodySmall?.copyWith(
             color: enabled
-                ? AppColors.textSecondary
-                : AppColors.textSecondary.withValues(alpha: 0.5),
+                ? scheme.onSurfaceVariant
+                : scheme.onSurfaceVariant.withValues(alpha: 0.6),
           ),
         ),
         trailing: enabled

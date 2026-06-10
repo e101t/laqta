@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -14,79 +14,70 @@ import 'package:flutter/foundation.dart'
 ///   options: DefaultFirebaseOptions.currentPlatform,
 /// );
 /// ```
+///
+/// For production, pass these via environment variables:
+/// - FIREBASE_ANDROID_API_KEY
+/// - FIREBASE_IOS_API_KEY
+/// - FIREBASE_PROJECT_ID
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-        return windows;
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
-          'DefaultFirebaseOptions are not supported for this platform.',
+          'DefaultFirebaseOptions are configured only for Android and iOS.',
         );
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDEw8HsoP52mKt1P17l0jJUze6KP8IIpkc',
-    appId: '1:1002424043359:web:efcd069505c2a0781218ea',
-    messagingSenderId: '1002424043359',
-    projectId: 'laqta-16406',
-    authDomain: 'laqta-16406.firebaseapp.com',
-    storageBucket: 'laqta-16406.firebasestorage.app',
-    measurementId: 'G-PGXBE8FNCC',
-  );
+  static const String _defaultAndroidApiKey =
+      'AIzaSyCnt1cCwRai57pMSdS-XVRh1PLKtA_dCIY';
+  static const String _defaultIosApiKey =
+      'AIzaSyDb2k5gZRFj7zQ6tmiq0s4us5okmmLg_ZU';
+  static const String _defaultProjectId = 'laqta-16406';
+  static const String _defaultMessagingSenderId = '1002424043359';
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCnt1cCwRai57pMSdS-XVRh1PLKtA_dCIY',
-    appId: '1:1002424043359:android:8a8f655d7a5d49a61218ea',
-    messagingSenderId: '1002424043359',
-    projectId: 'laqta-16406',
-    storageBucket: 'laqta-16406.firebasestorage.app',
-  );
+  static FirebaseOptions get android {
+    return FirebaseOptions(
+      apiKey: const String.fromEnvironment(
+        'FIREBASE_ANDROID_API_KEY',
+        defaultValue: _defaultAndroidApiKey,
+      ),
+      appId: const String.fromEnvironment(
+        'FIREBASE_ANDROID_APP_ID',
+        defaultValue: '1:1002424043359:android:1d756517be0408a91218ea',
+      ),
+      messagingSenderId: _defaultMessagingSenderId,
+      projectId: _defaultProjectId,
+    );
+  }
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDb2k5gZRFj7zQ6tmiq0s4us5okmmLg_ZU',
-    appId: '1:1002424043359:ios:af42e23c1321b64a1218ea',
-    messagingSenderId: '1002424043359',
-    projectId: 'laqta-16406',
-    storageBucket: 'laqta-16406.firebasestorage.app',
-    iosClientId:
-        '1002424043359-tk3l3hlv85uqrkf43uqqhcgfpfb7ntjc.apps.googleusercontent.com',
-    iosBundleId: 'com.luqta.luqta',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDb2k5gZRFj7zQ6tmiq0s4us5okmmLg_ZU',
-    appId: '1:1002424043359:ios:af42e23c1321b64a1218ea',
-    messagingSenderId: '1002424043359',
-    projectId: 'laqta-16406',
-    storageBucket: 'laqta-16406.firebasestorage.app',
-    iosClientId:
-        '1002424043359-tk3l3hlv85uqrkf43uqqhcgfpfb7ntjc.apps.googleusercontent.com',
-    iosBundleId: 'com.luqta.luqta',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDEw8HsoP52mKt1P17l0jJUze6KP8IIpkc',
-    appId: '1:1002424043359:web:9042b3870ceebe871218ea',
-    messagingSenderId: '1002424043359',
-    projectId: 'laqta-16406',
-    authDomain: 'laqta-16406.firebaseapp.com',
-    storageBucket: 'laqta-16406.firebasestorage.app',
-    measurementId: 'G-XWJX4BNSTY',
-  );
+  static FirebaseOptions get ios {
+    return FirebaseOptions(
+      apiKey: const String.fromEnvironment(
+        'FIREBASE_IOS_API_KEY',
+        defaultValue: _defaultIosApiKey,
+      ),
+      appId: const String.fromEnvironment(
+        'FIREBASE_IOS_APP_ID',
+        defaultValue: '1:1002424043359:ios:5ea4fb27afc272711218ea',
+      ),
+      messagingSenderId: _defaultMessagingSenderId,
+      projectId: _defaultProjectId,
+      androidClientId: const String.fromEnvironment(
+        'FIREBASE_ANDROID_CLIENT_ID',
+        defaultValue:
+            '1002424043359-7789fsq4srhi7a6kr63hddr80otjl17l.apps.googleusercontent.com',
+      ),
+      iosClientId: const String.fromEnvironment(
+        'FIREBASE_IOS_CLIENT_ID',
+        defaultValue:
+            '1002424043359-7tmde5l68i54fvc0en3c3o6hst5nobsd.apps.googleusercontent.com',
+      ),
+      iosBundleId: 'com.laqta.laqta',
+    );
+  }
 }

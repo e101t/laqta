@@ -1,14 +1,15 @@
+import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
 import 'package:go_router/go_router.dart';
-import 'package:luqta/core/router/app_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/core/models/user_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/dashboard/dashboard_dependencies.dart';
+import 'package:laqta/features/dashboard/domain/entities/dashboard_booking.dart';
 
 class PhotographerDashboardScreen extends StatefulWidget {
   const PhotographerDashboardScreen({super.key});
@@ -50,29 +51,22 @@ class _PhotographerDashboardScreenState
     setState(() => _isLoading = true);
 
     try {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final bookingsSnapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('photographerId', isEqualTo: userId)
-          .get();
-
-      final bookings = bookingsSnapshot.docs
-          .map((doc) => BookingModel.fromFirestore(doc))
-          .toList();
-
-      final customerIds = bookings.map((b) => b.customerId).toSet().toList();
-      final usersSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where(
-            FieldPath.documentId,
-            whereIn: customerIds.take(10),
-          ) // Limit to 10 for Firestore whereIn
-          .get();
-
-      final usersMap = {
-        for (var doc in usersSnapshot.docs)
-          doc.id: UserModel.fromFirestore(doc),
-      };
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        return;
+      }
+      final result = await DashboardDependencies.getPhotographerBookings().call(
+        photographerId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load dashboard bookings',
+        );
+      }
+      final bookings = result.valueOrNull ?? <DashboardBooking>[];
 
       final today = DateTime.now();
       final todayStr =
@@ -82,70 +76,83 @@ class _PhotographerDashboardScreenState
       _upcomingBookings.clear();
 
       for (var booking in bookings) {
-        final customerName = usersMap[booking.customerId]?.name ?? 'Unknown';
-        final dashboardBooking = DashboardBooking(
-          id: booking.id,
-          customerName: customerName,
-          type: booking.type,
-          date: DateTime.parse(booking.date),
-          time: booking.time,
-          status: booking.status,
-          price: booking.price,
-        );
-
-        if (booking.date == todayStr &&
-            (booking.status == 'confirmed' || booking.status == 'pending')) {
-          _todayBookings.add(dashboardBooking);
-        } else if (booking.date.compareTo(todayStr) > 0 &&
-            booking.status == 'confirmed') {
-          _upcomingBookings.add(dashboardBooking);
+        final bookingDate =
+            '${booking.date.year}-${booking.date.month.toString().padLeft(2, '0')}-${booking.date.day.toString().padLeft(2, '0')}';
+        if (bookingDate == todayStr &&
+            (booking.status == 'confirmed' ||
+                booking.status == 'pending' ||
+                booking.status == 'in_progress' ||
+                booking.status == 'delivered' ||
+                booking.status == 'revision_requested')) {
+          _todayBookings.add(booking);
+        } else if (bookingDate.compareTo(todayStr) > 0 &&
+            (booking.status == 'confirmed' ||
+                booking.status == 'in_progress' ||
+                booking.status == 'delivered' ||
+                booking.status == 'revision_requested')) {
+          _upcomingBookings.add(booking);
         }
       }
     } catch (e) {
       // Handle error, perhaps show snackbar
-      debugPrint('Error loading dashboard data: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error loading dashboard data: $e');
+      }
     }
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
   }
 
   Future<void> _acceptBooking(String bookingId) async {
+    final localizations = AppLocalizations.of(context);
     try {
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(bookingId)
-          .update({'status': 'confirmed', 'updatedAt': Timestamp.now()});
+      final result = await BookingDependencies.updateBookingStatus().call(
+        bookingId: bookingId,
+        status: 'confirmed',
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to accept booking',
+        );
+      }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Booking accepted')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.bookingAcceptedMessage)),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error accepting booking: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.bookingAcceptFailed)),
+        );
       }
     }
     _loadDashboardData();
   }
 
   Future<void> _rejectBooking(String bookingId) async {
+    final localizations = AppLocalizations.of(context);
     try {
-      await FirebaseFirestore.instance
-          .collection('bookings')
-          .doc(bookingId)
-          .update({'status': 'rejected', 'updatedAt': Timestamp.now()});
+      final result = await BookingDependencies.updateBookingStatus().call(
+        bookingId: bookingId,
+        status: 'rejected',
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to reject booking',
+        );
+      }
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Booking rejected')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.bookingRejectedMessage)),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error rejecting booking: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.bookingRejectFailed)),
+        );
       }
     }
     _loadDashboardData();
@@ -154,15 +161,15 @@ class _PhotographerDashboardScreenState
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(localizations.dashboard),
         actions: [
           IconButton(
             icon: const Icon(Icons.analytics_outlined),
-            tooltip: 'الإحصائيات',
+            tooltip: localizations.analyticsLabel,
             onPressed: () {
               context.push(AppRouter.analytics);
             },
@@ -194,18 +201,18 @@ class _PhotographerDashboardScreenState
                       Expanded(
                         child: _StatCard(
                           icon: Icons.calendar_today,
-                          label: 'Today',
+                          label: localizations.todayLabel,
                           value: _stats['todayBookings'].toString(),
-                          color: AppColors.primary,
+                          color: scheme.primary,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatCard(
                           icon: Icons.check_circle,
-                          label: 'Total',
+                          label: localizations.totalBookings,
                           value: _stats['totalBookings'].toString(),
-                          color: AppColors.success,
+                          color: scheme.tertiary,
                         ),
                       ),
                     ],
@@ -216,19 +223,18 @@ class _PhotographerDashboardScreenState
                       Expanded(
                         child: _StatCard(
                           icon: Icons.star,
-                          label: 'Rating',
+                          label: localizations.rating,
                           value: _stats['avgRating'].toString(),
-                          color: AppColors.cta,
+                          color: scheme.secondary,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatCard(
-                          icon: Icons.payments,
-                          label: 'Earnings',
-                          value:
-                              '${(_stats['totalEarnings'] / 1000).toStringAsFixed(0)}K',
-                          color: AppColors.success,
+                          icon: Icons.event_available,
+                          label: localizations.upcomingLabel,
+                          value: _upcomingBookings.length.toString(),
+                          color: scheme.tertiary,
                         ),
                       ),
                     ],
@@ -238,21 +244,21 @@ class _PhotographerDashboardScreenState
                   // Tabs
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: scheme.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TabBar(
                       controller: _tabController,
-                      labelColor: AppColors.primary,
-                      unselectedLabelColor: AppColors.textSecondary,
+                      labelColor: scheme.primary,
+                      unselectedLabelColor: scheme.onSurfaceVariant,
                       indicator: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: scheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      tabs: const [
-                        Tab(text: 'Today'),
-                        Tab(text: 'Upcoming'),
-                        Tab(text: 'Past'),
+                      tabs: [
+                        Tab(text: localizations.todayLabel),
+                        Tab(text: localizations.upcomingLabel),
+                        Tab(text: localizations.past),
                       ],
                     ),
                   ),
@@ -303,8 +309,8 @@ class _PhotographerDashboardScreenState
     return Center(
       child: EmptyState(
         icon: Icons.event_busy,
-        title: 'No Bookings',
-        message: 'You have no bookings for this period',
+        title: AppLocalizations.of(context).noBookings,
+        message: AppLocalizations.of(context).noBookingsMessage,
       ),
     );
   }
@@ -325,19 +331,27 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 32),
           const SizedBox(height: 8),
-          Text(value, style: AppTypography.h2.copyWith(color: color)),
-          Text(label, style: AppTypography.caption),
+          Text(
+            value,
+            style: textTheme.headlineSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(label, style: textTheme.labelSmall),
         ],
       ),
     );
@@ -357,23 +371,56 @@ class _BookingCard extends StatelessWidget {
     required this.onReject,
   });
 
-  Color _getStatusColor() {
+  Color _getStatusColor(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     switch (booking.status) {
       case 'confirmed':
-        return AppColors.confirmed;
+        return scheme.tertiary;
       case 'pending':
-        return AppColors.pending;
+      case 'in_progress':
+        return scheme.secondary;
+      case 'delivered':
+        return scheme.primary;
+      case 'revision_requested':
+        return scheme.secondary;
       case 'rejected':
-        return AppColors.rejected;
+        return scheme.error;
       case 'done':
-        return AppColors.done;
+      case 'completed':
+        return scheme.primary;
       default:
-        return AppColors.textSecondary;
+        return scheme.onSurfaceVariant;
+    }
+  }
+
+  String _statusLabel() {
+    switch (booking.status) {
+      case 'confirmed':
+        return localizations.bookingConfirmed;
+      case 'pending':
+        return localizations.bookingPending;
+      case 'in_progress':
+        return localizations.bookingInProgress;
+      case 'delivered':
+        return localizations.bookingDelivered;
+      case 'revision_requested':
+        return localizations.bookingRevisionRequested;
+      case 'rejected':
+        return localizations.bookingRejected;
+      case 'done':
+      case 'completed':
+        return localizations.bookingCompleted;
+      default:
+        return booking.status.replaceAll('_', ' ').toUpperCase();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final statusColor = _getStatusColor(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -386,18 +433,18 @@ class _BookingCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: scheme.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.person, color: AppColors.primary),
+                  child: Icon(Icons.person, color: scheme.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(booking.customerName, style: AppTypography.h4),
-                      Text(booking.type, style: AppTypography.bodySmall),
+                      Text(booking.customerName, style: textTheme.titleMedium),
+                      Text(booking.type, style: textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -407,14 +454,14 @@ class _BookingCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: _getStatusColor().withValues(alpha: 0.1),
+                    color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: _getStatusColor()),
+                    border: Border.all(color: statusColor),
                   ),
                   child: Text(
-                    booking.status.toUpperCase(),
-                    style: AppTypography.caption.copyWith(
-                      color: _getStatusColor(),
+                    _statusLabel(),
+                    style: textTheme.labelSmall?.copyWith(
+                      color: statusColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -428,13 +475,13 @@ class _BookingCard extends StatelessWidget {
               children: [
                 const Icon(Icons.access_time, size: 16),
                 const SizedBox(width: 4),
-                Text(booking.time, style: AppTypography.bodySmall),
+                Text(booking.time, style: textTheme.bodySmall),
                 const SizedBox(width: 16),
                 const Icon(Icons.payments, size: 16),
                 const SizedBox(width: 4),
                 Text(
                   '${booking.price.toStringAsFixed(0)} IQD',
-                  style: AppTypography.bodySmall.copyWith(
+                  style: textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -448,8 +495,8 @@ class _BookingCard extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: onReject,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
+                        foregroundColor: scheme.error,
+                        side: BorderSide(color: scheme.error),
                       ),
                       child: Text(localizations.reject),
                     ),
@@ -471,22 +518,3 @@ class _BookingCard extends StatelessWidget {
   }
 }
 
-class DashboardBooking {
-  final String id;
-  final String customerName;
-  final String type;
-  final DateTime date;
-  final String time;
-  final String status;
-  final double price;
-
-  DashboardBooking({
-    required this.id,
-    required this.customerName,
-    required this.type,
-    required this.date,
-    required this.time,
-    required this.status,
-    required this.price,
-  });
-}

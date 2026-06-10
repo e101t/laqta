@@ -1,4 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class PortfolioModel {
   final String id;
@@ -12,14 +15,12 @@ class PortfolioModel {
   });
 
   factory PortfolioModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final imagesList = data['images'] as List<dynamic>? ?? [];
+    final data = firestoreMap(doc.data());
+    final rawImages = readMapList(data, 'images');
     return PortfolioModel(
       id: doc.id,
-      photographerId: data['photographerId'] ?? '',
-      images: imagesList
-          .map((img) => PortfolioImage.fromMap(img as Map<String, dynamic>))
-          .toList(),
+      photographerId: readString(data, 'photographerId'),
+      images: rawImages.map(PortfolioImage.fromMap).toList(),
     );
   }
 
@@ -32,12 +33,14 @@ class PortfolioModel {
 }
 
 class PortfolioImage {
+  final String? mediaId;
   final String url;
   final int? width;
   final int? height;
   final DateTime createdAt;
 
   PortfolioImage({
+    this.mediaId,
     required this.url,
     this.width,
     this.height,
@@ -45,16 +48,21 @@ class PortfolioImage {
   });
 
   factory PortfolioImage.fromMap(Map<String, dynamic> map) {
+    final mediaId = readNullableString(map, 'mediaId');
     return PortfolioImage(
-      url: map['url'] ?? '',
-      width: map['w'],
-      height: map['h'],
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      mediaId: mediaId,
+      url: mediaId != null && mediaId.isNotEmpty
+          ? BackendConfig.mediaContentUrl(mediaId)
+          : readString(map, 'url'),
+      width: readNullableInt(map, 'w'),
+      height: readNullableInt(map, 'h'),
+      createdAt: readDateTime(map, 'createdAt'),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      if (mediaId != null && mediaId!.isNotEmpty) 'mediaId': mediaId,
       'url': url,
       'w': width,
       'h': height,

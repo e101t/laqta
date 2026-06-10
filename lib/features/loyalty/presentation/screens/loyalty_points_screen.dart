@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/models/loyalty_points_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/loyalty/domain/entities/loyalty_points.dart';
+import 'package:laqta/features/loyalty/loyalty_dependencies.dart';
 
 class LoyaltyPointsScreen extends StatefulWidget {
   const LoyaltyPointsScreen({super.key});
@@ -25,42 +26,34 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      if (!mounted) return;
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         // Handle not logged in
         setState(() => _isLoading = false);
         return;
       }
 
-      final doc = await FirebaseFirestore.instance
-          .collection('loyalty_points')
-          .doc(user.uid)
-          .get();
-
-      if (doc.exists) {
-        _loyaltyPoints = LoyaltyPoints.fromFirestore(doc);
-      } else {
-        // Create default loyalty points document
-        _loyaltyPoints = LoyaltyPoints(
-          userId: user.uid,
-          totalPoints: 0,
-          availablePoints: 0,
-          usedPoints: 0,
-          tier: 'bronze',
-          lastUpdated: DateTime.now(),
-          transactions: [],
+      final result = await LoyaltyDependencies.getLoyaltyPoints().call(
+        userId: userId,
+      );
+      if (!mounted) return;
+      if (!result.isSuccess || result.valueOrNull == null) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load loyalty points',
         );
-        // Save to Firestore
-        await FirebaseFirestore.instance
-            .collection('loyalty_points')
-            .doc(user.uid)
-            .set(_loyaltyPoints.toFirestore());
       }
+      _loyaltyPoints = result.valueOrNull!;
     } catch (e) {
       // Handle error, perhaps show a snackbar or log
-      debugPrint('Error loading loyalty points: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error loading loyalty points: $e');
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -70,8 +63,10 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('نقاط الولاء 🎁'),
         centerTitle: true,
@@ -101,7 +96,7 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('السجل', style: AppTypography.h3),
+              Text('السجل', style: textTheme.titleLarge),
               TextButton(onPressed: () {}, child: const Text('عرض الكل')),
             ],
           ),
@@ -113,18 +108,20 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
   }
 
   Widget _buildPointsCard() {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.cta],
+        gradient: LinearGradient(
+          colors: [scheme.primary, scheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
+            color: scheme.primary.withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -137,13 +134,13 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             children: [
               Text(
                 'نقاطك المتاحة',
-                style: AppTypography.h4.copyWith(
+                style: textTheme.titleMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
               Text(
                 _loyaltyPoints.getTierName(),
-                style: AppTypography.h4.copyWith(color: Colors.white),
+                style: textTheme.titleMedium?.copyWith(color: Colors.white),
               ),
             ],
           ),
@@ -159,7 +156,7 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           const SizedBox(height: 8),
           Text(
             'نقطة',
-            style: AppTypography.bodyLarge.copyWith(
+            style: textTheme.bodyLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.8),
             ),
           ),
@@ -223,13 +220,15 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
   Widget _buildTierProgress() {
     final nextTierPoints = _loyaltyPoints.getPointsForNextTier();
     final progress = _loyaltyPoints.getTierProgress();
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,12 +236,12 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('التقدم للمستوى التالي', style: AppTypography.h4),
+              Text('التقدم للمستوى التالي', style: textTheme.titleMedium),
               if (nextTierPoints > 0)
                 Text(
                   'باقي $nextTierPoints نقطة',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.primary,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: scheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -254,18 +253,18 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 12,
-              backgroundColor: AppColors.divider,
-              valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+              backgroundColor: scheme.surfaceContainerHighest,
+              valueColor: AlwaysStoppedAnimation(scheme.primary),
             ),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('🥉 برونزي', style: AppTypography.bodySmall),
-              Text('🥈 فضي', style: AppTypography.bodySmall),
-              Text('🥇 ذهبي', style: AppTypography.bodySmall),
-              Text('💎 بلاتينيوم', style: AppTypography.bodySmall),
+              Text('🥉 برونزي', style: textTheme.bodySmall),
+              Text('🥈 فضي', style: textTheme.bodySmall),
+              Text('🥇 ذهبي', style: textTheme.bodySmall),
+              Text('💎 بلاتينيوم', style: textTheme.bodySmall),
             ],
           ),
         ],
@@ -274,17 +273,19 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
   }
 
   Widget _buildHowToEarn() {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.1),
+        color: scheme.primary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.info.withValues(alpha: 0.3)),
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('كيف تكسب النقاط؟', style: AppTypography.h4),
+          Text('كيف تكسب النقاط؟', style: textTheme.titleMedium),
           const SizedBox(height: 16),
           _buildEarnMethod(
             '📅',
@@ -312,17 +313,19 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
   }
 
   Widget _buildEarnMethod(String emoji, String title, String points) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Text(emoji, style: const TextStyle(fontSize: 24)),
           const SizedBox(width: 12),
-          Expanded(child: Text(title, style: AppTypography.bodyMedium)),
+          Expanded(child: Text(title, style: textTheme.bodyMedium)),
           Text(
             points,
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.success,
+            style: textTheme.bodyMedium?.copyWith(
+              color: scheme.tertiary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -332,15 +335,18 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
   }
 
   Widget _buildTransactionCard(PointTransaction transaction) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final isEarned = transaction.type == 'earned';
+    final accent = isEarned ? scheme.tertiary : scheme.error;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: scheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Row(
         children: [
@@ -348,8 +354,7 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: (isEarned ? AppColors.success : AppColors.error)
-                  .withValues(alpha: 0.1),
+              color: accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -364,12 +369,12 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(transaction.getTitle(), style: AppTypography.bodyLarge),
+                Text(transaction.getTitle(), style: textTheme.bodyLarge),
                 if (transaction.description != null)
                   Text(
                     transaction.description!,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
               ],
@@ -380,14 +385,12 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             children: [
               Text(
                 '${isEarned ? '+' : ''}${transaction.points}',
-                style: AppTypography.h4.copyWith(
-                  color: isEarned ? AppColors.success : AppColors.error,
-                ),
+                style: textTheme.titleMedium?.copyWith(color: accent),
               ),
               Text(
                 _formatDate(transaction.createdAt),
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                style: textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -412,16 +415,19 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('معلومات النقاط', style: AppTypography.h3),
+            Text(
+              'معلومات النقاط',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Text(
               '• كل ${PointsRules.pointsToIQD} نقطة = 1,000 دينار عراقي\n'
@@ -429,7 +435,9 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
               '• النقاط لا تنتهي صلاحيتها\n'
               '• كلما ارتفع مستواك، زادت الخصومات\n'
               '• شارك رمز الإحالة واكسب نقاط إضافية',
-              style: AppTypography.bodyMedium.copyWith(height: 1.8),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.8),
             ),
             const SizedBox(height: 16),
           ],
@@ -438,3 +446,4 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
     );
   }
 }
+

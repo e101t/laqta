@@ -1,12 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import 'package:laqta/app/router/routes.dart';
+import 'package:laqta/core/auth/token_manager.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,6 +18,7 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  Timer? _authFallbackTimer;
 
   @override
   void initState() {
@@ -41,67 +40,17 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     _controller.forward();
-    _checkAppState();
-  }
-
-  Future<void> _checkAppState() async {
-    await Future.delayed(
-      const Duration(milliseconds: AppConstants.splashDuration),
-    );
-
-    if (!mounted) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    final onboardingSeen =
-        prefs.getBool(AppConstants.keyOnboardingSeen) ?? false;
-
-    if (!mounted) return;
-
-    if (!onboardingSeen) {
-      AppRouter.goToOnboarding(context);
-      return;
-    }
-
-    // Check if user is logged in
-    final currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser == null) {
-      // User not logged in, go to auth
-      AppRouter.goToAuth(context);
-      return;
-    }
-
-    // User is logged in, check profile completion
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
-
-      if (!mounted) return;
-
-      if (userDoc.exists) {
-        final userData = UserModel.fromFirestore(userDoc);
-        if (userData.profileCompleted) {
-          // Profile completed, go to main app
-          AppRouter.goToHome(context);
-        } else {
-          // Profile not completed, go to role picker or profile completion
-          AppRouter.goToRole(context);
-        }
-      } else {
-        // User document doesn't exist, go to role picker
-        AppRouter.goToRole(context);
+    _authFallbackTimer = Timer(const Duration(seconds: 10), () async {
+      await TokenManager().clearAllTokens();
+      if (mounted) {
+        context.go(Routes.auth);
       }
-    } catch (e) {
-      // Error fetching user data, go to auth as fallback
-      if (!mounted) return;
-      AppRouter.goToAuth(context);
-    }
+    });
   }
 
   @override
   void dispose() {
+    _authFallbackTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -109,6 +58,9 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       body: Stack(
@@ -128,8 +80,8 @@ class _SplashScreenState extends State<SplashScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.black.withValues(alpha: 0.05),
-                    AppColors.background.withValues(alpha: 0.9),
-                    AppColors.background,
+                    theme.scaffoldBackgroundColor.withValues(alpha: 0.9),
+                    theme.scaffoldBackgroundColor,
                   ],
                 ),
               ),
@@ -146,15 +98,15 @@ class _SplashScreenState extends State<SplashScreen>
                       width: 140,
                       height: 140,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [AppColors.primary, AppColors.cta],
+                          colors: [scheme.primary, scheme.secondary],
                         ),
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.4),
+                            color: scheme.primary.withValues(alpha: 0.4),
                             blurRadius: 30,
                             offset: const Offset(0, 15),
                             spreadRadius: 5,
@@ -175,17 +127,17 @@ class _SplashScreenState extends State<SplashScreen>
                       children: [
                         Text(
                           localizations.appName,
-                          style: AppTypography.h1.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
+                          style: textTheme.displaySmall?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.w800,
                             fontSize: 42,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'LAQTA',
-                          style: AppTypography.h2.copyWith(
-                            color: AppColors.textSecondary,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: scheme.onSurfaceVariant,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 2,
                           ),
@@ -201,8 +153,8 @@ class _SplashScreenState extends State<SplashScreen>
                       children: [
                         Text(
                           localizations.loading,
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -211,13 +163,13 @@ class _SplashScreenState extends State<SplashScreen>
                   const SizedBox(height: 16),
                   FadeTransition(
                     opacity: _fadeAnimation,
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 40,
                       height: 40,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
+                          scheme.primary,
                         ),
                       ),
                     ),

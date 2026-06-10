@@ -1,18 +1,18 @@
 import 'dart:convert';
+import 'package:laqta/core/logging/app_logger.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/constants/app_animations.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/widgets/enhanced_photographer_card.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/constants/app_animations.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/enhanced_photographer_card.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/core/models/photographer_model.dart';
+import 'package:laqta/features/search/domain/entities/search_result_photographer.dart';
+import 'package:laqta/features/search/search_dependencies.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -50,17 +50,13 @@ class _SearchScreenState extends State<SearchScreen>
 
   Future<void> _loadRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final recentSearchesJson = prefs.getString('recent_searches');
     if (recentSearchesJson != null) {
       final List<dynamic> decoded = json.decode(recentSearchesJson);
       setState(() {
         _recentSearches.clear();
         _recentSearches.addAll(decoded.cast<String>());
-      });
-    } else {
-      // Default demo data if no saved searches
-      setState(() {
-        _recentSearches.addAll(['Wedding', 'Sara Ali', 'Baghdad']);
       });
     }
   }
@@ -84,72 +80,30 @@ class _SearchScreenState extends State<SearchScreen>
     _errorMessage = null;
 
     try {
-      // Search in Firestore
-      final queryLower = query.toLowerCase();
-
-      // Query users collection for photographers
-      final userQuery = await FirebaseFirestore.instance
-          .collection('users')
-          .where('role', isEqualTo: 'photographer')
-          .get();
-
-      // Query photographers collection for additional data
-      final photographerQuery = await FirebaseFirestore.instance
-          .collection('photographers')
-          .get();
-
-      final Map<String, PhotographerModel> photographerMap = {};
-      for (var doc in photographerQuery.docs) {
-        photographerMap[doc.id] = PhotographerModel.fromFirestore(doc);
+      final result = await SearchDependencies.searchPhotographers().call(
+        query: query,
+      );
+      if (!mounted) return;
+      if (!result.isSuccess) {
+        _results.clear();
+        _errorMessage = result.failureOrNull?.message;
+      } else {
+        _results
+          ..clear()
+          ..addAll(result.valueOrNull ?? []);
+        _results.sort((a, b) => b.rating.compareTo(a.rating));
+        _errorMessage = null;
       }
-
-      _results.clear();
-
-      for (var userDoc in userQuery.docs) {
-        final user = UserModel.fromFirestore(userDoc);
-        final photographer = photographerMap[user.uid];
-
-        if (photographer != null) {
-          // Check if query matches name, specialties, or governorates
-          final matchesName = user.name.toLowerCase().contains(queryLower);
-          final matchesSpecialties = photographer.specialties.any(
-            (s) => s.toLowerCase().contains(queryLower),
-          );
-          final matchesGovernorates =
-              photographer.governorates.any(
-                (g) => g.toLowerCase().contains(queryLower),
-              ) ||
-              user.governorate.toLowerCase().contains(queryLower);
-
-          if (matchesName || matchesSpecialties || matchesGovernorates) {
-            _results.add(
-              SearchResultPhotographer(
-                id: user.uid,
-                name: user.name,
-                image: user.photoUrl ?? '',
-                specialties: photographer.specialties,
-                rating: photographer.rating,
-                reviewCount: photographer.reviewsCount,
-                startingPrice: photographer.basePrice,
-                governorate: user.governorate,
-                username: user.username,
-                gender: user.gender,
-                age: user.age,
-              ),
-            );
-          }
-        }
-      }
-
-      // Sort results by rating (highest first)
-      _results.sort((a, b) => b.rating.compareTo(a.rating));
-      _errorMessage = null;
     } catch (e) {
-      debugPrint('Search error: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Search error: $e');
+      }
+      if (!mounted) return;
       _results.clear();
-      _errorMessage = e.toString();
+      _errorMessage = 'Search failed';
     }
 
+    if (!mounted) return;
     setState(() => _isSearching = false);
 
     // Save to recent searches
@@ -185,9 +139,7 @@ class _SearchScreenState extends State<SearchScreen>
     final showResults = _searchController.text.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
         automaticallyImplyLeading: false,
         titleSpacing: 0,
         toolbarHeight: 72,
@@ -294,11 +246,18 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   Widget _buildRecentSearches(AppLocalizations localizations) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         // Quick Filters
-        Text(localizations.popularSpecialties, style: AppTypography.h3),
+        Text(
+          localizations.popularSpecialties,
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -320,7 +279,12 @@ class _SearchScreenState extends State<SearchScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(localizations.recentSearches, style: AppTypography.h3),
+              Text(
+                localizations.recentSearches,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               TextButton(
                 onPressed: () {
                   setState(() => _recentSearches.clear());
@@ -335,10 +299,7 @@ class _SearchScreenState extends State<SearchScreen>
             final query = _recentSearches[index];
             return ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.history,
-                color: AppColors.textSecondary,
-              ),
+              leading: Icon(Icons.history, color: scheme.onSurfaceVariant),
               title: Text(query),
               trailing: IconButton(
                 icon: const Icon(Icons.close, size: 20),
@@ -356,30 +317,3 @@ class _SearchScreenState extends State<SearchScreen>
   }
 }
 
-class SearchResultPhotographer {
-  final String id;
-  final String name;
-  final String image;
-  final List<String> specialties;
-  final double rating;
-  final int reviewCount;
-  final double startingPrice;
-  final String governorate;
-  final String? username;
-  final String? gender;
-  final int? age;
-
-  SearchResultPhotographer({
-    required this.id,
-    required this.name,
-    required this.image,
-    required this.specialties,
-    required this.rating,
-    required this.reviewCount,
-    required this.startingPrice,
-    required this.governorate,
-    this.username,
-    this.gender,
-    this.age,
-  });
-}

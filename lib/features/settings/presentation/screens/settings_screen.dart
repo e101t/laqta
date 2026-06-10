@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/providers/theme_provider.dart';
-import 'package:luqta/core/providers/locale_provider.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/providers/theme_provider.dart';
+import 'package:laqta/core/providers/locale_provider.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/settings/presentation/screens/policies_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/features/settings/settings_dependencies.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -28,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
       _reduceMotion = prefs.getBool('reduceMotion') ?? false;
@@ -74,9 +76,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(localizations.deleteAccount),
-        content: const Text(
-          'Are you sure you want to delete your account? This action cannot be undone.',
-        ),
+        content: Text(localizations.deleteAccountConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -84,7 +84,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => _deleteAccount(),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: Text(localizations.delete),
           ),
         ],
@@ -94,27 +96,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _deleteAccount() async {
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).noUserLoggedIn)),
+        );
         return;
       }
 
       // Delete user data from Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .delete();
+      final result = await SettingsDependencies.deleteUserData().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to delete user data',
+        );
+      }
 
-      // Delete user account from Firebase Auth
-      await user.delete();
+      // The server-side deletion flow disables the account immediately and
+      // completes cleanup in the background. We only need to clear the
+      // local session here.
+      final signOutResult = await AuthDependencies.signOut().call();
+      if (!signOutResult.isSuccess) {
+        throw StateError(
+          signOutResult.failureOrNull?.message ??
+              'Failed to clear local auth session',
+        );
+      }
 
-      // Clear local preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await _clearSessionOnlyPreferences();
 
       // Navigate to auth screen
       if (!mounted) return;
@@ -123,37 +136,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account deleted successfully')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).deleteAccountSuccess),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to delete account: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e is StateError
+                ? e.message.toString()
+                : AppLocalizations.of(context).deleteAccountFailed,
+          ),
+        ),
+      );
     }
   }
 
   Future<void> _logout() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      final currentLanguage = Localizations.localeOf(context).languageCode;
+      final result = await AuthDependencies.signOut().call();
+      if (!result.isSuccess) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context).logoutFailed}: ${result.failureOrNull?.message}',
+            ),
+          ),
+        );
+        return;
+      }
 
-      // Clear local preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
+      await _clearSessionOnlyPreferences(languageCode: currentLanguage);
 
       // Navigate to auth screen
       if (!mounted) return;
       AppRouter.goToAuth(context);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Logged out successfully')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).logoutSuccess)),
+      );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to logout: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).logoutFailed)),
+      );
+    }
+  }
+
+  Future<void> _clearSessionOnlyPreferences({String? languageCode}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final preservedLanguage =
+        languageCode ?? prefs.getString(AppConstants.keyLanguage);
+    await prefs.remove(AppConstants.keyBackendJwt);
+    await prefs.remove(AppConstants.keyBackendUserId);
+    await prefs.remove(AppConstants.keyProfileCacheUserId);
+    await prefs.remove(AppConstants.keyProfileCacheCompleted);
+    await prefs.remove(AppConstants.keyProfileCacheRole);
+    await prefs.remove(AppConstants.keyProfileCacheBlocked);
+    if (preservedLanguage != null && preservedLanguage.isNotEmpty) {
+      await prefs.setString(AppConstants.keyLanguage, preservedLanguage);
     }
   }
 
@@ -162,7 +208,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(localizations.settings)),
       body: ListView(
         children: [
@@ -170,15 +215,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSectionHeader(localizations.notificationsSection),
           SwitchListTile(
             title: Text(localizations.enableNotifications),
-            subtitle: const Text('استلام تحديثات الحجوزات والرسائل'),
+            subtitle: Text(localizations.notificationsSubtitle),
             value: _notificationsEnabled,
             onChanged: _toggleNotifications,
-            activeThumbColor: AppColors.primary,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const Divider(),
 
           // Appearance Section
-          _buildSectionHeader('${localizations.appearanceSection} 🎨'),
+          _buildSectionHeader(localizations.appearanceSection),
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, child) {
               return SwitchListTile(
@@ -186,10 +231,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text(localizations.darkModeSubtitle),
                 value: themeProvider.isDarkMode,
                 onChanged: _toggleDarkMode,
-                activeThumbColor: AppColors.primary,
+                activeThumbColor: Theme.of(context).colorScheme.primary,
                 secondary: Icon(
                   themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               );
             },
@@ -203,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(localizations.reduceMotionSubtitle),
             value: _reduceMotion,
             onChanged: _toggleReduceMotion,
-            activeThumbColor: AppColors.primary,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const Divider(),
 
@@ -235,6 +280,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Legal Section
           _buildSectionHeader(localizations.legalSection),
           ListTile(
+            leading: const Icon(Icons.gavel_outlined),
+            title: Text(localizations.policies),
+            subtitle: Text(localizations.policiesSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PoliciesScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.shield_outlined),
+            title: Text(localizations.bookingPolicies),
+            subtitle: Text(localizations.bookingPoliciesSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => AppRouter.goToBookingPolicies(context),
+          ),
+          ListTile(
             leading: const Icon(Icons.privacy_tip_outlined),
             title: Text(localizations.privacy),
             trailing: const Icon(Icons.chevron_right),
@@ -246,23 +308,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => AppRouter.goToTerms(context),
           ),
+          ListTile(
+            leading: const Icon(Icons.person_remove_outlined),
+            title: const Text('سياسة حذف الحساب'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => AppRouter.goToDeleteAccountPolicy(context),
+          ),
+          ListTile(
+            leading: const Icon(Icons.report_gmailerrorred_outlined),
+            title: const Text('سياسة المحتوى'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => AppRouter.goToContentPolicy(context),
+          ),
           const Divider(),
 
           // Account Actions
           _buildSectionHeader(localizations.accountSection),
           ListTile(
-            leading: const Icon(Icons.logout, color: AppColors.primary),
+            leading: Icon(
+              Icons.logout,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             title: Text(
               localizations.logout,
-              style: const TextStyle(color: AppColors.primary),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
             ),
             onTap: _logout,
           ),
           ListTile(
-            leading: const Icon(Icons.delete_forever, color: AppColors.error),
+            leading: Icon(
+              Icons.delete_forever,
+              color: Theme.of(context).colorScheme.error,
+            ),
             title: Text(
               localizations.deleteAccount,
-              style: const TextStyle(color: AppColors.error),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
             onTap: () => _showDeleteAccountDialog(localizations),
           ),
@@ -270,7 +350,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 32),
 
           // App Version
-          Center(child: Text('Luqta v1.0.0', style: AppTypography.caption)),
+          Center(
+            child: Text(
+              'Laqta v1.0.0',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -278,11 +363,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
       child: Text(
         title,
-        style: AppTypography.h4.copyWith(color: AppColors.primary),
+        style: textTheme.titleMedium?.copyWith(
+          color: scheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

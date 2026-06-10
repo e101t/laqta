@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Loading Indicator
 class LoadingIndicator extends StatelessWidget {
@@ -11,13 +11,14 @@ class LoadingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: SizedBox(
         width: size,
         height: size,
         child: CircularProgressIndicator(
           strokeWidth: 3,
-          valueColor: AlwaysStoppedAnimation<Color>(color ?? AppColors.primary),
+          valueColor: AlwaysStoppedAnimation<Color>(color ?? scheme.primary),
         ),
       ),
     );
@@ -34,14 +35,17 @@ class ShimmerBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final base = scheme.surfaceContainerHighest;
+    final highlight = scheme.surface;
     return Shimmer.fromColors(
-      baseColor: AppColors.divider,
-      highlightColor: AppColors.background,
+      baseColor: base,
+      highlightColor: highlight,
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.divider,
+          color: base,
           borderRadius: borderRadius ?? BorderRadius.circular(8),
         ),
       ),
@@ -91,19 +95,20 @@ class PhotographerCardSkeleton extends StatelessWidget {
 
 /// Error State Widget
 class ErrorState extends StatelessWidget {
-  final String title;
+  final String? title;
   final String? message;
   final VoidCallback? onRetry;
 
-  const ErrorState({
-    super.key,
-    this.title = 'Something went wrong',
-    this.message,
-    this.onRetry,
-  });
+  const ErrorState({super.key, this.title, this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final effectiveTitle = title ?? localizations.somethingWentWrong;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -113,20 +118,20 @@ class ErrorState extends StatelessWidget {
             Icon(
               Icons.error_outline,
               size: 80,
-              color: AppColors.error.withValues(alpha: 0.7),
+              color: scheme.error.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 16),
             Text(
-              title,
-              style: AppTypography.h3.copyWith(color: AppColors.textPrimary),
+              effectiveTitle,
+              style: textTheme.headlineSmall?.copyWith(color: scheme.onSurface),
               textAlign: TextAlign.center,
             ),
             if (message != null) ...[
               const SizedBox(height: 8),
               Text(
                 message!,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -136,7 +141,7 @@ class ErrorState extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(localizations.retry),
               ),
             ],
           ],

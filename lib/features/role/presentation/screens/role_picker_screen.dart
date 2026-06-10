@@ -1,13 +1,13 @@
+import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/constants/app_constants.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/utils/responsive.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/models/user_model.dart';
+import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/utils/responsive.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/role/role_dependencies.dart';
 
 class RolePickerScreen extends StatefulWidget {
   const RolePickerScreen({super.key});
@@ -31,19 +31,37 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final user = userResult.valueOrNull;
       if (user == null) {
         throw Exception('User not authenticated');
       }
 
-      final userDoc = await _persistRoleWithRetry(user);
-      final userModel = UserModel.fromFirestore(userDoc);
+      final result = await RoleDependencies.saveUserRole().call(
+        userId: user.id,
+        role: _selectedRole!,
+        lang: AppConstants.defaultLanguage,
+        name: user.displayName,
+        email: user.email,
+        phone: user.phoneNumber,
+        photoUrl: user.photoUrl,
+      );
+      if (!result.isSuccess || result.valueOrNull == null) {
+        if (kDebugMode) {
+          final code = result.failureOrNull?.code;
+          AppLogger.d('runtime', 'Save role failed: ${code ?? 'unknown'}');
+        }
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to save role',
+        );
+      }
+      final userProfile = result.valueOrNull!;
 
       setState(() => _isLoading = false);
 
       // Navigate to profile setup or home based on profile completion
       if (!mounted) return;
-      if (userModel.profileCompleted) {
+      if (userProfile.profileCompleted) {
         AppRouter.goToHome(context);
       } else {
         AppRouter.goToBasicInfo(context, _selectedRole!);
@@ -53,76 +71,16 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save role: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Failed to save role')));
     }
-  }
-
-  Future<DocumentSnapshot<Map<String, dynamic>>> _persistRoleWithRetry(
-    User user,
-  ) async {
-    final userDocRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid);
-    var delay = const Duration(milliseconds: 400);
-    const maxAttempts = 3;
-
-    for (var attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        final existingDoc = await userDocRef.get();
-        final timestamp = FieldValue.serverTimestamp();
-
-        if (existingDoc.exists) {
-          await userDocRef.update({
-            'role': _selectedRole,
-            'updatedAt': timestamp,
-          });
-        } else {
-          await userDocRef.set({
-            'uid': user.uid,
-            'name': user.displayName ?? '',
-            'email': user.email,
-            'phone': user.phoneNumber,
-            'photoUrl': user.photoURL,
-            'role': _selectedRole,
-            'username': null,
-            'usernameLower': null,
-            'gender': null,
-            'birthYear': null,
-            'age': null,
-            'governorate': '',
-            'lang': AppConstants.defaultLanguage,
-            'profileCompleted': false,
-            'over18Confirmed': false,
-            'blockedUsers': <String>[],
-            'interests': <String>[],
-            'createdAt': timestamp,
-            'updatedAt': timestamp,
-          });
-        }
-
-        return await userDocRef.get();
-      } on FirebaseException catch (e) {
-        final shouldRetry =
-            e.code == 'unavailable' && attempt < maxAttempts - 1;
-        if (shouldRetry) {
-          await Future.delayed(delay);
-          delay *= 2;
-          continue;
-        }
-        rethrow;
-      }
-    }
-
-    throw FirebaseException(
-      plugin: 'cloud_firestore',
-      message: 'Unable to save role after multiple attempts',
-    );
   }
 
   Widget _buildRoleHero(
     AppLocalizations localizations, {
     bool compact = false,
   }) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final height = compact ? 220.0 : 360.0;
 
     return ClipRRect(
@@ -146,8 +104,8 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
                     end: Alignment.bottomRight,
                     colors: [
                       Colors.black.withValues(alpha: 0.06),
-                      AppColors.cta.withValues(alpha: 0.2),
-                      AppColors.background.withValues(alpha: 0.1),
+                      scheme.secondary.withValues(alpha: 0.20),
+                      scheme.surface.withValues(alpha: 0.10),
                     ],
                   ),
                 ),
@@ -162,7 +120,7 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
                 children: [
                   Text(
                     localizations.chooseRole,
-                    style: AppTypography.h2.copyWith(
+                    style: textTheme.headlineSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -170,7 +128,7 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
                   const SizedBox(height: 8),
                   Text(
                     localizations.authSubtitle,
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
@@ -188,7 +146,6 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -229,13 +186,15 @@ class _RolePickerScreenState extends State<RolePickerScreen> {
   }
 
   Widget _buildRoleContent(AppLocalizations localizations) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           localizations.chooseRole,
-          style: AppTypography.h2.copyWith(
-            color: AppColors.textPrimary,
+          style: textTheme.headlineSmall?.copyWith(
+            color: scheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.start,
@@ -292,6 +251,8 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -300,17 +261,17 @@ class _RoleCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : AppColors.surface,
+              ? scheme.primary.withValues(alpha: 0.12)
+              : scheme.surface,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
+            color: isSelected ? scheme.primary : scheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.2),
+                    color: scheme.primary.withValues(alpha: 0.22),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -324,14 +285,14 @@ class _RoleCard extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primary
-                    : AppColors.primary.withValues(alpha: 0.1),
+                    ? scheme.primary
+                    : scheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
                 size: 32,
-                color: isSelected ? Colors.white : AppColors.primary,
+                color: isSelected ? Colors.white : scheme.primary,
               ),
             ),
             const SizedBox(width: 16),
@@ -341,31 +302,26 @@ class _RoleCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: AppTypography.h3.copyWith(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textPrimary,
+                    style: textTheme.titleLarge?.copyWith(
+                      color: isSelected ? scheme.primary : scheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     description,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: AppColors.primary,
-                size: 28,
-              ),
+              Icon(Icons.check_circle, color: scheme.primary, size: 28),
           ],
         ),
       ),
     );
   }
 }
+

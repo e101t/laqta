@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Custom Card Widget
 class AppCard extends StatelessWidget {
@@ -20,15 +20,27 @@ class AppCard extends StatelessWidget {
     this.color,
   });
 
+  BorderRadius _borderRadiusFrom(ShapeBorder? shape) {
+    if (shape is RoundedRectangleBorder && shape.borderRadius is BorderRadius) {
+      return shape.borderRadius as BorderRadius;
+    }
+    return BorderRadius.circular(16);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cardTheme = theme.cardTheme;
+    final shape = cardTheme.shape;
+    final borderRadius = _borderRadiusFrom(shape);
     return Card(
-      elevation: elevation ?? 2,
-      color: color,
+      elevation: elevation ?? cardTheme.elevation ?? 2,
+      color: color ?? cardTheme.color,
+      shape: shape,
       margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: borderRadius,
         child: Padding(
           padding: padding ?? const EdgeInsets.all(16),
           child: child,
@@ -91,6 +103,11 @@ class PhotographerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return AppCard(
       onTap: onTap,
       child: Column(
@@ -107,9 +124,9 @@ class PhotographerCard extends StatelessWidget {
                       ? Image.network(
                           photoUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _buildPlaceholder(),
+                          errorBuilder: (_, _, _) => _buildPlaceholder(context),
                         )
-                      : _buildPlaceholder(),
+                      : _buildPlaceholder(context),
                 ),
               ),
               if (isTopRated)
@@ -122,7 +139,7 @@ class PhotographerCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.cta,
+                      color: colorScheme.secondary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -131,8 +148,8 @@ class PhotographerCard extends StatelessWidget {
                         const Icon(Icons.star, size: 14, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          'Top Rated',
-                          style: AppTypography.caption.copyWith(
+                          localizations.topRated,
+                          style: textTheme.labelSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -150,13 +167,15 @@ class PhotographerCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: colorScheme.surface.withValues(alpha: 0.92),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
                       size: 20,
-                      color: isFavorite ? Colors.red : AppColors.textSecondary,
+                      color: isFavorite
+                          ? colorScheme.error
+                          : colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -171,28 +190,28 @@ class PhotographerCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: AppTypography.h4,
+                  style: textTheme.titleMedium,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Icon(Icons.star, size: 16, color: AppColors.starFilled),
+              Icon(Icons.star, size: 16, color: colorScheme.secondary),
               const SizedBox(width: 4),
               Text(
                 rating.toStringAsFixed(1),
-                style: AppTypography.bodySmall.copyWith(
+                style: textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              Text(' ($reviewsCount)', style: AppTypography.bodySmall),
+              Text(' ($reviewsCount)', style: textTheme.bodySmall),
             ],
           ),
           if (username != null && username!.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
               '@$username',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -203,13 +222,13 @@ class PhotographerCard extends StatelessWidget {
           // Governorate
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.location_on,
                 size: 14,
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
-              Text(governorate, style: AppTypography.bodySmall),
+              Text(governorate, style: textTheme.bodySmall),
             ],
           ),
           if (gender != null || age != null) ...[
@@ -221,9 +240,15 @@ class PhotographerCard extends StatelessWidget {
                 if (gender != null)
                   _InfoChip(
                     icon: gender == 'female' ? Icons.female : Icons.male,
-                    label: gender == 'female' ? 'أنثى' : 'ذكر',
+                    label: gender == 'female'
+                        ? localizations.female
+                        : localizations.male,
                   ),
-                if (age != null) _InfoChip(icon: Icons.cake, label: '$age سنة'),
+                if (age != null)
+                  _InfoChip(
+                    icon: Icons.cake,
+                    label: localizations.yearsOld(age!),
+                  ),
               ],
             ),
           ],
@@ -234,17 +259,35 @@ class PhotographerCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 6,
             children: [
-              if (verified) _InfoChip(icon: Icons.shield, label: 'موثق'),
-              if (pro) _InfoChip(icon: Icons.workspace_premium, label: 'محترف'),
+              if (verified)
+                _InfoChip(
+                  icon: Icons.shield,
+                  label: localizations.verifiedBadge,
+                ),
+              if (pro)
+                _InfoChip(
+                  icon: Icons.workspace_premium,
+                  label: localizations.proBadge,
+                ),
               if (recommended)
-                _InfoChip(icon: Icons.recommend, label: 'موصى به'),
-              if (isNew) _InfoChip(icon: Icons.new_releases, label: 'جديد'),
+                _InfoChip(
+                  icon: Icons.recommend,
+                  label: localizations.recommendedBadge,
+                ),
+              if (isNew)
+                _InfoChip(
+                  icon: Icons.new_releases,
+                  label: localizations.newBadge,
+                ),
               if (availableToday)
-                _InfoChip(icon: Icons.bolt, label: 'متاح اليوم'),
+                _InfoChip(
+                  icon: Icons.bolt,
+                  label: localizations.availableTodayBadge,
+                ),
               if (hasOffer)
                 _InfoChip(
                   icon: Icons.local_offer,
-                  label: offerLabel ?? 'عرض لقطة',
+                  label: offerLabel ?? localizations.offerBadge,
                 ),
             ],
           ),
@@ -258,13 +301,13 @@ class PhotographerCard extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   specialty,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.primary,
+                  style: textTheme.labelSmall?.copyWith(
+                    color: colorScheme.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -276,11 +319,14 @@ class PhotographerCard extends StatelessWidget {
           // Price
           Row(
             children: [
-              Text('Starting from', style: AppTypography.bodySmall),
+              Text(localizations.startingFrom, style: textTheme.bodySmall),
               const Spacer(),
               Text(
                 '${basePrice.toStringAsFixed(0)} IQD',
-                style: AppTypography.priceSmall,
+                style: textTheme.titleSmall?.copyWith(
+                  color: colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -291,14 +337,14 @@ class PhotographerCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onTap,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(color: colorScheme.primary),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
                     ),
                   ),
-                  child: const Text('عرض الملف'),
+                  child: Text(localizations.viewProfile),
                 ),
               ),
               const SizedBox(width: 8),
@@ -306,7 +352,9 @@ class PhotographerCard extends StatelessWidget {
                 onPressed: onFavorite,
                 icon: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : AppColors.textSecondary,
+                  color: isFavorite
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -316,11 +364,12 @@ class PhotographerCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      color: AppColors.divider,
-      child: const Center(
-        child: Icon(Icons.camera_alt, size: 48, color: AppColors.textSecondary),
+      color: scheme.surfaceContainerHighest,
+      child: Center(
+        child: Icon(Icons.camera_alt, size: 48, color: scheme.onSurfaceVariant),
       ),
     );
   }
@@ -334,18 +383,23 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: colorScheme.primary.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.primary),
+          Icon(icon, size: 14, color: colorScheme.primary),
           const SizedBox(width: 4),
-          Text(label, style: AppTypography.caption),
+          Text(
+            label,
+            style: textTheme.labelSmall?.copyWith(color: colorScheme.primary),
+          ),
         ],
       ),
     );
@@ -379,6 +433,9 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return AppCard(
       onTap: onTap,
       child: Column(
@@ -402,15 +459,15 @@ class BookingCard extends StatelessWidget {
                   children: [
                     Text(
                       photographerName,
-                      style: AppTypography.h4,
+                      style: textTheme.titleMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(type, style: AppTypography.bodySmall),
+                    Text(type, style: textTheme.bodySmall),
                   ],
                 ),
               ),
-              _buildStatusBadge(status),
+              _buildStatusBadge(context, status),
             ],
           ),
           const SizedBox(height: 12),
@@ -418,21 +475,17 @@ class BookingCard extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.calendar_today,
                 size: 16,
-                color: AppColors.textSecondary,
+                color: scheme.onSurfaceVariant,
               ),
               const SizedBox(width: 8),
-              Text(date, style: AppTypography.bodyMedium),
+              Text(date, style: textTheme.bodyMedium),
               const SizedBox(width: 16),
-              const Icon(
-                Icons.access_time,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
+              Icon(Icons.access_time, size: 16, color: scheme.onSurfaceVariant),
               const SizedBox(width: 8),
-              Text(time, style: AppTypography.bodyMedium),
+              Text(time, style: textTheme.bodyMedium),
             ],
           ),
           const SizedBox(height: 8),
@@ -440,14 +493,17 @@ class BookingCard extends StatelessWidget {
             children: [
               Text(
                 'Total:',
-                style: AppTypography.bodyMedium.copyWith(
+                style: textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),
               Text(
                 '${price.toStringAsFixed(0)} IQD',
-                style: AppTypography.priceSmall,
+                style: textTheme.titleSmall?.copyWith(
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -456,46 +512,50 @@ class BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  Widget _buildStatusBadge(BuildContext context, String status) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     Color color;
     String text;
 
     switch (status) {
       case 'confirmed':
-        color = AppColors.confirmed;
+        color = scheme.primary;
         text = 'Confirmed';
         break;
       case 'pending':
-        color = AppColors.pending;
+        color = scheme.secondary;
         text = 'Pending';
         break;
       case 'rejected':
-        color = AppColors.rejected;
+        color = scheme.error;
         text = 'Rejected';
         break;
       case 'done':
-        color = AppColors.done;
+        color = scheme.tertiary;
         text = 'Done';
         break;
       case 'canceled':
-        color = AppColors.canceled;
+        color = scheme.outline;
         text = 'Canceled';
         break;
       default:
-        color = AppColors.textSecondary;
+        color = scheme.onSurfaceVariant;
         text = status;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color, width: 1),
       ),
       child: Text(
         text,
-        style: AppTypography.caption.copyWith(
+        style: textTheme.labelSmall?.copyWith(
           color: color,
           fontWeight: FontWeight.bold,
         ),

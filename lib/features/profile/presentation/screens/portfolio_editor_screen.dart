@@ -1,12 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/models/portfolio_model.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/media/image_picker_service.dart';
+import 'package:laqta/core/models/portfolio_model.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/laqta_async_widgets.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
+import 'package:laqta/features/profile/presentation/mappers/profile_presentation_mapper.dart';
 
 class PortfolioEditorScreen extends StatefulWidget {
   const PortfolioEditorScreen({super.key});
@@ -27,68 +27,65 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
   }
 
   Future<void> _loadPortfolio() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
 
     try {
-      final portfolioQuery = await FirebaseFirestore.instance
-          .collection('portfolios')
-          .where('photographerId', isEqualTo: user.uid)
-          .get();
-
-      if (portfolioQuery.docs.isNotEmpty) {
-        final portfolio = PortfolioModel.fromFirestore(
-          portfolioQuery.docs.first,
-        );
-        setState(() {
-          _portfolioImages = portfolio.images;
-          _isLoading = false;
-        });
-      } else {
-        setState(() => _isLoading = false);
+      final result = await ProfileDependencies.getPortfolio().call(
+        photographerId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(result.failureOrNull?.message ?? 'Load failed');
       }
+      final portfolio = result.valueOrNull;
+      if (!mounted) return;
+      setState(() {
+        _portfolioImages = portfolio == null
+            ? []
+            : ProfilePresentationMapper.toPortfolioImages(portfolio.images);
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load portfolio: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر تحميل معرض الأعمال')),
+        );
       }
     }
   }
 
   Future<void> _addImage() async {
     if (_portfolioImages.length >= 20) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum 20 images allowed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('الحد الأقصى 20 صورة')));
       return;
     }
 
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePickerService().pickImageToTemp(
+      source: ImageSource.gallery,
+    );
 
     if (pickedFile != null && mounted) {
       setState(() => _isUploading = true);
 
       try {
-        final file = File(pickedFile.path);
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return;
+        final userResult = await AuthDependencies.getCurrentUser().call();
+        final userId = userResult.valueOrNull?.id;
+        if (userId == null || userId.isEmpty) return;
 
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('photographers')
-            .child(user.uid)
-            .child('portfolio')
-            .child(fileName);
-
-        await storageRef.putFile(
-          file,
-          SettableMetadata(contentType: 'image/jpeg'),
+        final result = await ProfileDependencies.uploadPortfolioImage().call(
+          photographerId: userId,
+          filePath: pickedFile.path,
         );
-        final downloadUrl = await storageRef.getDownloadURL();
+        if (!result.isSuccess || result.valueOrNull == null) {
+          throw StateError(
+            _portfolioUploadErrorMessage(result.failureOrNull?.message),
+          );
+        }
+        final downloadUrl = result.valueOrNull!;
 
         final newImage = PortfolioImage(
           url: downloadUrl,
@@ -102,19 +99,38 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Image added successfully')),
+            const SnackBar(content: Text('تمت إضافة الصورة بنجاح')),
           );
         }
       } catch (e) {
         if (mounted) {
+          final message = e is StateError
+              ? e.message.toString()
+              : 'تعذر إضافة الصورة';
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Failed to add image: $e')));
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
       } finally {
-        setState(() => _isUploading = false);
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
       }
     }
+  }
+
+  String _portfolioUploadErrorMessage(String? rawMessage) {
+    final normalized = rawMessage?.toLowerCase().trim() ?? '';
+    if (normalized.contains('active subscription')) {
+      return 'يتطلب رفع المزيد من أعمالك اشتراكًا نشطًا.';
+    }
+    if (normalized.contains('only photographers')) {
+      return 'رفع معرض الأعمال متاح لحسابات المصورين فقط.';
+    }
+    if (normalized.contains('limit')) {
+      return 'وصلت إلى حد معرض الأعمال في خطتك الحالية.';
+    }
+    return 'تعذر إضافة الصورة';
   }
 
   Future<void> _removeImage(int index) async {
@@ -122,8 +138,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
 
     // Delete from storage
     try {
-      final storageRef = FirebaseStorage.instance.refFromURL(imageToRemove.url);
-      await storageRef.delete();
+      await ProfileDependencies.deleteStorageFile().call(imageToRemove.url);
     } catch (e) {
       // Continue even if storage deletion fails
     }
@@ -135,52 +150,43 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
     await _savePortfolio();
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image removed successfully')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تم حذف الصورة بنجاح')));
     }
   }
 
   Future<void> _savePortfolio() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) return;
 
     try {
-      final portfolioData = {
-        'photographerId': user.uid,
-        'images': _portfolioImages.map((img) => img.toMap()).toList(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      final portfolioQuery = await FirebaseFirestore.instance
-          .collection('portfolios')
-          .where('photographerId', isEqualTo: user.uid)
-          .get();
-
-      if (portfolioQuery.docs.isNotEmpty) {
-        // Update existing
-        await portfolioQuery.docs.first.reference.update(portfolioData);
-      } else {
-        // Create new
-        await FirebaseFirestore.instance
-            .collection('portfolios')
-            .add(portfolioData);
+      final result = await ProfileDependencies.savePortfolio().call(
+        photographerId: userId,
+        images: ProfilePresentationMapper.toDomainImages(_portfolioImages),
+      );
+      if (!result.isSuccess) {
+        throw StateError(result.failureOrNull?.message ?? 'Save failed');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save portfolio: $e')));
+        ).showSnackBar(const SnackBar(content: Text('تعذر حفظ معرض الأعمال')));
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Edit Portfolio'),
+        title: const Text('معرض الأعمال'),
         actions: [
           if (_isUploading)
             const Padding(
@@ -205,24 +211,27 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.photo_library,
                     size: 64,
-                    color: AppColors.textSecondary,
+                    color: scheme.onSurfaceVariant,
                   ),
                   const SizedBox(height: 16),
-                  Text('No portfolio images yet', style: AppTypography.h3),
+                  Text(
+                    'لا توجد صور في معرض الأعمال',
+                    style: textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    'Add up to 20 images to showcase your work',
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                    'أضف صورًا تعرض جودة أعمالك للعملاء',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
-                    text: 'Add First Image',
+                    text: 'إضافة أول صورة',
                     icon: Icons.add,
                     onPressed: _addImage,
                   ),
@@ -242,13 +251,11 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
                 final image = _portfolioImages[index];
                 return Stack(
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
+                    Positioned.fill(
+                      child: LaqtaRemoteImage(
+                        imageUrl: image.url,
                         borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: NetworkImage(image.url),
-                          fit: BoxFit.cover,
-                        ),
+                        fit: BoxFit.cover,
                       ),
                     ),
                     Positioned(
@@ -280,14 +287,12 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove Image'),
-        content: const Text(
-          'Are you sure you want to remove this image from your portfolio?',
-        ),
+        title: const Text('حذف الصورة'),
+        content: const Text('هل تريد حذف هذه الصورة من معرض أعمالك؟'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text('إلغاء'),
           ),
           TextButton(
             onPressed: () {
@@ -295,7 +300,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
               _removeImage(index);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: const Text('حذف'),
           ),
         ],
       ),

@@ -1,15 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/models/booking_model.dart';
-import 'package:luqta/core/models/chat_model.dart';
-import 'package:luqta/core/models/photographer_model.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/core/router/app_router.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/models/booking_model.dart';
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/booking/booking_dependencies.dart';
+import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
+import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/profile/domain/entities/user_profile.dart';
+import 'package:laqta/features/profile/profile_dependencies.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -22,6 +24,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
+  bool _hasError = false;
 
   final List<BookingModel> _activeBookings = [];
   final List<BookingModel> _pastBookings = [];
@@ -40,23 +43,31 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _loadBookings() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        setState(() => _isLoading = false);
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true;
+        });
         return;
       }
 
-      final bookingsSnapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('customerId', isEqualTo: user.uid)
-          .orderBy('createdAt', descending: true)
-          .get();
-
-      final bookings = bookingsSnapshot.docs
-          .map((doc) => BookingModel.fromFirestore(doc))
+      final result = await BookingDependencies.getMyBookings().call(
+        userId: userId,
+      );
+      if (!result.isSuccess) {
+        throw StateError('Load bookings failed');
+      }
+      final bookingEntities = result.valueOrNull ?? [];
+      final bookings = bookingEntities
+          .map(BookingPresentationMapper.toModel)
           .toList();
 
       // Separate active and past bookings
@@ -71,6 +82,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         final isPast =
             bookingDateTime.isBefore(now) ||
             booking.status == 'done' ||
+            booking.status == 'completed' ||
             booking.status == 'canceled';
 
         if (isPast) {
@@ -80,8 +92,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         }
       }
     } catch (e) {
-      // Handle error - could show snackbar or error state
-      debugPrint('Error loading bookings: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error loading bookings: $e');
+      }
+      _hasError = true;
     }
 
     if (mounted) {
@@ -90,20 +104,23 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _cancelBooking(String bookingId) async {
+    final localizations = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: const Text('Are you sure you want to cancel this booking?'),
+        title: Text(localizations.cancelBooking),
+        content: Text(localizations.bookingCancelPrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
+            child: Text(localizations.no),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Yes, Cancel'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(localizations.confirm),
           ),
         ],
       ),
@@ -111,21 +128,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
     if (confirmed == true) {
       try {
-        await FirebaseFirestore.instance
-            .collection('bookings')
-            .doc(bookingId)
-            .update({'status': 'canceled', 'updatedAt': Timestamp.now()});
+        final result = await BookingDependencies.updateBookingStatus().call(
+          bookingId: bookingId,
+          status: 'canceled',
+        );
+        if (!result.isSuccess) {
+          throw StateError('Cancel failed');
+        }
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Booking cancelled successfully')),
+            SnackBar(content: Text(localizations.bookingCancelSuccess)),
           );
           _loadBookings();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to cancel booking: $e')),
+            SnackBar(content: Text(localizations.bookingCancelFailed)),
           );
         }
       }
@@ -133,91 +153,53 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _navigateToChat(BookingModel booking) async {
+    final localizations = AppLocalizations.of(context);
     try {
       // Get current user
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) return;
 
-      // Check if chat already exists for this booking
-      final chatQuery = await FirebaseFirestore.instance
-          .collection('chats')
-          .where('bookingId', isEqualTo: booking.id)
-          .limit(1)
-          .get();
-
-      String chatId;
-      String otherUserName;
-
-      if (chatQuery.docs.isNotEmpty) {
-        // Chat exists, use existing chat
-        final chatDoc = chatQuery.docs.first;
-        chatId = chatDoc.id;
-
-        // Get the other participant's name
-        final chat = ChatModel.fromFirestore(chatDoc);
-        final otherUserId = chat.participants.firstWhere(
-          (id) => id != user.uid,
-          orElse: () => '',
+      final chatResult = await ChatDependencies.getOrCreateBookingChat().call(
+        bookingId: booking.id,
+        participants: [userId, booking.photographerId],
+      );
+      if (!chatResult.isSuccess || chatResult.valueOrNull == null) {
+        throw StateError(
+          chatResult.failureOrNull?.message ?? 'Failed to open chat',
         );
-
-        if (otherUserId.isNotEmpty) {
-          final userDoc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(otherUserId)
-              .get();
-          otherUserName = userDoc.exists
-              ? UserModel.fromFirestore(userDoc).name
-              : 'Unknown';
-        } else {
-          otherUserName = 'Unknown';
-        }
-      } else {
-        // Create new chat
-        final newChatRef = FirebaseFirestore.instance.collection('chats').doc();
-        chatId = newChatRef.id;
-
-        // Get photographer name
-        final photographerDoc = await FirebaseFirestore.instance
-            .collection('photographers')
-            .doc(booking.photographerId)
-            .get();
-
-        otherUserName = photographerDoc.exists
-            ? PhotographerModel.fromFirestore(photographerDoc)
-                  .uid // Assuming uid is used as name, but actually we need name from users
-            : 'Unknown';
-
-        // Actually get name from users collection
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(booking.photographerId)
-            .get();
-
-        if (userDoc.exists) {
-          otherUserName = UserModel.fromFirestore(userDoc).name;
-        }
-
-        // Create chat document
-        final chat = ChatModel(
-          id: chatId,
-          bookingId: booking.id,
-          participants: [user.uid, booking.photographerId],
-          lastMessageAt: DateTime.now(),
-        );
-
-        await newChatRef.set(chat.toFirestore());
       }
+
+      final chat = chatResult.valueOrNull!;
+      final otherUserId = chat.participants.firstWhere(
+        (id) => id != userId,
+        orElse: () => '',
+      );
+      String otherUserName = 'Unknown';
+
+      if (otherUserId.isNotEmpty) {
+        final profileResult = await ProfileDependencies.getUserProfile().call(
+          userId: otherUserId,
+        );
+        if (profileResult.isSuccess && profileResult.valueOrNull != null) {
+          otherUserName = profileResult.valueOrNull!.name;
+        }
+      }
+
+      final chatId = chat.id;
 
       // Navigate to chat
       if (mounted) {
         AppRouter.goToChat(context, chatId, otherUserName);
       }
     } catch (e) {
-      debugPrint('Error navigating to chat: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error navigating to chat: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to open chat')));
+        ).showSnackBar(SnackBar(content: Text(localizations.error)));
       }
     }
   }
@@ -227,19 +209,20 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(localizations.myBookings),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Active'),
-            Tab(text: 'Past'),
+          tabs: [
+            Tab(text: localizations.active),
+            Tab(text: localizations.past),
           ],
         ),
       ),
       body: _isLoading
           ? const LoadingIndicator()
+          : _hasError && _activeBookings.isEmpty && _pastBookings.isEmpty
+          ? EmptyStates.error(onRetry: _loadBookings)
           : RefreshIndicator(
               onRefresh: _loadBookings,
               child: TabBarView(
@@ -257,11 +240,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     List<BookingModel> bookings, {
     required bool isActive,
   }) {
+    final localizations = AppLocalizations.of(context);
     if (bookings.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.event_busy,
-        title: 'No Bookings',
-        message: 'You have no bookings yet',
+        title: localizations.noBookings,
+        message: localizations.noBookingsMessage,
       );
     }
 
@@ -309,7 +293,7 @@ class _BookingCard extends StatefulWidget {
 }
 
 class _BookingCardState extends State<_BookingCard> {
-  UserModel? _photographerUser;
+  UserProfile? _photographerUser;
   bool _isLoadingPhotographer = true;
 
   @override
@@ -320,37 +304,69 @@ class _BookingCardState extends State<_BookingCard> {
 
   Future<void> _loadPhotographer() async {
     try {
-      // Load photographer user for name
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.booking.photographerId)
-          .get();
-
-      if (userDoc.exists) {
-        _photographerUser = UserModel.fromFirestore(userDoc);
+      final result = await ProfileDependencies.getUserProfile().call(
+        userId: widget.booking.photographerId,
+      );
+      if (result.isSuccess) {
+        _photographerUser = result.valueOrNull;
       }
 
       setState(() => _isLoadingPhotographer = false);
     } catch (e) {
       setState(() => _isLoadingPhotographer = false);
-      debugPrint('Error loading photographer: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error loading photographer: $e');
+      }
     }
   }
 
   Color _getStatusColor() {
+    final scheme = Theme.of(context).colorScheme;
     switch (widget.booking.status) {
       case 'confirmed':
-        return AppColors.confirmed;
+        return scheme.tertiary;
       case 'pending':
-        return AppColors.pending;
+        return scheme.secondary;
+      case 'in_progress':
+        return scheme.secondary;
+      case 'delivered':
+        return scheme.primary;
+      case 'revision_requested':
+        return scheme.secondary;
+      case 'completed':
+        return scheme.primary;
       case 'rejected':
-        return AppColors.rejected;
+        return scheme.error;
       case 'done':
-        return AppColors.done;
+        return scheme.primary;
       case 'canceled':
-        return AppColors.canceled;
+        return scheme.outline;
       default:
-        return AppColors.textSecondary;
+        return scheme.onSurfaceVariant;
+    }
+  }
+
+  String _localizedStatus(AppLocalizations localizations, String status) {
+    switch (status) {
+      case 'confirmed':
+        return localizations.bookingConfirmed;
+      case 'pending':
+        return localizations.bookingPending;
+      case 'in_progress':
+        return localizations.bookingInProgress;
+      case 'delivered':
+        return localizations.bookingDelivered;
+      case 'revision_requested':
+        return localizations.bookingRevisionRequested;
+      case 'completed':
+      case 'done':
+        return localizations.bookingCompleted;
+      case 'rejected':
+        return localizations.bookingRejected;
+      case 'canceled':
+        return localizations.bookingCanceledMessage;
+      default:
+        return status.replaceAll('_', ' ').toUpperCase();
     }
   }
 
@@ -365,6 +381,11 @@ class _BookingCardState extends State<_BookingCard> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final statusColor = _getStatusColor();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -381,8 +402,8 @@ class _BookingCardState extends State<_BookingCard> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.person, color: AppColors.primary),
+                    backgroundColor: scheme.primary.withValues(alpha: 0.12),
+                    child: Icon(Icons.person, color: scheme.primary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -391,15 +412,15 @@ class _BookingCardState extends State<_BookingCard> {
                       children: [
                         Text(
                           _isLoadingPhotographer
-                              ? 'Loading...'
+                              ? localizations.loading
                               : _photographerUser?.name ??
-                                    'Unknown Photographer',
-                          style: AppTypography.h4,
+                                    localizations.photographer,
+                          style: textTheme.titleMedium,
                         ),
                         Text(
                           widget.booking.type,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -411,14 +432,14 @@ class _BookingCardState extends State<_BookingCard> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor().withValues(alpha: 0.1),
+                      color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: _getStatusColor()),
+                      border: Border.all(color: statusColor),
                     ),
                     child: Text(
-                      widget.booking.status.toUpperCase(),
-                      style: AppTypography.caption.copyWith(
-                        color: _getStatusColor(),
+                      _localizedStatus(localizations, widget.booking.status),
+                      style: textTheme.labelSmall?.copyWith(
+                        color: statusColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -434,18 +455,18 @@ class _BookingCardState extends State<_BookingCard> {
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(widget.booking.date),
-                    style: AppTypography.bodySmall,
+                    style: textTheme.bodySmall,
                   ),
                   const SizedBox(width: 16),
                   const Icon(Icons.access_time, size: 16),
                   const SizedBox(width: 4),
-                  Text(widget.booking.time, style: AppTypography.bodySmall),
+                  Text(widget.booking.time, style: textTheme.bodySmall),
                   const Spacer(),
                   Text(
                     '${widget.booking.price.toStringAsFixed(0)} ${widget.booking.currency}',
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: scheme.primary,
                     ),
                   ),
                 ],
@@ -456,42 +477,45 @@ class _BookingCardState extends State<_BookingCard> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (widget.booking.status == 'confirmed' ||
-                        widget.booking.status == 'pending') ...[
+                    if (widget.booking.status != 'canceled' &&
+                        widget.booking.status != 'completed' &&
+                        widget.booking.status != 'done') ...[
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: widget.onChat,
                           icon: const Icon(Icons.message, size: 16),
-                          label: const Text('Chat'),
+                          label: Text(localizations.chat),
                         ),
                       ),
                       const SizedBox(width: 8),
                     ],
                     if (widget.booking.status == 'pending' ||
-                        widget.booking.status == 'confirmed') ...[
+                        widget.booking.status == 'confirmed' ||
+                        widget.booking.status == 'in_progress') ...[
                       Expanded(
                         child: OutlinedButton(
                           onPressed: widget.onCancel,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.error,
-                            side: const BorderSide(color: AppColors.error),
+                            foregroundColor: scheme.error,
+                            side: BorderSide(color: scheme.error),
                           ),
-                          child: const Text('Cancel'),
+                          child: Text(localizations.cancel),
                         ),
                       ),
                     ],
                   ],
                 ),
-              ] else if (widget.booking.status == 'done') ...[
+              ] else if (widget.booking.status == 'done' ||
+                  widget.booking.status == 'completed') ...[
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => widget.onReview(
-                      _photographerUser?.name ?? 'Unknown Photographer',
+                      _photographerUser?.name ?? localizations.photographer,
                     ),
                     icon: const Icon(Icons.star, size: 16),
-                    label: const Text('Leave Review'),
+                    label: Text(localizations.leaveReview),
                   ),
                 ),
               ],
@@ -502,3 +526,4 @@ class _BookingCardState extends State<_BookingCard> {
     );
   }
 }
+

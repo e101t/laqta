@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+
+Color _onColorForBackground(Color background) {
+  final brightness = ThemeData.estimateBrightnessForColor(background);
+  if (brightness == Brightness.dark) return Colors.white;
+  return Colors.black;
+}
 
 /// Primary Button Widget
 class PrimaryButton extends StatelessWidget {
@@ -22,20 +27,26 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final background = color ?? scheme.primary;
+    final foreground = color == null
+        ? scheme.onPrimary
+        : _onColorForBackground(background);
     return SizedBox(
       width: isFullWidth ? double.infinity : null,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color ?? AppColors.primary,
+          backgroundColor: background,
+          foregroundColor: foreground,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(foreground),
                 ),
               )
             : Row(
@@ -108,18 +119,22 @@ class CTAButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return SizedBox(
       width: isFullWidth ? double.infinity : null,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: AppColors.cta),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: scheme.secondary,
+          foregroundColor: scheme.onSecondary,
+        ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(scheme.onSecondary),
                 ),
               )
             : Row(
@@ -154,9 +169,10 @@ class AppIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return IconButton(
       icon: Icon(icon, size: size),
-      color: color ?? AppColors.textPrimary,
+      color: color ?? scheme.onSurface,
       onPressed: onPressed,
       splashRadius: size + 4,
     );

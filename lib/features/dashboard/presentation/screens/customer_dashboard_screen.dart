@@ -1,453 +1,544 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/router/app_router.dart';
+import 'package:provider/provider.dart';
+
+import 'package:laqta/app/router/app_router.dart';
+import 'package:laqta/core/constants/marketplace_assets.dart';
+import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/core/widgets/laqta_async_widgets.dart';
+import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
+import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
+import 'package:laqta/features/marketplace/marketplace_dependencies.dart';
+import 'package:laqta/features/marketplace/presentation/controllers/marketplace_controllers.dart';
 
 class CustomerDashboardScreen extends StatelessWidget {
   const CustomerDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) =>
+          HomeFeedController(MarketplaceDependencies.repository)..load(),
+      child: const _CustomerDashboardView(),
+    );
+  }
+}
+
+class _CustomerDashboardView extends StatefulWidget {
+  const _CustomerDashboardView();
+
+  @override
+  State<_CustomerDashboardView> createState() => _CustomerDashboardViewState();
+}
+
+class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
+  final List<String> _tabs = const [
+    'لك',
+    'الأكثر مشاهدة',
+    'زفاف',
+    'جلسات',
+    'نقاشات',
+  ];
+  int _selectedTab = 0;
+
+  List<MarketplaceFeedEntry> _filterItems(List<MarketplaceFeedEntry> items) {
+    final base = [...items];
+    if (_selectedTab == 1) {
+      base.sort((a, b) => b.rankingScore.compareTo(a.rankingScore));
+      return base;
+    }
+    if (_selectedTab == 2) {
+      return base
+          .where(
+            (item) =>
+                item.kind == MarketplaceFeedKind.reel ||
+                item.kind == MarketplaceFeedKind.photographer,
+          )
+          .toList(growable: false);
+    }
+    if (_selectedTab == 3) {
+      return base
+          .where((item) => item.kind != MarketplaceFeedKind.location)
+          .toList(growable: false);
+    }
+    return base;
+  }
+
+  void _handleStoryTap(String id) {
+    switch (id) {
+      case 'venues':
+        AppRouter.goToVenues(context);
+        break;
+      case 'locations':
+        AppRouter.goToExplore(context);
+        break;
+      case 'photographers':
+        AppRouter.goToExplore(context);
+        break;
+      default:
+        AppRouter.goToExplore(context);
+    }
+  }
+
+  void _openFeedItem(MarketplaceFeedEntry item) {
+    switch (item.kind) {
+      case MarketplaceFeedKind.venue:
+        if (item.venue != null) {
+          AppRouter.goToVenueDetails(context, item.venue!.id);
+        }
+        break;
+      case MarketplaceFeedKind.location:
+        if (item.venue != null) {
+          AppRouter.goToLocationDetails(context, item.venue!.id);
+        }
+        break;
+      case MarketplaceFeedKind.photographer:
+        if (item.photographer != null) {
+          AppRouter.goToPhotographerProfile(context, item.photographer!.id);
+        }
+        break;
+      case MarketplaceFeedKind.reel:
+        if (item.reel != null) {
+          AppRouter.goToPhotographerProfile(context, item.reel!.photographerId);
+        }
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<HomeFeedController>();
+    final feedItems = _filterItems(controller.items);
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('لوحة التحكم'), centerTitle: true),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Greeting Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.cta],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+      backgroundColor: const Color(0xFF0E1014),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: controller.load,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+            children: [
+              Row(
+                textDirection: TextDirection.ltr,
+                children: [
+                  Text(
+                    'LAQTA',
+                    style: textTheme.headlineSmall?.copyWith(
+                      color: const Color(0xFFD6A44A),
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const Spacer(),
+                  LaqtaTopIconButton(
+                    icon: Icons.notifications_none_rounded,
+                    badge: true,
+                    onTap: () => AppRouter.goToNotifications(context),
+                  ),
+                  const SizedBox(width: 2),
+                  LaqtaTopIconButton(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    onTap: () => AppRouter.goToChatList(context),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 35,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 40, color: AppColors.primary),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'مرحباً، أحمد! 👋',
-                        style: AppTypography.h3.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+              const SizedBox(height: 14),
+              LaqtaLuxurySearchBar(
+                hint: 'ابحث عن مصور، قاعة، مكان...',
+                onTap: () => AppRouter.goToSearch(context),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 98,
+                child: Builder(
+                  builder: (context) {
+                    final stories = MarketplaceAssets.storyShortcuts;
+                    return Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: stories.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          final story = stories[index];
+                          return InkWell(
+                            onTap: () => _handleStoryTap(story.id),
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(2.2),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFFD6A44A),
+                                      width: 1.3,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 26,
+                                    backgroundImage: story.id == 'follow'
+                                        ? null
+                                        : AssetImage(story.imagePath),
+                                    backgroundColor: const Color(0xFF17191F),
+                                    child: story.id == 'follow'
+                                        ? const Icon(
+                                            Icons.add_rounded,
+                                            color: Color(0xFFD6A44A),
+                                            size: 28,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  story.title,
+                                  style: textTheme.labelMedium?.copyWith(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'جاهز لحجز جلستك القادمة؟',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 32,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _tabs.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 24),
+                    itemBuilder: (context, index) {
+                      final selected = _selectedTab == index;
+                      return InkWell(
+                        onTap: () => setState(() => _selectedTab = index),
+                        child: Column(
+                          children: [
+                            Text(
+                              _tabs[index],
+                              style: textTheme.titleSmall?.copyWith(
+                                color: selected
+                                    ? const Color(0xFFD6A44A)
+                                    : Colors.white70,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const Spacer(flex: 2),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: selected ? 28 : 0,
+                              height: 2,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD6A44A),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
-              ],
+              ),
+              const SizedBox(height: 18),
+              if (controller.isLoading && controller.items.isEmpty)
+                ...List.generate(
+                  3,
+                  (_) => const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
+                    child: LaqtaSkeletonBox(
+                      height: 320,
+                      borderRadius: BorderRadius.all(Radius.circular(24)),
+                    ),
+                  ),
+                )
+              else if (feedItems.isEmpty && controller.error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: _DashboardStateMessage(message: controller.error!),
+                )
+              else if (feedItems.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: _DashboardStateMessage(
+                    message: 'لا توجد منشورات بعد',
+                    subtitle: 'ابدأ بمتابعة مصورين أو استكشف القاعات والأماكن',
+                  ),
+                )
+              else
+                ...feedItems.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _FeedCard(
+                      item: item,
+                      onTap: () => _openFeedItem(item),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardStateMessage extends StatelessWidget {
+  final String message;
+  final String? subtitle;
+
+  const _DashboardStateMessage({required this.message, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Center(
+      child: Column(
+        children: [
+          Text(
+            message,
+            style: textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
-
-          // Quick Actions
-          Text('إجراءات سريعة', style: AppTypography.h3),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.search,
-                  label: 'ابحث عن مصور',
-                  color: AppColors.primary,
-                  onTap: () {
-                    AppRouter.goToSearch(context);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.card_giftcard,
-                  label: 'نقاط الولاء',
-                  color: AppColors.cta,
-                  onTap: () {
-                    AppRouter.goToLoyaltyPoints(context);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.emoji_events,
-                  label: 'الإنجازات',
-                  color: AppColors.success,
-                  onTap: () {
-                    AppRouter.goToAchievements(context);
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.favorite,
-                  label: 'المفضلة',
-                  color: AppColors.error,
-                  onTap: () {
-                    AppRouter.goToFavorites(context);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // My Bookings Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('حجوزاتي الأخيرة', style: AppTypography.h3),
-              TextButton(
-                onPressed: () {
-                  AppRouter.goToBookings(context);
-                },
-                child: const Text('عرض الكل'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Bookings List
-          _BookingCard(
-            photographerName: 'أحمد محمد',
-            specialty: 'تصوير زفاف',
-            date: '15 نوفمبر 2024',
-            time: '4:00 مساءً',
-            status: 'confirmed',
-            onTap: () {},
-          ),
-          const SizedBox(height: 12),
-          _BookingCard(
-            photographerName: 'سارة علي',
-            specialty: 'تصوير شخصي',
-            date: '20 نوفمبر 2024',
-            time: '2:00 مساءً',
-            status: 'pending',
-            onTap: () {},
-          ),
-          const SizedBox(height: 24),
-
-          // Favorite Photographers
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('مصورين مفضلين', style: AppTypography.h3),
-              TextButton(
-                onPressed: () {
-                  AppRouter.goToFavorites(context);
-                },
-                child: const Text('عرض الكل'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Favorites Horizontal List
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 3,
-              itemBuilder: (context, index) {
-                return _FavoritePhotographerCard(
-                  name: 'مصور ${index + 1}',
-                  rating: 4.5 + (index * 0.2),
-                  reviewsCount: 120 + (index * 20),
-                  onTap: () {},
-                );
-              },
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              subtitle!,
+              style: textTheme.bodyMedium?.copyWith(color: Colors.white60),
+              textAlign: TextAlign.center,
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _QuickActionCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
+class _FeedCard extends StatelessWidget {
+  final MarketplaceFeedEntry item;
   final VoidCallback onTap;
 
-  const _QuickActionCard({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _FeedCard({required this.item, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final imageUrl =
+        item.reel?.mediaUrl ??
+        item.venue?.coverUrl ??
+        item.photographer?.photoUrl;
+    final title =
+        item.reel?.caption ??
+        item.venue?.name ??
+        item.photographer?.name ??
+        'LAQTA';
+    final creatorName =
+        item.reel?.photographerName ??
+        item.photographer?.name ??
+        item.venue?.name ??
+        'LAQTA';
+    final likes =
+        item.reel?.likes ??
+        ((item.photographer?.ratingAverage ?? item.venue?.ratingAverage ?? 0) *
+                100)
+            .round();
+    final comments =
+        item.reel?.comments ??
+        item.venue?.reviewCount ??
+        item.photographer?.ratingCount ??
+        0;
+
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white, size: 28),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: AppTypography.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BookingCard extends StatelessWidget {
-  final String photographerName;
-  final String specialty;
-  final String date;
-  final String time;
-  final String status; // pending, confirmed, completed, cancelled
-  final VoidCallback onTap;
-
-  const _BookingCard({
-    required this.photographerName,
-    required this.specialty,
-    required this.date,
-    required this.time,
-    required this.status,
-    required this.onTap,
-  });
-
-  Color _getStatusColor() {
-    switch (status) {
-      case 'confirmed':
-        return AppColors.success;
-      case 'pending':
-        return AppColors.cta;
-      case 'completed':
-        return AppColors.info;
-      case 'cancelled':
-        return AppColors.error;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
-  String _getStatusText() {
-    switch (status) {
-      case 'confirmed':
-        return 'مؤكد ✓';
-      case 'pending':
-        return 'قيد الانتظار ⏳';
-      case 'completed':
-        return 'مكتمل ✅';
-      case 'cancelled':
-        return 'ملغي ✖';
-      default:
-        return '';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: AppColors.primary,
-                size: 30,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      borderRadius: BorderRadius.circular(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: SizedBox(
+              height: item.kind == MarketplaceFeedKind.photographer ? 290 : 220,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Text(photographerName, style: AppTypography.h4),
-                  const SizedBox(height: 4),
-                  Text(
-                    specialty,
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                  LaqtaRemoteImage(
+                    imageUrl: imageUrl,
+                    fallbackAssetPath: switch (item.kind) {
+                      MarketplaceFeedKind.photographer =>
+                        MarketplaceAssets.heroPhotographer,
+                      MarketplaceFeedKind.location =>
+                        MarketplaceAssets.heroLocation,
+                      MarketplaceFeedKind.venue => MarketplaceAssets.heroVenue,
+                      MarketplaceFeedKind.reel => MarketplaceAssets.heroWedding,
+                    },
+                    fit: BoxFit.cover,
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.08),
+                          Colors.black.withValues(alpha: 0.68),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text('$date - $time', style: AppTypography.bodySmall),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _getStatusColor().withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                _getStatusText(),
-                style: AppTypography.bodySmall.copyWith(
-                  color: _getStatusColor(),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FavoritePhotographerCard extends StatelessWidget {
-  final String name;
-  final double rating;
-  final int reviewsCount;
-  final VoidCallback onTap;
-
-  const _FavoritePhotographerCard({
-    required this.name,
-    required this.rating,
-    required this.reviewsCount,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: 150,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.3),
-                    AppColors.cta.withValues(alpha: 0.3),
-                  ],
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
-                ),
-              ),
-              child: const Center(
-                child: Icon(Icons.person, size: 50, color: Colors.white),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, size: 14, color: AppColors.cta),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating.toStringAsFixed(1),
-                        style: AppTypography.bodySmall,
-                      ),
-                      Text(
-                        ' ($reviewsCount)',
-                        style: AppTypography.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: AlignmentDirectional.topEnd,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (item.isSponsored || item.isFeatured)
+                                Container(
+                                  margin: const EdgeInsetsDirectional.only(
+                                    end: 8,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD6A44A),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    item.isSponsored ? 'ممول' : 'مميز',
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              const Icon(
+                                Icons.more_vert_rounded,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        Text(
+                          title,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 12,
+                              backgroundImage: const AssetImage(
+                                MarketplaceAssets.avatar,
+                              ),
+                              foregroundImage:
+                                  BackendConfig.resolvePublicUrl(
+                                        item.photographer?.photoUrl,
+                                      ) !=
+                                      null
+                                  ? NetworkImage(
+                                      BackendConfig.resolvePublicUrl(
+                                        item.photographer?.photoUrl,
+                                      )!,
+                                    )
+                                  : BackendConfig.resolvePublicUrl(
+                                          item.reel?.photographerPhotoUrl,
+                                        ) !=
+                                        null
+                                  ? NetworkImage(
+                                      BackendConfig.resolvePublicUrl(
+                                        item.reel?.photographerPhotoUrl,
+                                      )!,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                creatorName,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white70,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 10),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(
+                Icons.mode_comment_outlined,
+                size: 18,
+                color: Colors.white70,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '$comments',
+                style: textTheme.bodySmall?.copyWith(color: Colors.white70),
+              ),
+              const SizedBox(width: 14),
+              const Icon(
+                Icons.favorite_border_rounded,
+                size: 18,
+                color: Colors.white70,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                likes >= 1000
+                    ? '${(likes / 1000).toStringAsFixed(1)}K'
+                    : '$likes',
+                style: textTheme.bodySmall?.copyWith(color: Colors.white70),
+              ),
+              if (item.kind != MarketplaceFeedKind.photographer) ...[
+                const Spacer(),
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

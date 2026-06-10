@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/loading_widgets.dart';
-import 'package:luqta/core/widgets/empty_states.dart';
-import 'package:luqta/core/widgets/app_cards.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/core/models/user_model.dart';
-import 'package:luqta/core/models/photographer_model.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/widgets/loading_widgets.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/core/widgets/app_cards.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/favorites/domain/entities/favorite_photographer.dart';
+import 'package:laqta/features/favorites/favorites_dependencies.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -52,8 +50,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadFavorites() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) {
       setState(() {
         _isLoading = false;
         _errorMessage = 'Please log in to view favorites';
@@ -67,78 +67,35 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     });
 
     try {
-      // Fetch favorites for the current user
-      final favoritesQuery = await FirebaseFirestore.instance
-          .collection('favorites')
-          .where('userId', isEqualTo: user.uid)
-          .get();
-
-      final photographerIds = favoritesQuery.docs
-          .map((doc) => doc.data()['photographerId'] as String)
-          .toList();
-
-      if (photographerIds.isEmpty) {
-        setState(() => _isLoading = false);
-        return;
+      final result = await FavoritesDependencies.getFavorites().call(
+        userId: userId,
+      );
+      if (!mounted) return;
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to load favorites',
+        );
       }
 
-      // Fetch user data for each photographer
-      final userDocs = await FirebaseFirestore.instance
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: photographerIds)
-          .get();
-
-      // Fetch photographer data for each photographer
-      final photographerDocs = await FirebaseFirestore.instance
-          .collection('photographers')
-          .where(FieldPath.documentId, whereIn: photographerIds)
-          .get();
-
-      // Create a map for quick lookup
-      final userMap = {
-        for (var doc in userDocs.docs) doc.id: UserModel.fromFirestore(doc),
-      };
-      final photographerMap = {
-        for (var doc in photographerDocs.docs)
-          doc.id: PhotographerModel.fromFirestore(doc),
-      };
-
-      _favorites.clear();
-      for (final photographerId in photographerIds) {
-        final userData = userMap[photographerId];
-        final photographerData = photographerMap[photographerId];
-
-        if (userData != null && photographerData != null) {
-          _favorites.add(
-            FavoritePhotographer(
-              id: photographerId,
-              name: userData.name,
-              image: userData.photoUrl ?? '',
-              specialties: photographerData.specialties,
-              rating: photographerData.rate,
-              reviewCount: photographerData.reviewsCount,
-              startingPrice: photographerData.basePrice,
-              governorate: userData.governorate,
-              username: userData.username,
-              gender: userData.gender,
-              age: userData.age,
-            ),
-          );
-        }
-      }
+      _favorites
+        ..clear()
+        ..addAll(result.valueOrNull ?? []);
 
       setState(() => _isLoading = false);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load favorites: $e';
+        _errorMessage = 'Failed to load favorites';
       });
     }
   }
 
   Future<void> _removeFavorite(String photographerId) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    final userResult = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
+    final userId = userResult.valueOrNull?.id;
+    if (userId == null || userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please log in to manage favorites')),
       );
@@ -154,10 +111,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     });
 
     try {
-      await FirebaseFirestore.instance
-          .collection('favorites')
-          .doc('${user.uid}_$photographerId')
-          .delete();
+      final result = await FavoritesDependencies.removeFavorite().call(
+        userId: userId,
+        photographerId: photographerId,
+      );
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to remove from favorites',
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,9 +145,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(localizations.favorites)),
       body: _isLoading
           ? const LoadingIndicator()
@@ -194,13 +156,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  Icon(Icons.error_outline, size: 64, color: scheme.error),
                   const SizedBox(height: 16),
                   Text(_errorMessage!, textAlign: TextAlign.center),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadFavorites,
-                    child: const Text('Retry'),
+                    child: Text(localizations.retry),
                   ),
                 ],
               ),
@@ -238,6 +200,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Widget _buildFavoritesList(List<FavoritePhotographer> list) {
+    final scheme = Theme.of(context).colorScheme;
+
     if (list.isEmpty) {
       return Center(
         child: EmptyState(
@@ -262,7 +226,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: 16),
               decoration: BoxDecoration(
-                color: AppColors.error,
+                color: scheme.error,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.delete, color: Colors.white),
@@ -297,32 +261,4 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
-}
-
-class FavoritePhotographer {
-  final String id;
-  final String name;
-  final String image;
-  final List<String> specialties;
-  final double rating;
-  final int reviewCount;
-  final double startingPrice;
-  final String governorate;
-  final String? username;
-  final String? gender;
-  final int? age;
-
-  FavoritePhotographer({
-    required this.id,
-    required this.name,
-    required this.image,
-    required this.specialties,
-    required this.rating,
-    required this.reviewCount,
-    required this.startingPrice,
-    required this.governorate,
-    this.username,
-    this.gender,
-    this.age,
-  });
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/widgets/app_buttons.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:laqta/core/widgets/app_buttons.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/settings/domain/entities/report_submission.dart';
+import 'package:laqta/features/settings/settings_dependencies.dart';
 
 class ReportScreen extends StatefulWidget {
   final String? reportedUserId;
@@ -85,32 +85,35 @@ class _ReportScreenState extends State<ReportScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userResult = await AuthDependencies.getCurrentUser().call();
+      final userId = userResult.valueOrNull?.id;
+      if (userId == null || userId.isEmpty) {
         throw Exception('User not authenticated');
       }
 
-      final reportData = {
-        'reporterId': user.uid,
-        'reportedUserId': widget.reportedUserId,
-        'reportedUserName': widget.reportedUserName,
-        'reportType': widget.reportType.toString(),
-        'reason': _selectedReason,
-        'details': _detailsController.text.trim(),
-        'timestamp': FieldValue.serverTimestamp(),
-        'status': 'pending',
-      };
-
-      await FirebaseFirestore.instance.collection('reports').add(reportData);
+      final submission = ReportSubmission(
+        reporterId: userId,
+        reportedUserId: widget.reportedUserId,
+        reportedUserName: widget.reportedUserName,
+        reportType: widget.reportType.toString(),
+        reason: _selectedReason!,
+        details: _detailsController.text.trim(),
+      );
+      final result = await SettingsDependencies.submitReport().call(submission);
+      if (!result.isSuccess) {
+        throw StateError(
+          result.failureOrNull?.message ?? 'Failed to submit report',
+        );
+      }
 
       setState(() => _isSubmitting = false);
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('حدث خطأ أثناء إرسال البلاغ: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حدث خطأ أثناء إرسال البلاغ')),
+      );
       return;
     }
 
@@ -120,59 +123,67 @@ class _ReportScreenState extends State<ReportScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+      builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
+        final textTheme = Theme.of(context).textTheme;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: scheme.tertiary.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle,
+                  size: 50,
+                  color: scheme.tertiary,
+                ),
               ),
-              child: const Icon(
-                Icons.check_circle,
-                size: 50,
-                color: AppColors.success,
+              const SizedBox(height: 20),
+              const Text(
+                'تم إرسال البلاغ بنجاح',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'تم إرسال البلاغ بنجاح',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'شكراً لك! سنقوم بمراجعة البلاغ في أقرب وقت.',
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+              const SizedBox(height: 12),
+              Text(
+                'شكراً لك! سنقوم بمراجعة البلاغ في أقرب وقت.',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: CTAButton(
-                text: 'تم',
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                },
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: CTAButton(
+                  text: 'تم',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('إرسال بلاغ 🚨'), centerTitle: true),
       body: Form(
         key: _formKey,
@@ -187,16 +198,16 @@ class _ReportScreenState extends State<ReportScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.error.withValues(alpha: 0.2),
-                      AppColors.error.withValues(alpha: 0.05),
+                      scheme.error.withValues(alpha: 0.20),
+                      scheme.error.withValues(alpha: 0.06),
                     ],
                   ),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.report_problem,
                   size: 50,
-                  color: AppColors.error,
+                  color: scheme.error,
                 ),
               ),
             ),
@@ -207,28 +218,27 @@ class _ReportScreenState extends State<ReportScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: scheme.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: scheme.outlineVariant),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.person, color: AppColors.textSecondary),
+                    Icon(Icons.person, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'الإبلاغ عن:',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
                           Text(
                             widget.reportedUserName!,
-                            style: AppTypography.h4,
+                            style: textTheme.titleMedium,
                           ),
                         ],
                       ),
@@ -240,7 +250,7 @@ class _ReportScreenState extends State<ReportScreen> {
             ],
 
             // Title
-            Text('سبب البلاغ ⚠️', style: AppTypography.h3),
+            Text('سبب البلاغ ⚠️', style: textTheme.titleLarge),
             const SizedBox(height: 16),
 
             // Report Reasons Grid
@@ -268,10 +278,12 @@ class _ReportScreenState extends State<ReportScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.error.withValues(alpha: 0.1)
-                          : AppColors.surface,
+                          ? scheme.error.withValues(alpha: 0.12)
+                          : scheme.surface,
                       border: Border.all(
-                        color: isSelected ? AppColors.error : AppColors.divider,
+                        color: isSelected
+                            ? scheme.error
+                            : scheme.outlineVariant,
                         width: isSelected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -286,10 +298,8 @@ class _ReportScreenState extends State<ReportScreen> {
                         const SizedBox(height: 8),
                         Text(
                           reason.title,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: isSelected
-                                ? AppColors.error
-                                : AppColors.textPrimary,
+                          style: textTheme.bodySmall?.copyWith(
+                            color: isSelected ? scheme.error : scheme.onSurface,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -305,7 +315,7 @@ class _ReportScreenState extends State<ReportScreen> {
             const SizedBox(height: 24),
 
             // Details
-            Text('تفاصيل إضافية 📋', style: AppTypography.h3),
+            Text('تفاصيل إضافية 📋', style: textTheme.titleLarge),
             const SizedBox(height: 12),
             AppTextField(
               controller: _detailsController,
@@ -328,27 +338,23 @@ class _ReportScreenState extends State<ReportScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.info.withValues(alpha: 0.1),
+                color: scheme.primary.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.3),
+                  color: scheme.primary.withValues(alpha: 0.25),
                 ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: AppColors.info,
-                    size: 20,
-                  ),
+                  Icon(Icons.info_outline, color: scheme.primary, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'سيتم مراجعة بلاغك من قبل فريقنا خلال 24-48 ساعة. '
                       'نحن نأخذ جميع البلاغات على محمل الجد ونعمل على توفير بيئة آمنة للجميع.',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.info,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: scheme.primary,
                         height: 1.5,
                       ),
                     ),

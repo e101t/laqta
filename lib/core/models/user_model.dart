@@ -1,4 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:laqta/core/utils/legacy_data_compat.dart';
+
+import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class UserModel {
   final String uid;
@@ -46,32 +48,28 @@ class UserModel {
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = firestoreMap(doc.data());
     return UserModel(
       uid: doc.id,
-      role: data['role'] ?? 'customer',
-      name: data['name'] ?? '',
-      username: data['username'],
-      email: data['email'],
-      phone: data['phone'],
-      photoUrl: data['photoUrl'],
-      governorate: data['governorate'] ?? '',
-      gender: data['gender'],
-      age: data['age'],
-      birthYear: data['birthYear'],
-      lang: data['lang'] ?? 'ar',
-      fcmToken: data['fcmToken'],
-      profileCompleted: data['profileCompleted'] ?? false,
-      over18Confirmed: data['over18Confirmed'] ?? false,
-      interests: data['interests'] != null
-          ? List<String>.from(data['interests'])
-          : null,
-      blockedUsers: data['blockedUsers'] != null
-          ? List<String>.from(data['blockedUsers'])
-          : const [],
-      lastSeen: (data['lastSeen'] as Timestamp?)?.toDate(),
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      role: readString(data, 'role', defaultValue: 'customer'),
+      name: readString(data, 'name'),
+      username: readNullableString(data, 'username'),
+      email: readNullableString(data, 'email'),
+      phone: readNullableString(data, 'phone'),
+      photoUrl: readNullableString(data, 'photoUrl'),
+      governorate: readString(data, 'governorate'),
+      gender: readNullableString(data, 'gender'),
+      age: readNullableInt(data, 'age'),
+      birthYear: readNullableInt(data, 'birthYear'),
+      lang: readString(data, 'lang', defaultValue: 'ar'),
+      fcmToken: readNullableString(data, 'fcmToken'),
+      profileCompleted: readBool(data, 'profileCompleted'),
+      over18Confirmed: readBool(data, 'over18Confirmed'),
+      interests: readStringListOrNull(data, 'interests'),
+      blockedUsers: readStringList(data, 'blockedUsers'),
+      lastSeen: readDate(data['lastSeen']),
+      createdAt: readDateTime(data, 'createdAt'),
+      updatedAt: readDateTime(data, 'updatedAt'),
     );
   }
 

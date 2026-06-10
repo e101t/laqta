@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:luqta/core/constants/app_theme.dart';
+
+enum PolicyType { privacy, terms, deleteAccount, content }
 
 class PolicyTermsScreen extends StatelessWidget {
   final PolicyType type;
@@ -8,99 +9,95 @@ class PolicyTermsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final title = switch (type) {
+      PolicyType.privacy => isArabic ? 'سياسة الخصوصية' : 'Privacy Policy',
+      PolicyType.terms => isArabic ? 'الشروط والأحكام' : 'Terms & Conditions',
+      PolicyType.deleteAccount =>
+        isArabic ? 'سياسة حذف الحساب' : 'Delete Account Policy',
+      PolicyType.content => isArabic ? 'سياسة المحتوى' : 'Content Policy',
+    };
+    final lastUpdated = isArabic
+        ? 'آخر تحديث: 26 يناير 2026'
+        : 'Last updated: January 26, 2026';
+    final supportTitle = isArabic ? 'هل تحتاج مساعدة؟' : 'Need help?';
+    final supportText = isArabic ? 'تواصل مع فريق الدعم:' : 'Contact support:';
+
+    final sections = switch (type) {
+      PolicyType.privacy => _privacySections(isArabic),
+      PolicyType.terms => _termsSections(isArabic),
+      PolicyType.deleteAccount => _deleteAccountSections(isArabic),
+      PolicyType.content => _contentSections(isArabic),
+    };
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          type == PolicyType.privacy
-              ? 'سياسة الخصوصية ⚖️'
-              : 'شروط الاستخدام 📄',
-        ),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(title), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          // Header Icon
           Center(
             child: Container(
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: scheme.primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 type == PolicyType.privacy ? Icons.security : Icons.description,
                 size: 40,
-                color: AppColors.primary,
+                color: scheme.primary,
               ),
             ),
           ),
           const SizedBox(height: 24),
-
-          // Last Updated
           Center(
             child: Text(
-              'آخر تحديث: 15 نوفمبر 2024',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
+              lastUpdated,
+              style: textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
             ),
           ),
           const SizedBox(height: 32),
-
-          // Content
-          if (type == PolicyType.privacy)
-            _buildPrivacyPolicy()
-          else
-            _buildTermsOfService(),
-
+          for (final section in sections)
+            _buildSection(context, section.title, section.body),
           const SizedBox(height: 32),
-
-          // Contact Support
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.primary.withValues(alpha: 0.1),
-                  AppColors.cta.withValues(alpha: 0.05),
+                  scheme.primary.withValues(alpha: 0.10),
+                  scheme.secondary.withValues(alpha: 0.06),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
-              ),
+              border: Border.all(color: scheme.primary.withValues(alpha: 0.30)),
             ),
             child: Column(
               children: [
-                const Icon(
-                  Icons.support_agent,
-                  size: 40,
-                  color: AppColors.primary,
-                ),
+                Icon(Icons.support_agent, size: 40, color: scheme.primary),
                 const SizedBox(height: 12),
                 Text(
-                  'هل لديك استفسار؟',
-                  style: AppTypography.h4.copyWith(color: AppColors.primary),
+                  supportTitle,
+                  style: textTheme.titleMedium?.copyWith(color: scheme.primary),
                 ),
                 const SizedBox(height: 8),
-                Text('تواصل معنا على:', style: AppTypography.bodyMedium),
+                Text(supportText, style: textTheme.bodyMedium),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.email,
-                      size: 16,
-                      color: AppColors.textSecondary,
-                    ),
+                    Icon(Icons.email, size: 16, color: scheme.onSurfaceVariant),
                     const SizedBox(width: 4),
                     Text(
-                      'support@luqta.iq',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.primary,
+                      'support@laqta.cloud',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: scheme.primary,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -114,124 +111,217 @@ class PolicyTermsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPrivacyPolicy() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSection(
-          '📋 1. جمع المعلومات',
-          'نقوم بجمع المعلومات التالية عند استخدامك للتطبيق:\n\n'
-              '• الاسم الكامل واسم المستخدم\n'
-              '• البريد الإلكتروني ورقم الهاتف\n'
-              '• الموقع الجغرافي (المحافظة)\n'
-              '• الصور والمحتوى الذي تقوم بتحميله\n'
-              '• معلومات الاستخدام والتفاعل مع التطبيق',
+  List<_PolicySection> _privacySections(bool isArabic) {
+    if (isArabic) {
+      return const [
+        _PolicySection(
+          '1) البيانات التي نجمعها',
+          'نجمع معلومات الحساب مثل الاسم ورقم الهاتف والمدينة، ومعلومات الملف للمصورين، ورسائل وتفاصيل الحجوزات وملفات التسليم داخل المنصة.',
         ),
-        _buildSection(
-          '🔒 2. حماية البيانات',
-          'نلتزم بحماية بياناتك الشخصية من خلال:\n\n'
-              '• تشفير جميع البيانات المرسلة والمستقبلة\n'
-              '• استخدام Firebase الآمن لتخزين البيانات\n'
-              '• عدم مشاركة معلوماتك مع أطراف ثالثة بدون إذنك\n'
-              '• إمكانية حذف حسابك وبياناتك في أي وقت',
+        _PolicySection(
+          '2) كيف نستخدم بياناتك',
+          'نستخدم البيانات لتشغيل المنصة ومطابقة الطلبات، وتحسين الجودة، وإدارة النزاعات، وإرسال الإشعارات الضرورية.',
         ),
-        _buildSection(
-          '💳 3. معلومات الدفع',
-          'نستخدم Stripe لمعالجة المدفوعات بشكل آمن. لا نقوم بتخزين تفاصيل بطاقتك الائتمانية على خوادمنا.',
+        _PolicySection(
+          '3) مشاركة البيانات',
+          'لا نبيع بياناتك. قد نشارك البيانات داخل الحجز بين العميل والمصور، أو مع الجهات الرسمية عند الطلب القانوني.',
         ),
-        _buildSection(
-          '📸 4. المحتوى المرفوع',
-          'أنت المسؤول عن المحتوى الذي تقوم بتحميله. يجب أن يكون المحتوى:\n\n'
-              '• قانونياً ولا ينتهك حقوق الآخرين\n'
-              '• مناسباً وخالياً من المحتوى المسيء\n'
-              '• يتوافق مع شروط الاستخدام',
+        _PolicySection(
+          '4) الاحتفاظ والحذف',
+          'يمكنك طلب حذف حسابك. قد نحتفظ ببعض السجلات لمدة محدودة للامتثال أو حل النزاعات.',
         ),
-        _buildSection(
-          '🔔 5. الإشعارات',
-          'نستخدم Firebase Cloud Messaging لإرسال الإشعارات. يمكنك إيقاف الإشعارات من الإعدادات.',
+        _PolicySection(
+          '5) الأمان',
+          'نطبق إجراءات حماية معقولة، ولكن لا يمكن ضمان الأمان الكامل لأي خدمة رقمية.',
         ),
-      ],
-    );
+      ];
+    }
+
+    return const [
+      _PolicySection(
+        '1) Data we collect',
+        'We collect account details (name, phone, city), photographer profile data, messages, booking details, and delivery files shared inside the platform.',
+      ),
+      _PolicySection(
+        '2) How we use data',
+        'We use data to operate the platform, match requests with photographers, improve quality, manage disputes, and send essential notifications.',
+      ),
+      _PolicySection(
+        '3) Data sharing',
+        'We do not sell your data. We may share data within a booking between client and photographer, or with authorities when legally required.',
+      ),
+      _PolicySection(
+        '4) Retention & deletion',
+        'You can request account deletion. We may retain certain records for a limited period for compliance or dispute resolution.',
+      ),
+      _PolicySection(
+        '5) Security',
+        'We apply reasonable protections, but no digital service can guarantee absolute security.',
+      ),
+    ];
   }
 
-  Widget _buildTermsOfService() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSection(
-          '✅ 1. الموافقة على الشروط',
-          'باستخدامك لتطبيق لقطة، أنت توافق على جميع الشروط والأحكام المذكورة هنا. إذا كنت لا توافق على أي من هذه الشروط، يرجى عدم استخدام التطبيق.',
+  List<_PolicySection> _termsSections(bool isArabic) {
+    if (isArabic) {
+      return const [
+        _PolicySection(
+          '1) طبيعة الخدمة',
+          'لقطة منصة تشغيل وضمان لخدمة التصوير، وليست جهة توظيف مباشر للمصورين.',
         ),
-        _buildSection(
-          '👥 2. أهلية الاستخدام',
-          '• يجب أن تكون فوق 18 سنة لاستخدام التطبيق\n'
-              '• يجب تقديم معلومات صحيحة ودقيقة\n'
-              '• حساب واحد لكل مستخدم\n'
-              '• مسؤولية حماية بيانات تسجيل الدخول الخاصة بك',
+        _PolicySection(
+          '2) الحساب والمسؤولية',
+          'يلتزم المستخدم بتقديم معلومات صحيحة والالتزام بسياسات المنصة وعدم مشاركة وسائل الاتصال قبل تأكيد الحجز.',
         ),
-        _buildSection(
-          '📸 3. الحجوزات والمدفوعات',
-          '• جميع الحجوزات تخضع لموافقة المصور\n'
-              '• الأسعار المعروضة هي أسعار ابتدائية وقد تتغير\n'
-              '• سياسة الإلغاء تحددها اتفاقية الطرفين\n'
-              '• المدفوعات آمنة عبر Stripe',
+        _PolicySection(
+          '3) الطلبات والعروض',
+          'الطلب يصبح ملزمًا بعد قبول عرض، والعروض صالحة لفترة محددة قبل الإغلاق.',
         ),
-        _buildSection(
-          '⚠️ 4. المحتوى المحظور',
-          'يُحظر نشر أو تحميل:\n\n'
-              '• محتوى مسيء أو غير قانوني\n'
-              '• صور منتهكة لحقوق الملكية الفكرية\n'
-              '• محتوى يحرض على العنف أو الكراهية\n'
-              '• رسائل بريد مزعج أو احتيالية',
+        _PolicySection(
+          '4) التسليم والتعديل',
+          'التسليم يتم داخل المنصة. يحق للعميل طلب تعديل واحد مجاني ضمن نطاق الطلب؛ الأعمال الإضافية تتطلب عرضًا جديدًا.',
         ),
-        _buildSection(
-          '🛡️ 5. إخلاء المسؤولية',
-          'تطبيق لقطة هو منصة وساطة بين الزبائن والمصورين. نحن لسنا مسؤولين عن:\n\n'
-              '• جودة الخدمات المقدمة من المصورين\n'
-              '• أي نزاعات بين الطرفين\n'
-              '• المحتوى الذي يقوم المستخدمون بتحميله',
+        _PolicySection(
+          '5) الإلغاء والنزاعات',
+          'الإلغاء يؤثر على مؤشرات الثقة. النزاعات تُفتح داخل الحجز فقط ويتم حسمها بقرار الإدارة.',
         ),
-        _buildSection(
-          '🔄 6. تعديل الشروط',
-          'نحتفظ بالحق في تعديل هذه الشروط في أي وقت. سيتم إشعارك بأي تغييرات جوهرية.',
+        _PolicySection(
+          '6) الدفع',
+          'الدفع غير مفعّل في هذه النسخة. عند تفعيل الدفع سيتم نشر سياسة منفصلة.',
         ),
-      ],
-    );
+      ];
+    }
+
+    return const [
+      _PolicySection(
+        '1) Service nature',
+        'Laqta is an operations and guarantee platform for photography services; it does not employ photographers directly.',
+      ),
+      _PolicySection(
+        '2) Accounts & responsibility',
+        'Users must provide accurate information, follow platform policies, and avoid sharing contact details before a booking is confirmed.',
+      ),
+      _PolicySection(
+        '3) Requests & offers',
+        'A request becomes binding after an offer is accepted. Offers are valid for a limited period before closing.',
+      ),
+      _PolicySection(
+        '4) Delivery & revisions',
+        'Delivery happens inside the platform. Clients are entitled to one free revision within the original scope; additional work requires a new offer.',
+      ),
+      _PolicySection(
+        '5) Cancellations & disputes',
+        'Cancellations impact trust indicators. Disputes are opened inside the booking and resolved by admin decision.',
+      ),
+      _PolicySection(
+        '6) Payments',
+        'Payments are not enabled in this version. A separate policy will be published once activated.',
+      ),
+    ];
   }
 
-  Widget _buildSection(String title, String content) {
+  List<_PolicySection> _deleteAccountSections(bool isArabic) {
+    if (isArabic) {
+      return const [
+        _PolicySection(
+          '1) طريقة طلب الحذف',
+          'يمكنك طلب حذف الحساب من الإعدادات أو عبر التواصل مع الدعم على support@laqta.cloud.',
+        ),
+        _PolicySection(
+          '2) ما يتم حذفه',
+          'نحذف بيانات الحساب والملف الشخصي والمحتوى غير المطلوب للاحتفاظ التشغيلي أو القانوني.',
+        ),
+        _PolicySection(
+          '3) ما قد نحتفظ به مؤقتًا',
+          'قد نحتفظ بسجلات محدودة متعلقة بالأمان، النزاعات، أو الالتزامات القانونية لفترة ضرورية فقط.',
+        ),
+        _PolicySection(
+          '4) مدة التنفيذ',
+          'نهدف إلى تنفيذ طلبات الحذف خلال 30 يومًا ما لم توجد التزامات قانونية أو نزاعات مفتوحة.',
+        ),
+      ];
+    }
+
+    return const [
+      _PolicySection(
+        '1) How to request deletion',
+        'You can request account deletion from settings or by contacting support@laqta.cloud.',
+      ),
+      _PolicySection(
+        '2) What is deleted',
+        'We delete account, profile, and content data that is not required for legal or operational retention.',
+      ),
+      _PolicySection(
+        '3) Temporary retention',
+        'Limited security, dispute, or legal records may be retained only as needed.',
+      ),
+      _PolicySection(
+        '4) Timeline',
+        'We aim to process deletion requests within 30 days unless legal obligations or open disputes apply.',
+      ),
+    ];
+  }
+
+  List<_PolicySection> _contentSections(bool isArabic) {
+    if (isArabic) {
+      return const [
+        _PolicySection(
+          '1) المحتوى المحظور',
+          'يُمنع نشر محتوى عنيف، بالغ، مسيء، مضلل، أو ينتهك خصوصية الآخرين.',
+        ),
+        _PolicySection(
+          '2) الصور المسروقة والانتحال',
+          'يُمنع استخدام صور لا تملك حقوقها أو انتحال هوية مصور، قاعة، أو مستخدم آخر.',
+        ),
+        _PolicySection(
+          '3) الاحتيال والمضايقة',
+          'يُمنع الاحتيال، التحرش، التهديد، أو محاولة نقل المستخدمين خارج المنصة بطرق مخالفة.',
+        ),
+        _PolicySection(
+          '4) البلاغات والإجراءات',
+          'يمكن للمستخدمين الإبلاغ عن المحتوى أو الحسابات، وتراجع الإدارة البلاغات لاتخاذ إجراء مناسب.',
+        ),
+      ];
+    }
+
+    return const [
+      _PolicySection(
+        '1) Prohibited content',
+        'Violent, adult, abusive, misleading, or privacy-invasive content is prohibited.',
+      ),
+      _PolicySection(
+        '2) Stolen photos and impersonation',
+        'Do not use photos you do not own or impersonate another creator, venue, or user.',
+      ),
+      _PolicySection(
+        '3) Fraud and harassment',
+        'Fraud, harassment, threats, and abusive off-platform solicitation are prohibited.',
+      ),
+      _PolicySection(
+        '4) Reports and enforcement',
+        'Users can report content or accounts. LAQTA reviews reports and may take action.',
+      ),
+    ];
+  }
+
+  Widget _buildSection(BuildContext context, String title, String body) {
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AppTypography.h4.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.divider),
-            ),
-            child: Text(
-              content,
-              style: AppTypography.bodyMedium.copyWith(
-                height: 1.6,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
+          Text(title, style: textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Text(body, style: textTheme.bodyMedium),
         ],
       ),
     );
   }
 }
 
-enum PolicyType { privacy, terms }
+class _PolicySection {
+  final String title;
+  final String body;
+
+  const _PolicySection(this.title, this.body);
+}

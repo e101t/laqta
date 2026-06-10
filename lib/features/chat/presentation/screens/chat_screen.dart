@@ -1,18 +1,19 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 import 'package:video_player/video_player.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:luqta/core/constants/app_theme.dart';
-import 'package:luqta/core/localization/app_localizations.dart';
-import 'package:luqta/core/widgets/app_text_field.dart';
-import 'package:luqta/screens/settings/report_screen.dart';
-import 'package:luqta/core/models/chat_model.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_media_service.dart';
+import 'package:laqta/core/widgets/backend_media_image.dart';
+import 'package:laqta/core/widgets/app_text_field.dart';
+import 'package:laqta/core/widgets/empty_states.dart';
+import 'package:laqta/features/settings/presentation/screens/report_screen.dart';
+import 'package:laqta/features/auth/auth_dependencies.dart';
+import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/chat/domain/entities/chat_message.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -31,13 +32,25 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<MessageModel> _messages = [];
+  final List<ChatMessage> _messages = [];
   bool _isLoading = true;
+  bool _hasError = false;
+  String _currentUserId = '';
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
+    _initializeChat();
+  }
+
+  Future<void> _initializeChat() async {
+    final result = await AuthDependencies.getCurrentUser().call();
+    if (!mounted) return;
+    final currentUserId = result.valueOrNull?.id ?? '';
+    setState(() {
+      _currentUserId = currentUserId;
+    });
+    await _loadMessages();
   }
 
   @override
@@ -48,27 +61,76 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadMessages() async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
+    var hasError = false;
     try {
-      final messagesSnapshot = await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .orderBy('createdAt', descending: false)
-          .get();
-
-      _messages.clear();
-      _messages.addAll(
-        messagesSnapshot.docs.map((doc) => MessageModel.fromFirestore(doc)),
+      final result = await ChatDependencies.getChatMessages().call(
+        chatId: widget.chatId,
       );
+      if (!result.isSuccess) {
+        throw StateError('Failed to load messages');
+      }
+      _messages.clear();
+      _messages.addAll(result.valueOrNull ?? []);
     } catch (e) {
       // Handle error - could show a snackbar or log
-      debugPrint('Error loading messages: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error loading messages: $e');
+      }
+      hasError = true;
     }
 
-    setState(() => _isLoading = false);
-    _scrollToBottom();
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _hasError = hasError;
+    });
+    if (!hasError) {
+      _scrollToBottom();
+      _markMessagesAsRead();
+    }
+  }
+
+  Future<void> _markMessagesAsRead() async {
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty || _messages.isEmpty) {
+      return;
+    }
+
+    final unreadIncomingIndexes = <int>[];
+    for (var index = 0; index < _messages.length; index++) {
+      final message = _messages[index];
+      if (message.senderId != currentUserId &&
+          !message.isSeenBy(currentUserId)) {
+        unreadIncomingIndexes.add(index);
+      }
+    }
+
+    if (unreadIncomingIndexes.isEmpty) {
+      return;
+    }
+
+    final result = await ChatDependencies.markChatMessagesRead().call(
+      chatId: widget.chatId,
+      userId: currentUserId,
+      messages: List<ChatMessage>.unmodifiable(_messages),
+    );
+    if (!result.isSuccess || !mounted) {
+      return;
+    }
+
+    setState(() {
+      for (final index in unreadIncomingIndexes) {
+        final message = _messages[index];
+        _messages[index] = message.copyWith(
+          seenBy: {...message.seenBy, currentUserId}.toList(),
+        );
+      }
+    });
   }
 
   void _scrollToBottom() {
@@ -82,183 +144,135 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _blockUser() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
+    final localizations = AppLocalizations.of(context);
 
-    // Get the other user's ID from the chat participants
-    final chatDoc = await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .get();
+    try {
+      final result = await ChatDependencies.toggleBlockUser().call(
+        chatId: widget.chatId,
+        currentUserId: currentUserId,
+      );
+      if (!result.isSuccess) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(localizations.unableToDetermineUser)),
+          );
+        }
+        return;
+      }
 
-    if (!chatDoc.exists) return;
-
-    final chatData = chatDoc.data() as Map<String, dynamic>;
-    final participants = List<String>.from(chatData['participants'] ?? []);
-    final otherUserId = participants.firstWhere(
-      (id) => id != currentUser.uid,
-      orElse: () => '',
-    );
-
-    if (otherUserId.isEmpty) {
+      final isBlocked = result.valueOrNull ?? false;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to determine user.')),
+          SnackBar(
+            content: Text(
+              isBlocked
+                  ? localizations.userBlocked
+                  : localizations.userUnblocked,
+            ),
+          ),
         );
+        Navigator.of(context).pop();
       }
-      return;
-    }
-
-    // Get current user's document
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .get();
-
-    if (!userDoc.exists) return;
-
-    final userData = userDoc.data() as Map<String, dynamic>;
-    final blockedUsers = List<String>.from(userData['blockedUsers'] ?? []);
-
-    if (blockedUsers.contains(otherUserId)) {
-      // User is already blocked, unblock them
-      blockedUsers.remove(otherUserId);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('User unblocked')));
+    } catch (e) {
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error blocking user: $e');
       }
-    } else {
-      // Block the user
-      blockedUsers.add(otherUserId);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('User blocked')));
-      }
-    }
-
-    // Update the user's blockedUsers list
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .update({'blockedUsers': blockedUsers});
-
-    // Navigate back to chat list
-    if (mounted) {
-      Navigator.of(context).pop();
     }
   }
 
   Future<void> _deleteChat() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
+    final localizations = AppLocalizations.of(context);
 
     // Show confirmation dialog
     final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Chat'),
-        content: const Text(
-          'Are you sure you want to delete this chat? This action cannot be undone.',
-        ),
+        title: Text(localizations.deleteChatTitle),
+        content: Text(localizations.deleteChatPrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(localizations.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              localizations.delete,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
 
+    if (!mounted) return;
     if (shouldDelete != true) return;
 
     try {
-      // Delete all messages in the chat
-      final messagesSnapshot = await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .get();
-
-      final batch = FirebaseFirestore.instance.batch();
-      for (final doc in messagesSnapshot.docs) {
-        batch.delete(doc.reference);
-      }
-
-      // Delete the chat document
-      batch.delete(
-        FirebaseFirestore.instance.collection('chats').doc(widget.chatId),
+      final result = await ChatDependencies.deleteChatWithMessages().call(
+        chatId: widget.chatId,
       );
-
-      await batch.commit();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Chat deleted successfully')),
-        );
-        Navigator.of(context).pop(); // Go back to chat list
+      if (!result.isSuccess) {
+        throw StateError('Delete chat failed');
       }
-    } catch (e) {
-      debugPrint('Error deleting chat: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to delete chat')));
+        ).showSnackBar(SnackBar(content: Text(localizations.chatDeleted)));
+        Navigator.of(context).pop(); // Go back to chat list
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error deleting chat: $e');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(localizations.chatDeleteFailed)));
       }
     }
   }
 
-  void _reportUser() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+  Future<void> _reportUser() async {
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
+    final localizations = AppLocalizations.of(context);
 
-    // Get the other user's ID from the chat participants
-    FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .get()
-        .then((chatDoc) {
-          if (!chatDoc.exists) return;
+    final result = await ChatDependencies.getOtherParticipantId().call(
+      chatId: widget.chatId,
+      currentUserId: currentUserId,
+    );
+    if (!mounted) return;
+    final otherUserId = result.valueOrNull;
+    if (!result.isSuccess || otherUserId == null || otherUserId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(localizations.unableToDetermineUser)),
+        );
+      }
+      return;
+    }
 
-          final chatData = chatDoc.data() as Map<String, dynamic>;
-          final participants = List<String>.from(
-            chatData['participants'] ?? [],
-          );
-          final otherUserId = participants.firstWhere(
-            (id) => id != currentUser.uid,
-            orElse: () => '',
-          );
-
-          if (otherUserId.isEmpty) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Unable to determine user.')),
-              );
-            }
-            return;
-          }
-
-          // Navigate to report screen
-          if (mounted) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => ReportScreen(
-                  reportedUserId: otherUserId,
-                  reportedUserName: widget.otherUserName,
-                  reportType: ReportType.user,
-                ),
-              ),
-            );
-          }
-        });
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => ReportScreen(
+            reportedUserId: otherUserId,
+            reportedUserName: widget.otherUserName,
+            reportType: ReportType.user,
+          ),
+        ),
+      );
+    }
   }
 
   void _showChatOptions() {
+    final localizations = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       builder: (context) => Column(
@@ -266,7 +280,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.block),
-            title: const Text('Block User'),
+            title: Text(localizations.blockUser),
             onTap: () {
               Navigator.pop(context);
               _blockUser();
@@ -274,7 +288,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.report),
-            title: const Text('Report User'),
+            title: Text(localizations.reportUser),
             onTap: () {
               Navigator.pop(context);
               _reportUser();
@@ -282,7 +296,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: const Text('Delete Chat'),
+            title: Text(localizations.deleteChatTitle),
             onTap: () {
               Navigator.pop(context);
               _deleteChat();
@@ -294,6 +308,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showAttachmentOptions() {
+    final localizations = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       builder: (context) => Column(
@@ -301,7 +316,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           ListTile(
             leading: const Icon(Icons.image),
-            title: const Text('Send Image'),
+            title: Text(localizations.sendImage),
             onTap: () {
               Navigator.pop(context);
               _sendImage();
@@ -309,7 +324,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.video_file),
-            title: const Text('Send Video'),
+            title: Text(localizations.sendVideo),
             onTap: () {
               Navigator.pop(context);
               _sendVideo();
@@ -317,7 +332,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.insert_drive_file),
-            title: const Text('Send Document'),
+            title: Text(localizations.sendDocument),
             onTap: () {
               Navigator.pop(context);
               _sendDocument();
@@ -332,18 +347,16 @@ class _ChatScreenState extends State<ChatScreen> {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
-    final message = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
+    );
+    final message = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
       content: content,
       createdAt: DateTime.now(),
       type: 'text',
@@ -355,50 +368,46 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(message.id)
-          .set(message.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
+      final result = await ChatDependencies.sendChatMessage().call(message);
+      if (!result.isSuccess) {
+        throw StateError('Send message failed');
+      }
     } catch (e) {
       // Handle error - could show a snackbar or log
-      debugPrint('Error sending message: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error sending message: $e');
+      }
       // Remove the message from UI if sending failed
-      setState(() {
-        _messages.remove(message);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(message);
+        });
+      }
     }
 
     _scrollToBottom();
   }
 
   Future<void> _sendImage() async {
+    final localizations = AppLocalizations.of(context);
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (!mounted) return;
 
     if (pickedFile == null) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
     // Create a temporary message for UI feedback
-    final tempMessage = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
-      content: 'Uploading image...',
+    );
+    final tempMessage = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
+      content: localizations.uploadingImage,
       createdAt: DateTime.now(),
       type: 'image',
     );
@@ -408,56 +417,37 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Upload image to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_images')
-          .child(widget.chatId)
-          .child('${tempMessage.id}.jpg');
-
-      final file = File(pickedFile.path);
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the message with the actual image URL
-      final imageMessage = MessageModel(
-        id: tempMessage.id,
+      final result = await ChatDependencies.sendChatMediaMessage().call(
         chatId: widget.chatId,
-        senderId: currentUser.uid,
-        content: downloadUrl,
-        createdAt: DateTime.now(),
+        senderId: currentUserId,
         type: 'image',
+        filePath: pickedFile.path,
+        messageId: messageId,
       );
+      if (!mounted) return;
+      final imageMessage = result.valueOrNull;
+      if (!result.isSuccess || imageMessage == null) {
+        throw StateError('Send image failed');
+      }
 
-      // Replace the temporary message
       setState(() {
         _messages.remove(tempMessage);
         _messages.add(imageMessage);
       });
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(imageMessage.id)
-          .set(imageMessage.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
     } catch (e) {
-      debugPrint('Error sending image: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error sending image: $e');
+      }
       // Remove the temporary message on error
-      setState(() {
-        _messages.remove(tempMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(tempMessage);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to send image')));
+        ).showSnackBar(SnackBar(content: Text(localizations.sendImageFailed)));
       }
     }
 
@@ -465,25 +455,25 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendVideo() async {
+    final localizations = AppLocalizations.of(context);
     final picker = ImagePicker();
     final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
+    if (!mounted) return;
 
     if (pickedFile == null) return;
 
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
 
     // Create a temporary message for UI feedback
-    final tempMessage = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
-      content: 'Uploading video...',
+    );
+    final tempMessage = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
+      content: localizations.uploadingVideo,
       createdAt: DateTime.now(),
       type: 'video',
     );
@@ -493,56 +483,37 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Upload video to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_videos')
-          .child(widget.chatId)
-          .child('${tempMessage.id}.mp4');
-
-      final file = File(pickedFile.path);
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the message with the actual video URL
-      final videoMessage = MessageModel(
-        id: tempMessage.id,
+      final result = await ChatDependencies.sendChatMediaMessage().call(
         chatId: widget.chatId,
-        senderId: currentUser.uid,
-        content: downloadUrl,
-        createdAt: DateTime.now(),
+        senderId: currentUserId,
         type: 'video',
+        filePath: pickedFile.path,
+        messageId: messageId,
       );
+      if (!mounted) return;
+      final videoMessage = result.valueOrNull;
+      if (!result.isSuccess || videoMessage == null) {
+        throw StateError('Send video failed');
+      }
 
-      // Replace the temporary message
       setState(() {
         _messages.remove(tempMessage);
         _messages.add(videoMessage);
       });
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(videoMessage.id)
-          .set(videoMessage.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
     } catch (e) {
-      debugPrint('Error sending video: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error sending video: $e');
+      }
       // Remove the temporary message on error
-      setState(() {
-        _messages.remove(tempMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(tempMessage);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to send video')));
+        ).showSnackBar(SnackBar(content: Text(localizations.sendVideoFailed)));
       }
     }
 
@@ -550,6 +521,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _sendDocument() async {
+    final localizations = AppLocalizations.of(context);
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: [
@@ -563,24 +535,24 @@ class _ChatScreenState extends State<ChatScreen> {
         'pptx',
       ],
     );
+    if (!mounted) return;
 
     if (result == null || result.files.isEmpty) return;
 
     final pickedFile = result.files.first;
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final currentUserId = _currentUserId;
+    if (currentUserId.isEmpty) return;
+    if (pickedFile.path == null) return;
 
     // Create a temporary message for UI feedback
-    final tempMessage = MessageModel(
-      id: FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc()
-          .id,
+    final messageId = ChatDependencies.generateMessageId().call(
       chatId: widget.chatId,
-      senderId: currentUser.uid,
-      content: 'Uploading document...',
+    );
+    final tempMessage = ChatMessage(
+      id: messageId,
+      chatId: widget.chatId,
+      senderId: currentUserId,
+      content: localizations.uploadingDocument,
       createdAt: DateTime.now(),
       type: 'document',
     );
@@ -590,55 +562,38 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     try {
-      // Upload document to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_documents')
-          .child(widget.chatId)
-          .child('${tempMessage.id}_${pickedFile.name}');
-
-      final file = File(pickedFile.path!);
-      await storageRef.putFile(file);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the message with the actual document URL and metadata
-      final documentMessage = MessageModel(
-        id: tempMessage.id,
+      final result = await ChatDependencies.sendChatMediaMessage().call(
         chatId: widget.chatId,
-        senderId: currentUser.uid,
-        content: '$downloadUrl|${pickedFile.name}|${pickedFile.size}',
-        createdAt: DateTime.now(),
+        senderId: currentUserId,
         type: 'document',
+        filePath: pickedFile.path!,
+        messageId: messageId,
+        fileName: pickedFile.name,
+        fileSize: pickedFile.size,
       );
+      if (!mounted) return;
+      final documentMessage = result.valueOrNull;
+      if (!result.isSuccess || documentMessage == null) {
+        throw StateError('Send document failed');
+      }
 
-      // Replace the temporary message
       setState(() {
         _messages.remove(tempMessage);
         _messages.add(documentMessage);
       });
-
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .collection('messages')
-          .doc(documentMessage.id)
-          .set(documentMessage.toFirestore());
-
-      // Update chat's lastMessageAt
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(widget.chatId)
-          .update({'lastMessageAt': Timestamp.fromDate(DateTime.now())});
     } catch (e) {
-      debugPrint('Error sending document: $e');
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error sending document: $e');
+      }
       // Remove the temporary message on error
-      setState(() {
-        _messages.remove(tempMessage);
-      });
+      if (mounted) {
+        setState(() {
+          _messages.remove(tempMessage);
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send document')),
+          SnackBar(content: Text(localizations.sendDocumentFailed)),
         );
       }
     }
@@ -649,9 +604,11 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -661,11 +618,11 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.otherUserName, style: AppTypography.h4),
+                  Text(widget.otherUserName, style: textTheme.titleMedium),
                   Text(
-                    'Online',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.success,
+                    localizations.onlineNow,
+                    style: textTheme.labelSmall?.copyWith(
+                      color: scheme.tertiary,
                     ),
                   ),
                 ],
@@ -688,14 +645,21 @@ class _ChatScreenState extends State<ChatScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
+                : _hasError
+                ? EmptyStates.error(onRetry: _loadMessages)
+                : _messages.isEmpty
+                ? EmptyState(
+                    icon: Icons.chat_bubble_outline,
+                    title: localizations.noMessagesYet,
+                    message: localizations.startConversationPrompt,
+                  )
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      final currentUser = FirebaseAuth.instance.currentUser;
-                      final isMe = message.senderId == currentUser?.uid;
+                      final isMe = message.senderId == _currentUserId;
 
                       return _MessageBubble(message: message, isMe: isMe);
                     },
@@ -706,7 +670,7 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: scheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
@@ -740,7 +704,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: AppColors.background,
+                        fillColor: scheme.surfaceContainerHighest,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
@@ -750,8 +714,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
@@ -770,7 +734,7 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _MessageBubble extends StatefulWidget {
-  final MessageModel message;
+  final ChatMessage message;
   final bool isMe;
 
   const _MessageBubble({required this.message, required this.isMe});
@@ -780,13 +744,30 @@ class _MessageBubble extends StatefulWidget {
 }
 
 class _MessageBubbleState extends State<_MessageBubble> {
+  final BackendMediaService _mediaService = BackendMediaService();
   VideoPlayerController? _videoController;
+  bool _isPreparingVideo = false;
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.message.type == widget.message.type &&
+        oldWidget.message.content == widget.message.content &&
+        oldWidget.message.mediaId == widget.message.mediaId) {
+      return;
+    }
+
     if (widget.message.type == 'video') {
-      _initializeVideoPlayer();
+      _videoController?.dispose();
+      _videoController = null;
+      setState(() {
+        _isPreparingVideo = false;
+      });
     }
   }
 
@@ -797,33 +778,107 @@ class _MessageBubbleState extends State<_MessageBubble> {
   }
 
   Future<void> _initializeVideoPlayer() async {
-    _videoController = VideoPlayerController.networkUrl(
-      Uri.parse(widget.message.content),
-    );
-    await _videoController!.initialize();
-    if (mounted) setState(() {});
+    if (_isPreparingVideo || _videoController != null) {
+      return;
+    }
+    final sourceUrl = _resolveMediaSource(widget.message);
+    if (sourceUrl == null) {
+      return;
+    }
+
+    try {
+      setState(() {
+        _isPreparingVideo = true;
+      });
+      final resolvedUrl = await _mediaService.resolveDisplayUrl(sourceUrl);
+      final controller = VideoPlayerController.networkUrl(
+        Uri.parse(resolvedUrl),
+      );
+      await controller.initialize();
+
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+
+      setState(() {
+        _videoController?.dispose();
+        _videoController = controller;
+        _isPreparingVideo = false;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        AppLogger.d('runtime', 'Error preparing video message: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _isPreparingVideo = false;
+        });
+      }
+    }
+  }
+
+  String? _resolveMediaSource(ChatMessage message) {
+    if (message.mediaId != null && message.mediaId!.trim().isNotEmpty) {
+      return BackendMediaService.mediaApiUrlFromId(message.mediaId!);
+    }
+
+    final content = message.content;
+    if (content.trim().isEmpty) {
+      return null;
+    }
+    if (message.type == 'document') {
+      return content.split('|').first.trim();
+    }
+    return content.trim();
+  }
+
+  bool _looksLikeUrl(String? value) {
+    final normalized = value?.trim() ?? '';
+    if (normalized.isEmpty) {
+      return false;
+    }
+    final uri = Uri.tryParse(normalized);
+    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
   }
 
   String _formatTime(DateTime createdAt) {
     return '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildDocumentWidget(MessageModel message) {
+  Widget _buildDocumentWidget(ChatMessage message) {
+    final localizations = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     final parts = message.content.split('|');
-    final url = parts[0];
-    final fileName = parts.length > 1 ? parts[1] : 'Document';
-    final fileSize = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;
+    final url = _resolveMediaSource(message) ?? '';
+    final fileName =
+        message.fileName ?? (parts.length > 1 ? parts[1] : 'Document');
+    final fileSize =
+        message.fileSize ??
+        (parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0);
 
     return InkWell(
       onTap: () async {
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text('Cannot open $fileName')));
+        try {
+          final resolvedUrl = await _mediaService.resolveDisplayUrl(url);
+          final uri = Uri.parse(resolvedUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return;
           }
+        } catch (e) {
+          if (kDebugMode) {
+            AppLogger.d('runtime', 'Error opening document message: $e');
+          }
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${localizations.cannotOpenFile} $fileName'),
+            ),
+          );
         }
       },
       child: Container(
@@ -831,12 +886,12 @@ class _MessageBubbleState extends State<_MessageBubble> {
         decoration: BoxDecoration(
           color: widget.isMe
               ? Colors.white.withValues(alpha: 0.1)
-              : AppColors.surface,
+              : scheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: widget.isMe
                 ? Colors.white.withValues(alpha: 0.3)
-                : AppColors.textSecondary.withValues(alpha: 0.3),
+                : scheme.outlineVariant,
           ),
         ),
         child: Row(
@@ -850,8 +905,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
                 children: [
                   Text(
                     fileName,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: widget.isMe ? Colors.white : AppColors.textPrimary,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: widget.isMe ? Colors.white : scheme.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -860,10 +915,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
                   if (fileSize > 0) ...[
                     Text(
                       _formatFileSize(fileSize),
-                      style: AppTypography.caption.copyWith(
+                      style: textTheme.labelSmall?.copyWith(
                         color: widget.isMe
                             ? Colors.white.withValues(alpha: 0.7)
-                            : AppColors.textSecondary,
+                            : scheme.onSurfaceVariant,
                       ),
                     ),
                   ] else ...[
@@ -889,6 +944,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -904,7 +961,7 @@ class _MessageBubbleState extends State<_MessageBubble> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: widget.isMe ? AppColors.primary : AppColors.surface,
+                color: widget.isMe ? scheme.primary : scheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -923,27 +980,34 @@ class _MessageBubbleState extends State<_MessageBubble> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (widget.message.type == 'image') ...[
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: widget.message.content,
+                    if (_looksLikeUrl(_resolveMediaSource(widget.message)))
+                      BackendMediaImage(
+                        url: _resolveMediaSource(widget.message)!,
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => const SizedBox(
-                          width: 200,
-                          height: 200,
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (context, url, error) => const SizedBox(
-                          width: 200,
-                          height: 200,
-                          child: Icon(Icons.error),
+                        borderRadius: BorderRadius.circular(8),
+                      )
+                    else
+                      Text(
+                        widget.message.content,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: widget.isMe ? Colors.white : scheme.onSurface,
                         ),
                       ),
-                    ),
                   ] else if (widget.message.type == 'video') ...[
-                    if (_videoController != null &&
+                    if (!_looksLikeUrl(
+                      _resolveMediaSource(widget.message),
+                    )) ...[
+                      Text(
+                        widget.message.content.isNotEmpty
+                            ? widget.message.content
+                            : 'Video',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: widget.isMe ? Colors.white : scheme.onSurface,
+                        ),
+                      ),
+                    ] else if (_videoController != null &&
                         _videoController!.value.isInitialized) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -967,31 +1031,47 @@ class _MessageBubbleState extends State<_MessageBubble> {
                         },
                       ),
                     ] else ...[
-                      const SizedBox(
+                      SizedBox(
                         width: 200,
                         height: 200,
-                        child: Center(child: CircularProgressIndicator()),
+                        child: Center(
+                          child: _isPreparingVideo
+                              ? const CircularProgressIndicator()
+                              : IconButton.filled(
+                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  onPressed: _initializeVideoPlayer,
+                                ),
+                        ),
                       ),
                     ],
                   ] else if (widget.message.type == 'document') ...[
-                    _buildDocumentWidget(widget.message),
+                    if (_looksLikeUrl(_resolveMediaSource(widget.message)))
+                      _buildDocumentWidget(widget.message)
+                    else
+                      Text(
+                        widget.message.fileName ??
+                            (widget.message.content.isNotEmpty
+                                ? widget.message.content
+                                : 'Document'),
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: widget.isMe ? Colors.white : scheme.onSurface,
+                        ),
+                      ),
                   ] else ...[
                     Text(
                       widget.message.content,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: widget.isMe
-                            ? Colors.white
-                            : AppColors.textPrimary,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: widget.isMe ? Colors.white : scheme.onSurface,
                       ),
                     ),
                   ],
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(widget.message.createdAt),
-                    style: AppTypography.caption.copyWith(
+                    style: textTheme.labelSmall?.copyWith(
                       color: widget.isMe
                           ? Colors.white.withValues(alpha: 0.7)
-                          : AppColors.textSecondary,
+                          : scheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -1000,10 +1080,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
           ),
           if (widget.isMe) ...[
             const SizedBox(width: 8),
-            const CircleAvatar(
+            CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary,
-              child: Icon(Icons.person, size: 16, color: Colors.white),
+              backgroundColor: scheme.primary,
+              child: const Icon(Icons.person, size: 16, color: Colors.white),
             ),
           ],
         ],

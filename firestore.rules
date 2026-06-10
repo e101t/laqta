@@ -1,131 +1,2032 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
+    // Auth helpers
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null &&
+        !exists(/databases/$(database)/documents/deleted_users/$(request.auth.uid));
     }
-    
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
-    function isPhotographer() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'photographer';
-    }
-    
-    function isCustomer() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'customer';
-    }
-    
-    function isParticipant(participants) {
-      return isSignedIn() && request.auth.uid in participants;
-    }
-    
-    function isChatParticipant(chatId) {
+
+    // Admin strategy (default: custom claims)
+    function adminByClaims() {
       return isSignedIn() &&
-             exists(/databases/$(database)/documents/chats/$(chatId)) &&
-             isParticipant(
-               get(/databases/$(database)/documents/chats/$(chatId)).data.participants
-             );
+        request.auth.token != null &&
+        request.auth.token.keys().hasAny(['admin']) &&
+        request.auth.token.admin == true;
     }
-    
-    // Users collection
+
+    function adminByDoc() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      // Default: custom claims admin=true.
+      // To switch to admin collection, return adminByDoc().
+      return adminByClaims();
+    }
+
+    // User profile helpers (users_public is readable by everyone)
+    function getUserPublic(userId) {
+      return get(/databases/$(database)/documents/users_public/$(userId));
+    }
+
+    function currentUserPublic() {
+      return isSignedIn() ? getUserPublic(request.auth.uid) : null;
+    }
+
+    function getPhotographerProfile(userId) {
+      return get(/databases/$(database)/documents/photographers/$(userId));
+    }
+
+    function currentPhotographerProfile() {
+      return isSignedIn() ? getPhotographerProfile(request.auth.uid) : null;
+    }
+
+    function currentPhotographerIsVerified() {
+      let doc = currentPhotographerProfile();
+      return doc != null &&
+        doc.data != null &&
+        doc.data.isVerified == true;
+    }
+
+    function currentPhotographerServesGovernorate(governorate) {
+      let doc = currentPhotographerProfile();
+      return doc != null &&
+        doc.data != null &&
+        doc.data.governorates is list &&
+        doc.data.governorates.hasAny([governorate]);
+    }
+
+    function currentUserRole() {
+      let doc = currentUserPublic();
+      return doc != null && doc.data != null && doc.data.role is string
+        ? doc.data.role
+        : '';
+    }
+
+    function currentUserGovernorate() {
+      let doc = currentUserPublic();
+      return doc != null && doc.data != null && doc.data.governorate is string
+        ? doc.data.governorate
+        : '';
+    }
+
+    function isPhotographerUser() {
+      return isSignedIn() && currentUserRole() == 'photographer';
+    }
+
+    // Type helpers
+    function isString(value) { return value is string; }
+    function isNonEmptyString(value) { return isString(value) && value.size() > 0; }
+    function isNumber(value) { return value is number; }
+    function isBool(value) { return value is bool; }
+    function isTimestamp(value) { return value is timestamp; }
+    function isLatLng(value) { return value is latlng; }
+    function isNullableString(value) { return value == null || value is string; }
+    function isNullableNumber(value) { return value == null || value is number; }
+    function isNullableBool(value) { return value == null || value is bool; }
+    function isNullableTimestamp(value) { return value == null || value is timestamp; }
+    function isNullableLatLng(value) { return value == null || value is latlng; }
+    function isList(value) { return value is list; }
+    function isMap(value) { return value is map; }
+    function isNullableList(value) { return value == null || value is list; }
+    function isNullableMap(value) { return value == null || value is map; }
+    function listSize(value) { return value is list ? value.size() : 0; }
+    function hasOnlyKeys(data, keys) { return data.keys().hasOnly(keys); }
+
+    function isValidRole(role) { return role in ['customer', 'photographer']; }
+    function isValidBookingStatus(status) {
+      return status in [
+        'pending',
+        'confirmed',
+        'rejected',
+        'in_progress',
+        'awaiting_delivery',
+        'delivered',
+        'revision_requested',
+        'done',
+        'completed',
+        'canceled',
+        'dispute_open'
+      ];
+    }
+    function isValidPaymentStatus(status) {
+      return status in [
+        'pending',
+        'deposit_pending',
+        'deposit_paid',
+        'escrow_held',
+        'released',
+        'succeeded',
+        'failed',
+        'refunded',
+        'refunded_partial',
+        'refunded_full'
+      ];
+    }
+    function isValidRequestStatus(status) {
+      return status in [
+        'draft',
+        'published',
+        'awaiting_offers',
+        'offer_selected',
+        'closed',
+        'canceled',
+        'expired'
+      ];
+    }
+    function isValidOfferStatus(status) {
+      return status in ['submitted', 'accepted', 'rejected', 'withdrawn'];
+    }
+    function isValidDeliveryStatus(status) {
+      return status in ['submitted', 'revision_requested', 'accepted'];
+    }
+    function isValidDisputeStatus(status) {
+      return status in ['open', 'resolved', 'closed'];
+    }
+    function isValidReportStatus(status) {
+      return status in ['pending', 'resolved', 'dismissed'];
+    }
+    function isValidMessageType(type) {
+      return type in ['text', 'image', 'video', 'document', 'location'];
+    }
+
+    function userKeys() {
+      return [
+        'uid',
+        'name',
+        'email',
+        'phone',
+        'photoUrl',
+        'role',
+        'username',
+        'usernameLower',
+        'gender',
+        'birthYear',
+        'age',
+        'governorate',
+        'lang',
+        'profileCompleted',
+        'over18Confirmed',
+        'blockedUsers',
+        'interests',
+        'fcmToken',
+        'lastSeen',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function publicUserKeys() {
+      return [
+        'name',
+        'username',
+        'usernameLower',
+        'photoUrl',
+        'governorate',
+        'role',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function isValidUserDoc(data, userId) {
+      return hasOnlyKeys(data, userKeys()) &&
+        data.uid == userId &&
+        isString(data.name) &&
+        isNullableString(data.email) &&
+        isNullableString(data.phone) &&
+        isNullableString(data.photoUrl) &&
+        isString(data.role) &&
+        isValidRole(data.role) &&
+        isNullableString(data.username) &&
+        isNullableString(data.usernameLower) &&
+        isNullableString(data.gender) &&
+        isNullableNumber(data.age) &&
+        isNullableNumber(data.birthYear) &&
+        isString(data.governorate) &&
+        isString(data.lang) &&
+        isNullableString(data.fcmToken) &&
+        isBool(data.profileCompleted) &&
+        isBool(data.over18Confirmed) &&
+        (data.interests == null || isList(data.interests)) &&
+        isList(data.blockedUsers) &&
+        isNullableTimestamp(data.lastSeen) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function isValidPublicUserDoc(data) {
+      return hasOnlyKeys(data, publicUserKeys()) &&
+        isString(data.name) &&
+        isNullableString(data.username) &&
+        isNullableString(data.usernameLower) &&
+        isNullableString(data.photoUrl) &&
+        isString(data.governorate) &&
+        isString(data.role) &&
+        isValidRole(data.role) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function photographerKeys() {
+      return [
+        'specialties',
+        'governorates',
+        'rate',
+        'reviewsCount',
+        'basePrice',
+        'currency',
+        'bio',
+        'instagram',
+        'tiktok',
+        'geo',
+        'isVerified',
+        'verifiedAt',
+        'updatedAt'
+      ];
+    }
+
+    function isValidPhotographerDoc(data) {
+      return hasOnlyKeys(data, photographerKeys()) &&
+        isList(data.specialties) &&
+        isList(data.governorates) &&
+        isNumber(data.rate) &&
+        data.rate >= 0 &&
+        isNumber(data.reviewsCount) &&
+        data.reviewsCount >= 0 &&
+        isNumber(data.basePrice) &&
+        data.basePrice >= 0 &&
+        isString(data.currency) &&
+        isString(data.bio) &&
+        isNullableString(data.instagram) &&
+        isNullableString(data.tiktok) &&
+        isNullableLatLng(data.geo) &&
+        isBool(data.isVerified) &&
+        isNullableTimestamp(data.verifiedAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function isValidPhotographerCreate(data) {
+      return isValidPhotographerDoc(data) &&
+        data.rate == 0 &&
+        data.reviewsCount == 0 &&
+        data.isVerified == false &&
+        data.verifiedAt == null;
+    }
+
+    function isValidPhotographerOwnerUpdate() {
+      return isValidPhotographerDoc(request.resource.data) &&
+        request.resource.data.rate == resource.data.rate &&
+        request.resource.data.reviewsCount == resource.data.reviewsCount &&
+        request.resource.data.isVerified == resource.data.isVerified &&
+        request.resource.data.verifiedAt == resource.data.verifiedAt;
+    }
+
+    function portfolioKeys() {
+      return ['photographerId', 'images', 'updatedAt'];
+    }
+
+    function isValidPortfolioDoc(data) {
+      return hasOnlyKeys(data, portfolioKeys()) &&
+        isString(data.photographerId) &&
+        isList(data.images) &&
+        listSize(data.images) <= 20 &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function bookingKeys() {
+      return [
+        'customerId',
+        'photographerId',
+        'requestId',
+        'offerId',
+        'date',
+        'time',
+        'duration',
+        'type',
+        'price',
+        'currency',
+        'status',
+        'payment',
+        'location',
+        'deliverables',
+        'notes',
+        'chatId',
+        'deliveryId',
+        'disputeId',
+        'revisionCount',
+        'canceledBy',
+        'timeline',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function requestKeys() {
+      return [
+        'clientId',
+        'type',
+        'date',
+        'time',
+        'governorate',
+        'address',
+        'budgetMin',
+        'budgetMax',
+        'duration',
+        'style',
+        'deliverables',
+        'notes',
+        'referenceImages',
+        'status',
+        'offersCount',
+        'selectedOfferId',
+        'selectedPhotographerId',
+        'expiresAt',
+        'latitude',
+        'longitude',
+        'locationLabel',
+        'location',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function offerKeys() {
+      return [
+        'requestId',
+        'photographerId',
+        'price',
+        'currency',
+        'deliveryDays',
+        'deliverables',
+        'notes',
+        'status',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function deliveryKeys() {
+      return [
+        'bookingId',
+        'photographerId',
+        'customerId',
+        'status',
+        'photoUrls',
+        'videoUrls',
+        'otherUrls',
+        'note',
+        'revisionNote',
+        'revisionCount',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function disputeKeys() {
+      return [
+        'bookingId',
+        'requestId',
+        'customerId',
+        'photographerId',
+        'openedBy',
+        'reason',
+        'details',
+        'evidenceUrls',
+        'status',
+        'resolution',
+        'createdAt',
+        'updatedAt',
+        'closedAt',
+        'decidedBy'
+      ];
+    }
+
+    function trustStatsKeys() {
+      return [
+        'photographerId',
+        'reviewCount',
+        'sumQuality',
+        'sumCommunication',
+        'sumOnTime',
+        'sumDelivery',
+        'completedBookings',
+        'canceledByPhotographer',
+        'disputesCount',
+        'updatedAt'
+      ];
+    }
+
+    function isValidPaymentMap(data) {
+      return isMap(data) &&
+        hasOnlyKeys(data, ['status', 'intentId', 'amount', 'paidAt']) &&
+        data.keys().hasAll(['status', 'intentId', 'amount', 'paidAt']) &&
+        isString(data.status) &&
+        isValidPaymentStatus(data.status) &&
+        isNullableString(data.intentId) &&
+        isNullableNumber(data.amount) &&
+        isNullableTimestamp(data.paidAt);
+    }
+
+    function isValidLocationMap(data) {
+      return isMap(data) &&
+        hasOnlyKeys(data, ['lat', 'lng', 'text']) &&
+        isNullableNumber(data.lat) &&
+        isNullableNumber(data.lng) &&
+        isNullableString(data.text);
+    }
+
+    function isValidRequestLocationMap(data) {
+      return data == null ||
+        (
+          isMap(data) &&
+          hasOnlyKeys(data, ['lat', 'lng', 'label']) &&
+          isNullableNumber(data.lat) &&
+          isNullableNumber(data.lng) &&
+          isNullableString(data.label)
+        );
+    }
+
+    function isValidDeliverablesMap(data) {
+      return data == null ||
+        (
+          isMap(data) &&
+          hasOnlyKeys(data, [
+            'photosCount',
+            'videoMinutes',
+            'includesEditing',
+            'includesVideo',
+            'notes'
+          ]) &&
+          isNullableNumber(data.photosCount) &&
+          isNullableNumber(data.videoMinutes) &&
+          isNullableBool(data.includesEditing) &&
+          isNullableBool(data.includesVideo) &&
+          isNullableString(data.notes)
+        );
+    }
+
+    function isValidTimelineMap(data) {
+      return data == null ||
+        (
+          isMap(data) &&
+          data.keys().hasOnly([
+            'confirmedAt',
+            'inProgressAt',
+            'deliveredAt',
+            'revisionRequestedAt',
+            'completedAt',
+            'canceledAt'
+          ]) &&
+          isNullableTimestamp(data.confirmedAt) &&
+          isNullableTimestamp(data.inProgressAt) &&
+          isNullableTimestamp(data.deliveredAt) &&
+          isNullableTimestamp(data.revisionRequestedAt) &&
+          isNullableTimestamp(data.completedAt) &&
+          isNullableTimestamp(data.canceledAt)
+        );
+    }
+
+    function isValidBookingDoc(data) {
+      return hasOnlyKeys(data, bookingKeys()) &&
+        isString(data.customerId) &&
+        isString(data.photographerId) &&
+        isNullableString(data.requestId) &&
+        isNullableString(data.offerId) &&
+        isNonEmptyString(data.date) &&
+        isNonEmptyString(data.time) &&
+        isNumber(data.duration) &&
+        isNonEmptyString(data.type) &&
+        isNumber(data.price) &&
+        data.price >= 0 &&
+        isString(data.currency) &&
+        isString(data.status) &&
+        isValidBookingStatus(data.status) &&
+        isValidPaymentMap(data.payment) &&
+        isValidLocationMap(data.location) &&
+        isValidDeliverablesMap(data.deliverables) &&
+        isNullableString(data.notes) &&
+        isNullableString(data.chatId) &&
+        isNullableString(data.deliveryId) &&
+        isNullableString(data.disputeId) &&
+        isNullableNumber(data.revisionCount) &&
+        isNullableString(data.canceledBy) &&
+        isValidTimelineMap(data.timeline) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function isValidRequestDoc(data) {
+      return hasOnlyKeys(data, requestKeys()) &&
+        isString(data.clientId) &&
+        isNonEmptyString(data.type) &&
+        isNonEmptyString(data.date) &&
+        isNonEmptyString(data.time) &&
+        isString(data.governorate) &&
+        isNullableString(data.address) &&
+        isNullableNumber(data.budgetMin) &&
+        isNullableNumber(data.budgetMax) &&
+        (data.budgetMin == null || data.budgetMin >= 0) &&
+        (data.budgetMax == null || data.budgetMax >= 0) &&
+        (data.budgetMin == null || data.budgetMax == null ||
+          data.budgetMax >= data.budgetMin) &&
+        isNumber(data.duration) &&
+        data.duration > 0 &&
+        isNullableString(data.style) &&
+        isValidDeliverablesMap(data.deliverables) &&
+        isNullableString(data.notes) &&
+        data.keys().hasAny(['referenceImages']) &&
+        isList(data.referenceImages) &&
+        listSize(data.referenceImages) <= 10 &&
+        isString(data.status) &&
+        isValidRequestStatus(data.status) &&
+        isNullableNumber(data.offersCount) &&
+        (data.offersCount == null || data.offersCount >= 0) &&
+        isNullableString(data.selectedOfferId) &&
+        isNullableString(data.selectedPhotographerId) &&
+        isNullableTimestamp(data.expiresAt) &&
+        isNullableNumber(data.latitude) &&
+        isNullableNumber(data.longitude) &&
+        isNullableString(data.locationLabel) &&
+        isValidRequestLocationMap(data.location) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+
+    function isValidOfferDoc(data) {
+      return hasOnlyKeys(data, offerKeys()) &&
+        isString(data.requestId) &&
+        isString(data.photographerId) &&
+        isNumber(data.price) &&
+        data.price >= 0 &&
+        isString(data.currency) &&
+        isNumber(data.deliveryDays) &&
+        data.deliveryDays >= 0 &&
+        isValidDeliverablesMap(data.deliverables) &&
+        isNullableString(data.notes) &&
+        isString(data.status) &&
+        isValidOfferStatus(data.status) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function isValidDeliveryDoc(data) {
+      return hasOnlyKeys(data, deliveryKeys()) &&
+        isString(data.bookingId) &&
+        isString(data.photographerId) &&
+        isString(data.customerId) &&
+        isString(data.status) &&
+        isValidDeliveryStatus(data.status) &&
+        isNullableList(data.photoUrls) &&
+        isNullableList(data.videoUrls) &&
+        isNullableList(data.otherUrls) &&
+        isNullableString(data.note) &&
+        isNullableString(data.revisionNote) &&
+        isNullableNumber(data.revisionCount) &&
+        (data.revisionCount == null || data.revisionCount >= 0) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function isValidDisputeDoc(data) {
+      return hasOnlyKeys(data, disputeKeys()) &&
+        isString(data.bookingId) &&
+        isNullableString(data.requestId) &&
+        isString(data.customerId) &&
+        isString(data.photographerId) &&
+        isString(data.openedBy) &&
+        isString(data.reason) &&
+        isString(data.details) &&
+        isNullableList(data.evidenceUrls) &&
+        isString(data.status) &&
+        isValidDisputeStatus(data.status) &&
+        isNullableString(data.resolution) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt) &&
+        isNullableTimestamp(data.closedAt) &&
+        isNullableString(data.decidedBy);
+    }
+
+    function isValidTrustStatsDoc(data) {
+      return hasOnlyKeys(data, trustStatsKeys()) &&
+        isString(data.photographerId) &&
+        isNumber(data.reviewCount) &&
+        data.reviewCount >= 0 &&
+        isNumber(data.sumQuality) &&
+        data.sumQuality >= 0 &&
+        isNumber(data.sumCommunication) &&
+        data.sumCommunication >= 0 &&
+        isNumber(data.sumOnTime) &&
+        data.sumOnTime >= 0 &&
+        isNumber(data.sumDelivery) &&
+        data.sumDelivery >= 0 &&
+        isNumber(data.completedBookings) &&
+        data.completedBookings >= 0 &&
+        isNumber(data.canceledByPhotographer) &&
+        data.canceledByPhotographer >= 0 &&
+        isNumber(data.disputesCount) &&
+        data.disputesCount >= 0 &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function bookingParticipantUpdateAllowed(bookingId) {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      let statusChanged = newStatus != oldStatus;
+      let oldRevision =
+        resource.data.revisionCount == null ? 0 : resource.data.revisionCount;
+      let newRevision =
+        request.resource.data.revisionCount == null
+          ? 0
+          : request.resource.data.revisionCount;
+
+      return changed.hasOnly([
+        'status',
+        'notes',
+        'location',
+        'chatId',
+        'updatedAt',
+        'date',
+        'time',
+        'duration',
+        'type',
+        'deliveryId',
+        'revisionCount',
+        'canceledBy',
+        'timeline'
+      ]) &&
+        isValidBookingStatus(request.resource.data.status) &&
+        isNullableString(request.resource.data.notes) &&
+        isValidLocationMap(request.resource.data.location) &&
+        isNullableString(request.resource.data.chatId) &&
+        isTimestamp(request.resource.data.updatedAt) &&
+        isNonEmptyString(request.resource.data.date) &&
+        isNonEmptyString(request.resource.data.time) &&
+        isNumber(request.resource.data.duration) &&
+        request.resource.data.duration > 0 &&
+        isNonEmptyString(request.resource.data.type) &&
+        isNullableString(request.resource.data.deliveryId) &&
+        isNullableNumber(request.resource.data.revisionCount) &&
+        isNullableString(request.resource.data.canceledBy) &&
+        isValidTimelineMap(request.resource.data.timeline) &&
+        bookingTimelineUpdateAllowed() &&
+        bookingParticipantImmutableFieldsUnchanged() &&
+        request.resource.data.updatedAt >= resource.data.updatedAt &&
+        // Delivery ID can only be set by photographer when delivering.
+        (!changed.hasAny(['deliveryId']) ||
+          (
+            request.auth.uid == resource.data.photographerId &&
+            statusChanged &&
+            newStatus == 'delivered' &&
+            request.resource.data.deliveryId != null &&
+            request.resource.data.deliveryId == bookingId
+          )) &&
+        // Revision count can only be incremented by customer on revision request.
+        (!changed.hasAny(['revisionCount']) ||
+          (
+            request.auth.uid == resource.data.customerId &&
+            statusChanged &&
+            oldStatus == 'delivered' &&
+            newStatus == 'revision_requested' &&
+            isNumber(oldRevision) &&
+            isNumber(newRevision) &&
+            newRevision == oldRevision + 1 &&
+            newRevision <= 1
+          )) &&
+        // canceledBy is only set when customer cancels.
+        (!changed.hasAny(['canceledBy']) ||
+          (
+            statusChanged &&
+            newStatus == 'canceled' &&
+            request.resource.data.canceledBy == request.auth.uid
+          )) &&
+        // Timeline changes must follow status transitions.
+        (!changed.hasAny(['timeline']) || statusChanged) &&
+        (
+          !statusChanged ||
+          (
+            request.auth.uid == resource.data.customerId &&
+            (
+              (
+                newStatus == 'canceled' &&
+                oldStatus in ['pending', 'confirmed', 'in_progress'] &&
+                request.resource.data.timeline != null &&
+                request.resource.data.timeline.canceledAt != null
+              ) ||
+              (
+                newStatus == 'revision_requested' &&
+                oldStatus == 'delivered' &&
+                isNumber(oldRevision) &&
+                isNumber(newRevision) &&
+                newRevision == oldRevision + 1 &&
+                newRevision <= 1 &&
+                request.resource.data.timeline != null &&
+                request.resource.data.timeline.revisionRequestedAt != null
+              ) ||
+              (
+                newStatus == 'completed' &&
+                oldStatus == 'delivered' &&
+                request.resource.data.timeline != null &&
+                request.resource.data.timeline.completedAt != null
+              ) ||
+              (
+                newStatus == 'dispute_open' &&
+                !(oldStatus in ['completed', 'done', 'canceled', 'dispute_open'])
+              )
+            )
+          ) ||
+          (
+            request.auth.uid == resource.data.photographerId &&
+            (
+              (
+                newStatus == 'confirmed' &&
+                oldStatus == 'pending' &&
+                resource.data.payment != null &&
+                resource.data.payment.status in [
+                  'succeeded',
+                  'deposit_paid',
+                  'escrow_held',
+                  'released'
+                ]
+              ) ||
+              (newStatus == 'rejected' && oldStatus == 'pending') ||
+              (
+                newStatus == 'in_progress' &&
+                oldStatus == 'confirmed' &&
+                request.resource.data.timeline != null &&
+                request.resource.data.timeline.inProgressAt != null
+              ) ||
+              (newStatus == 'awaiting_delivery' && oldStatus == 'in_progress') ||
+              (
+                newStatus == 'delivered' &&
+                oldStatus in ['in_progress', 'awaiting_delivery', 'revision_requested'] &&
+                request.resource.data.deliveryId != null &&
+                request.resource.data.deliveryId == bookingId &&
+                request.resource.data.timeline != null &&
+                request.resource.data.timeline.deliveredAt != null
+              ) ||
+              (newStatus == 'done' && oldStatus == 'delivered') ||
+              (
+                newStatus == 'dispute_open' &&
+                !(oldStatus in ['completed', 'done', 'canceled', 'dispute_open'])
+              )
+            )
+          )
+        );
+    }
+
+    function bookingParticipantImmutableFieldsUnchanged() {
+      return request.resource.data.customerId == resource.data.customerId &&
+        request.resource.data.photographerId == resource.data.photographerId &&
+        request.resource.data.requestId == resource.data.requestId &&
+        request.resource.data.offerId == resource.data.offerId &&
+        request.resource.data.price == resource.data.price &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.payment == resource.data.payment &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function bookingUserUpdateKeysAllowed() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'status',
+        'notes',
+        'location',
+        'chatId',
+        'updatedAt',
+        'date',
+        'time',
+        'duration',
+        'type',
+        'deliveryId',
+        'revisionCount',
+        'canceledBy',
+        'timeline'
+      ]);
+    }
+
+    function bookingPaymentChanged() {
+      return request.resource.data.payment != null &&
+        resource.data.payment != null &&
+        (
+          request.resource.data.payment.status != resource.data.payment.status ||
+          request.resource.data.payment.intentId != resource.data.payment.intentId ||
+          request.resource.data.payment.amount != resource.data.payment.amount ||
+          request.resource.data.payment.paidAt != resource.data.payment.paidAt
+        );
+    }
+
+    function bookingTimelineUpdateAllowed() {
+      let old = resource.data.timeline;
+      let neu = request.resource.data.timeline;
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      let statusChanged = newStatus != oldStatus;
+      return isValidTimelineMap(neu) &&
+        (
+          old == null ||
+          (
+            neu != null &&
+            (old.confirmedAt == null || neu.confirmedAt == old.confirmedAt) &&
+            (old.inProgressAt == null || neu.inProgressAt == old.inProgressAt) &&
+            (
+              old.deliveredAt == null ||
+              neu.deliveredAt == old.deliveredAt ||
+              (
+                // Allow overwriting deliveredAt only when the photographer
+                // re-delivers after a revision request.
+                statusChanged &&
+                oldStatus == 'revision_requested' &&
+                newStatus == 'delivered' &&
+                request.auth.uid == resource.data.photographerId &&
+                neu.deliveredAt != null
+              )
+            ) &&
+            (old.revisionRequestedAt == null ||
+              neu.revisionRequestedAt == old.revisionRequestedAt) &&
+            (old.completedAt == null || neu.completedAt == old.completedAt) &&
+            (old.canceledAt == null || neu.canceledAt == old.canceledAt)
+          )
+        );
+    }
+
+    function bookingParticipantFieldMutationsAllowed(bookingId) {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      let statusChanged = newStatus != oldStatus;
+      let oldRevision =
+        resource.data.revisionCount == null ? 0 : resource.data.revisionCount;
+      let newRevision =
+        request.resource.data.revisionCount == null
+          ? 0
+          : request.resource.data.revisionCount;
+
+      return
+        (!changed.hasAny(['timeline']) || statusChanged) &&
+        (!changed.hasAny(['revisionCount']) ||
+          (
+            request.auth.uid == resource.data.customerId &&
+            statusChanged &&
+            oldStatus == 'delivered' &&
+            newStatus == 'revision_requested' &&
+            isNumber(oldRevision) &&
+            isNumber(newRevision) &&
+            newRevision == oldRevision + 1 &&
+            newRevision <= 1
+          )) &&
+        (!changed.hasAny(['deliveryId']) ||
+          (
+            request.auth.uid == resource.data.photographerId &&
+            statusChanged &&
+            newStatus == 'delivered' &&
+            request.resource.data.deliveryId != null &&
+            request.resource.data.deliveryId == bookingId
+          )) &&
+        (!changed.hasAny(['canceledBy']) ||
+          (
+            statusChanged &&
+            newStatus == 'canceled' &&
+            request.resource.data.canceledBy == request.auth.uid
+          ));
+    }
+
+    function bookingParticipantStatusTransitionAllowed(bookingId) {
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      let statusChanged = newStatus != oldStatus;
+      let oldRevision =
+        resource.data.revisionCount == null ? 0 : resource.data.revisionCount;
+      let newRevision =
+        request.resource.data.revisionCount == null
+          ? 0
+          : request.resource.data.revisionCount;
+
+      return !statusChanged ||
+        (
+          request.auth.uid == resource.data.customerId &&
+          (
+            (newStatus == 'canceled' &&
+              oldStatus in ['pending', 'confirmed', 'in_progress'] &&
+              request.resource.data.canceledBy == request.auth.uid &&
+              request.resource.data.timeline != null &&
+              request.resource.data.timeline.canceledAt != null) ||
+            (newStatus == 'revision_requested' &&
+              oldStatus == 'delivered' &&
+              isNumber(oldRevision) &&
+              isNumber(newRevision) &&
+              newRevision == oldRevision + 1 &&
+              newRevision <= 1 &&
+              request.resource.data.timeline != null &&
+              request.resource.data.timeline.revisionRequestedAt != null) ||
+            (newStatus == 'completed' &&
+              oldStatus == 'delivered' &&
+              request.resource.data.timeline != null &&
+              request.resource.data.timeline.completedAt != null) ||
+            (newStatus == 'dispute_open' &&
+              !(oldStatus in ['completed', 'done', 'canceled', 'dispute_open']))
+          )
+        ) ||
+        (
+          request.auth.uid == resource.data.photographerId &&
+          (
+            (
+              newStatus == 'confirmed' &&
+              oldStatus == 'pending' &&
+              resource.data.payment != null &&
+              resource.data.payment.status in [
+                'succeeded',
+                'deposit_paid',
+                'escrow_held',
+                'released'
+              ]
+            ) ||
+            (newStatus == 'rejected' && oldStatus == 'pending') ||
+            (newStatus == 'in_progress' &&
+              oldStatus == 'confirmed' &&
+              request.resource.data.timeline != null &&
+              request.resource.data.timeline.inProgressAt != null) ||
+            (newStatus == 'awaiting_delivery' && oldStatus == 'in_progress') ||
+            (newStatus == 'delivered' &&
+              oldStatus in [
+                'in_progress',
+                'awaiting_delivery',
+                'revision_requested'
+              ] &&
+              request.resource.data.deliveryId != null &&
+              request.resource.data.deliveryId == bookingId &&
+              request.resource.data.timeline != null &&
+              request.resource.data.timeline.deliveredAt != null) ||
+            (newStatus == 'done' && oldStatus == 'delivered') ||
+            (newStatus == 'dispute_open' &&
+              !(oldStatus in ['completed', 'done', 'canceled', 'dispute_open']))
+          )
+        );
+    }
+
+    function bookingAdminUpdateAllowed() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'status',
+        'notes',
+        'location',
+        'chatId',
+        'updatedAt',
+        'date',
+        'time',
+        'duration',
+        'type',
+        'payment',
+        'deliveryId',
+        'disputeId',
+        'revisionCount'
+      ]) &&
+        isValidBookingStatus(request.resource.data.status) &&
+        isNullableString(request.resource.data.notes) &&
+        isValidLocationMap(request.resource.data.location) &&
+        isNullableString(request.resource.data.chatId) &&
+        isTimestamp(request.resource.data.updatedAt) &&
+        isNonEmptyString(request.resource.data.date) &&
+        isNonEmptyString(request.resource.data.time) &&
+        isNumber(request.resource.data.duration) &&
+        request.resource.data.duration > 0 &&
+        isNonEmptyString(request.resource.data.type) &&
+        isValidPaymentMap(request.resource.data.payment) &&
+        isNullableString(request.resource.data.deliveryId) &&
+        isNullableString(request.resource.data.disputeId) &&
+        isNullableNumber(request.resource.data.revisionCount);
+    }
+
+    function canCustomerUpdateBookingStatus() {
+      return resource.data != null &&
+        request.auth.uid == resource.data.customerId &&
+        request.resource.data.status in [
+          'canceled',
+          'revision_requested',
+          'completed',
+          'dispute_open'
+        ];
+    }
+
+    function canPhotographerUpdateBookingStatus() {
+      return resource.data != null &&
+        request.auth.uid == resource.data.photographerId &&
+        request.resource.data.status in [
+          'confirmed',
+          'rejected',
+          'in_progress',
+          'awaiting_delivery',
+          'delivered',
+          'done'
+        ];
+    }
+
+    function isBookingParticipant() {
+      return resource.data != null &&
+        (
+          request.auth.uid == resource.data.customerId ||
+          request.auth.uid == resource.data.photographerId
+        );
+    }
+
+    function isBookingParticipantById(bookingId) {
+      let booking = get(/databases/$(database)/documents/bookings/$(bookingId));
+      return isSignedIn() &&
+        booking != null &&
+        booking.data != null &&
+        (
+          request.auth.uid == booking.data.customerId ||
+          request.auth.uid == booking.data.photographerId
+        );
+    }
+
+    function isBookingPhotographerById(bookingId) {
+      let booking = get(/databases/$(database)/documents/bookings/$(bookingId));
+      return isSignedIn() &&
+        booking != null &&
+        booking.data != null &&
+        request.auth.uid == booking.data.photographerId;
+    }
+
+    function isRequestOwner(requestId) {
+      let requestDoc = get(/databases/$(database)/documents/requests/$(requestId));
+      return isSignedIn() &&
+        requestDoc != null &&
+        requestDoc.data != null &&
+        requestDoc.data.clientId == request.auth.uid;
+    }
+
+    function canReadRequestAsPhotographer(data) {
+      return isSignedIn() &&
+        currentPhotographerIsVerified() &&
+        (
+          data.selectedPhotographerId == request.auth.uid ||
+          (
+            data.status in ['published', 'awaiting_offers'] &&
+            (data.selectedPhotographerId == null ||
+             data.selectedPhotographerId == request.auth.uid) &&
+            isString(data.governorate) &&
+            currentPhotographerServesGovernorate(data.governorate)
+          )
+        );
+    }
+
+    function requestOfferCounterUpdateAllowed() {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      let oldCount =
+        resource.data.offersCount == null ? 0 : resource.data.offersCount;
+      let newCount =
+        request.resource.data.offersCount == null
+          ? 0
+          : request.resource.data.offersCount;
+      return isSignedIn() &&
+        resource.data != null &&
+        changed.hasOnly(['offersCount', 'updatedAt']) &&
+        isNumber(oldCount) &&
+        isNumber(newCount) &&
+        newCount == oldCount + 1 &&
+        isTimestamp(request.resource.data.updatedAt) &&
+        request.resource.data.clientId == resource.data.clientId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.status == resource.data.status &&
+        resource.data.status in ['published', 'awaiting_offers'] &&
+        (resource.data.expiresAt == null || resource.data.expiresAt > request.time) &&
+        currentPhotographerIsVerified() &&
+        (
+          resource.data.selectedPhotographerId == request.auth.uid ||
+          (
+            resource.data.selectedPhotographerId == null &&
+            isString(resource.data.governorate) &&
+            currentPhotographerServesGovernorate(resource.data.governorate)
+          )
+        );
+    }
+
+    function canCreateOfferForRequest(requestId) {
+      let req = get(/databases/$(database)/documents/requests/$(requestId));
+      return isSignedIn() &&
+        req != null &&
+        req.data != null &&
+        currentPhotographerIsVerified() &&
+        req.data.status in ['published', 'awaiting_offers'] &&
+        (req.data.expiresAt == null || req.data.expiresAt > request.time) &&
+        req.data.clientId != request.auth.uid &&
+        (
+          req.data.selectedPhotographerId == request.auth.uid ||
+          (
+            req.data.selectedPhotographerId == null &&
+            isString(req.data.governorate) &&
+            currentPhotographerServesGovernorate(req.data.governorate)
+          )
+        );
+    }
+
+    function offerUpdateByRequestOwnerAllowed() {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      return isSignedIn() &&
+        isRequestOwner(resource.data.requestId) &&
+        changed.hasOnly(['status', 'updatedAt']) &&
+        resource.data.status == 'submitted' &&
+        request.resource.data.status in ['rejected'];
+    }
+
+    function offerUpdateByPhotographerAllowed() {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      return isSignedIn() &&
+        request.auth.uid == resource.data.photographerId &&
+        changed.hasOnly(['status', 'updatedAt']) &&
+        resource.data.status == 'submitted' &&
+        request.resource.data.status in ['withdrawn'];
+    }
+
+    function bookingCreateLinkedWritesAllowed(requestId, offerId, photographerId) {
+      let reqAfter = getAfter(/databases/$(database)/documents/requests/$(requestId));
+      let offerAfter = getAfter(/databases/$(database)/documents/offers/$(offerId));
+      return reqAfter != null &&
+        reqAfter.data != null &&
+        offerAfter != null &&
+        offerAfter.data != null &&
+        reqAfter.data.clientId == request.auth.uid &&
+        reqAfter.data.status == 'offer_selected' &&
+        reqAfter.data.selectedOfferId == offerId &&
+        reqAfter.data.selectedPhotographerId == photographerId &&
+        offerAfter.data.requestId == requestId &&
+        offerAfter.data.photographerId == photographerId &&
+        offerAfter.data.status == 'accepted';
+    }
+
+    function requestOwnerDirectUpdateAllowed() {
+      return resource.data != null &&
+        request.resource.data.clientId == resource.data.clientId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (isOwner(resource.data.clientId) || isAdmin()) &&
+        isValidRequestDoc(request.resource.data) &&
+        (
+          isAdmin() ||
+          (
+            request.resource.data.selectedOfferId == resource.data.selectedOfferId &&
+            request.resource.data.selectedPhotographerId == resource.data.selectedPhotographerId &&
+            !(
+              request.resource.data.status == 'offer_selected' &&
+              resource.data.status != 'offer_selected'
+            )
+          )
+        );
+    }
+
+    function deliveryCreateAllowed(deliveryId) {
+      let booking = get(/databases/$(database)/documents/bookings/$(deliveryId));
+      return isSignedIn() &&
+        isValidDeliveryDoc(request.resource.data) &&
+        booking != null &&
+        booking.data != null &&
+        request.resource.data.bookingId == deliveryId &&
+        request.resource.data.photographerId == booking.data.photographerId &&
+        request.resource.data.customerId == booking.data.customerId &&
+        request.auth.uid == booking.data.photographerId &&
+        booking.data.status in [
+          'in_progress',
+          'awaiting_delivery',
+          'revision_requested'
+        ] &&
+        request.resource.data.status == 'submitted';
+    }
+
+    function deliveryUpdateByPhotographerAllowed(booking) {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      return request.auth.uid == resource.data.photographerId &&
+        booking.data.photographerId == resource.data.photographerId &&
+        booking.data.customerId == resource.data.customerId &&
+        booking.data.status in [
+          'in_progress',
+          'awaiting_delivery',
+          'revision_requested'
+        ] &&
+        changed.hasOnly([
+          'status',
+          'photoUrls',
+          'videoUrls',
+          'otherUrls',
+          'note',
+          'updatedAt'
+        ]) &&
+        request.resource.data.revisionNote == resource.data.revisionNote &&
+        request.resource.data.revisionCount == resource.data.revisionCount &&
+        (
+          (oldStatus == 'submitted' && newStatus == 'submitted') ||
+          (oldStatus == 'revision_requested' && newStatus == 'submitted')
+        );
+    }
+
+    function deliveryUpdateByCustomerAllowed(booking) {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      let oldStatus = resource.data.status;
+      let newStatus = request.resource.data.status;
+      return request.auth.uid == resource.data.customerId &&
+        booking.data.photographerId == resource.data.photographerId &&
+        booking.data.customerId == resource.data.customerId &&
+        booking.data.status == 'delivered' &&
+        changed.hasOnly([
+          'status',
+          'revisionNote',
+          'updatedAt'
+        ]) &&
+        (
+          (oldStatus == 'submitted' && newStatus == 'accepted') ||
+          (
+            oldStatus == 'submitted' &&
+            newStatus == 'revision_requested' &&
+            isNonEmptyString(request.resource.data.revisionNote)
+          )
+        );
+    }
+
+    function deliveryUpdateAllowed(deliveryId) {
+      let booking = get(/databases/$(database)/documents/bookings/$(deliveryId));
+      return isSignedIn() &&
+        isValidDeliveryDoc(request.resource.data) &&
+        booking != null &&
+        booking.data != null &&
+        request.resource.data.bookingId == resource.data.bookingId &&
+        request.resource.data.photographerId == resource.data.photographerId &&
+        request.resource.data.customerId == resource.data.customerId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.bookingId == deliveryId &&
+        (
+          isAdmin() ||
+          deliveryUpdateByPhotographerAllowed(booking) ||
+          deliveryUpdateByCustomerAllowed(booking)
+        );
+    }
+
+    function disputeCreateLinkedToBookingAllowed() {
+      let booking = get(
+        /databases/$(database)/documents/bookings/$(request.resource.data.bookingId)
+      );
+      return booking != null &&
+        booking.data != null &&
+        booking.data.status != 'dispute_open' &&
+        !(booking.data.status in ['completed', 'done', 'canceled']) &&
+        request.resource.data.customerId == booking.data.customerId &&
+        request.resource.data.photographerId == booking.data.photographerId &&
+        request.resource.data.requestId == booking.data.requestId &&
+        request.resource.data.status == 'open';
+    }
+
+    function chatKeys() {
+      return [
+        'bookingId',
+        'participants',
+        'lastMessageAt',
+        'lastMessage',
+        'lastMessageType',
+        'lastMessageSenderId'
+      ];
+    }
+
+    function isValidChatPreview(data) {
+      return (!('lastMessage' in data) || isString(data.lastMessage)) &&
+        (!('lastMessageType' in data) || (
+          isString(data.lastMessageType) &&
+          isValidMessageType(data.lastMessageType)
+        )) &&
+        (!('lastMessageSenderId' in data) || (
+          isString(data.lastMessageSenderId) &&
+          data.lastMessageSenderId in data.participants
+        ));
+    }
+
+    function isValidChatDoc(data) {
+      return hasOnlyKeys(data, chatKeys()) &&
+        isString(data.bookingId) &&
+        isList(data.participants) &&
+        listSize(data.participants) == 2 &&
+        isString(data.participants[0]) &&
+        isString(data.participants[1]) &&
+        data.participants[0] != data.participants[1] &&
+        isTimestamp(data.lastMessageAt) &&
+        isValidChatPreview(data);
+    }
+
+    function chatCreateAllowed() {
+      let booking = get(
+        /databases/$(database)/documents/bookings/$(request.resource.data.bookingId)
+      );
+      return booking != null &&
+        booking.data != null &&
+        request.resource.data.participants.hasAll([
+          booking.data.customerId,
+          booking.data.photographerId
+        ]) &&
+        request.auth.uid in request.resource.data.participants;
+    }
+
+    function isChatParticipant(chatId) {
+      let chat = get(/databases/$(database)/documents/chats/$(chatId));
+      return isSignedIn() &&
+        chat != null &&
+        chat.data != null &&
+        request.auth.uid in chat.data.participants;
+    }
+
+    function messageKeys() {
+      return ['chatId', 'senderId', 'type', 'content', 'createdAt', 'seenBy'];
+    }
+
+    function isValidMessageDoc(data) {
+      return hasOnlyKeys(data, messageKeys()) &&
+        isString(data.chatId) &&
+        isString(data.senderId) &&
+        isString(data.type) &&
+        isValidMessageType(data.type) &&
+        isString(data.content) &&
+        isTimestamp(data.createdAt) &&
+        isList(data.seenBy);
+    }
+
+    function messageSeenByUpdateAllowed() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'seenBy'
+      ]) &&
+        isList(request.resource.data.seenBy) &&
+        isList(resource.data.seenBy) &&
+        listSize(request.resource.data.seenBy) <=
+          listSize(resource.data.seenBy) + 1 &&
+        request.auth.uid in request.resource.data.seenBy &&
+        request.resource.data.seenBy.hasAll(resource.data.seenBy) &&
+        request.resource.data.senderId == resource.data.senderId &&
+        request.resource.data.chatId == resource.data.chatId &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.content == resource.data.content &&
+        request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function storyKeys() {
+      return [
+        'photographerId',
+        'photographerName',
+        'photographerPhotoUrl',
+        'imageUrl',
+        'caption',
+        'createdAt',
+        'expiresAt',
+        'isActive'
+      ];
+    }
+
+    function isValidStoryDoc(data) {
+      return hasOnlyKeys(data, storyKeys()) &&
+        isString(data.photographerId) &&
+        isString(data.photographerName) &&
+        isNullableString(data.photographerPhotoUrl) &&
+        isString(data.imageUrl) &&
+        isNullableString(data.caption) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.expiresAt) &&
+        isBool(data.isActive);
+    }
+
+    function storyViewKeys() {
+      return ['userId', 'userName', 'viewedAt'];
+    }
+
+    function isValidStoryViewDoc(data, viewerId) {
+      return hasOnlyKeys(data, storyViewKeys()) &&
+        isString(data.userId) &&
+        data.userId == viewerId &&
+        isString(data.userName) &&
+        isTimestamp(data.viewedAt);
+    }
+
+    function canCreateStoryView(storyId, viewerId) {
+      let story = get(/databases/$(database)/documents/stories/$(storyId));
+      return isSignedIn() &&
+        viewerId == request.auth.uid &&
+        story != null &&
+        story.data != null &&
+        story.data.expiresAt is timestamp &&
+        story.data.expiresAt > request.time;
+    }
+
+    function canReadStoryViews(storyId) {
+      let story = get(/databases/$(database)/documents/stories/$(storyId));
+      return isAdmin() ||
+        (
+          isSignedIn() &&
+          story != null &&
+          story.data != null &&
+          story.data.photographerId == request.auth.uid
+        );
+    }
+
+    function reelKeys() {
+      return [
+        'photographerId',
+        'photographerName',
+        'photographerPhotoUrl',
+        'videoUrl',
+        'thumbnailUrl',
+        'caption',
+        'tags',
+        'views',
+        'likes',
+        'comments',
+        'shares',
+        'createdAt',
+        'isVerified'
+      ];
+    }
+
+    function isValidReelDoc(data) {
+      return hasOnlyKeys(data, reelKeys()) &&
+        isString(data.photographerId) &&
+        isString(data.photographerName) &&
+        isNullableString(data.photographerPhotoUrl) &&
+        isString(data.videoUrl) &&
+        isNullableString(data.thumbnailUrl) &&
+        isString(data.caption) &&
+        isList(data.tags) &&
+        isNumber(data.views) &&
+        data.views >= 0 &&
+        isNumber(data.likes) &&
+        data.likes >= 0 &&
+        isNumber(data.comments) &&
+        data.comments >= 0 &&
+        isNumber(data.shares) &&
+        data.shares >= 0 &&
+        isTimestamp(data.createdAt) &&
+        isBool(data.isVerified);
+    }
+
+    function isCounterDelta(oldValue, newValue, minDelta, maxDelta) {
+      return isNumber(oldValue) &&
+        isNumber(newValue) &&
+        newValue >= 0 &&
+        (newValue - oldValue) >= minDelta &&
+        (newValue - oldValue) <= maxDelta;
+    }
+
+    function reelCounterUpdateAllowed() {
+      let changed = request.resource.data.diff(resource.data).changedKeys();
+      return isAdmin() &&
+        isValidReelDoc(request.resource.data) &&
+        (
+          (changed.hasOnly(['likes']) &&
+            isCounterDelta(resource.data.likes, request.resource.data.likes, -1, 1)) ||
+          (changed.hasOnly(['shares']) &&
+            isCounterDelta(resource.data.shares, request.resource.data.shares, 0, 1)) ||
+          (changed.hasOnly(['comments']) &&
+            isCounterDelta(resource.data.comments, request.resource.data.comments, 0, 1)) ||
+          (changed.hasOnly(['views']) &&
+            isCounterDelta(resource.data.views, request.resource.data.views, 0, 1))
+        );
+    }
+
+    function reelOwnerUpdateAllowed() {
+      return isValidReelDoc(request.resource.data) &&
+        request.resource.data.photographerId == resource.data.photographerId &&
+        request.resource.data.views == resource.data.views &&
+        request.resource.data.likes == resource.data.likes &&
+        request.resource.data.comments == resource.data.comments &&
+        request.resource.data.shares == resource.data.shares &&
+        request.resource.data.isVerified == resource.data.isVerified;
+    }
+
+    function commentKeys() {
+      return [
+        'reelId',
+        'userId',
+        'userName',
+        'userPhotoUrl',
+        'text',
+        'createdAt',
+        'likes'
+      ];
+    }
+
+    function isValidCommentDoc(data) {
+      return hasOnlyKeys(data, commentKeys()) &&
+        isString(data.reelId) &&
+        isString(data.userId) &&
+        isString(data.userName) &&
+        isNullableString(data.userPhotoUrl) &&
+        isString(data.text) &&
+        isTimestamp(data.createdAt) &&
+        isNumber(data.likes) &&
+        data.likes >= 0;
+    }
+
+    function reviewKeys() {
+      return [
+        'bookingId',
+        'reviewerId',
+        'targetId',
+        'rating',
+        'qualityRating',
+        'communicationRating',
+        'onTimeRating',
+        'deliverySpeedRating',
+        'recommend',
+        'comment',
+        'createdAt'
+      ];
+    }
+
+    function isValidReviewDoc(data) {
+      return hasOnlyKeys(data, reviewKeys()) &&
+        isString(data.bookingId) &&
+        isString(data.reviewerId) &&
+        isString(data.targetId) &&
+        isNumber(data.rating) &&
+        data.rating >= 1 &&
+        data.rating <= 5 &&
+        isNumber(data.qualityRating) &&
+        data.qualityRating >= 1 &&
+        data.qualityRating <= 5 &&
+        isNumber(data.communicationRating) &&
+        data.communicationRating >= 1 &&
+        data.communicationRating <= 5 &&
+        isNumber(data.onTimeRating) &&
+        data.onTimeRating >= 1 &&
+        data.onTimeRating <= 5 &&
+        isNumber(data.deliverySpeedRating) &&
+        data.deliverySpeedRating >= 1 &&
+        data.deliverySpeedRating <= 5 &&
+        isNullableBool(data.recommend) &&
+        isNullableString(data.comment) &&
+        isTimestamp(data.createdAt);
+    }
+
+    function notificationKeys() {
+      return [
+        'userId',
+        'title',
+        'body',
+        'type',
+        'data',
+        'isRead',
+        'createdAt',
+        'imageUrl',
+        'actionUrl'
+      ];
+    }
+
+    function isValidNotificationDoc(data) {
+      return hasOnlyKeys(data, notificationKeys()) &&
+        isString(data.userId) &&
+        isString(data.title) &&
+        isString(data.body) &&
+        isString(data.type) &&
+        (data.data == null || isMap(data.data)) &&
+        isBool(data.isRead) &&
+        isTimestamp(data.createdAt) &&
+        isNullableString(data.imageUrl) &&
+        isNullableString(data.actionUrl);
+    }
+
+    function notificationReadUpdateAllowed() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'isRead'
+      ]) &&
+        request.resource.data.isRead == true;
+    }
+
+    function reportKeys() {
+      return [
+        'reporterId',
+        'reportedUserId',
+        'reportedUserName',
+        'reportType',
+        'reason',
+        'details',
+        'timestamp',
+        'status'
+      ];
+    }
+
+    function isValidReportDoc(data) {
+      return hasOnlyKeys(data, reportKeys()) &&
+        isString(data.reporterId) &&
+        isNullableString(data.reportedUserId) &&
+        isNullableString(data.reportedUserName) &&
+        isString(data.reportType) &&
+        isString(data.reason) &&
+        isString(data.details) &&
+        isTimestamp(data.timestamp) &&
+        isValidReportStatus(data.status);
+    }
+
+    function favoriteKeys() {
+      return ['userId', 'photographerId', 'createdAt'];
+    }
+
+    function isValidFavoriteDoc(data) {
+      return hasOnlyKeys(data, favoriteKeys()) &&
+        isString(data.userId) &&
+        isString(data.photographerId) &&
+        isTimestamp(data.createdAt);
+    }
+
+    function followKeys() {
+      return ['followerId', 'followingId', 'followedAt'];
+    }
+
+    function isValidFollowDoc(data) {
+      return hasOnlyKeys(data, followKeys()) &&
+        isString(data.followerId) &&
+        isString(data.followingId) &&
+        isTimestamp(data.followedAt);
+    }
+
+    function userAchievementKeys() {
+      return ['userId', 'achievementId', 'currentProgress', 'isUnlocked', 'unlockedAt'];
+    }
+
+    function isValidUserAchievementDoc(data) {
+      return hasOnlyKeys(data, userAchievementKeys()) &&
+        isString(data.userId) &&
+        isString(data.achievementId) &&
+        isNumber(data.currentProgress) &&
+        data.currentProgress >= 0 &&
+        isBool(data.isUnlocked) &&
+        isNullableTimestamp(data.unlockedAt);
+    }
+
+    function loyaltyKeys() {
+      return [
+        'totalPoints',
+        'availablePoints',
+        'usedPoints',
+        'transactions',
+        'tier',
+        'lastUpdated'
+      ];
+    }
+
+    function isValidLoyaltyDoc(data) {
+      return hasOnlyKeys(data, loyaltyKeys()) &&
+        isNumber(data.totalPoints) &&
+        data.totalPoints >= 0 &&
+        isNumber(data.availablePoints) &&
+        data.availablePoints >= 0 &&
+        isNumber(data.usedPoints) &&
+        data.usedPoints >= 0 &&
+        isList(data.transactions) &&
+        isString(data.tier) &&
+        isTimestamp(data.lastUpdated);
+    }
+
+    function isDefaultLoyaltyDoc(data) {
+      return isValidLoyaltyDoc(data) &&
+        data.totalPoints == 0 &&
+        data.availablePoints == 0 &&
+        data.usedPoints == 0 &&
+        listSize(data.transactions) == 0 &&
+        data.tier == 'bronze';
+    }
+
+    function canWriteReview(bookingId, photographerId) {
+      let booking = get(/databases/$(database)/documents/bookings/$(bookingId));
+      return booking != null &&
+        booking.data != null &&
+        booking.data.status in ['done', 'completed'] &&
+        booking.data.customerId == request.auth.uid &&
+        booking.data.photographerId == photographerId;
+    }
+
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
     match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) &&
+        isValidUserDoc(request.resource.data, userId);
+      allow update: if (isOwner(userId) || isAdmin()) &&
+        isValidUserDoc(request.resource.data, userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isAdmin();
+
+      match /private/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    match /users_public/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId) &&
+        isValidPublicUserDoc(request.resource.data);
+      allow update: if (isOwner(userId) || isAdmin()) &&
+        isValidPublicUserDoc(request.resource.data);
+      allow delete: if isAdmin();
     }
-    
-    // Photographers collection
+
+    match /deleted_users/{userId} {
+      allow read, write: if isAdmin();
+    }
+
     match /photographers/{photographerId} {
-      allow read: if true; // Public read for browsing
-      allow create: if isOwner(photographerId) && isPhotographer();
-      allow update: if isOwner(photographerId) && isPhotographer();
-      allow delete: if isOwner(photographerId);
+      allow read: if true;
+      allow create: if (isOwner(photographerId) &&
+        isValidPhotographerCreate(request.resource.data)) ||
+        (isAdmin() && isValidPhotographerDoc(request.resource.data));
+      allow update: if isAdmin() ||
+        (isOwner(photographerId) && isValidPhotographerOwnerUpdate());
+      allow delete: if isOwner(photographerId) || isAdmin();
     }
-    
-    // Portfolios collection
+
     match /portfolios/{portfolioId} {
-      allow read: if true; // Public read
-      allow write: if isSignedIn() && 
-                     request.resource.data.photographerId == request.auth.uid &&
-                     isPhotographer();
-    }
-    
-    // Availabilities collection
-    match /availabilities/{availabilityId} {
-      allow read: if true; // Public read for booking
-      allow write: if isSignedIn() &&
-                     request.resource.data.photographerId == request.auth.uid &&
-                     isPhotographer();
-    }
-    
-    // Bookings collection
-    match /bookings/{bookingId} {
-      allow read: if isSignedIn() && 
-                    (request.auth.uid == resource.data.customerId ||
-                     request.auth.uid == resource.data.photographerId);
-      allow create: if isSignedIn() && isCustomer() &&
-                      request.resource.data.customerId == request.auth.uid;
+      allow read: if true;
+      allow create: if isSignedIn() &&
+        request.resource.data.photographerId == request.auth.uid &&
+        isValidPortfolioDoc(request.resource.data);
       allow update: if isSignedIn() &&
-                      (request.auth.uid == resource.data.customerId ||
-                       request.auth.uid == resource.data.photographerId);
-      allow delete: if isOwner(resource.data.customerId);
+        resource.data.photographerId == request.auth.uid &&
+        request.resource.data.photographerId == resource.data.photographerId &&
+        isValidPortfolioDoc(request.resource.data);
+      allow delete: if isSignedIn() &&
+        resource.data.photographerId == request.auth.uid;
     }
-    
-    // Chats collection
+
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.customerId ||
+         request.auth.uid == resource.data.photographerId ||
+          isAdmin());
+      allow create: if isSignedIn() &&
+        request.resource.data.customerId == request.auth.uid &&
+        isValidBookingDoc(request.resource.data) &&
+        request.resource.data.payment != null &&
+        request.resource.data.payment.status == 'pending' &&
+        request.resource.data.status == 'pending' &&
+        isNonEmptyString(request.resource.data.requestId) &&
+        isNonEmptyString(request.resource.data.offerId) &&
+        bookingCreateLinkedWritesAllowed(
+          request.resource.data.requestId,
+          request.resource.data.offerId,
+          request.resource.data.photographerId
+        );
+      allow update: if isSignedIn() &&
+        request.resource != null &&
+        request.resource.data != null &&
+        resource.data != null &&
+        isAdmin() &&
+        bookingAdminUpdateAllowed();
+      allow update: if isSignedIn() &&
+        request.resource != null &&
+        request.resource.data != null &&
+        resource.data != null &&
+        isBookingParticipant() &&
+        bookingParticipantUpdateAllowed(bookingId);
+      allow delete: if isAdmin();
+    }
+
+    match /requests/{requestId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          (
+            isOwner(resource.data.clientId) ||
+            canReadRequestAsPhotographer(resource.data)
+          ));
+      allow create: if isSignedIn() &&
+        request.resource.data.clientId == request.auth.uid &&
+        isValidRequestDoc(request.resource.data);
+      allow update: if isSignedIn() &&
+        (
+          requestOwnerDirectUpdateAllowed() ||
+          requestOfferCounterUpdateAllowed()
+        );
+      allow delete: if isOwner(resource.data.clientId) || isAdmin();
+    }
+
+    match /offers/{offerId} {
+      allow read: if isSignedIn() &&
+        (
+          request.auth.uid == resource.data.photographerId ||
+          isRequestOwner(resource.data.requestId) ||
+          isAdmin()
+        );
+      allow create: if isSignedIn() &&
+        request.resource.data.photographerId == request.auth.uid &&
+        request.resource.data.status == 'submitted' &&
+        isValidOfferDoc(request.resource.data) &&
+        canCreateOfferForRequest(request.resource.data.requestId);
+      allow update: if isSignedIn() &&
+        isValidOfferDoc(request.resource.data) &&
+        request.resource.data.requestId == resource.data.requestId &&
+        request.resource.data.photographerId == resource.data.photographerId &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (isAdmin() ||
+          offerUpdateByRequestOwnerAllowed() ||
+          offerUpdateByPhotographerAllowed());
+      allow delete: if isSignedIn() &&
+        (request.auth.uid == resource.data.photographerId || isAdmin());
+    }
+
+    match /deliveries/{deliveryId} {
+      allow read: if isSignedIn() &&
+        (isBookingParticipantById(resource.data.bookingId) || isAdmin());
+      allow create: if deliveryCreateAllowed(deliveryId);
+      allow update: if deliveryUpdateAllowed(deliveryId);
+      allow delete: if isAdmin();
+    }
+
+    match /download_links/{bookingId} {
+      allow read: if isSignedIn() &&
+        (isBookingParticipantById(bookingId) || isAdmin());
+      allow create, update: if isSignedIn() &&
+        isBookingParticipantById(bookingId) &&
+        request.resource.data != null &&
+        request.resource.data.bookingId == bookingId &&
+        request.resource.data.keys().hasOnly([
+          'batchId',
+          'bookingId',
+          'links',
+          'photoCount',
+          'createdAt',
+          'includesRaw',
+          'includesEdited'
+        ]) &&
+        isString(request.resource.data.batchId) &&
+        isList(request.resource.data.links) &&
+        listSize(request.resource.data.links) <= 200 &&
+        isNumber(request.resource.data.photoCount) &&
+        request.resource.data.photoCount >= 0 &&
+        isString(request.resource.data.createdAt) &&
+        isBool(request.resource.data.includesRaw) &&
+        isBool(request.resource.data.includesEdited);
+      allow delete: if isAdmin() || isBookingPhotographerById(bookingId);
+    }
+
+    match /disputes/{disputeId} {
+      allow read: if isSignedIn() &&
+        (isBookingParticipantById(resource.data.bookingId) || isAdmin());
+      allow create: if isSignedIn() &&
+        isBookingParticipantById(request.resource.data.bookingId) &&
+        request.resource.data.openedBy == request.auth.uid &&
+        isValidDisputeDoc(request.resource.data) &&
+        disputeCreateLinkedToBookingAllowed();
+      allow update: if isAdmin() &&
+        isValidDisputeDoc(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /trust_stats/{photographerId} {
+      allow read: if isSignedIn() || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /chats/{chatId} {
-      allow read: if isSignedIn() && isParticipant(resource.data.participants);
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && isParticipant(resource.data.participants);
-      allow delete: if isSignedIn() && isParticipant(resource.data.participants);
-      
+      allow read: if isSignedIn() &&
+        request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() &&
+        isValidChatDoc(request.resource.data) &&
+        chatCreateAllowed();
+      allow update: if isChatParticipant(chatId) &&
+        isValidChatDoc(request.resource.data) &&
+        request.resource.data.participants == resource.data.participants &&
+        request.resource.data.bookingId == resource.data.bookingId &&
+        request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'lastMessageAt',
+          'lastMessage',
+          'lastMessageType',
+          'lastMessageSenderId'
+        ]);
+      allow delete: if isChatParticipant(chatId) || isAdmin();
+
       match /messages/{messageId} {
         allow read: if isChatParticipant(chatId);
         allow create: if isChatParticipant(chatId) &&
-                        request.resource.data.senderId == request.auth.uid &&
-                        request.resource.data.chatId == chatId;
+          isValidMessageDoc(request.resource.data) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.chatId == chatId;
         allow update: if isChatParticipant(chatId) &&
-                        request.auth.uid == resource.data.senderId;
-        allow delete: if isChatParticipant(chatId);
+          messageSeenByUpdateAllowed();
+        allow delete: if isChatParticipant(chatId) || isAdmin();
       }
     }
-    
-    // Offers collection
-    match /offers/{offerId} {
-      allow read: if true; // Public read
-      allow write: if isSignedIn() &&
-                     request.resource.data.photographerId == request.auth.uid &&
-                     isPhotographer();
-    }
-    
-    // Reviews collection
-    match /reviews/{reviewId} {
-      allow read: if true; // Public read
+
+    match /stories/{storyId} {
+      allow read: if true;
       allow create: if isSignedIn() &&
-                      request.resource.data.reviewerId == request.auth.uid;
-      allow update: if isOwner(resource.data.reviewerId);
-      allow delete: if isOwner(resource.data.reviewerId);
+        request.resource.data.photographerId == request.auth.uid &&
+        isValidStoryDoc(request.resource.data);
+      allow update: if isAdmin() ||
+        (isOwner(resource.data.photographerId) &&
+          isValidStoryDoc(request.resource.data) &&
+          request.resource.data.photographerId == resource.data.photographerId);
+      allow delete: if isOwner(resource.data.photographerId) || isAdmin();
+
+      match /views/{viewerId} {
+        allow read: if canReadStoryViews(storyId);
+        allow create: if canCreateStoryView(storyId, viewerId) &&
+          isValidStoryViewDoc(request.resource.data, viewerId);
+        allow update, delete: if false;
+      }
     }
-    
-    // Favorites collection
+
+    match /reels/{reelId} {
+      allow read: if true;
+      allow create: if (isSignedIn() &&
+        request.resource.data.photographerId == request.auth.uid &&
+        isValidReelDoc(request.resource.data) &&
+        request.resource.data.isVerified == false) ||
+        (isAdmin() && isValidReelDoc(request.resource.data));
+      allow update: if isAdmin() ||
+        (isOwner(resource.data.photographerId) &&
+          reelOwnerUpdateAllowed()) ||
+        reelCounterUpdateAllowed();
+      allow delete: if isOwner(resource.data.photographerId) || isAdmin();
+    }
+
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isSignedIn() &&
+        isValidCommentDoc(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.likes == 0;
+      allow update: if false;
+      allow delete: if isSignedIn() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() &&
+        isValidReviewDoc(request.resource.data) &&
+        request.resource.data.reviewerId == request.auth.uid &&
+        canWriteReview(
+          request.resource.data.bookingId,
+          request.resource.data.targetId
+        );
+      allow update: if false;
+      allow delete: if isSignedIn() &&
+        resource.data.reviewerId == request.auth.uid;
+    }
+
     match /favorites/{favoriteId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isOwner(resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isSignedIn() &&
+        isValidFavoriteDoc(request.resource.data) &&
+        request.resource.data.userId == request.auth.uid;
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
-    
-    // Reports collection
+
+    match /following/{followId} {
+      allow read: if isOwner(resource.data.followerId) || isAdmin();
+      allow create: if isSignedIn() &&
+        isValidFollowDoc(request.resource.data) &&
+        request.resource.data.followerId == request.auth.uid;
+      allow delete: if isOwner(resource.data.followerId) || isAdmin();
+    }
+
     match /reports/{reportId} {
-      allow read: if false; // Admin only
-      allow create: if isSignedIn() && request.resource.data.reporterId == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+      allow create: if isSignedIn() &&
+        isValidReportDoc(request.resource.data) &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAdmin() &&
+        isValidNotificationDoc(request.resource.data);
+      allow update: if isOwner(resource.data.userId) &&
+        isValidNotificationDoc(request.resource.data) &&
+        notificationReadUpdateAllowed();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    match /user_achievements/{achievementId} {
+      allow read: if isSignedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update, delete: if isAdmin() &&
+        isValidUserAchievementDoc(request.resource.data);
+    }
+
+    match /loyalty_points/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if (isOwner(userId) &&
+        isDefaultLoyaltyDoc(request.resource.data)) ||
+        (isAdmin() && isValidLoyaltyDoc(request.resource.data));
+      allow update: if isAdmin() &&
+        isValidLoyaltyDoc(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
+
