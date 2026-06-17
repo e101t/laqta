@@ -37,6 +37,13 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _hasError = false;
   String _currentUserId = '';
 
+  static const List<String> _quickMessages = [
+    'كم سعر جلسة تصوير؟',
+    'هل أنت متاح هذا الأسبوع؟',
+    'أريد تصوير مناسبة',
+    'ممكن أشوف باقاتك؟',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -341,6 +348,14 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
     );
+  }
+
+  void _applyQuickMessage(String message) {
+    _messageController
+      ..text = message
+      ..selection = TextSelection.collapsed(offset: message.length);
+    FocusScope.of(context).unfocus();
+    setState(() {});
   }
 
   Future<void> _sendMessage() async {
@@ -664,10 +679,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       final message = _messages[index];
                       final isMe = message.senderId == _currentUserId;
 
-                      return _MessageBubble(
-                        message: message,
-                        isMe: isMe,
-                      );
+                      return _MessageBubble(message: message, isMe: isMe);
                     },
                   ),
           ),
@@ -686,54 +698,101 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
             child: SafeArea(
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.attach_file),
-                    onPressed: () {
-                      _showAttachmentOptions();
-                    },
-                  ),
-                  Expanded(
-                    child: AppTextField(
-                      controller: _messageController,
-                      hint: localizations.typeMessage,
-                      maxLines: null,
-                      minLines: 1,
-                      textCapitalization: TextCapitalization.sentences,
-                      textInputAction: TextInputAction.send,
-                      onFieldSubmitted: (_) => _sendMessage(),
-                      decoration: InputDecoration(
-                        hintText: localizations.typeMessage,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: scheme.surfaceContainerHighest,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                  if (!_isLoading && !_hasError) ...[
+                    _QuickMessageStrip(
+                      messages: _quickMessages,
+                      onSelected: _applyQuickMessage,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.attach_file),
+                        onPressed: () {
+                          _showAttachmentOptions();
+                        },
+                      ),
+                      Expanded(
+                        child: AppTextField(
+                          controller: _messageController,
+                          hint: localizations.typeMessage,
+                          maxLines: null,
+                          minLines: 1,
+                          textCapitalization: TextCapitalization.sentences,
+                          textInputAction: TextInputAction.send,
+                          onFieldSubmitted: (_) => _sendMessage(),
+                          decoration: InputDecoration(
+                            hintText: localizations.typeMessage,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: scheme.surfaceContainerHighest,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _sendMessage,
-                    ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: scheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.send, color: Colors.white),
+                          onPressed: _sendMessage,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickMessageStrip extends StatelessWidget {
+  final List<String> messages;
+  final ValueChanged<String> onSelected;
+
+  const _QuickMessageStrip({required this.messages, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        reverse: true,
+        itemCount: messages.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final message = messages[index];
+          return ActionChip(
+            visualDensity: VisualDensity.compact,
+            label: Text(
+              message,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            avatar: Icon(Icons.bolt_rounded, size: 16, color: scheme.primary),
+            backgroundColor: scheme.surfaceContainerHighest,
+            side: BorderSide(color: scheme.outlineVariant),
+            onPressed: () => onSelected(message),
+          );
+        },
       ),
     );
   }

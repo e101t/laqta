@@ -37,7 +37,8 @@ class _InAppNotificationBannerHostState
     final message = FcmService.instance.foregroundMessage.value;
     if (message == null || !mounted) return;
     final title = message.notification?.title ?? '';
-    final body = message.notification?.body ?? _fallbackNotificationBody(message.data);
+    final body =
+        message.notification?.body ?? _fallbackNotificationBody(message.data);
     if (title.trim().isEmpty && body.trim().isEmpty) return;
     _timer?.cancel();
     setState(() => _message = message);
@@ -159,7 +160,6 @@ class _Banner extends StatelessWidget {
       ),
     );
   }
-
 }
 
 String _fallbackNotificationBody(Map<String, dynamic>? data) {

@@ -335,6 +335,8 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                           height: 1.5,
                         ),
                       ),
+                    const SizedBox(height: 16),
+                    _trustSignalStrip(profile),
                     const SizedBox(height: 18),
                     Row(
                       textDirection: TextDirection.ltr,
@@ -360,17 +362,21 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                       textDirection: TextDirection.ltr,
                       children: [
                         LaqtaPrimaryAction(
-                          label: 'احجز الآن',
+                          label: 'اطلب عرض سعر',
+                          icon: Icons.request_quote_outlined,
                           onTap: () => AppRouter.goToCreateRequest(context),
                         ),
                         const SizedBox(width: 12),
                         LaqtaPrimaryAction(
                           label: 'تواصل',
+                          icon: Icons.chat_bubble_outline_rounded,
                           outlined: true,
                           onTap: () => _openDirectChat(profile),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 14),
+                    _packageHintCard(profile),
                     const SizedBox(height: 20),
                     Row(
                       textDirection: TextDirection.ltr,
@@ -420,6 +426,126 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
 
   Widget _divider() =>
       Container(width: 1, height: 36, color: const Color(0xFF292B31));
+
+  Widget _trustSignalStrip(MarketplacePhotographerProfile profile) {
+    final ratingLabel = profile.ratingAverage == null
+        ? 'تقييم جديد'
+        : '${profile.ratingAverage!.toStringAsFixed(1)} تقييم';
+    final projectLabel = profile.projectsCount > 0
+        ? '${profile.projectsCount} أعمال'
+        : 'معرض أعمال';
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _trustChip(
+          icon: profile.verified
+              ? Icons.verified_rounded
+              : Icons.shield_outlined,
+          label: profile.verified ? 'مصور موثّق' : 'قابل للتوثيق',
+          highlighted: profile.verified,
+        ),
+        _trustChip(icon: Icons.star_rounded, label: ratingLabel),
+        _trustChip(icon: Icons.photo_library_outlined, label: projectLabel),
+        _trustChip(icon: Icons.lock_outline_rounded, label: 'تواصل داخل LAQTA'),
+      ],
+    );
+  }
+
+  Widget _trustChip({
+    required IconData icon,
+    required String label,
+    bool highlighted = false,
+  }) {
+    final borderColor = highlighted
+        ? LaqtaColors.accent.withValues(alpha: 0.9)
+        : const Color(0xFF2A2D33);
+    final textColor = highlighted ? LaqtaColors.accent : Colors.white70;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: highlighted
+            ? LaqtaColors.accent.withValues(alpha: 0.1)
+            : const Color(0xFF17191F),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: textColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _packageHintCard(MarketplacePhotographerProfile profile) {
+    final price = profile.basePrice == null
+        ? 'اطلب السعر المناسب لمناسبتك'
+        : 'يبدأ من ${profile.basePrice!.toStringAsFixed(0)}';
+
+    return LaqtaLuxurySurface(
+      padding: const EdgeInsets.all(14),
+      radius: 18,
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: LaqtaColors.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(
+              Icons.auto_awesome_motion_outlined,
+              color: LaqtaColors.accent,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'باقات تصوير جاهزة للتفاوض',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  price,
+                  style: const TextStyle(
+                    color: Colors.white60,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => AppRouter.goToCreateRequest(context),
+            child: const Text('ابدأ'),
+          ),
+        ],
+      ),
+    );
+  }
 
   String _formatFollowers(int value) {
     if (value >= 1000) {

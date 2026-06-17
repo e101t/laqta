@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:ui';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart' hide TextDirection;
+import 'package:intl/intl.dart' as intl;
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
@@ -100,7 +100,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         body: Stack(
@@ -304,7 +304,7 @@ class _AuthScreenState extends State<AuthScreen> {
           controller: _usernameController,
           label: 'اسم المستخدم',
           hint: 'مثال: ali.photography',
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
         ),
       ],
@@ -343,7 +343,7 @@ class _AuthScreenState extends State<AuthScreen> {
           label: 'تاريخ الميلاد',
           value: _birthdate == null
               ? 'اختر تاريخ الميلاد'
-              : DateFormat('yyyy-MM-dd').format(_birthdate!),
+              : intl.DateFormat('yyyy-MM-dd').format(_birthdate!),
           icon: Icons.calendar_month_outlined,
           onTap: _pickBirthdate,
         ),
@@ -370,7 +370,7 @@ class _AuthScreenState extends State<AuthScreen> {
           label: 'رقم الهاتف',
           hint: '077xxxxxxxx',
           keyboardType: TextInputType.phone,
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
           ],
@@ -392,7 +392,7 @@ class _AuthScreenState extends State<AuthScreen> {
             controller: _otpController,
             label: 'أدخل رمز التحقق',
             keyboardType: TextInputType.number,
-            textDirection: TextDirection.ltr,
+            textDirection: ui.TextDirection.ltr,
             maxLength: AppConstants.otpLength,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
@@ -449,7 +449,7 @@ class _AuthScreenState extends State<AuthScreen> {
           label: 'رقم الهاتف',
           hint: '077xxxxxxxx',
           keyboardType: TextInputType.phone,
-          textDirection: TextDirection.ltr,
+          textDirection: ui.TextDirection.ltr,
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s]')),
           ],
@@ -471,7 +471,7 @@ class _AuthScreenState extends State<AuthScreen> {
             controller: _forgotOtpController,
             label: 'أدخل رمز التحقق',
             keyboardType: TextInputType.number,
-            textDirection: TextDirection.ltr,
+            textDirection: ui.TextDirection.ltr,
             maxLength: AppConstants.otpLength,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
@@ -643,7 +643,7 @@ class _AuthScreenState extends State<AuthScreen> {
         lastName: _lastNameController.text.trim(),
         username: _usernameController.text.trim().toLowerCase(),
         gender: _selectedGender!,
-        birthdate: DateFormat('yyyy-MM-dd').format(_birthdate!),
+        birthdate: intl.DateFormat('yyyy-MM-dd').format(_birthdate!),
         province: _selectedProvince!,
         phone: _phoneController.text.trim(),
       );
@@ -933,7 +933,7 @@ class _AuthGlassCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -1070,7 +1070,7 @@ class _LabeledField extends StatelessWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
-  final TextDirection? textDirection;
+  final ui.TextDirection? textDirection;
   final int? maxLength;
   final Widget? suffixIcon;
   final List<TextInputFormatter>? inputFormatters;
