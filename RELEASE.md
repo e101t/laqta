@@ -14,7 +14,7 @@ flutter clean
 flutter pub get
 flutter analyze --fatal-infos
 flutter test
-flutter build appbundle --release --obfuscate --split-debug-info=build/symbols
+flutter build appbundle --release --flavor production --obfuscate --split-debug-info=build/debug-info
 bash build_and_sign.sh
 ```
 
@@ -23,7 +23,7 @@ bash build_and_sign.sh
 Upload this artifact to Google Play:
 
 ```text
-build/app/outputs/bundle/release/app-release.aab
+build/app/outputs/bundle/productionRelease/app-production-release.aab
 ```
 
 ## Sideload QA artifact
