@@ -34,10 +34,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
     final authResult = await AuthDependencies.getCurrentUser().call();
     final authUser = authResult.valueOrNull;
     if (authUser == null) {
       if (!mounted) return;
+      setState(() => _isLoading = false);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           AppRouter.goToAuth(context);
@@ -47,9 +55,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final result = await ProfileDependencies.getUserProfile().call(
-        userId: authUser.id,
-      );
+      final result = await ProfileDependencies.getUserProfile()
+          .call(userId: authUser.id)
+          .timeout(const Duration(seconds: 10));
       if (!result.isSuccess || result.valueOrNull == null) {
         throw StateError(result.failureOrNull?.message ?? 'User not found');
       }

@@ -50,26 +50,27 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadFavorites() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     final userResult = await AuthDependencies.getCurrentUser().call();
     if (!mounted) return;
     final userId = userResult.valueOrNull?.id;
     if (userId == null || userId.isEmpty) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Please log in to view favorites';
+        _errorMessage = 'يرجى تسجيل الدخول لعرض المفضلة';
       });
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
     try {
-      final result = await FavoritesDependencies.getFavorites().call(
-        userId: userId,
-      );
+      final result = await FavoritesDependencies.getFavorites()
+          .call(userId: userId)
+          .timeout(const Duration(seconds: 10));
       if (!mounted) return;
       if (!result.isSuccess) {
         throw StateError(
@@ -86,7 +87,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load favorites';
+        _errorMessage = 'تعذر تحميل المفضلة';
       });
     }
   }
@@ -97,15 +98,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final userId = userResult.valueOrNull?.id;
     if (userId == null || userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to manage favorites')),
+        const SnackBar(content: Text('يرجى تسجيل الدخول لإدارة المفضلة')),
       );
       return;
     }
 
     // Optimistically remove from UI
-    final removedPhotographer = _favorites.firstWhere(
-      (p) => p.id == photographerId,
-    );
+    final removedIndex = _favorites.indexWhere((p) => p.id == photographerId);
+    if (removedIndex == -1) return;
+    final removedPhotographer = _favorites[removedIndex];
     setState(() {
       _favorites.removeWhere((p) => p.id == photographerId);
     });
@@ -124,7 +125,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Removed from favorites'),
+            content: Text('تمت الإزالة من المفضلة'),
             duration: Duration(seconds: 2),
           ),
         );
@@ -133,10 +134,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       // Revert the change on error
       if (mounted) {
         setState(() {
-          _favorites.add(removedPhotographer);
+          _favorites.insert(removedIndex, removedPhotographer);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to remove from favorites')),
+          const SnackBar(content: Text('تعذر الإزالة من المفضلة')),
         );
       }
     }
@@ -171,9 +172,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ? Center(
               child: EmptyState(
                 icon: Icons.favorite_border,
-                title: 'No Favorites',
-                message:
-                    'You haven\'t added any photographers to your favorites yet',
+                title: 'لا توجد مفضلة',
+                message: 'لم تقم بإضافة أي مصور إلى المفضلة بعد',
               ),
             )
           : Column(
@@ -206,8 +206,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       return Center(
         child: EmptyState(
           icon: Icons.search_off,
-          title: 'No results',
-          message: 'Try searching by name, specialty, or governorate',
+          title: 'لا توجد نتائج',
+          message: 'جرّب البحث بالاسم أو التخصص أو المحافظة',
         ),
       );
     }

@@ -37,6 +37,7 @@ class _MyRequestsScreenState extends State<MyRequestsScreen>
   }
 
   Future<void> _loadRequests() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -54,9 +55,9 @@ class _MyRequestsScreenState extends State<MyRequestsScreen>
         return;
       }
 
-      final result = await RequestsDependencies.getMyRequests().call(
-        clientId: userId,
-      );
+      final result = await RequestsDependencies.getMyRequests()
+          .call(clientId: userId)
+          .timeout(const Duration(seconds: 10));
       if (!result.isSuccess) {
         throw StateError('Failed to load requests');
       }

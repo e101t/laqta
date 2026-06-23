@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/services/backend_notification_sync_service.dart';
@@ -10,7 +11,6 @@ class FcmService {
 
   static final FcmService instance = FcmService._();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final ValueNotifier<RemoteMessage?> foregroundMessage =
       ValueNotifier<RemoteMessage?>(null);
 
@@ -18,11 +18,18 @@ class FcmService {
   bool _initialized = false;
   bool _permissionAskedThisSession = false;
 
+  bool get _isFirebaseReady => Firebase.apps.isNotEmpty;
+
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
 
-    await _messaging.setForegroundNotificationPresentationOptions(
+    // FCM is optional for startup. If Firebase failed to initialize, keep the
+    // app usable and skip notification wiring instead of throwing in the UI.
+    if (!_isFirebaseReady) return;
+
+    final messaging = FirebaseMessaging.instance;
+    await messaging.setForegroundNotificationPresentationOptions(
       alert: false,
       badge: false,
       sound: false,
@@ -39,10 +46,11 @@ class FcmService {
   Future<void> requestPermissionAfterMeaningfulAction(
     BuildContext context,
   ) async {
-    if (_permissionAskedThisSession) return;
+    if (_permissionAskedThisSession || !_isFirebaseReady) return;
     _permissionAskedThisSession = true;
 
-    final settings = await _messaging.getNotificationSettings();
+    final messaging = FirebaseMessaging.instance;
+    final settings = await messaging.getNotificationSettings();
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       await BackendNotificationSyncService.instance.syncCurrentDeviceToken();

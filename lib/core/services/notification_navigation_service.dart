@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/widgets.dart';
 import 'package:laqta/app/router/app_router.dart';
@@ -18,12 +19,18 @@ class NotificationNavigationService {
   String? _lastHandledMessageId;
   bool _initialized = false;
 
+  bool get _isFirebaseReady => Firebase.apps.isNotEmpty;
+
   Future<void> initialize() async {
     if (_initialized) {
       return;
     }
 
     _initialized = true;
+    if (!_isFirebaseReady) {
+      return;
+    }
+
     _pendingLaunchMessage = await FirebaseMessaging.instance
         .getInitialMessage();
     _messageOpenedSubscription = FirebaseMessaging.onMessageOpenedApp.listen(

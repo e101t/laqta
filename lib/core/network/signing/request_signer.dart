@@ -27,14 +27,17 @@ class RequestSigner {
     String? body,
     String? accessToken,
     bool sensitive = false,
+    String? requestId,
   }) async {
-    final requestId = _uuid.v4();
+    final resolvedRequestId = (requestId == null || requestId.isEmpty)
+        ? _uuid.v4()
+        : requestId;
     final timestamp = DateTime.now().toUtc().millisecondsSinceEpoch.toString();
     final fingerprint = await _deviceHash();
     final deviceId = await _deviceBinder.deviceId();
     final bodyHash = sha256.convert(utf8.encode(body ?? '')).toString();
     final headers = <String, String>{
-      'X-Request-ID': requestId,
+      'X-Request-ID': resolvedRequestId,
       'X-Timestamp': timestamp,
       'X-App-Version': AppConstants.appVersion,
       'X-Device-Fingerprint': fingerprint,

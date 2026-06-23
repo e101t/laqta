@@ -29,6 +29,7 @@ class _SearchScreenState extends State<SearchScreen>
   final List<SearchResultPhotographer> _results = [];
   final List<String> _recentSearches = [];
   late AnimationController _animationController;
+  int _searchGeneration = 0;
 
   @override
   void initState() {
@@ -67,7 +68,10 @@ class _SearchScreenState extends State<SearchScreen>
   }
 
   Future<void> _performSearch(String query) async {
-    if (query.trim().isEmpty) {
+    final normalizedQuery = query.trim();
+    final generation = ++_searchGeneration;
+
+    if (normalizedQuery.isEmpty) {
       setState(() {
         _results.clear();
         _isSearching = false;
@@ -76,14 +80,17 @@ class _SearchScreenState extends State<SearchScreen>
       return;
     }
 
-    setState(() => _isSearching = true);
-    _errorMessage = null;
+    setState(() {
+      _isSearching = true;
+      _errorMessage = null;
+    });
 
     try {
-      final result = await SearchDependencies.searchPhotographers().call(
-        query: query,
-      );
+      final result = await SearchDependencies.searchPhotographers()
+          .call(query: normalizedQuery)
+          .timeout(const Duration(seconds: 10));
       if (!mounted) return;
+      if (generation != _searchGeneration) return;
       if (!result.isSuccess) {
         _results.clear();
         _errorMessage = result.failureOrNull?.message;
@@ -99,17 +106,19 @@ class _SearchScreenState extends State<SearchScreen>
         AppLogger.d('runtime', 'Search error: $e');
       }
       if (!mounted) return;
+      if (generation != _searchGeneration) return;
       _results.clear();
-      _errorMessage = 'Search failed';
+      _errorMessage = 'تعذر إكمال البحث. حاول مرة أخرى.';
     }
 
     if (!mounted) return;
+    if (generation != _searchGeneration) return;
     setState(() => _isSearching = false);
 
     // Save to recent searches
-    if (!_recentSearches.contains(query)) {
+    if (!_recentSearches.contains(normalizedQuery)) {
       setState(() {
-        _recentSearches.insert(0, query);
+        _recentSearches.insert(0, normalizedQuery);
         if (_recentSearches.length > 10) {
           _recentSearches.removeLast();
         }
@@ -316,4 +325,3 @@ class _SearchScreenState extends State<SearchScreen>
     );
   }
 }
-

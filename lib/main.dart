@@ -92,8 +92,11 @@ Future<void> _bootstrap() async {
   }
 
   if (startupError != null) {
-    runApp(StartupFailureApp(error: startupError.toString()));
-    return;
+    AppLogger.e(
+      'runtime',
+      'Firebase Messaging initialization failed; continuing without FCM startup block.',
+      startupError,
+    );
   }
 
   runApp(const LaqtaApp());
@@ -133,17 +136,19 @@ Future<void> _initializeDeferredServices() async {
     SecurityHealth.instance.start();
   });
 
-  await guard('Firebase Messaging auto-init', () async {
-    await FirebaseMessaging.instance.setAutoInitEnabled(true);
-  });
+  if (Firebase.apps.isNotEmpty) {
+    await guard('Firebase Messaging auto-init', () async {
+      await FirebaseMessaging.instance.setAutoInitEnabled(true);
+    });
 
-  await guard('Notification sync', () async {
-    await FcmService.instance.initialize();
-  });
+    await guard('Notification sync', () async {
+      await FcmService.instance.initialize();
+    });
 
-  await guard('Notification navigation', () async {
-    await NotificationNavigationService.instance.initialize();
-  });
+    await guard('Notification navigation', () async {
+      await NotificationNavigationService.instance.initialize();
+    });
+  }
 
   await guard('Deep link navigation', () async {
     await _deepLinkHandler.initialize(AppRouter.router);
@@ -367,4 +372,3 @@ class StartupFailureApp extends StatelessWidget {
     );
   }
 }
-

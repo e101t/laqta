@@ -43,6 +43,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   }
 
   Future<void> _loadBookings() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -59,9 +60,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         return;
       }
 
-      final result = await BookingDependencies.getMyBookings().call(
-        userId: userId,
-      );
+      final result = await BookingDependencies.getMyBookings()
+          .call(userId: userId)
+          .timeout(const Duration(seconds: 10));
       if (!result.isSuccess) {
         throw StateError('Load bookings failed');
       }
@@ -76,9 +77,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       _pastBookings.clear();
 
       for (final booking in bookings) {
-        final bookingDateTime = DateTime.parse(
-          '${booking.date} ${booking.time}',
-        );
+        final bookingDateTime =
+            DateTime.tryParse('${booking.date} ${booking.time}') ??
+            DateTime.tryParse(booking.date) ??
+            now;
         final isPast =
             bookingDateTime.isBefore(now) ||
             booking.status == 'done' ||
@@ -160,10 +162,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       final userId = userResult.valueOrNull?.id;
       if (userId == null || userId.isEmpty) return;
 
-      final chatResult = await ChatDependencies.getOrCreateBookingChat().call(
-        bookingId: booking.id,
-        participants: [userId, booking.photographerId],
-      );
+      final chatResult = await ChatDependencies.getOrCreateBookingChat()
+          .call(
+            bookingId: booking.id,
+            participants: [userId, booking.photographerId],
+          )
+          .timeout(const Duration(seconds: 10));
       if (!chatResult.isSuccess || chatResult.valueOrNull == null) {
         throw StateError(
           chatResult.failureOrNull?.message ?? 'Failed to open chat',
@@ -178,9 +182,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       String otherUserName = 'Unknown';
 
       if (otherUserId.isNotEmpty) {
-        final profileResult = await ProfileDependencies.getUserProfile().call(
-          userId: otherUserId,
-        );
+        final profileResult = await ProfileDependencies.getUserProfile()
+            .call(userId: otherUserId)
+            .timeout(const Duration(seconds: 8));
         if (profileResult.isSuccess && profileResult.valueOrNull != null) {
           otherUserName = profileResult.valueOrNull!.name;
         }
@@ -304,15 +308,17 @@ class _BookingCardState extends State<_BookingCard> {
 
   Future<void> _loadPhotographer() async {
     try {
-      final result = await ProfileDependencies.getUserProfile().call(
-        userId: widget.booking.photographerId,
-      );
+      final result = await ProfileDependencies.getUserProfile()
+          .call(userId: widget.booking.photographerId)
+          .timeout(const Duration(seconds: 8));
+      if (!mounted) return;
       if (result.isSuccess) {
         _photographerUser = result.valueOrNull;
       }
 
       setState(() => _isLoadingPhotographer = false);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isLoadingPhotographer = false);
       if (kDebugMode) {
         AppLogger.d('runtime', 'Error loading photographer: $e');
@@ -526,4 +532,3 @@ class _BookingCardState extends State<_BookingCard> {
     );
   }
 }
-

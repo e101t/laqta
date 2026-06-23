@@ -141,7 +141,7 @@ android {
                 throw GradleException("Missing android/key.properties for release signing.")
             }
             signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android.txt"),

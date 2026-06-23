@@ -1,3 +1,6 @@
+extra["FlutterFire"] = mapOf(
+    "FirebaseSDKVersion" to "33.16.0"
+)
 allprojects {
     repositories {
         google()

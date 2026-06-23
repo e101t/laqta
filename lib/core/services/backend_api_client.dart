@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:uuid/uuid.dart';
 import 'package:laqta/core/auth/auth_interceptor.dart';
 import 'package:laqta/core/auth/session/anomaly_detector.dart';
 import 'package:laqta/core/network/cache/cache_interceptor.dart';
@@ -137,7 +138,13 @@ class BackendApiClient {
     required bool authorized,
     bool retryOnUnauthorized = true,
     int rateLimitAttempt = 0,
+    String? idempotencyRequestId,
   }) async {
+    // Generate the idempotency/request-id ONCE per logical operation (on the
+    // first attempt) and reuse it across every retry of this same request
+    // (429 rate-limit retries, 401 refresh-and-retry), instead of letting
+    // RequestSigner.buildHeaders mint a brand-new X-Request-ID on each retry.
+    final requestId = idempotencyRequestId ?? const Uuid().v4();
     final uri = BackendConfig.apiUri(path);
     _recordRequestBurst(path);
     final encodedBody = body == null ? null : jsonEncode(body);
@@ -162,6 +169,7 @@ class BackendApiClient {
         body: encodedBody,
         accessToken: accessToken,
         sensitive: _isSensitivePath(path),
+        requestId: requestId,
       ),
     );
 
@@ -197,6 +205,7 @@ class BackendApiClient {
         authorized: authorized,
         retryOnUnauthorized: retryOnUnauthorized,
         rateLimitAttempt: rateLimitAttempt + 1,
+        idempotencyRequestId: requestId,
       );
     }
 
@@ -209,6 +218,7 @@ class BackendApiClient {
           body: body,
           authorized: authorized,
           retryOnUnauthorized: false,
+          idempotencyRequestId: requestId,
         );
       }
       await _sessionService.clear();

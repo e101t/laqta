@@ -58,6 +58,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   Future<void> _loadConversations() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -70,9 +71,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
         throw StateError('Missing current user');
       }
 
-      final result = await ChatDependencies.getChatThreads().call(
-        userId: userId,
-      );
+      final result = await ChatDependencies.getChatThreads()
+          .call(userId: userId)
+          .timeout(const Duration(seconds: 10));
       if (!result.isSuccess) {
         throw StateError(
           result.failureOrNull?.message ?? 'Failed to load chats',
@@ -239,47 +240,62 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _buildBodyContent() {
+  Widget _buildBodySliver() {
     if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 80),
-        child: Center(child: CircularProgressIndicator()),
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Padding(
+          padding: EdgeInsets.only(top: 80),
+          child: Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
     if (_errorMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 80),
-        child: Column(
-          children: [
-            Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.white70, fontSize: 15),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: _loadConversations,
-              child: const Text('إعادة المحاولة'),
-            ),
-          ],
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 80),
+          child: Column(
+            children: [
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.white70, fontSize: 15),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: _loadConversations,
+                child: const Text('إعادة المحاولة'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     final visible = _visibleConversations;
     if (visible.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.only(top: 80),
-        child: Center(
-          child: Text(
-            'لا توجد محادثات بعد',
-            style: TextStyle(color: Colors.white70, fontSize: 15),
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Padding(
+          padding: EdgeInsets.only(top: 80),
+          child: Center(
+            child: Text(
+              'لا توجد محادثات بعد',
+              style: TextStyle(color: Colors.white70, fontSize: 15),
+            ),
           ),
         ),
       );
     }
 
-    return Column(children: visible.map(_buildConversationRow).toList());
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList.builder(
+        itemCount: visible.length,
+        itemBuilder: (context, index) => _buildConversationRow(visible[index]),
+      ),
+    );
   }
 
   @override
@@ -287,65 +303,75 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0E1014),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
-          children: [
-            Row(
-              textDirection: TextDirection.ltr,
-              children: [
-                LaqtaTopIconButton(
-                  icon: Icons.search_rounded,
-                  onTap: () {
-                    _searchFocusNode.requestFocus();
-                  },
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: Row(
+                  textDirection: TextDirection.ltr,
+                  children: [
+                    LaqtaTopIconButton(
+                      icon: Icons.search_rounded,
+                      onTap: () {
+                        _searchFocusNode.requestFocus();
+                      },
+                    ),
+                    const Spacer(),
+                    Text(
+                      'الرسائل',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Spacer(),
+                    LaqtaTopIconButton(
+                      icon: Icons.edit_outlined,
+                      onTap: () => AppRouter.goToExplore(context),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  'الرسائل',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              sliver: SliverToBoxAdapter(
+                child: LaqtaLuxurySearchBar(
+                  hint: 'ابحث في الرسائل',
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  readOnly: false,
+                  onChanged: (value) => setState(() => _search = value),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 10)),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 38,
+                child: Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _filters.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final filter = _filters[index];
+                      return LaqtaFilterPill(
+                        label: filter,
+                        selected: filter == _selectedFilter,
+                        onTap: () => setState(() => _selectedFilter = filter),
+                      );
+                    },
                   ),
                 ),
-                const Spacer(),
-                LaqtaTopIconButton(
-                  icon: Icons.edit_outlined,
-                  onTap: () => AppRouter.goToExplore(context),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: LaqtaLuxurySearchBar(
-                hint: 'ابحث في الرسائل',
-                controller: _searchController,
-                focusNode: _searchFocusNode,
-                readOnly: false,
-                onChanged: (value) => setState(() => _search = value),
               ),
             ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 38,
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _filters.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
-                  itemBuilder: (context, index) {
-                    final filter = _filters[index];
-                    return LaqtaFilterPill(
-                      label: filter,
-                      selected: filter == _selectedFilter,
-                      onTap: () => setState(() => _selectedFilter = filter),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            _buildBodyContent(),
+            const SliverToBoxAdapter(child: SizedBox(height: 14)),
+            _buildBodySliver(),
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
           ],
         ),
       ),

@@ -64,7 +64,12 @@ jobs:
           path: |
             build/app/outputs/bundle/productionRelease/app-production-release.aab
             build/app/outputs/flutter-apk/app-release-signed.apk
-            build/debug-info
+
+      - name: Upload debug symbols (restricted, not attached to public release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: laqta-android-debug-symbols
+          path: build/debug-info
 
   github_release:
     runs-on: ubuntu-latest

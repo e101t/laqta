@@ -162,7 +162,7 @@ class BackendAuthRemoteDataSource implements AuthRemoteDataSource {
     }
     await _sessionService.clear();
     await CacheInterceptor().clearUserCache();
-    SecureStorageManager.instance.clearMemoryTier();
+    await SecureStorageManager.instance.wipeAll();
     _cachedUser = null;
   }
 

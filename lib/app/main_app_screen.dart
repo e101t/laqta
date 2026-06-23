@@ -29,6 +29,7 @@ class MainAppScreen extends StatefulWidget {
 
 class _MainAppScreenState extends State<MainAppScreen> {
   static const int _centerActionIndex = 2;
+  static const int _maxTabHistory = 12;
   int _currentIndex = 0;
   String _userRole = '';
   bool _isLoadingRole = true;
@@ -303,7 +304,12 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
     if (index == _currentIndex) return;
     setState(() {
-      _tabHistory.add(_currentIndex);
+      if (_tabHistory.isEmpty || _tabHistory.last != _currentIndex) {
+        _tabHistory.add(_currentIndex);
+        if (_tabHistory.length > _maxTabHistory) {
+          _tabHistory.removeAt(0);
+        }
+      }
       _currentIndex = index;
       _loadedTabs.add(index);
     });

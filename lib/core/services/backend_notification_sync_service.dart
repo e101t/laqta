@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/core/services/backend_session_service.dart';
@@ -11,12 +12,13 @@ class BackendNotificationSyncService {
   static final BackendNotificationSyncService instance =
       BackendNotificationSyncService._();
 
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final BackendSessionService _sessionService = BackendSessionService();
   final BackendApiClient _apiClient = BackendApiClient();
 
   StreamSubscription<String>? _tokenRefreshSubscription;
   bool _initialized = false;
+
+  bool get _isFirebaseReady => Firebase.apps.isNotEmpty;
 
   Future<void> initialize() async {
     if (_initialized) {
@@ -24,13 +26,18 @@ class BackendNotificationSyncService {
     }
 
     _initialized = true;
-    await _messaging.setForegroundNotificationPresentationOptions(
+    if (!_isFirebaseReady) {
+      return;
+    }
+
+    final messaging = FirebaseMessaging.instance;
+    await messaging.setForegroundNotificationPresentationOptions(
       alert: false,
       badge: false,
       sound: false,
     );
 
-    _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((_) {
+    _tokenRefreshSubscription = messaging.onTokenRefresh.listen((_) {
       unawaited(syncCurrentDeviceToken());
     });
 
@@ -38,7 +45,9 @@ class BackendNotificationSyncService {
   }
 
   Future<void> requestPermissionAndSync() async {
-    final settings = await _messaging.requestPermission();
+    if (!_isFirebaseReady) return;
+
+    final settings = await FirebaseMessaging.instance.requestPermission();
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       await syncCurrentDeviceToken();
@@ -46,12 +55,14 @@ class BackendNotificationSyncService {
   }
 
   Future<void> syncCurrentDeviceToken() async {
+    if (!_isFirebaseReady) return;
+
     final backendToken = await _sessionService.getToken();
     if (backendToken == null || backendToken.isEmpty) {
       return;
     }
 
-    final fcmToken = await _messaging.getToken();
+    final fcmToken = await FirebaseMessaging.instance.getToken();
     if (fcmToken == null || fcmToken.isEmpty) {
       return;
     }

@@ -106,12 +106,20 @@ class CertificatePinning {
     } on CertificatePinningException catch (error) {
       lastFailure.value = error;
       rethrow;
-    } on TimeoutException {
-      lastFailure.value = null;
-      return;
-    } on SocketException {
-      lastFailure.value = null;
-      return;
+    } on TimeoutException catch (error) {
+      final failure = CertificatePinningException(
+        host,
+        'Pin verification timed out: $error',
+      );
+      lastFailure.value = failure;
+      throw failure;
+    } on SocketException catch (error) {
+      final failure = CertificatePinningException(
+        host,
+        'Pin verification failed: $error',
+      );
+      lastFailure.value = failure;
+      throw failure;
     } catch (error) {
       final failure = CertificatePinningException(host, error.toString());
       lastFailure.value = failure;

@@ -19,6 +19,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
   List<PortfolioImage> _portfolioImages = [];
   bool _isLoading = true;
   bool _isUploading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -27,14 +28,28 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
   }
 
   Future<void> _loadPortfolio() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
     final userResult = await AuthDependencies.getCurrentUser().call();
     final userId = userResult.valueOrNull?.id;
-    if (userId == null || userId.isEmpty) return;
+    if (userId == null || userId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'يرجى تسجيل الدخول لعرض معرض الأعمال';
+      });
+      return;
+    }
 
     try {
-      final result = await ProfileDependencies.getPortfolio().call(
-        photographerId: userId,
-      );
+      final result = await ProfileDependencies.getPortfolio()
+          .call(photographerId: userId)
+          .timeout(const Duration(seconds: 10));
       if (!result.isSuccess) {
         throw StateError(result.failureOrNull?.message ?? 'Load failed');
       }
@@ -45,14 +60,14 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
             ? []
             : ProfilePresentationMapper.toPortfolioImages(portfolio.images);
         _isLoading = false;
+        _errorMessage = null;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر تحميل معرض الأعمال')),
-        );
-      }
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'تعذر تحميل معرض الأعمال';
+      });
     }
   }
 
@@ -206,6 +221,29 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error_outline, size: 56, color: scheme.error),
+                    const SizedBox(height: 12),
+                    Text(
+                      _errorMessage!,
+                      style: textTheme.bodyLarge?.copyWith(color: scheme.error),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    SecondaryButton(
+                      text: 'إعادة المحاولة',
+                      onPressed: _loadPortfolio,
+                    ),
+                  ],
+                ),
+              ),
+            )
           : _portfolioImages.isEmpty
           ? Center(
               child: Column(
