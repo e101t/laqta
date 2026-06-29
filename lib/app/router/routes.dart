@@ -58,6 +58,14 @@ class Routes {
   static const String createPost = '/create-post';
   static const String createStory = '/create-story';
 
+  static const String courses = '/courses';
+  static const String courseDetails = '/courses/:id';
+  static const String courseCreate = '/courses/create';
+  static const String courseEdit = '/courses/:id/edit';
+  static const String courseManagement = '/courses/manage';
+  static const String coursePayment = '/courses/:id/payment';
+  static const String myCourses = '/my-courses';
+
   // Names (GoRoute name:)
   static const String nSplash = 'splash';
   static const String nLanguage = 'language';
@@ -115,4 +123,12 @@ class Routes {
   static const String nWriteReview = 'write_review';
   static const String nCreatePost = 'create_post';
   static const String nCreateStory = 'create_story';
+
+  static const String nCourses = 'courses';
+  static const String nCourseDetails = 'course_details';
+  static const String nCourseCreate = 'course_create';
+  static const String nCourseEdit = 'course_edit';
+  static const String nCourseManagement = 'course_management';
+  static const String nCoursePayment = 'course_payment';
+  static const String nMyCourses = 'my_courses';
 }

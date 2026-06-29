@@ -461,6 +461,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   AppRouter.goToFavorites(context);
                 },
               ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                text: 'دوراتي',
+                icon: Icons.school_outlined,
+                onPressed: () {
+                  AppRouter.goToMyCourses(context);
+                },
+              ),
             ] else if (user.role == AppConstants.rolePhotographer) ...[
               PrimaryButton(
                 text: localizations.dashboard,
@@ -499,6 +507,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.verified_user_outlined,
                 onPressed: () {
                   AppRouter.goToPhotographerVerification(context);
+                },
+              ),
+              const SizedBox(height: 12),
+              SecondaryButton(
+                text: 'إدارة الدورات التعليمية',
+                icon: Icons.school_outlined,
+                onPressed: () {
+                  AppRouter.goToCourseManagement(context);
                 },
               ),
             ] else ...[

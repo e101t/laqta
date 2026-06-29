@@ -57,6 +57,12 @@ import 'package:laqta/features/monetization/presentation/screens/subscription_pl
 import 'package:laqta/features/monetization/presentation/screens/sponsored_ad_screen.dart';
 import 'package:laqta/features/monetization/presentation/screens/campaign_analytics_screen.dart';
 import 'package:laqta/features/verification/presentation/screens/photographer_verification_screen.dart';
+import 'package:laqta/features/courses/presentation/screens/courses_list_screen.dart';
+import 'package:laqta/features/courses/presentation/screens/course_details_screen.dart';
+import 'package:laqta/features/courses/presentation/screens/course_editor_screen.dart';
+import 'package:laqta/features/courses/presentation/screens/course_management_screen.dart';
+import 'package:laqta/features/courses/presentation/screens/course_payment_screen.dart';
+import 'package:laqta/features/courses/presentation/screens/my_courses_screen.dart';
 
 import 'package:laqta/features/analytics/presentation/screens/analytics_dashboard_screen.dart';
 import 'package:laqta/features/achievements/presentation/screens/achievements_screen.dart';
@@ -339,6 +345,76 @@ class AppRouter {
           path: Routes.photographerVerification,
           name: Routes.nPhotographerVerification,
           builder: (context, state) => const PhotographerVerificationScreen(),
+        ),
+        GoRoute(
+          path: Routes.courses,
+          name: Routes.nCourses,
+          builder: (context, state) => const CoursesListScreen(),
+        ),
+        GoRoute(
+          path: Routes.courseCreate,
+          name: Routes.nCourseCreate,
+          builder: (context, state) => const CourseEditorScreen(),
+        ),
+        GoRoute(
+          path: Routes.courseManagement,
+          name: Routes.nCourseManagement,
+          builder: (context, state) => const CourseManagementScreen(),
+        ),
+        GoRoute(
+          path: Routes.myCourses,
+          name: Routes.nMyCourses,
+          builder: (context, state) => const MyCoursesScreen(),
+        ),
+        GoRoute(
+          path: Routes.courseEdit,
+          name: Routes.nCourseEdit,
+          builder: (context, state) {
+            final courseId = state.pathParameters['id'];
+            if (courseId == null || courseId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing course id')),
+              );
+            }
+            return CourseEditorScreen(courseId: courseId);
+          },
+        ),
+        GoRoute(
+          path: Routes.coursePayment,
+          name: Routes.nCoursePayment,
+          builder: (context, state) {
+            final enrollmentId = state.pathParameters['id'];
+            final amount =
+                double.tryParse(state.uri.queryParameters['amount'] ?? '') ??
+                0;
+            final title = state.uri.queryParameters['title'] ?? '';
+            final photographerId =
+                state.uri.queryParameters['photographerId'] ?? '';
+            if (enrollmentId == null || enrollmentId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing enrollment id')),
+              );
+            }
+            return CoursePaymentScreen(
+              enrollmentId: enrollmentId,
+              amount: amount,
+              courseTitle: title,
+              photographerId: photographerId,
+            );
+          },
+        ),
+        GoRoute(
+          path: Routes.courseDetails,
+          name: Routes.nCourseDetails,
+          builder: (context, state) {
+            final courseId = state.pathParameters['id'];
+            if (courseId == null || courseId.isEmpty) {
+              return const Scaffold(
+                body: Center(child: Text('Missing course id')),
+              );
+            }
+            return CourseDetailsScreen(courseId: courseId);
+          },
         ),
         GoRoute(
           path: Routes.profile,
@@ -829,6 +905,50 @@ class AppRouter {
 
   static void goToPhotographerVerification(BuildContext context) =>
       context.push(Routes.photographerVerification);
+
+  static void goToCourses(BuildContext context) =>
+      context.push(Routes.courses);
+
+  static void goToCourseDetails(BuildContext context, String courseId) {
+    assert(courseId.isNotEmpty, 'courseId is required');
+    context.push(_resolvePath(Routes.courseDetails, {'id': courseId}));
+  }
+
+  static Future<bool?> goToCourseCreate(BuildContext context) {
+    return context.push<bool>(Routes.courseCreate);
+  }
+
+  static Future<bool?> goToCourseEdit(BuildContext context, String courseId) {
+    assert(courseId.isNotEmpty, 'courseId is required');
+    return context.push<bool>(
+      _resolvePath(Routes.courseEdit, {'id': courseId}),
+    );
+  }
+
+  static void goToCourseManagement(BuildContext context) =>
+      context.push(Routes.courseManagement);
+
+  static void goToMyCourses(BuildContext context) =>
+      context.push(Routes.myCourses);
+
+  static Future<bool?> goToCoursePayment(
+    BuildContext context,
+    String enrollmentId,
+    double amount,
+    String courseTitle,
+    String photographerId,
+  ) {
+    assert(enrollmentId.isNotEmpty, 'enrollmentId is required');
+    final path = _resolvePath(Routes.coursePayment, {'id': enrollmentId});
+    final query = Uri(
+      queryParameters: {
+        'amount': amount.toString(),
+        'title': courseTitle,
+        'photographerId': photographerId,
+      },
+    ).query;
+    return context.push<bool>('$path?$query');
+  }
 
   static void goToFavorites(BuildContext context) =>
       context.push(Routes.favorites);

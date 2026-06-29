@@ -126,6 +126,14 @@ class _ExploreMarketplaceView extends StatelessWidget {
                       },
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _CategoryCard(
+                      title: 'دورات تعليمية',
+                      icon: Icons.school_outlined,
+                      onTap: () => AppRouter.goToCourses(context),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),

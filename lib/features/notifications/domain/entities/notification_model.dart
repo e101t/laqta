@@ -52,6 +52,8 @@ class NotificationModel {
         return '📸';
       case 'payment':
         return '💳';
+      case 'course':
+        return '🎓';
       case 'system':
         return '🔔';
       default:

@@ -155,6 +155,12 @@ service cloud.firestore {
     function isValidMessageType(type) {
       return type in ['text', 'image', 'video', 'document', 'location'];
     }
+    function isValidCourseType(type) {
+      return type in ['in_person', 'online'];
+    }
+    function isValidEnrollmentStatus(status) {
+      return status in ['pending_payment', 'confirmed', 'canceled'];
+    }
 
     function userKeys() {
       return [
@@ -575,6 +581,80 @@ service cloud.firestore {
         isValidOfferStatus(data.status) &&
         isTimestamp(data.createdAt) &&
         isTimestamp(data.updatedAt);
+    }
+
+    function courseKeys() {
+      return [
+        'photographerId',
+        'title',
+        'description',
+        'type',
+        'specialties',
+        'basePrice',
+        'currency',
+        'capacity',
+        'seatsRemaining',
+        'sessions',
+        'location',
+        'meetingLink',
+        'thumbnailUrl',
+        'isPublished',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function isValidSessionMap(data) {
+      return isMap(data) &&
+        hasOnlyKeys(data, ['date', 'startMinutes', 'endMinutes']) &&
+        isNonEmptyString(data.date) &&
+        isNumber(data.startMinutes) &&
+        isNumber(data.endMinutes) &&
+        data.startMinutes >= 0 && data.startMinutes < 1440 &&
+        data.endMinutes > data.startMinutes && data.endMinutes <= 1440;
+    }
+
+    function isValidSessionsList(data) {
+      return isList(data) && data.size() >= 1 && data.size() <= 52 &&
+        (data.size() == 0 || isValidSessionMap(data[0]));
+    }
+
+    function isValidCourseDoc(data) {
+      return hasOnlyKeys(data, courseKeys()) &&
+        isString(data.photographerId) &&
+        isNonEmptyString(data.title) &&
+        isNonEmptyString(data.description) &&
+        isString(data.type) &&
+        isValidCourseType(data.type) &&
+        isList(data.specialties) &&
+        listSize(data.specialties) <= 10 &&
+        isNumber(data.basePrice) && data.basePrice >= 0 &&
+        isString(data.currency) &&
+        isNumber(data.capacity) && data.capacity >= 1 && data.capacity <= 100 &&
+        isNumber(data.seatsRemaining) &&
+        data.seatsRemaining >= 0 && data.seatsRemaining <= data.capacity &&
+        isValidSessionsList(data.sessions) &&
+        isNullableLocationOrNull(data.location) &&
+        isNullableString(data.meetingLink) &&
+        isNullableString(data.thumbnailUrl) &&
+        isBool(data.isPublished) &&
+        isTimestamp(data.createdAt) &&
+        isTimestamp(data.updatedAt);
+    }
+
+    function isNullableLocationOrNull(data) {
+      return data == null || isValidLocationMap(data);
+    }
+
+    function isValidCourseCreate(data) {
+      return isValidCourseDoc(data) &&
+        data.seatsRemaining == data.capacity;
+    }
+
+    function isValidCourseOwnerUpdate() {
+      return isValidCourseDoc(request.resource.data) &&
+        request.resource.data.photographerId == resource.data.photographerId &&
+        request.resource.data.seatsRemaining == resource.data.seatsRemaining;
     }
 
     function isValidDeliveryDoc(data) {
@@ -1742,6 +1822,34 @@ service cloud.firestore {
       allow update: if isAdmin() ||
         (isOwner(photographerId) && isValidPhotographerOwnerUpdate());
       allow delete: if isOwner(photographerId) || isAdmin();
+    }
+
+    match /courses/{courseId} {
+      allow read: if resource.data.isPublished == true ||
+        (isSignedIn() && isOwner(resource.data.photographerId)) ||
+        isAdmin();
+      allow create: if isSignedIn() && isPhotographerUser() &&
+        request.resource.data.photographerId == request.auth.uid &&
+        isValidCourseCreate(request.resource.data);
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+          isOwner(resource.data.photographerId) &&
+          isValidCourseOwnerUpdate());
+      allow delete: if isOwner(resource.data.photographerId) || isAdmin();
+    }
+
+    // course_enrollments has no client-side create/update rule: seat-capacity
+    // enforcement requires an atomic read-then-write transaction (check
+    // seatsRemaining > 0, decrement it, flip enrollment to confirmed) which can
+    // only be done safely server-side. All writes happen via Cloud Functions
+    // using the Admin SDK, which bypasses these rules entirely. Clients may only
+    // read their own enrollments.
+    match /course_enrollments/{enrollmentId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid == resource.data.customerId ||
+         request.auth.uid == resource.data.photographerId ||
+         isAdmin());
+      allow write: if false;
     }
 
     match /portfolios/{portfolioId} {

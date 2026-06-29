@@ -26,6 +26,7 @@ const {
   buildBookingForAcceptedOffer,
   validateBookingAgainstAvailability,
 } = require("./booking_authority");
+const { validateEnrollmentEligibility } = require("./courses");
 
 async function getBookingOrThrow(bookingId) {
   if (typeof bookingId !== "string" || bookingId.trim().length === 0) {
@@ -68,6 +69,59 @@ function assertAmountAndCurrency(booking, amount, currency) {
   throw new functions.https.HttpsError(
     "invalid-argument",
     "Amount does not match booking.",
+  );
+}
+
+async function getCourseOrThrow(courseId) {
+  if (typeof courseId !== "string" || courseId.trim().length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid courseId.",
+    );
+  }
+  const doc = await db.collection("courses").doc(courseId).get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Course not found.");
+  }
+  return { id: doc.id, data: doc.data() || {} };
+}
+
+async function getEnrollmentOrThrow(enrollmentId) {
+  if (typeof enrollmentId !== "string" || enrollmentId.trim().length === 0) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Invalid enrollmentId.",
+    );
+  }
+  const doc = await db.collection("course_enrollments").doc(enrollmentId).get();
+  if (!doc.exists) {
+    throw new functions.https.HttpsError("not-found", "Enrollment not found.");
+  }
+  return { id: doc.id, data: doc.data() || {} };
+}
+
+function assertCourseAmountAndCurrency(course, amount, currency) {
+  const error = validateAmountAndCurrency(
+    { price: course.data.basePrice, currency: course.data.currency },
+    amount,
+    currency,
+  );
+  if (!error) return;
+  if (error === "invalid_booking_amount") {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Course price is invalid.",
+    );
+  }
+  if (error === "currency_mismatch") {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Currency does not match course price.",
+    );
+  }
+  throw new functions.https.HttpsError(
+    "invalid-argument",
+    "Amount does not match course price.",
   );
 }
 
@@ -526,6 +580,247 @@ exports.confirmPaymentIntent = functions.https.onCall(async (data, context) => {
   return { ok: true };
 });
 
+exports.createCourseEnrollment = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Authentication required.",
+    );
+  }
+
+  const courseId = typeof data.courseId === "string" ? data.courseId : "";
+  const course = await getCourseOrThrow(courseId);
+
+  if (course.data.photographerId === context.auth.uid) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Photographers cannot enroll in their own course.",
+    );
+  }
+
+  const eligibilityError = validateEnrollmentEligibility(course.data);
+  if (eligibilityError === "course_not_published") {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "Course is not available for enrollment.",
+    );
+  }
+  if (eligibilityError === "course_full") {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "No seats remaining for this course.",
+    );
+  }
+
+  const enrollmentRef = db.collection("course_enrollments").doc();
+  await enrollmentRef.set({
+    courseId,
+    photographerId: course.data.photographerId,
+    customerId: context.auth.uid,
+    payment: { status: "pending", intentId: null, amount: null, paidAt: null },
+    status: "pending_payment",
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { ok: true, enrollmentId: enrollmentRef.id };
+});
+
+exports.createCourseEnrollmentPaymentIntent = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication required.",
+      );
+    }
+
+    if (!stripe) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Stripe secret key is not configured.",
+      );
+    }
+
+    const amount = toNumber(data.amount);
+    const currency = normalizeCurrency(data.currency || "iqd");
+    const enrollmentId =
+      typeof data.enrollmentId === "string" ? data.enrollmentId : "";
+    const enrollment = await getEnrollmentOrThrow(enrollmentId);
+    if (enrollment.data.customerId !== context.auth.uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "You do not own this enrollment.",
+      );
+    }
+
+    const course = await getCourseOrThrow(enrollment.data.courseId);
+    assertCourseAmountAndCurrency(course, amount, currency);
+
+    const intent = await stripe.paymentIntents.create(
+      {
+        amount: Math.round(amount),
+        currency,
+        automatic_payment_methods: { enabled: true },
+        metadata: {
+          courseEnrollmentId: enrollmentId,
+          courseId: course.id,
+          userId: context.auth.uid,
+        },
+      },
+      {
+        idempotencyKey: `create_course_intent_${enrollmentId}_${Math.round(amount)}_${currency}`,
+      },
+    );
+
+    if (!intent.client_secret) {
+      throw new functions.https.HttpsError(
+        "internal",
+        "Failed to create payment intent.",
+      );
+    }
+
+    return {
+      paymentIntentId: intent.id,
+      clientSecret: intent.client_secret,
+    };
+  },
+);
+
+exports.confirmCourseEnrollmentPayment = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated",
+        "Authentication required.",
+      );
+    }
+
+    if (!stripe) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Stripe secret key is not configured.",
+      );
+    }
+
+    const enrollmentId =
+      typeof data.enrollmentId === "string" ? data.enrollmentId : "";
+    const paymentIntentId =
+      typeof data.paymentIntentId === "string" ? data.paymentIntentId : "";
+    if (!paymentIntentId) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Invalid paymentIntentId.",
+      );
+    }
+
+    const enrollment = await getEnrollmentOrThrow(enrollmentId);
+    if (enrollment.data.customerId !== context.auth.uid) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "You do not own this enrollment.",
+      );
+    }
+
+    const course = await getCourseOrThrow(enrollment.data.courseId);
+    const currency = normalizeCurrency(course.data.currency || "iqd");
+    const amount = toNumber(data.amount);
+    assertCourseAmountAndCurrency(course, amount, currency);
+
+    const expectedAmount = Math.round(toNumber(course.data.basePrice));
+    if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Course price is invalid.",
+      );
+    }
+
+    let intent;
+    try {
+      intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (_) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Invalid paymentIntentId.",
+      );
+    }
+    if (!intent || intent.status !== "succeeded") {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Payment not completed.",
+      );
+    }
+
+    if (
+      normalizeCurrency(intent.currency) !== currency ||
+      intent.amount !== expectedAmount
+    ) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "PaymentIntent does not match course price.",
+      );
+    }
+
+    if (
+      !intent.metadata ||
+      intent.metadata.courseEnrollmentId !== enrollmentId ||
+      intent.metadata.userId !== context.auth.uid
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "PaymentIntent is not associated with this enrollment.",
+      );
+    }
+
+    await db.runTransaction(async (tx) => {
+      const enrollmentRef = db.collection("course_enrollments").doc(enrollmentId);
+      const courseRef = db.collection("courses").doc(course.id);
+      const enrollmentSnap = await tx.get(enrollmentRef);
+      const courseSnap = await tx.get(courseRef);
+      if (!enrollmentSnap.exists || !courseSnap.exists) {
+        throw new functions.https.HttpsError(
+          "not-found",
+          "Enrollment or course not found.",
+        );
+      }
+
+      const enrollmentData = enrollmentSnap.data() || {};
+      if (enrollmentData.payment && enrollmentData.payment.status === "succeeded") {
+        // Already confirmed by a previous call — idempotent no-op, matches
+        // confirmPaymentIntent's existing re-confirmation behavior.
+        return;
+      }
+
+      const courseData = courseSnap.data() || {};
+      const seatsRemaining =
+        typeof courseData.seatsRemaining === "number"
+          ? courseData.seatsRemaining
+          : 0;
+      if (seatsRemaining <= 0) {
+        throw new functions.https.HttpsError(
+          "resource-exhausted",
+          "No seats remaining for this course.",
+        );
+      }
+
+      tx.update(enrollmentRef, {
+        "payment.status": "succeeded",
+        "payment.intentId": intent.id,
+        "payment.amount": intent.amount,
+        "payment.paidAt": admin.firestore.FieldValue.serverTimestamp(),
+        status: "confirmed",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      tx.update(courseRef, {
+        seatsRemaining: seatsRemaining - 1,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    });
+
+    return { ok: true };
+  },
+);
+
 exports.createNotification = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -562,6 +857,10 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
     payload.data && typeof payload.data.requestId === "string"
       ? payload.data.requestId
       : "";
+  const courseEnrollmentId =
+    payload.data && typeof payload.data.courseEnrollmentId === "string"
+      ? payload.data.courseEnrollmentId
+      : "";
 
   if (bookingId) {
     const booking = await getBookingOrThrow(bookingId);
@@ -584,6 +883,29 @@ exports.createNotification = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Not allowed to notify this user for the booking.",
+      );
+    }
+  } else if (courseEnrollmentId) {
+    const enrollment = await getEnrollmentOrThrow(courseEnrollmentId);
+    if (
+      enrollment.data.customerId !== callerId &&
+      enrollment.data.photographerId !== callerId &&
+      !isAdmin
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not allowed to send course enrollment notification.",
+      );
+    }
+
+    if (
+      userId !== enrollment.data.customerId &&
+      userId !== enrollment.data.photographerId &&
+      !isAdmin
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Not allowed to notify this user for the course enrollment.",
       );
     }
   } else if (requestId) {

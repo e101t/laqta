@@ -1404,3 +1404,169 @@ test('chats update: participants can refresh preview fields only with a valid se
     }),
   );
 });
+
+function courseDocData({ photographerId, capacity = 2, seatsRemaining, isPublished = true }) {
+  const now = Timestamp.fromDate(new Date());
+  return {
+    photographerId,
+    title: 'Wedding Photography Basics',
+    description: 'A 4-week intro course.',
+    type: 'in_person',
+    specialties: ['Wedding'],
+    basePrice: 50000,
+    currency: 'IQD',
+    capacity,
+    seatsRemaining: seatsRemaining ?? capacity,
+    sessions: [{ date: '2026-03-01', startMinutes: 540, endMinutes: 600 }],
+    location: { lat: 33.3128, lng: 44.3615, text: 'Baghdad Studio' },
+    meetingLink: null,
+    thumbnailUrl: null,
+    isPublished,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+test('courses create: verified photographer can create own course with seatsRemaining == capacity', async () => {
+  const photographerId = 'photog_course_1';
+  await seedVerifiedPhotographer(photographerId);
+  const photographerDb = authedDb(photographerId);
+
+  await assertSucceeds(
+    photographerDb
+      .collection('courses')
+      .doc('course_1')
+      .set(courseDocData({ photographerId, capacity: 5 })),
+  );
+});
+
+test('courses create: denied if photographerId does not match auth uid', async () => {
+  const photographerId = 'photog_course_2';
+  await seedVerifiedPhotographer(photographerId);
+  const otherDb = authedDb('someone_else');
+
+  await assertFails(
+    otherDb
+      .collection('courses')
+      .doc('course_2')
+      .set(courseDocData({ photographerId, capacity: 5 })),
+  );
+});
+
+test('courses create: denied if seatsRemaining does not equal capacity', async () => {
+  const photographerId = 'photog_course_3';
+  await seedVerifiedPhotographer(photographerId);
+  const photographerDb = authedDb(photographerId);
+
+  await assertFails(
+    photographerDb
+      .collection('courses')
+      .doc('course_3')
+      .set(courseDocData({ photographerId, capacity: 5, seatsRemaining: 3 })),
+  );
+});
+
+test('courses read: unpublished course is hidden from non-owners but visible to the owner', async () => {
+  const photographerId = 'photog_course_4';
+  await seedVerifiedPhotographer(photographerId);
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(
+      doc(context.firestore(), `courses/course_4`),
+      courseDocData({ photographerId, capacity: 5, isPublished: false }),
+    );
+  });
+
+  const ownerDb = authedDb(photographerId);
+  await assertSucceeds(ownerDb.collection('courses').doc('course_4').get());
+
+  const strangerDb = authedDb('stranger_1');
+  await assertFails(strangerDb.collection('courses').doc('course_4').get());
+});
+
+test('courses update: owner cannot change seatsRemaining or photographerId directly', async () => {
+  const photographerId = 'photog_course_5';
+  await seedVerifiedPhotographer(photographerId);
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(
+      doc(context.firestore(), `courses/course_5`),
+      courseDocData({ photographerId, capacity: 5 }),
+    );
+  });
+
+  const ownerDb = authedDb(photographerId);
+
+  await assertSucceeds(
+    ownerDb.collection('courses').doc('course_5').update({
+      title: 'Updated title',
+      updatedAt: Timestamp.fromDate(new Date()),
+    }),
+  );
+
+  await assertFails(
+    ownerDb.collection('courses').doc('course_5').update({
+      seatsRemaining: 1,
+      updatedAt: Timestamp.fromDate(new Date()),
+    }),
+  );
+
+  await assertFails(
+    ownerDb.collection('courses').doc('course_5').update({
+      photographerId: 'someone_else',
+      updatedAt: Timestamp.fromDate(new Date()),
+    }),
+  );
+});
+
+test('course_enrollments: clients cannot create or update directly, only read their own', async () => {
+  const photographerId = 'photog_enroll_1';
+  const customerId = 'cust_enroll_1';
+  const enrollmentId = 'enrollment_1';
+  await seedVerifiedPhotographer(photographerId);
+
+  const now = Timestamp.fromDate(new Date());
+  const enrollmentData = {
+    courseId: 'course_enroll_1',
+    photographerId,
+    customerId,
+    payment: { status: 'pending', intentId: null, amount: null, paidAt: null },
+    status: 'pending_payment',
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const customerDb = authedDb(customerId);
+
+  // Direct client create is denied — capacity-safe writes only happen via
+  // Cloud Functions using the Admin SDK.
+  await assertFails(
+    customerDb.collection('course_enrollments').doc(enrollmentId).set(enrollmentData),
+  );
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(
+      doc(context.firestore(), `course_enrollments/${enrollmentId}`),
+      enrollmentData,
+    );
+  });
+
+  // The enrolled customer and the course's photographer can read it.
+  await assertSucceeds(
+    customerDb.collection('course_enrollments').doc(enrollmentId).get(),
+  );
+  await assertSucceeds(
+    authedDb(photographerId).collection('course_enrollments').doc(enrollmentId).get(),
+  );
+
+  // A stranger cannot read it, and the customer cannot self-confirm payment.
+  await assertFails(
+    authedDb('stranger_2').collection('course_enrollments').doc(enrollmentId).get(),
+  );
+  await assertFails(
+    customerDb.collection('course_enrollments').doc(enrollmentId).update({
+      status: 'confirmed',
+      'payment.status': 'succeeded',
+    }),
+  );
+});
