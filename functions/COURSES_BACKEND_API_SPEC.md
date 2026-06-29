@@ -13,6 +13,15 @@ in *this* repo — use those as the reference implementation. The 57-test suite 
 `functions/test/` (`courses.test.js`, `firestore_rules.test.js`) documents the expected
 behavior precisely.
 
+**Correction (post-launch finding):** an earlier version of this doc said course CRUD
+didn't need REST endpoints because the Flutter client writes directly to Firestore.
+That was wrong — the Flutter app has **no real Firestore client at all**
+(`lib/core/utils/legacy_data_compat.dart` is an inert stub; every read/write through it
+silently no-ops). Course CRUD and "my enrollments" listing **do** need real REST
+endpoints, added below. `firestore.rules`'s `courses`/`course_enrollments` blocks are
+therefore dead weight from the client's perspective (kept here only as a reference for
+the validation logic the backend should replicate).
+
 ## Endpoints needed
 
 ### `POST /courses/enrollments`
@@ -79,13 +88,41 @@ Logic:
    - Both writes must happen in the same transaction as the read, so two concurrent
      confirmations for the last seat cannot both succeed.
 
-### `GET /courses` and course CRUD
-**Not needed as REST endpoints.** Course browsing, creation, editing, and deletion are
-all done by the Flutter app writing directly to Firestore (`courses` collection),
-protected by `firestore.rules` (photographer owns/writes, public read when
-`isPublished == true`). No backend REST involvement required for these — only
-enrollment + payment need server-side logic, because only those require the atomic
-seat-capacity transaction above.
+### Course CRUD — needed, mirrors `lib/features/requests/data/datasources/api_requests_remote_data_source.dart`'s style
+
+`GET /courses` (optional query param `?specialty=Wedding`) — published courses only.
+Response: `{ "courses": [ {...course}, ... ] }`.
+
+`GET /courses/photographer/{photographerId}` — a photographer's own courses (including
+unpublished drafts when the caller IS that photographer; published-only for anyone
+else, or just require the caller to be that photographer and 403 otherwise — match
+whatever auth model the rest of the backend uses for "my own resource" reads).
+
+`GET /courses/{courseId}` — single course. Response: `{ "course": {...} }` (or the
+course object directly — the Flutter client accepts either, see
+`ApiCourseRemoteDataSource._readMap`).
+
+`POST /courses` — photographer creates a course. Request body: the course fields minus
+`id`/`seatsRemaining`/timestamps (see `CourseDto.toBackendCreateJson()` for the exact
+shape: title, description, type, specialties, basePrice, currency, capacity, sessions,
+location, meetingLink, thumbnailUrl, isPublished). Backend must set
+`seatsRemaining = capacity` and `photographerId = callerUid` server-side — do not trust
+client-supplied values for either field, matching the `isValidCourseCreate` check in
+`firestore.rules` (`seatsRemaining == capacity` on create). Response: `{ "course": { "id": "...", ... } }`.
+
+`PATCH /courses/{courseId}` — photographer updates their own course. Same body shape as
+create. Reject (permission-denied) if caller isn't the course's `photographerId`. Do
+NOT let this endpoint change `seatsRemaining` directly (that's only ever touched by the
+payment-confirmation transaction above) — mirrors `isValidCourseOwnerUpdate`'s
+`seatsRemaining == resource.data.seatsRemaining` invariant in `firestore.rules`.
+
+`DELETE /courses/{courseId}` — photographer deletes their own course.
+
+### `GET /courses/enrollments/my` — needed
+The signed-in customer's own enrollments (any status). Response:
+`{ "enrollments": [ {...enrollment}, ... ] }`. Mirrors `course_enrollments`'s read rule
+(owner or that enrollment's photographer can read) — scope this endpoint to the caller's
+own `customerId`.
 
 ### Notifications
 `POST /notifications` (already exists for booking notifications) is reused as-is — the

@@ -1,7 +1,4 @@
 import 'package:laqta/core/services/backend_api_client.dart';
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-import 'package:laqta/core/constants/app_constants.dart';
-import 'package:laqta/core/security/secure_firestore.dart';
 import 'package:laqta/features/courses/data/datasources/course_enrollment_remote_data_source.dart';
 import 'package:laqta/features/courses/data/dtos/course_enrollment_dto.dart';
 
@@ -12,16 +9,10 @@ import 'package:laqta/features/courses/data/dtos/course_enrollment_dto.dart';
 /// `confirmCourseEnrollmentPayment` Cloud Functions in functions/index.js.
 class BackendCourseEnrollmentRemoteDataSource
     implements CourseEnrollmentRemoteDataSource {
-  BackendCourseEnrollmentRemoteDataSource({
-    BackendApiClient? apiClient,
-    LegacyDataStore? firestore,
-  }) : _apiClient = apiClient ?? BackendApiClient(),
-       _firestore = firestore ?? LegacyDataStore.instance,
-       _secure = SecureFirestore(firestore ?? LegacyDataStore.instance);
+  BackendCourseEnrollmentRemoteDataSource({BackendApiClient? apiClient})
+    : _apiClient = apiClient ?? BackendApiClient();
 
   final BackendApiClient _apiClient;
-  final LegacyDataStore _firestore;
-  final SecureFirestore _secure;
 
   @override
   Future<String> createEnrollment(String courseId) async {
@@ -77,12 +68,28 @@ class BackendCourseEnrollmentRemoteDataSource
 
   @override
   Future<List<CourseEnrollmentDto>> getMyEnrollments(String customerId) async {
-    Query<Map<String, dynamic>> query = _firestore
-        .collection('course_enrollments')
-        .where('customerId', isEqualTo: customerId);
-    final snapshot = await _secure.guard(
-      () => query.limit(AppConstants.queryLimit).get(),
-    );
-    return snapshot.docs.map(CourseEnrollmentDto.fromFirestore).toList();
+    final response = await _apiClient.get('/courses/enrollments/my');
+    return _readList(response, 'enrollments')
+        .map((json) => CourseEnrollmentDto.fromJson(json))
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _readList(dynamic response, String key) {
+    if (response is Map<String, dynamic>) {
+      final value = response[key];
+      if (value is List) {
+        return value
+            .whereType<Map<Object?, Object?>>()
+            .map(Map<String, dynamic>.from)
+            .toList();
+      }
+    }
+    if (response is List) {
+      return response
+          .whereType<Map<Object?, Object?>>()
+          .map(Map<String, dynamic>.from)
+          .toList();
+    }
+    throw const BackendApiException('Unexpected backend response format.');
   }
 }

@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class CourseEnrollmentDto {
   final String id;
   final String courseId;
@@ -21,25 +19,22 @@ class CourseEnrollmentDto {
     required this.updatedAt,
   });
 
-  factory CourseEnrollmentDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final paymentMap = data['payment'];
+  factory CourseEnrollmentDto.fromJson(Map<String, dynamic> json) {
+    final paymentMap = json['payment'];
 
     return CourseEnrollmentDto(
-      id: doc.id,
-      courseId: _readString(data, 'courseId'),
-      photographerId: _readString(data, 'photographerId'),
-      customerId: _readString(data, 'customerId'),
+      id: _readString(json, 'id'),
+      courseId: _readString(json, 'courseId'),
+      photographerId: _readString(json, 'photographerId'),
+      customerId: _readString(json, 'customerId'),
       payment: paymentMap is Map
           ? CourseEnrollmentPaymentDto.fromMap(
               Map<String, dynamic>.from(paymentMap),
             )
           : const CourseEnrollmentPaymentDto(),
-      status: _readString(data, 'status', fallback: 'pending_payment'),
-      createdAt: _readDateTime(data['createdAt']),
-      updatedAt: _readDateTime(data['updatedAt']),
+      status: _readString(json, 'status', fallback: 'pending_payment'),
+      createdAt: _readDateTime(json['createdAt']),
+      updatedAt: _readDateTime(json['updatedAt']),
     );
   }
 
@@ -53,7 +48,7 @@ class CourseEnrollmentDto {
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     if (value is DateTime) return value;
     return DateTime.now();
   }
@@ -80,7 +75,7 @@ class CourseEnrollmentPaymentDto {
       status: map['status'] is String ? map['status'] as String : 'pending',
       intentId: intentId is String ? intentId : null,
       amount: amount is num ? amount.toDouble() : null,
-      paidAt: paidAt is Timestamp ? paidAt.toDate() : null,
+      paidAt: paidAt is String ? DateTime.tryParse(paidAt) : null,
     );
   }
 }

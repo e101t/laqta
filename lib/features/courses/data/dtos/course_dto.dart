@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class CourseDto {
   final String id;
   final String photographerId;
@@ -39,22 +37,21 @@ class CourseDto {
     required this.updatedAt,
   });
 
-  factory CourseDto.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final locationMap = data['location'];
-    final sessionsList = data['sessions'];
+  factory CourseDto.fromJson(Map<String, dynamic> json) {
+    final locationMap = json['location'];
+    final sessionsList = json['sessions'];
 
     return CourseDto(
-      id: doc.id,
-      photographerId: _readString(data, 'photographerId'),
-      title: _readString(data, 'title'),
-      description: _readString(data, 'description'),
-      type: _readString(data, 'type', fallback: 'in_person'),
-      specialties: _readStringList(data['specialties']),
-      basePrice: _readDouble(data, 'basePrice', fallback: 0),
-      currency: _readString(data, 'currency', fallback: 'IQD'),
-      capacity: _readInt(data, 'capacity', fallback: 1),
-      seatsRemaining: _readInt(data, 'seatsRemaining', fallback: 0),
+      id: _readString(json, 'id'),
+      photographerId: _readString(json, 'photographerId'),
+      title: _readString(json, 'title'),
+      description: _readString(json, 'description'),
+      type: _readString(json, 'type', fallback: 'in_person'),
+      specialties: _readStringList(json['specialties']),
+      basePrice: _readDouble(json, 'basePrice', fallback: 0),
+      currency: _readString(json, 'currency', fallback: 'IQD'),
+      capacity: _readInt(json, 'capacity', fallback: 1),
+      seatsRemaining: _readInt(json, 'seatsRemaining', fallback: 0),
       sessions: sessionsList is List
           ? sessionsList
                 .whereType<Map<dynamic, dynamic>>()
@@ -68,16 +65,17 @@ class CourseDto {
       location: locationMap is Map
           ? CourseLocationDto.fromMap(Map<String, dynamic>.from(locationMap))
           : null,
-      meetingLink: _readNullableString(data, 'meetingLink'),
-      thumbnailUrl: _readNullableString(data, 'thumbnailUrl'),
-      isPublished: _readBool(data, 'isPublished', fallback: false),
-      createdAt: _readDateTime(data['createdAt']),
-      updatedAt: _readDateTime(data['updatedAt']),
+      meetingLink: _readNullableString(json, 'meetingLink'),
+      thumbnailUrl: _readNullableString(json, 'thumbnailUrl'),
+      isPublished: _readBool(json, 'isPublished', fallback: false),
+      createdAt: _readJsonDateTime(json['createdAt']),
+      updatedAt: _readJsonDateTime(json['updatedAt']),
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'photographerId': photographerId,
       'title': title,
       'description': description,
@@ -92,8 +90,27 @@ class CourseDto {
       'meetingLink': meetingLink,
       'thumbnailUrl': thumbnailUrl,
       'isPublished': isPublished,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  /// What the backend needs to create a course — omits server-assigned
+  /// fields (id, seatsRemaining defaults to capacity, timestamps).
+  Map<String, dynamic> toBackendCreateJson() {
+    return {
+      'title': title,
+      'description': description,
+      'type': type,
+      'specialties': specialties,
+      'basePrice': basePrice,
+      'currency': currency,
+      'capacity': capacity,
+      'sessions': sessions.map((s) => s.toMap()).toList(),
+      'location': location?.toMap(),
+      'meetingLink': meetingLink,
+      'thumbnailUrl': thumbnailUrl,
+      'isPublished': isPublished,
     };
   }
 
@@ -149,8 +166,10 @@ class CourseDto {
     return const [];
   }
 
-  static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) return value.toDate();
+  static DateTime _readJsonDateTime(dynamic value) {
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
     if (value is DateTime) return value;
     return DateTime.now();
   }

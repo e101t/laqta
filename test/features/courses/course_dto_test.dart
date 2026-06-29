@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/features/courses/data/dtos/course_dto.dart';
 
 void main() {
@@ -41,12 +40,8 @@ void main() {
   });
 
   group('CourseDto', () {
-    DocumentSnapshot<Map<String, dynamic>> docWith(Map<String, dynamic> data) {
-      return DocumentSnapshot<Map<String, dynamic>>('course_1', data);
-    }
-
-    test('fromFirestore applies safe fallbacks for a minimal doc', () {
-      final dto = CourseDto.fromFirestore(docWith(const {}));
+    test('fromJson applies safe fallbacks for a minimal payload', () {
+      final dto = CourseDto.fromJson({'id': 'course_1'});
 
       expect(dto.id, 'course_1');
       expect(dto.photographerId, '');
@@ -59,29 +54,28 @@ void main() {
       expect(dto.isPublished, isFalse);
     });
 
-    test('fromFirestore parses a fully populated course doc', () {
-      final dto = CourseDto.fromFirestore(
-        docWith({
-          'photographerId': 'photog_1',
-          'title': 'Wedding Photography Basics',
-          'description': 'A 4-week intro course.',
-          'type': 'online',
-          'specialties': ['Wedding', 'Portrait'],
-          'basePrice': 50000,
-          'currency': 'IQD',
-          'capacity': 10,
-          'seatsRemaining': 7,
-          'sessions': [
-            {'date': '2026-07-01', 'startMinutes': 540, 'endMinutes': 600},
-          ],
-          'location': null,
-          'meetingLink': 'https://meet.example.com/abc',
-          'thumbnailUrl': 'https://cdn.example.com/thumb.jpg',
-          'isPublished': true,
-          'createdAt': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
-          'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
-        }),
-      );
+    test('fromJson parses a fully populated course payload', () {
+      final dto = CourseDto.fromJson({
+        'id': 'course_1',
+        'photographerId': 'photog_1',
+        'title': 'Wedding Photography Basics',
+        'description': 'A 4-week intro course.',
+        'type': 'online',
+        'specialties': ['Wedding', 'Portrait'],
+        'basePrice': 50000,
+        'currency': 'IQD',
+        'capacity': 10,
+        'seatsRemaining': 7,
+        'sessions': [
+          {'date': '2026-07-01', 'startMinutes': 540, 'endMinutes': 600},
+        ],
+        'location': null,
+        'meetingLink': 'https://meet.example.com/abc',
+        'thumbnailUrl': 'https://cdn.example.com/thumb.jpg',
+        'isPublished': true,
+        'createdAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+        'updatedAt': DateTime.utc(2026, 1, 2).toIso8601String(),
+      });
 
       expect(dto.photographerId, 'photog_1');
       expect(dto.title, 'Wedding Photography Basics');
@@ -96,7 +90,7 @@ void main() {
       expect(dto.isPublished, isTrue);
     });
 
-    test('toMap excludes the id and serializes nested sessions/location', () {
+    test('toJson round-trips through fromJson, including the id', () {
       final dto = CourseDto(
         id: 'course_1',
         photographerId: 'photog_1',
@@ -119,13 +113,44 @@ void main() {
         updatedAt: DateTime.utc(2026, 1, 2),
       );
 
-      final map = dto.toMap();
+      final json = dto.toJson();
+      expect(json['id'], 'course_1');
+      expect(json['sessions'], isA<List<dynamic>>());
+      expect((json['sessions'] as List).first, isA<Map<String, dynamic>>());
+      expect(json['location'], {'lat': null, 'lng': null, 'text': 'Studio'});
+      expect(json['isPublished'], isTrue);
 
-      expect(map.containsKey('id'), isFalse);
-      expect(map['sessions'], isA<List<dynamic>>());
-      expect((map['sessions'] as List).first, isA<Map<String, dynamic>>());
-      expect(map['location'], {'lat': null, 'lng': null, 'text': 'Studio'});
-      expect(map['isPublished'], isTrue);
+      final restored = CourseDto.fromJson(json);
+      expect(restored.id, dto.id);
+      expect(restored.title, dto.title);
+      expect(restored.sessions.first.startMinutes, 0);
+    });
+
+    test('toBackendCreateJson omits server-assigned fields', () {
+      final dto = CourseDto(
+        id: '',
+        photographerId: 'photog_1',
+        title: 'Title',
+        description: 'Description',
+        type: 'in_person',
+        specialties: const [],
+        basePrice: 1000,
+        currency: 'IQD',
+        capacity: 5,
+        seatsRemaining: 5,
+        sessions: const [],
+        isPublished: false,
+        createdAt: DateTime.utc(2026, 1, 1),
+        updatedAt: DateTime.utc(2026, 1, 1),
+      );
+
+      final json = dto.toBackendCreateJson();
+
+      expect(json.containsKey('id'), isFalse);
+      expect(json.containsKey('seatsRemaining'), isFalse);
+      expect(json.containsKey('createdAt'), isFalse);
+      expect(json.containsKey('updatedAt'), isFalse);
+      expect(json['title'], 'Title');
     });
   });
 }

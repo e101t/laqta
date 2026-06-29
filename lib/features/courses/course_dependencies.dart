@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:laqta/features/courses/data/datasources/api_course_remote_data_source.dart';
 import 'package:laqta/features/courses/data/datasources/backend_course_enrollment_remote_data_source.dart';
 import 'package:laqta/features/courses/data/datasources/course_enrollment_remote_data_source.dart';
 import 'package:laqta/features/courses/data/datasources/course_remote_data_source.dart';
-import 'package:laqta/features/courses/data/datasources/firestore_course_remote_data_source.dart';
 import 'package:laqta/features/courses/data/repositories/course_repository_impl.dart';
 import 'package:laqta/features/courses/domain/repositories/course_repository.dart';
 import 'package:laqta/features/courses/domain/usecases/confirm_enrollment_payment.dart';
@@ -18,7 +18,7 @@ import 'package:laqta/features/courses/domain/usecases/update_course.dart';
 
 class CourseDependencies {
   static final CourseRemoteDataSource _courseDataSource =
-      FirestoreCourseRemoteDataSource();
+      ApiCourseRemoteDataSource();
   static final CourseEnrollmentRemoteDataSource _enrollmentDataSource =
       BackendCourseEnrollmentRemoteDataSource();
   static CourseRepository? _repositoryOverride;
