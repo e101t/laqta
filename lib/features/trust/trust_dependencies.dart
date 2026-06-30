@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:laqta/features/trust/data/datasources/firestore_trust_remote_data_source.dart';
+import 'package:laqta/features/trust/data/datasources/api_trust_remote_data_source.dart';
 import 'package:laqta/features/trust/data/datasources/trust_remote_data_source.dart';
 import 'package:laqta/features/trust/data/repositories/trust_repository_impl.dart';
 import 'package:laqta/features/trust/domain/repositories/trust_repository.dart';
@@ -11,7 +11,7 @@ import 'package:laqta/features/trust/domain/usecases/increment_review_stats.dart
 
 class TrustDependencies {
   static final TrustRemoteDataSource _remoteDataSource =
-      FirestoreTrustRemoteDataSource();
+      ApiTrustRemoteDataSource();
   static TrustRepository? _repositoryOverride;
 
   @visibleForTesting

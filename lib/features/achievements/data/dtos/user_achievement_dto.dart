@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class UserAchievementDto {
   final String id;
   final String userId;
@@ -17,17 +15,14 @@ class UserAchievementDto {
     this.unlockedAt,
   });
 
-  factory UserAchievementDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
+  factory UserAchievementDto.fromJson(Map<String, dynamic> json) {
     return UserAchievementDto(
-      id: doc.id,
-      userId: _readString(data, 'userId'),
-      achievementId: _readString(data, 'achievementId'),
-      currentProgress: _readInt(data, 'currentProgress'),
-      isUnlocked: _readBool(data, 'isUnlocked'),
-      unlockedAt: _readNullableDateTime(data['unlockedAt']),
+      id: _readString(json, 'id'),
+      userId: _readString(json, 'userId'),
+      achievementId: _readString(json, 'achievementId'),
+      currentProgress: _readInt(json, 'currentProgress'),
+      isUnlocked: _readBool(json, 'isUnlocked'),
+      unlockedAt: _readNullableDateTime(json['unlockedAt']),
     );
   }
 
@@ -37,41 +32,25 @@ class UserAchievementDto {
     String fallback = '',
   }) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return fallback;
+    return value is String ? value : fallback;
   }
 
   static int _readInt(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
     return 0;
   }
 
   static bool _readBool(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is bool) {
-      return value;
-    }
-    return false;
+    return value is bool ? value : false;
   }
 
   static DateTime? _readNullableDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String) return DateTime.tryParse(value);
+    if (value is DateTime) return value;
     return null;
   }
 }

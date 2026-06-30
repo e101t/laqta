@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class LoyaltyPointsDto {
   final String id;
   final int totalPoints;
@@ -19,49 +17,40 @@ class LoyaltyPointsDto {
     required this.lastUpdated,
   });
 
-  factory LoyaltyPointsDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final transactionsRaw = data['transactions'];
+  factory LoyaltyPointsDto.fromJson(Map<String, dynamic> json) {
+    final transactionsRaw = json['transactions'];
     final transactionMaps = transactionsRaw is List
         ? transactionsRaw.whereType<Map<dynamic, dynamic>>()
         : const <Map<dynamic, dynamic>>[];
     return LoyaltyPointsDto(
-      id: doc.id,
-      totalPoints: _readInt(data, 'totalPoints'),
-      availablePoints: _readInt(data, 'availablePoints'),
-      usedPoints: _readInt(data, 'usedPoints'),
+      id: _readString(json, 'id'),
+      totalPoints: _readInt(json, 'totalPoints'),
+      availablePoints: _readInt(json, 'availablePoints'),
+      usedPoints: _readInt(json, 'usedPoints'),
       transactions: transactionMaps
           .map((t) => PointTransactionDto.fromMap(Map<String, dynamic>.from(t)))
           .toList(),
-      tier: _readString(data, 'tier', fallback: 'bronze'),
-      lastUpdated: _readDateTime(data['lastUpdated']),
+      tier: _readString(json, 'tier', fallback: 'bronze'),
+      lastUpdated: _readDateTime(json['lastUpdated']),
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'totalPoints': totalPoints,
       'availablePoints': availablePoints,
       'usedPoints': usedPoints,
-      'transactions': transactions.map((t) => t.toMap()).toList(),
+      'transactions': transactions.map((t) => t.toJson()).toList(),
       'tier': tier,
-      'lastUpdated': Timestamp.fromDate(lastUpdated),
+      'lastUpdated': lastUpdated.toIso8601String(),
     };
   }
 
   static int _readInt(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
     return 0;
   }
 
@@ -71,19 +60,12 @@ class LoyaltyPointsDto {
     String fallback = '',
   }) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return fallback;
+    return value is String ? value : fallback;
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is DateTime) return value;
     return DateTime.now();
   }
 }
@@ -116,14 +98,14 @@ class PointTransactionDto {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'transactionId': transactionId,
       'points': points,
       'type': type,
       'source': source,
       'description': description,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
@@ -133,18 +115,12 @@ class PointTransactionDto {
     String fallback = '',
   }) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return fallback;
+    return value is String ? value : fallback;
   }
 
   static String? _readNullableString(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return null;
+    return value is String ? value : null;
   }
 
   static int _readInt(
@@ -153,25 +129,15 @@ class PointTransactionDto {
     int fallback = 0,
   }) {
     final value = data[key];
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value) ?? fallback;
-    }
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? fallback;
     return fallback;
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is DateTime) return value;
     return DateTime.now();
   }
 }
