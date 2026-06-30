@@ -1,5 +1,5 @@
+import 'package:laqta/features/favorites/data/datasources/api_favorites_remote_data_source.dart';
 import 'package:laqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
-import 'package:laqta/features/favorites/data/datasources/firestore_favorites_remote_data_source.dart';
 import 'package:laqta/features/favorites/data/repositories/favorites_repository_impl.dart';
 import 'package:laqta/features/favorites/domain/repositories/favorites_repository.dart';
 import 'package:laqta/features/favorites/domain/usecases/get_favorites.dart';
@@ -7,7 +7,7 @@ import 'package:laqta/features/favorites/domain/usecases/remove_favorite.dart';
 
 class FavoritesDependencies {
   static final FavoritesRemoteDataSource _remoteDataSource =
-      FirestoreFavoritesRemoteDataSource();
+      ApiFavoritesRemoteDataSource();
   static final FavoritesRepository _repository = FavoritesRepositoryImpl(
     _remoteDataSource,
   );

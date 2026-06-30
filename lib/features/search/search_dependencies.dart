@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:laqta/features/search/data/datasources/firestore_search_remote_data_source.dart';
+import 'package:laqta/features/search/data/datasources/api_search_remote_data_source.dart';
 import 'package:laqta/features/search/data/datasources/search_remote_data_source.dart';
 import 'package:laqta/features/search/data/repositories/search_repository_impl.dart';
 import 'package:laqta/features/search/domain/repositories/search_repository.dart';
@@ -7,7 +7,7 @@ import 'package:laqta/features/search/domain/usecases/search_photographers.dart'
 
 class SearchDependencies {
   static final SearchRemoteDataSource _remoteDataSource =
-      FirestoreSearchRemoteDataSource();
+      ApiSearchRemoteDataSource();
   static final SearchRepository _defaultRepository = SearchRepositoryImpl(
     _remoteDataSource,
   );

@@ -1,4 +1,4 @@
-import 'package:laqta/features/photographer/data/datasources/firestore_photographer_remote_data_source.dart';
+import 'package:laqta/features/photographer/data/datasources/api_photographer_remote_data_source.dart';
 import 'package:laqta/features/photographer/data/datasources/photographer_remote_data_source.dart';
 import 'package:laqta/features/photographer/data/repositories/photographer_repository_impl.dart';
 import 'package:laqta/features/photographer/domain/repositories/photographer_repository.dart';
@@ -8,7 +8,7 @@ import 'package:laqta/features/photographer/domain/usecases/set_favorite_status.
 
 class PhotographerDependencies {
   static final PhotographerRemoteDataSource _remoteDataSource =
-      FirestorePhotographerRemoteDataSource();
+      ApiPhotographerRemoteDataSource();
   static final PhotographerRepository _repository = PhotographerRepositoryImpl(
     _remoteDataSource,
   );

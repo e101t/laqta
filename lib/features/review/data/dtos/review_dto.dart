@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class ReviewDto {
   final String bookingId;
   final String reviewerId;
@@ -27,7 +25,7 @@ class ReviewDto {
     required this.createdAt,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'bookingId': bookingId,
       'reviewerId': reviewerId,
@@ -39,7 +37,7 @@ class ReviewDto {
       'deliverySpeedRating': deliverySpeedRating,
       'recommend': recommend,
       'comment': comment,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

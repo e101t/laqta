@@ -1,18 +1,13 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class FavoriteDto {
   final String userId;
   final String photographerId;
 
   const FavoriteDto({required this.userId, required this.photographerId});
 
-  factory FavoriteDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
+  factory FavoriteDto.fromJson(Map<String, dynamic> json) {
     return FavoriteDto(
-      userId: _readString(data, 'userId'),
-      photographerId: _readString(data, 'photographerId'),
+      userId: _readString(json, 'userId'),
+      photographerId: _readString(json, 'photographerId'),
     );
   }
 
@@ -22,9 +17,6 @@ class FavoriteDto {
     String fallback = '',
   }) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return fallback;
+    return value is String ? value : fallback;
   }
 }
