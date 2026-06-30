@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class DisputeDto {
   final String id;
   final String bookingId;
@@ -35,66 +33,24 @@ class DisputeDto {
     this.decidedBy,
   });
 
-  factory DisputeDto.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return DisputeDto(
-      id: doc.id,
-      bookingId: _readString(data, 'bookingId'),
-      requestId: _readNullableString(data, 'requestId'),
-      customerId: _readString(data, 'customerId'),
-      photographerId: _readString(data, 'photographerId'),
-      openedBy: _readString(data, 'openedBy'),
-      reason: _readString(data, 'reason'),
-      details: _readString(data, 'details'),
-      evidenceUrls: _readStringList(data['evidenceUrls']),
-      status: _readString(data, 'status', fallback: 'open'),
-      resolution: _readNullableString(data, 'resolution'),
-      createdAt: _readDateTime(data['createdAt']),
-      updatedAt: _readDateTime(data['updatedAt']),
-      closedAt: _readNullableDateTime(data['closedAt']),
-      decidedBy: _readNullableString(data, 'decidedBy'),
-    );
-  }
-
   factory DisputeDto.fromJson(Map<String, dynamic> json) {
     return DisputeDto(
-      id: json['id'] as String,
-      bookingId: json['bookingId'] as String,
-      requestId: json['requestId'] as String?,
-      customerId: json['customerId'] as String,
-      photographerId: json['photographerId'] as String,
-      openedBy: json['openedBy'] as String,
-      reason: json['reason'] as String,
-      details: json['details'] as String,
-      evidenceUrls: (json['evidenceUrls'] as List<dynamic>).cast<String>(),
-      status: json['status'] as String,
-      resolution: json['resolution'] as String?,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      closedAt: json['closedAt'] != null
-          ? DateTime.parse(json['closedAt'])
-          : null,
-      decidedBy: json['decidedBy'] as String?,
+      id: _readString(json, 'id'),
+      bookingId: _readString(json, 'bookingId'),
+      requestId: _readNullableString(json, 'requestId'),
+      customerId: _readString(json, 'customerId'),
+      photographerId: _readString(json, 'photographerId'),
+      openedBy: _readString(json, 'openedBy'),
+      reason: _readString(json, 'reason'),
+      details: _readString(json, 'details'),
+      evidenceUrls: _readStringList(json['evidenceUrls']),
+      status: _readString(json, 'status', fallback: 'open'),
+      resolution: _readNullableString(json, 'resolution'),
+      createdAt: _readDateTime(json['createdAt']),
+      updatedAt: _readDateTime(json['updatedAt']),
+      closedAt: _readNullableDateTime(json['closedAt']),
+      decidedBy: _readNullableString(json, 'decidedBy'),
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'bookingId': bookingId,
-      'requestId': requestId,
-      'customerId': customerId,
-      'photographerId': photographerId,
-      'openedBy': openedBy,
-      'reason': reason,
-      'details': details,
-      'evidenceUrls': evidenceUrls,
-      'status': status,
-      'resolution': resolution,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
-      'closedAt': closedAt != null ? Timestamp.fromDate(closedAt!) : null,
-      'decidedBy': decidedBy,
-    };
   }
 
   Map<String, dynamic> toJson() {
@@ -123,44 +79,28 @@ class DisputeDto {
     String fallback = '',
   }) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return fallback;
+    return value is String ? value : fallback;
   }
 
   static String? _readNullableString(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return null;
+    return value is String ? value : null;
   }
 
   static List<String> _readStringList(dynamic value) {
-    if (value is List) {
-      return value.whereType<String>().toList();
-    }
-    return <String>[];
+    if (value is List) return value.whereType<String>().toList();
+    return const [];
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is DateTime) return value;
     return DateTime.now();
   }
 
   static DateTime? _readNullableDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String) return DateTime.tryParse(value);
+    if (value is DateTime) return value;
     return null;
   }
 }
