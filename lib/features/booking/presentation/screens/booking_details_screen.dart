@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -213,20 +212,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       'status': AppConstants.bookingInProgress,
       'timeline': {
         'confirmedAt': timeline.confirmedAt != null
-            ? Timestamp.fromDate(timeline.confirmedAt!)
-            : Timestamp.fromDate(_booking!.createdAt),
-        'inProgressAt': Timestamp.fromDate(DateTime.now()),
+            ? timeline.confirmedAt!.toIso8601String()
+            : _booking!.createdAt.toIso8601String(),
+        'inProgressAt': DateTime.now().toIso8601String(),
         'deliveredAt': timeline.deliveredAt != null
-            ? Timestamp.fromDate(timeline.deliveredAt!)
+            ? timeline.deliveredAt!.toIso8601String()
             : null,
         'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? Timestamp.fromDate(timeline.revisionRequestedAt!)
+            ? timeline.revisionRequestedAt!.toIso8601String()
             : null,
         'completedAt': timeline.completedAt != null
-            ? Timestamp.fromDate(timeline.completedAt!)
+            ? timeline.completedAt!.toIso8601String()
             : null,
         'canceledAt': timeline.canceledAt != null
-            ? Timestamp.fromDate(timeline.canceledAt!)
+            ? timeline.canceledAt!.toIso8601String()
             : null,
       },
     };
@@ -264,20 +263,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       'deliveryId': delivery.id,
       'timeline': {
         'confirmedAt': timeline.confirmedAt != null
-            ? Timestamp.fromDate(timeline.confirmedAt!)
-            : Timestamp.fromDate(_booking!.createdAt),
+            ? timeline.confirmedAt!.toIso8601String()
+            : _booking!.createdAt.toIso8601String(),
         'inProgressAt': timeline.inProgressAt != null
-            ? Timestamp.fromDate(timeline.inProgressAt!)
+            ? timeline.inProgressAt!.toIso8601String()
             : null,
-        'deliveredAt': Timestamp.fromDate(DateTime.now()),
+        'deliveredAt': DateTime.now().toIso8601String(),
         'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? Timestamp.fromDate(timeline.revisionRequestedAt!)
+            ? timeline.revisionRequestedAt!.toIso8601String()
             : null,
         'completedAt': timeline.completedAt != null
-            ? Timestamp.fromDate(timeline.completedAt!)
+            ? timeline.completedAt!.toIso8601String()
             : null,
         'canceledAt': timeline.canceledAt != null
-            ? Timestamp.fromDate(timeline.canceledAt!)
+            ? timeline.canceledAt!.toIso8601String()
             : null,
       },
     };
@@ -303,20 +302,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       'status': AppConstants.bookingCompleted,
       'timeline': {
         'confirmedAt': timeline.confirmedAt != null
-            ? Timestamp.fromDate(timeline.confirmedAt!)
-            : Timestamp.fromDate(_booking!.createdAt),
+            ? timeline.confirmedAt!.toIso8601String()
+            : _booking!.createdAt.toIso8601String(),
         'inProgressAt': timeline.inProgressAt != null
-            ? Timestamp.fromDate(timeline.inProgressAt!)
+            ? timeline.inProgressAt!.toIso8601String()
             : null,
         'deliveredAt': timeline.deliveredAt != null
-            ? Timestamp.fromDate(timeline.deliveredAt!)
+            ? timeline.deliveredAt!.toIso8601String()
             : null,
         'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? Timestamp.fromDate(timeline.revisionRequestedAt!)
+            ? timeline.revisionRequestedAt!.toIso8601String()
             : null,
-        'completedAt': Timestamp.fromDate(DateTime.now()),
+        'completedAt': DateTime.now().toIso8601String(),
         'canceledAt': timeline.canceledAt != null
-            ? Timestamp.fromDate(timeline.canceledAt!)
+            ? timeline.canceledAt!.toIso8601String()
             : null,
       },
     };
@@ -440,20 +439,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       'revisionCount': _booking!.revisionCount + 1,
       'timeline': {
         'confirmedAt': timeline.confirmedAt != null
-            ? Timestamp.fromDate(timeline.confirmedAt!)
-            : Timestamp.fromDate(_booking!.createdAt),
+            ? timeline.confirmedAt!.toIso8601String()
+            : _booking!.createdAt.toIso8601String(),
         'inProgressAt': timeline.inProgressAt != null
-            ? Timestamp.fromDate(timeline.inProgressAt!)
+            ? timeline.inProgressAt!.toIso8601String()
             : null,
         'deliveredAt': timeline.deliveredAt != null
-            ? Timestamp.fromDate(timeline.deliveredAt!)
+            ? timeline.deliveredAt!.toIso8601String()
             : null,
-        'revisionRequestedAt': Timestamp.fromDate(DateTime.now()),
+        'revisionRequestedAt': DateTime.now().toIso8601String(),
         'completedAt': timeline.completedAt != null
-            ? Timestamp.fromDate(timeline.completedAt!)
+            ? timeline.completedAt!.toIso8601String()
             : null,
         'canceledAt': timeline.canceledAt != null
-            ? Timestamp.fromDate(timeline.canceledAt!)
+            ? timeline.canceledAt!.toIso8601String()
             : null,
       },
     };
@@ -598,21 +597,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       'canceledBy': _currentUserId,
       'timeline': {
         'confirmedAt': timeline.confirmedAt != null
-            ? Timestamp.fromDate(timeline.confirmedAt!)
-            : Timestamp.fromDate(_booking!.createdAt),
+            ? timeline.confirmedAt!.toIso8601String()
+            : _booking!.createdAt.toIso8601String(),
         'inProgressAt': timeline.inProgressAt != null
-            ? Timestamp.fromDate(timeline.inProgressAt!)
+            ? timeline.inProgressAt!.toIso8601String()
             : null,
         'deliveredAt': timeline.deliveredAt != null
-            ? Timestamp.fromDate(timeline.deliveredAt!)
+            ? timeline.deliveredAt!.toIso8601String()
             : null,
         'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? Timestamp.fromDate(timeline.revisionRequestedAt!)
+            ? timeline.revisionRequestedAt!.toIso8601String()
             : null,
         'completedAt': timeline.completedAt != null
-            ? Timestamp.fromDate(timeline.completedAt!)
+            ? timeline.completedAt!.toIso8601String()
             : null,
-        'canceledAt': Timestamp.fromDate(DateTime.now()),
+        'canceledAt': DateTime.now().toIso8601String(),
       },
     });
 

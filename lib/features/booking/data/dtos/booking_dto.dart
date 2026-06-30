@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class BookingDto {
   final String id;
   final String customerId;
@@ -53,67 +51,38 @@ class BookingDto {
     required this.updatedAt,
   });
 
-  factory BookingDto.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final paymentMap = _readMap(data['payment']);
-    final locationMap = _readMap(data['location']);
-    final deliverablesMap = _readMap(data['deliverables']);
-    final timelineMap = _readMap(data['timeline']);
+  factory BookingDto.fromJson(Map<String, dynamic> json) {
+    final paymentMap = _readMap(json['payment']);
+    final locationMap = _readMap(json['location']);
+    final deliverablesMap = _readMap(json['deliverables']);
+    final timelineMap = _readMap(json['timeline']);
 
     return BookingDto(
-      id: doc.id,
-      customerId: _readString(data, 'customerId'),
-      photographerId: _readString(data, 'photographerId'),
-      requestId: _readNullableString(data, 'requestId'),
-      offerId: _readNullableString(data, 'offerId'),
-      date: _readString(data, 'date'),
-      time: _readString(data, 'time'),
-      duration: _readInt(data, 'duration', fallback: 60),
-      type: _readString(data, 'type'),
-      price: _readDouble(data, 'price', fallback: 0),
-      currency: _readString(data, 'currency', fallback: 'IQD'),
-      status: _readString(data, 'status', fallback: 'pending'),
+      id: _readString(json, 'id'),
+      customerId: _readString(json, 'customerId'),
+      photographerId: _readString(json, 'photographerId'),
+      requestId: _readNullableString(json, 'requestId'),
+      offerId: _readNullableString(json, 'offerId'),
+      date: _readString(json, 'date'),
+      time: _readString(json, 'time'),
+      duration: _readInt(json, 'duration', fallback: 60),
+      type: _readString(json, 'type'),
+      price: _readDouble(json, 'price', fallback: 0),
+      currency: _readString(json, 'currency', fallback: 'IQD'),
+      status: _readString(json, 'status', fallback: 'pending'),
       payment: BookingPaymentDto.fromMap(paymentMap),
       location: BookingLocationDto.fromMap(locationMap),
       deliverables: BookingDeliverablesDto.fromMap(deliverablesMap),
-      notes: _readNullableString(data, 'notes'),
-      chatId: _readNullableString(data, 'chatId'),
-      deliveryId: _readNullableString(data, 'deliveryId'),
-      disputeId: _readNullableString(data, 'disputeId'),
-      revisionCount: _readInt(data, 'revisionCount', fallback: 0),
-      canceledBy: _readNullableString(data, 'canceledBy'),
+      notes: _readNullableString(json, 'notes'),
+      chatId: _readNullableString(json, 'chatId'),
+      deliveryId: _readNullableString(json, 'deliveryId'),
+      disputeId: _readNullableString(json, 'disputeId'),
+      revisionCount: _readInt(json, 'revisionCount', fallback: 0),
+      canceledBy: _readNullableString(json, 'canceledBy'),
       timeline: BookingTimelineDto.fromMap(timelineMap),
-      createdAt: _readDateTime(data['createdAt']),
-      updatedAt: _readDateTime(data['updatedAt']),
+      createdAt: _readDateTime(json['createdAt']),
+      updatedAt: _readDateTime(json['updatedAt']),
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'customerId': customerId,
-      'photographerId': photographerId,
-      'requestId': requestId,
-      'offerId': offerId,
-      'date': date,
-      'time': time,
-      'duration': duration,
-      'type': type,
-      'price': price,
-      'currency': currency,
-      'status': status,
-      'payment': payment.toMap(),
-      'location': location.toMap(),
-      'deliverables': deliverables.toMap(),
-      'notes': notes,
-      'chatId': chatId,
-      'deliveryId': deliveryId,
-      'disputeId': disputeId,
-      'revisionCount': revisionCount,
-      'canceledBy': canceledBy,
-      'timeline': timeline.toMap(),
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
-    };
   }
 
   Map<String, dynamic> toJson() {
@@ -252,8 +221,8 @@ class BookingDto {
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
     }
     if (value is DateTime) {
       return value;
@@ -262,8 +231,8 @@ class BookingDto {
   }
 
   static DateTime? _readNullableDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
+    if (value is String) {
+      return DateTime.tryParse(value);
     }
     if (value is DateTime) {
       return value;
@@ -290,7 +259,7 @@ class BookingPaymentDto {
       status: BookingDto._readString(map, 'status', fallback: 'pending'),
       intentId: BookingDto._readNullableString(map, 'intentId'),
       amount: BookingDto._readNullableDouble(map, 'amount'),
-      paidAt: _readNullableDateTime(map['paidAt']),
+      paidAt: BookingDto._readNullableDateTime(map['paidAt']),
     );
   }
 
@@ -299,18 +268,8 @@ class BookingPaymentDto {
       'status': status,
       'intentId': intentId,
       'amount': amount,
-      'paidAt': paidAt != null ? Timestamp.fromDate(paidAt!) : null,
+      'paidAt': paidAt?.toIso8601String(),
     };
-  }
-
-  static DateTime? _readNullableDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
-    return null;
   }
 }
 
@@ -410,22 +369,12 @@ class BookingTimelineDto {
 
   Map<String, dynamic> toMap() {
     return {
-      'confirmedAt': confirmedAt != null
-          ? Timestamp.fromDate(confirmedAt!)
-          : null,
-      'inProgressAt': inProgressAt != null
-          ? Timestamp.fromDate(inProgressAt!)
-          : null,
-      'deliveredAt': deliveredAt != null
-          ? Timestamp.fromDate(deliveredAt!)
-          : null,
-      'revisionRequestedAt': revisionRequestedAt != null
-          ? Timestamp.fromDate(revisionRequestedAt!)
-          : null,
-      'completedAt': completedAt != null
-          ? Timestamp.fromDate(completedAt!)
-          : null,
-      'canceledAt': canceledAt != null ? Timestamp.fromDate(canceledAt!) : null,
+      'confirmedAt': confirmedAt?.toIso8601String(),
+      'inProgressAt': inProgressAt?.toIso8601String(),
+      'deliveredAt': deliveredAt?.toIso8601String(),
+      'revisionRequestedAt': revisionRequestedAt?.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
+      'canceledAt': canceledAt?.toIso8601String(),
     };
   }
 }

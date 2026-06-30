@@ -1,6 +1,6 @@
+import 'package:laqta/features/booking/data/datasources/api_booking_remote_data_source.dart';
 import 'package:laqta/features/booking/data/datasources/booking_remote_data_source.dart';
 import 'package:flutter/foundation.dart';
-import 'package:laqta/features/booking/data/datasources/firestore_booking_remote_data_source.dart';
 import 'package:laqta/features/booking/data/repositories/booking_repository_impl.dart';
 import 'package:laqta/features/booking/domain/repositories/booking_repository.dart';
 import 'package:laqta/features/booking/domain/usecases/create_booking.dart';
@@ -12,7 +12,7 @@ import 'package:laqta/features/booking/domain/usecases/update_booking.dart';
 
 class BookingDependencies {
   static final BookingRemoteDataSource _remoteDataSource =
-      FirestoreBookingRemoteDataSource();
+      ApiBookingRemoteDataSource();
   static BookingRepository? _repositoryOverride;
 
   @visibleForTesting
