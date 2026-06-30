@@ -176,7 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final controller = TextEditingController(
       text: fieldKey == 'governorate'
           ? _user!.governorate
-          : (_user!.toFirestore()[fieldKey] ?? '').toString(),
+          : (_user!.toJson()[fieldKey] ?? '').toString(),
     );
     final newValue = await showDialog<String>(
       context: context,

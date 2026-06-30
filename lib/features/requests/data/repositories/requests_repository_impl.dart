@@ -1,6 +1,6 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/booking/data/mappers/booking_mapper.dart';
 import 'package:laqta/features/booking/domain/entities/booking.dart';
 import 'package:laqta/features/requests/data/datasources/requests_remote_data_source.dart';
@@ -132,11 +132,11 @@ class RequestsRepositoryImpl implements RequestsRepository {
         booking: bookingDto,
       );
       return Result.success(null);
-    } on BackendFunctionException catch (error) {
+    } on BackendApiException catch (error) {
       return Result.failure(
         Failure(
-          message: error.message ?? 'Failed to accept offer',
-          code: error.code,
+          message: error.message,
+          code: error.statusCode?.toString(),
         ),
       );
     } catch (_) {

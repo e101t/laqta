@@ -1,6 +1,6 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/settings/data/datasources/settings_remote_data_source.dart';
 import 'package:laqta/features/settings/domain/entities/report_submission.dart';
 import 'package:laqta/features/settings/domain/repositories/settings_repository.dart';
@@ -25,11 +25,11 @@ class SettingsRepositoryImpl implements SettingsRepository {
     try {
       await _remoteDataSource.deleteUserData(userId);
       return Result.success(null);
-    } on BackendFunctionException catch (error) {
+    } on BackendApiException catch (error) {
       return Result.failure(
         Failure(
-          message: error.message ?? 'Failed to delete user data',
-          code: error.code,
+          message: error.message,
+          code: error.statusCode?.toString(),
         ),
       );
     } catch (_) {

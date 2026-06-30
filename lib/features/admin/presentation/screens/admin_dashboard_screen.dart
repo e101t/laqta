@@ -1,7 +1,6 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
-import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_disputes_screen.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_reports_screen.dart';
 import 'package:laqta/features/admin/presentation/screens/admin_users_screen.dart';
@@ -14,12 +13,10 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  final _apiClient = BackendApiClient();
   bool _isLoading = true;
   bool _hasError = false;
   _AdminStats? _stats;
-
-  final LegacyDataStore _firestore = LegacyDataStore.instance;
-  late final SecureFirestore _secure = SecureFirestore(_firestore);
 
   @override
   void initState() {
@@ -34,38 +31,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
 
     try {
-      final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day);
-      final requestsSnapshot = await _secure.guard(
-        () => _firestore
-            .collection('requests')
-            .where(
-              'createdAt',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
-            )
-            .get(),
-      );
-      final bookingsSnapshot = await _secure.guard(
-        () => _firestore.collection('bookings').get(),
-      );
-      final cancellationsSnapshot = await _secure.guard(
-        () => _firestore
-            .collection('bookings')
-            .where('status', isEqualTo: 'canceled')
-            .get(),
-      );
-      final disputesSnapshot = await _secure.guard(
-        () => _firestore
-            .collection('disputes')
-            .where('status', isEqualTo: 'open')
-            .get(),
-      );
-
+      final response = await _apiClient.get('/admin/stats');
+      final data = response is Map<String, dynamic> ? response : <String, dynamic>{};
+      final stats = data['stats'] is Map<String, dynamic>
+          ? data['stats'] as Map<String, dynamic>
+          : data;
       _stats = _AdminStats(
-        requestsToday: requestsSnapshot.docs.length,
-        bookingsTotal: bookingsSnapshot.docs.length,
-        cancellations: cancellationsSnapshot.docs.length,
-        openDisputes: disputesSnapshot.docs.length,
+        requestsToday: (stats['requestsToday'] as num?)?.toInt() ?? 0,
+        bookingsTotal: (stats['bookingsTotal'] as num?)?.toInt() ?? 0,
+        cancellations: (stats['cancellations'] as num?)?.toInt() ?? 0,
+        openDisputes: (stats['openDisputes'] as num?)?.toInt() ?? 0,
       );
     } catch (_) {
       _hasError = true;

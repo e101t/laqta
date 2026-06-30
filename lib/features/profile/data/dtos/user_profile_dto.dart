@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/services/backend_config.dart';
 
 class UserProfileDto {
@@ -47,13 +46,6 @@ class UserProfileDto {
     required this.createdAt,
     required this.updatedAt,
   });
-
-  factory UserProfileDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return UserProfileDto.fromMap(doc.id, data);
-  }
 
   factory UserProfileDto.fromMap(String id, Map<String, dynamic> data) {
     return UserProfileDto(
@@ -133,22 +125,14 @@ class UserProfileDto {
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
   }
 
   static DateTime? _readNullableDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is DateTime) return value;
+    if (value is String && value.isNotEmpty) return DateTime.tryParse(value);
     return null;
   }
 

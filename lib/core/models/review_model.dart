@@ -1,13 +1,11 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class ReviewModel {
   final String id;
   final String bookingId;
   final String reviewerId;
-  final String targetId; // photographerId
-  final int rating; // 1-5
+  final String targetId;
+  final int rating;
   final int qualityRating;
   final int communicationRating;
   final int onTimeRating;
@@ -31,33 +29,24 @@ class ReviewModel {
     required this.createdAt,
   });
 
-  factory ReviewModel.fromFirestore(DocumentSnapshot doc) {
-    final data = firestoreMap(doc.data());
+  factory ReviewModel.fromMap(String id, Map<String, dynamic> data) {
     return ReviewModel(
-      id: doc.id,
+      id: id,
       bookingId: readString(data, 'bookingId'),
       reviewerId: readString(data, 'reviewerId'),
       targetId: readString(data, 'targetId'),
       rating: readInt(data, 'rating', defaultValue: 5),
       qualityRating: readInt(data, 'qualityRating', defaultValue: 5),
-      communicationRating: readInt(
-        data,
-        'communicationRating',
-        defaultValue: 5,
-      ),
+      communicationRating: readInt(data, 'communicationRating', defaultValue: 5),
       onTimeRating: readInt(data, 'onTimeRating', defaultValue: 5),
-      deliverySpeedRating: readInt(
-        data,
-        'deliverySpeedRating',
-        defaultValue: 5,
-      ),
+      deliverySpeedRating: readInt(data, 'deliverySpeedRating', defaultValue: 5),
       recommend: data['recommend'] is bool ? data['recommend'] as bool : null,
       comment: readNullableString(data, 'comment'),
       createdAt: readDateTime(data, 'createdAt'),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'bookingId': bookingId,
       'reviewerId': reviewerId,
@@ -69,7 +58,7 @@ class ReviewModel {
       'deliverySpeedRating': deliverySpeedRating,
       'recommend': recommend,
       'comment': comment,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

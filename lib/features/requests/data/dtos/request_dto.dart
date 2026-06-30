@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/services/backend_config.dart';
 
 class RequestDto {
@@ -57,43 +56,6 @@ class RequestDto {
     this.locationLabel,
     this.location,
   });
-
-  factory RequestDto.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return RequestDto(
-      id: doc.id,
-      clientId: _readString(data, 'clientId'),
-      type: _readString(data, 'type'),
-      date: _readString(data, 'date'),
-      time: _readString(data, 'time'),
-      governorate: _readString(data, 'governorate'),
-      address: _readNullableString(data, 'address'),
-      budgetMin: _readNullableDouble(data, 'budgetMin'),
-      budgetMax: _readNullableDouble(data, 'budgetMax'),
-      durationHours: _readInt(data, 'duration', fallback: 1),
-      style: _readNullableString(data, 'style'),
-      deliverables: _readMap(data['deliverables']),
-      notes: _readNullableString(data, 'notes'),
-      referenceImageMediaIds: _readStringList(data['referenceImageMediaIds']),
-      referenceImages: _resolveReferenceImages(data),
-      status: _readString(data, 'status', fallback: 'draft'),
-      offersCount: _readInt(data, 'offersCount', fallback: 0),
-      selectedOfferId: _readNullableString(data, 'selectedOfferId'),
-      selectedPhotographerId: _readNullableString(
-        data,
-        'selectedPhotographerId',
-      ),
-      expiresAt: _readNullableDateTime(data['expiresAt']),
-      location: RequestLocationDto.fromMap(
-        _readMap(data['location']) ?? <String, dynamic>{},
-      ),
-      latitude: _readNullableDouble(data, 'latitude'),
-      longitude: _readNullableDouble(data, 'longitude'),
-      locationLabel: _readNullableString(data, 'locationLabel'),
-      createdAt: _readDateTime(data['createdAt']),
-      updatedAt: _readDateTime(data['updatedAt']),
-    );
-  }
 
   factory RequestDto.fromJson(Map<String, dynamic> json) {
     final location = RequestLocationDto.fromMap(_readMap(json['location']));
@@ -164,13 +126,13 @@ class RequestDto {
       'offersCount': offersCount,
       'selectedOfferId': selectedOfferId,
       'selectedPhotographerId': selectedPhotographerId,
-      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
+      'expiresAt': expiresAt?.toIso8601String(),
       'latitude': latitude,
       'longitude': longitude,
       'locationLabel': locationLabel,
       'location': location?.toMap(),
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -308,28 +270,14 @@ class RequestDto {
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is String && value.isNotEmpty) {
-      return DateTime.tryParse(value) ?? DateTime.now();
-    }
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String && value.isNotEmpty) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is DateTime) return value;
     return DateTime.now();
   }
 
   static DateTime? _readNullableDateTime(dynamic value) {
-    if (value is String && value.isNotEmpty) {
-      return DateTime.tryParse(value);
-    }
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is String && value.isNotEmpty) return DateTime.tryParse(value);
+    if (value is DateTime) return value;
     return null;
   }
 }

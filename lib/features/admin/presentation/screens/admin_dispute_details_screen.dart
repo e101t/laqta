@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
@@ -95,28 +94,16 @@ class _AdminDisputeDetailsScreenState extends State<AdminDisputeDetailsScreen> {
         'status': bookingStatus,
         'disputeId': widget.dispute.id,
         'timeline': {
-          'confirmedAt': timeline.confirmedAt != null
-              ? Timestamp.fromDate(timeline.confirmedAt!)
-              : Timestamp.fromDate(_booking!.createdAt),
-          'inProgressAt': timeline.inProgressAt != null
-              ? Timestamp.fromDate(timeline.inProgressAt!)
-              : null,
-          'deliveredAt': timeline.deliveredAt != null
-              ? Timestamp.fromDate(timeline.deliveredAt!)
-              : null,
-          'revisionRequestedAt': timeline.revisionRequestedAt != null
-              ? Timestamp.fromDate(timeline.revisionRequestedAt!)
-              : null,
+          'confirmedAt': (timeline.confirmedAt ?? _booking!.createdAt).toIso8601String(),
+          'inProgressAt': timeline.inProgressAt?.toIso8601String(),
+          'deliveredAt': timeline.deliveredAt?.toIso8601String(),
+          'revisionRequestedAt': timeline.revisionRequestedAt?.toIso8601String(),
           'completedAt': bookingStatus == AppConstants.bookingCompleted
-              ? Timestamp.fromDate(now)
-              : (timeline.completedAt != null
-                    ? Timestamp.fromDate(timeline.completedAt!)
-                    : null),
+              ? now.toIso8601String()
+              : timeline.completedAt?.toIso8601String(),
           'canceledAt': bookingStatus == AppConstants.bookingCanceled
-              ? Timestamp.fromDate(now)
-              : (timeline.canceledAt != null
-                    ? Timestamp.fromDate(timeline.canceledAt!)
-                    : null),
+              ? now.toIso8601String()
+              : timeline.canceledAt?.toIso8601String(),
         },
       };
       await BookingDependencies.updateBooking().call(

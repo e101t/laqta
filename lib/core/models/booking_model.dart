@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class BookingModel {
@@ -8,13 +6,13 @@ class BookingModel {
   final String photographerId;
   final String? requestId;
   final String? offerId;
-  final String date; // YYYY-MM-DD
-  final String time; // HH:mm
-  final int duration; // minutes
-  final String type; // specialty
+  final String date;
+  final String time;
+  final int duration;
+  final String type;
   final double price;
   final String currency;
-  final String status; // pending, confirmed, rejected, done, canceled
+  final String status;
   final PaymentInfo payment;
   final LocationInfo location;
   final DeliverablesInfo deliverables;
@@ -55,42 +53,7 @@ class BookingModel {
     required this.updatedAt,
   });
 
-  factory BookingModel.fromFirestore(DocumentSnapshot doc) {
-    final data = firestoreMap(doc.data());
-    final paymentMap = readMapOrNull(data, 'payment') ?? <String, dynamic>{};
-    final locationMap = readMapOrNull(data, 'location') ?? <String, dynamic>{};
-    final deliverablesMap =
-        readMapOrNull(data, 'deliverables') ?? <String, dynamic>{};
-    final timelineMap = readMapOrNull(data, 'timeline') ?? <String, dynamic>{};
-    return BookingModel(
-      id: doc.id,
-      customerId: readString(data, 'customerId'),
-      photographerId: readString(data, 'photographerId'),
-      requestId: readNullableString(data, 'requestId'),
-      offerId: readNullableString(data, 'offerId'),
-      date: readString(data, 'date'),
-      time: readString(data, 'time'),
-      duration: readInt(data, 'duration', defaultValue: 60),
-      type: readString(data, 'type'),
-      price: readDouble(data, 'price'),
-      currency: readString(data, 'currency', defaultValue: 'IQD'),
-      status: readString(data, 'status', defaultValue: 'pending'),
-      payment: PaymentInfo.fromMap(paymentMap),
-      location: LocationInfo.fromMap(locationMap),
-      deliverables: DeliverablesInfo.fromMap(deliverablesMap),
-      notes: readNullableString(data, 'notes'),
-      chatId: readNullableString(data, 'chatId'),
-      deliveryId: readNullableString(data, 'deliveryId'),
-      disputeId: readNullableString(data, 'disputeId'),
-      revisionCount: readInt(data, 'revisionCount', defaultValue: 0),
-      canceledBy: readNullableString(data, 'canceledBy'),
-      timeline: BookingTimeline.fromMap(timelineMap),
-      createdAt: readDateTime(data, 'createdAt'),
-      updatedAt: readDateTime(data, 'updatedAt'),
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'customerId': customerId,
       'photographerId': photographerId,
@@ -113,8 +76,8 @@ class BookingModel {
       'revisionCount': revisionCount,
       'canceledBy': canceledBy,
       'timeline': timeline.toMap(),
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -159,17 +122,12 @@ class BookingModel {
 }
 
 class PaymentInfo {
-  final String status; // pending, succeeded, failed, refunded
+  final String status;
   final String? intentId;
   final double? amount;
   final DateTime? paidAt;
 
-  PaymentInfo({
-    this.status = 'pending',
-    this.intentId,
-    this.amount,
-    this.paidAt,
-  });
+  PaymentInfo({this.status = 'pending', this.intentId, this.amount, this.paidAt});
 
   factory PaymentInfo.fromMap(Map<String, dynamic> map) {
     return PaymentInfo(
@@ -185,16 +143,11 @@ class PaymentInfo {
       'status': status,
       'intentId': intentId,
       'amount': amount,
-      'paidAt': paidAt != null ? Timestamp.fromDate(paidAt!) : null,
+      'paidAt': paidAt?.toIso8601String(),
     };
   }
 
-  PaymentInfo copyWith({
-    String? status,
-    String? intentId,
-    double? amount,
-    DateTime? paidAt,
-  }) {
+  PaymentInfo copyWith({String? status, String? intentId, double? amount, DateTime? paidAt}) {
     return PaymentInfo(
       status: status ?? this.status,
       intentId: intentId ?? this.intentId,
@@ -219,9 +172,7 @@ class LocationInfo {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {'lat': lat, 'lng': lng, 'text': text};
-  }
+  Map<String, dynamic> toMap() => {'lat': lat, 'lng': lng, 'text': text};
 }
 
 class DeliverablesInfo {
@@ -290,22 +241,12 @@ class BookingTimeline {
 
   Map<String, dynamic> toMap() {
     return {
-      'confirmedAt': confirmedAt != null
-          ? Timestamp.fromDate(confirmedAt!)
-          : null,
-      'inProgressAt': inProgressAt != null
-          ? Timestamp.fromDate(inProgressAt!)
-          : null,
-      'deliveredAt': deliveredAt != null
-          ? Timestamp.fromDate(deliveredAt!)
-          : null,
-      'revisionRequestedAt': revisionRequestedAt != null
-          ? Timestamp.fromDate(revisionRequestedAt!)
-          : null,
-      'completedAt': completedAt != null
-          ? Timestamp.fromDate(completedAt!)
-          : null,
-      'canceledAt': canceledAt != null ? Timestamp.fromDate(canceledAt!) : null,
+      'confirmedAt': confirmedAt?.toIso8601String(),
+      'inProgressAt': inProgressAt?.toIso8601String(),
+      'deliveredAt': deliveredAt?.toIso8601String(),
+      'revisionRequestedAt': revisionRequestedAt?.toIso8601String(),
+      'completedAt': completedAt?.toIso8601String(),
+      'canceledAt': canceledAt?.toIso8601String(),
     };
   }
 }

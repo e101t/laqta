@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
@@ -30,27 +28,6 @@ class StoryModel {
     required this.isActive,
   });
 
-  factory StoryModel.fromFirestore(DocumentSnapshot doc) {
-    final data = firestoreMap(doc.data());
-    final createdAt = readDate(data['createdAt']) ?? DateTime.now();
-    final expiresAt =
-        readDate(data['expiresAt']) ?? createdAt.add(const Duration(hours: 24));
-
-    return StoryModel(
-      storyId: doc.id,
-      photographerId: readString(data, 'photographerId'),
-      photographerName: readString(data, 'photographerName'),
-      photographerPhotoUrl: readNullableString(data, 'photographerPhotoUrl'),
-      mediaId: readNullableString(data, 'mediaId'),
-      imageUrl: _resolveImageUrl(data),
-      caption: readNullableString(data, 'caption'),
-      createdAt: createdAt,
-      expiresAt: expiresAt,
-      views: _parseViews(data['views']),
-      isActive: DateTime.now().isBefore(expiresAt),
-    );
-  }
-
   factory StoryModel.fromJson(Map<String, dynamic> json) {
     final createdAt = DateTime.parse(json['createdAt'] as String);
     final expiresAt = DateTime.parse(json['expiresAt'] as String);
@@ -72,7 +49,7 @@ class StoryModel {
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'photographerId': photographerId,
       'photographerName': photographerName,
@@ -80,8 +57,8 @@ class StoryModel {
       'mediaId': mediaId,
       if (mediaId == null || mediaId!.isEmpty) 'imageUrl': imageUrl,
       'caption': caption,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'expiresAt': Timestamp.fromDate(expiresAt),
+      'createdAt': createdAt.toIso8601String(),
+      'expiresAt': expiresAt.toIso8601String(),
       'isActive': isActive,
     };
   }
@@ -102,14 +79,6 @@ class StoryModel {
         .whereType<Map<dynamic, dynamic>>()
         .map((view) => StoryView.fromMap(Map<String, dynamic>.from(view)))
         .toList();
-  }
-
-  static String _resolveImageUrl(Map<String, dynamic> data) {
-    final mediaId = readNullableString(data, 'mediaId');
-    if (mediaId != null && mediaId.isNotEmpty) {
-      return BackendConfig.mediaContentUrl(mediaId);
-    }
-    return readString(data, 'imageUrl');
   }
 
   static String _resolveImageUrlFromJson(Map<String, dynamic> data) {
@@ -176,7 +145,7 @@ class StoryView {
     return {
       'userId': userId,
       'userName': userName,
-      'viewedAt': Timestamp.fromDate(viewedAt),
+      'viewedAt': viewedAt.toIso8601String(),
     };
   }
 }

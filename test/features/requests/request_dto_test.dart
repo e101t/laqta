@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:laqta/features/requests/data/dtos/request_dto.dart';
 
@@ -46,8 +45,8 @@ void main() {
     expect((map['location'] as Map)['lat'], 33.3128);
     expect((map['location'] as Map)['lng'], 44.3615);
     expect((map['location'] as Map)['label'], 'Baghdad');
-    expect(map['createdAt'], isA<Timestamp>());
-    expect(map['updatedAt'], isA<Timestamp>());
+    expect(map['createdAt'], isA<String>());
+    expect(map['updatedAt'], isA<String>());
   });
 
   test('RequestDto.fromJson accepts backend request payload shape', () {

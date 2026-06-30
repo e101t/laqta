@@ -1,26 +1,24 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class UserModel {
   final String uid;
-  final String role; // customer, photographer, admin
+  final String role;
   final String name;
-  final String? username; // NEW: Unique username
+  final String? username;
   final String? email;
   final String? phone;
   final String? photoUrl;
   final String governorate;
-  final String? gender; // NEW: male, female
-  final int? age; // NEW: User's age
-  final int? birthYear; // NEW: Birth year
-  final String lang; // ar, en
+  final String? gender;
+  final int? age;
+  final int? birthYear;
+  final String lang;
   final String? fcmToken;
   final bool profileCompleted;
-  final bool over18Confirmed; // NEW: Confirmation for 18+ age
-  final List<String>? interests; // For customers
-  final List<String> blockedUsers; // Users blocked by this user
-  final DateTime? lastSeen; // Timestamp for online status
+  final bool over18Confirmed;
+  final List<String>? interests;
+  final List<String> blockedUsers;
+  final DateTime? lastSeen;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -47,10 +45,9 @@ class UserModel {
     required this.updatedAt,
   });
 
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = firestoreMap(doc.data());
+  factory UserModel.fromMap(String id, Map<String, dynamic> data) {
     return UserModel(
-      uid: doc.id,
+      uid: id,
       role: readString(data, 'role', defaultValue: 'customer'),
       name: readString(data, 'name'),
       username: readNullableString(data, 'username'),
@@ -73,7 +70,7 @@ class UserModel {
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'role': role,
       'name': name,
@@ -91,9 +88,9 @@ class UserModel {
       'over18Confirmed': over18Confirmed,
       'interests': interests,
       'blockedUsers': blockedUsers,
-      'lastSeen': lastSeen != null ? Timestamp.fromDate(lastSeen!) : null,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'lastSeen': lastSeen?.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 

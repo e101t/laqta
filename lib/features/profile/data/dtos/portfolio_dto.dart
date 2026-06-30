@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/services/backend_config.dart';
 
 class PortfolioDto {
@@ -12,43 +11,11 @@ class PortfolioDto {
     required this.images,
   });
 
-  factory PortfolioDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
-    final imagesRaw = data['images'];
-    final rawImages = imagesRaw is List
-        ? imagesRaw.whereType<Map<dynamic, dynamic>>()
-        : const <Map<dynamic, dynamic>>[];
-
-    return PortfolioDto(
-      id: doc.id,
-      photographerId: _readString(data, 'photographerId'),
-      images: rawImages
-          .map(
-            (img) => PortfolioImageDto.fromMap(Map<String, dynamic>.from(img)),
-          )
-          .toList(),
-    );
-  }
-
   Map<String, dynamic> toMap() {
     return {
       'photographerId': photographerId,
       'images': images.map((img) => img.toMap()).toList(),
     };
-  }
-
-  static String _readString(
-    Map<String, dynamic> data,
-    String key, {
-    String fallback = '',
-  }) {
-    final value = data[key];
-    if (value is String) {
-      return value;
-    }
-    return fallback;
   }
 }
 
@@ -83,27 +50,19 @@ class PortfolioImageDto {
       'url': url,
       'w': width,
       'h': height,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
-  static String _readString(
-    Map<String, dynamic> data,
-    String key, {
-    String fallback = '',
-  }) {
+  static String _readString(Map<String, dynamic> data, String key, {String fallback = ''}) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
+    if (value is String) return value;
     return fallback;
   }
 
   static String? _readNullableString(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
+    if (value is String) return value;
     return null;
   }
 
@@ -117,25 +76,15 @@ class PortfolioImageDto {
 
   static int? _readNullableInt(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    if (value is String) {
-      return int.tryParse(value);
-    }
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
     return null;
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
   }
 }

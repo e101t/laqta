@@ -1,8 +1,7 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
-import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/notifications/domain/entities/notification_model.dart';
 import 'package:laqta/features/notifications/notifications_dependencies.dart';
 
@@ -14,18 +13,33 @@ class AdminUsersScreen extends StatefulWidget {
 }
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
-  final LegacyDataStore _firestore = LegacyDataStore.instance;
-  late final SecureFirestore _secure = SecureFirestore(_firestore);
+  final _apiClient = BackendApiClient();
+  late Future<List<Map<String, dynamic>>> _usersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  void _load() {
+    _usersFuture = _fetchUsers();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchUsers() async {
+    final response = await _apiClient.get('/admin/users?sort=createdAt:desc');
+    if (response is! Map<String, dynamic>) return const [];
+    final list = response['users'];
+    if (list is! List) return const [];
+    return list.whereType<Map<Object?, Object?>>().map(Map<String, dynamic>.from).toList();
+  }
 
   bool _isBlocked(List<dynamic>? blockedUsers) {
-    return blockedUsers?.whereType<String>().contains(
-          AppConstants.adminBlockMarker,
-        ) ??
-        false;
+    return blockedUsers?.whereType<String>().contains(AppConstants.adminBlockMarker) ?? false;
   }
 
   Future<void> _toggleBlock(
-    DocumentReference<Map<String, dynamic>> ref,
+    String userId,
     List<dynamic>? blockedUsers,
   ) async {
     final current = blockedUsers?.whereType<String>().toList() ?? <String>[];
@@ -35,7 +49,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     } else {
       current.add(AppConstants.adminBlockMarker);
     }
-    await _secure.guard(() => ref.update({'blockedUsers': current}));
+    await _apiClient.patch('/admin/users/$userId', body: {'blockedUsers': current});
+    setState(_load);
   }
 
   Future<void> _sendWarning(String userId, String name) async {
@@ -58,9 +73,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(localizations.warningFailed)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(localizations.warningFailed)));
       }
     }
   }
@@ -74,11 +88,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(localizations.adminUsers)),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _firestore
-            .collection('users')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _usersFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -86,13 +97,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           if (snapshot.hasError) {
             return Center(
               child: TextButton(
-                onPressed: () => setState(() {}),
+                onPressed: () => setState(_load),
                 child: Text(localizations.retry),
               ),
             );
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          final docs = snapshot.data ?? [];
           if (docs.isEmpty) {
             return Center(child: Text(localizations.usersEmpty));
           }
@@ -101,10 +112,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: docs.length,
             itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data();
-              final name = (data['name'] ?? localizations.notSpecified)
-                  .toString();
+              final data = docs[index];
+              final userId = (data['id'] ?? data['userId'] ?? '').toString();
+              final name = (data['name'] ?? localizations.notSpecified).toString();
               final role = (data['role'] ?? '').toString();
               final governorate = (data['governorate'] ?? '').toString();
               final blockedUsers = data['blockedUsers'] as List<dynamic>?;
@@ -117,9 +127,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'toggleBlock') {
-                        await _toggleBlock(doc.reference, blockedUsers);
+                        await _toggleBlock(userId, blockedUsers);
                       } else if (value == 'warn') {
-                        await _sendWarning(doc.id, name);
+                        await _sendWarning(userId, name);
                       }
                     },
                     itemBuilder: (context) => [

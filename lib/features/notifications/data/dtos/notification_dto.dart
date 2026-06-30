@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 class NotificationDto {
   final String id;
   final String userId;
@@ -25,24 +23,6 @@ class NotificationDto {
     this.actionUrl,
   });
 
-  factory NotificationDto.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return NotificationDto(
-      id: doc.id,
-      userId: _readString(data, 'userId'),
-      title: _readString(data, 'title'),
-      body: _readString(data, 'body'),
-      type: _readString(data, 'type', fallback: 'system'),
-      data: _readMapOrNull(data['data']),
-      isRead: _readBool(data, 'isRead'),
-      createdAt: _readDateTime(data['createdAt']),
-      imageUrl: _readNullableString(data, 'imageUrl'),
-      actionUrl: _readNullableString(data, 'actionUrl'),
-    );
-  }
-
   factory NotificationDto.fromJson(Map<String, dynamic> json) {
     return NotificationDto(
       id: _readString(json, 'id'),
@@ -58,68 +38,48 @@ class NotificationDto {
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'userId': userId,
       'title': title,
       'body': body,
       'type': type,
       'data': data,
       'isRead': isRead,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
       'imageUrl': imageUrl,
       'actionUrl': actionUrl,
     };
   }
 
-  static String _readString(
-    Map<String, dynamic> data,
-    String key, {
-    String fallback = '',
-  }) {
+  static String _readString(Map<String, dynamic> data, String key, {String fallback = ''}) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
+    if (value is String) return value;
     return fallback;
   }
 
   static String? _readNullableString(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is String) {
-      return value;
-    }
+    if (value is String) return value;
     return null;
   }
 
   static bool _readBool(Map<String, dynamic> data, String key) {
     final value = data[key];
-    if (value is bool) {
-      return value;
-    }
+    if (value is bool) return value;
     return false;
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
-    if (value is String) {
-      return DateTime.tryParse(value) ?? DateTime.now();
-    }
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
   }
 
   static Map<String, dynamic>? _readMapOrNull(dynamic value) {
-    if (value is Map<String, dynamic>) {
-      return value;
-    }
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
     return null;
   }
 }

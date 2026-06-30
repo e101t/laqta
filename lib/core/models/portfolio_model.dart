@@ -1,5 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
@@ -14,17 +12,7 @@ class PortfolioModel {
     required this.images,
   });
 
-  factory PortfolioModel.fromFirestore(DocumentSnapshot doc) {
-    final data = firestoreMap(doc.data());
-    final rawImages = readMapList(data, 'images');
-    return PortfolioModel(
-      id: doc.id,
-      photographerId: readString(data, 'photographerId'),
-      images: rawImages.map(PortfolioImage.fromMap).toList(),
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'photographerId': photographerId,
       'images': images.map((img) => img.toMap()).toList(),
@@ -39,13 +27,7 @@ class PortfolioImage {
   final int? height;
   final DateTime createdAt;
 
-  PortfolioImage({
-    this.mediaId,
-    required this.url,
-    this.width,
-    this.height,
-    required this.createdAt,
-  });
+  PortfolioImage({this.mediaId, required this.url, this.width, this.height, required this.createdAt});
 
   factory PortfolioImage.fromMap(Map<String, dynamic> map) {
     final mediaId = readNullableString(map, 'mediaId');
@@ -66,7 +48,7 @@ class PortfolioImage {
       'url': url,
       'w': width,
       'h': height,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

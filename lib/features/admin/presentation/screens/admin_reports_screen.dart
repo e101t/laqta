@@ -1,7 +1,6 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:flutter/material.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
-import 'package:laqta/core/security/secure_firestore.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 
 class AdminReportsScreen extends StatefulWidget {
   const AdminReportsScreen({super.key});
@@ -11,28 +10,43 @@ class AdminReportsScreen extends StatefulWidget {
 }
 
 class _AdminReportsScreenState extends State<AdminReportsScreen> {
-  final LegacyDataStore _firestore = LegacyDataStore.instance;
-  late final SecureFirestore _secure = SecureFirestore(_firestore);
+  final _apiClient = BackendApiClient();
+  late Future<List<Map<String, dynamic>>> _reportsFuture;
 
-  String _formatTimestamp(dynamic value) {
-    if (value is Timestamp) {
-      final date = value.toDate();
-      return '${date.day}/${date.month}/${date.year}';
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  void _load() {
+    _reportsFuture = _fetchReports();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchReports() async {
+    final response = await _apiClient.get('/admin/reports?sort=createdAt:desc');
+    if (response is! Map<String, dynamic>) return const [];
+    final list = response['reports'];
+    if (list is! List) return const [];
+    return list.whereType<Map<Object?, Object?>>().map(Map<String, dynamic>.from).toList();
+  }
+
+  String _formatDate(dynamic value) {
+    if (value is String) {
+      final dt = DateTime.tryParse(value);
+      if (dt != null) return '${dt.day}/${dt.month}/${dt.year}';
     }
     return '-';
   }
 
-  Future<void> _updateStatus(
-    DocumentReference<Map<String, dynamic>> ref,
-    String status,
-  ) async {
-    await _secure.guard(() => ref.update({'status': status}));
+  Future<void> _updateStatus(String id, String status) async {
+    await _apiClient.patch('/admin/reports/$id/status', body: {'status': status});
+    setState(_load);
   }
 
-  Future<void> _deleteReport(
-    DocumentReference<Map<String, dynamic>> ref,
-  ) async {
-    await _secure.guard(() => ref.delete());
+  Future<void> _deleteReport(String id) async {
+    await _apiClient.delete('/admin/reports/$id');
+    setState(_load);
   }
 
   @override
@@ -42,11 +56,8 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(localizations.adminReports)),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _firestore
-            .collection('reports')
-            .orderBy('timestamp', descending: true)
-            .snapshots(),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _reportsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -54,13 +65,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
           if (snapshot.hasError) {
             return Center(
               child: TextButton(
-                onPressed: () => setState(() {}),
+                onPressed: () => setState(_load),
                 child: Text(localizations.retry),
               ),
             );
           }
 
-          final docs = snapshot.data?.docs ?? [];
+          final docs = snapshot.data ?? [];
           if (docs.isEmpty) {
             return Center(child: Text(localizations.reportsEmpty));
           }
@@ -69,14 +80,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             padding: const EdgeInsets.all(16),
             itemCount: docs.length,
             itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data();
+              final data = docs[index];
+              final id = (data['id'] ?? data['reportId'] ?? '').toString();
               final reason = (data['reason'] ?? '').toString();
               final status = (data['status'] ?? '').toString();
               final reportType = (data['reportType'] ?? '').toString();
               final reportedUserName =
-                  (data['reportedUserName'] ?? localizations.notSpecified)
-                      .toString();
+                  (data['reportedUserName'] ?? localizations.notSpecified).toString();
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
@@ -85,17 +95,17 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                     '${localizations.typeLabel}: $reportType\n'
                     '${localizations.reportedLabel}: $reportedUserName\n'
                     '${localizations.statusLabel}: $status\n'
-                    '${localizations.dateLabel}: ${_formatTimestamp(data['timestamp'])}',
+                    '${localizations.dateLabel}: ${_formatDate(data['createdAt'] ?? data['timestamp'])}',
                   ),
                   isThreeLine: true,
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) async {
                       if (value == 'resolve') {
-                        await _updateStatus(doc.reference, 'resolved');
+                        await _updateStatus(id, 'resolved');
                       } else if (value == 'dismiss') {
-                        await _updateStatus(doc.reference, 'dismissed');
+                        await _updateStatus(id, 'dismissed');
                       } else if (value == 'delete') {
-                        await _deleteReport(doc.reference);
+                        await _deleteReport(id);
                       }
                     },
                     itemBuilder: (context) => [

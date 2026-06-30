@@ -1,4 +1,3 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 import 'package:laqta/core/domain/failures/failure.dart';
 import 'package:laqta/core/domain/result/result.dart';
 import 'package:laqta/core/security/integrity_checker.dart';
@@ -44,11 +43,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
       await IntegrityChecker.instance.verifyForOperation('profile_update');
       await _remoteDataSource.updateUserProfile(userId, updates);
       return Result.success(null);
-    } on BackendFunctionException catch (e) {
+    } on BackendApiException catch (e) {
       return Result.failure(
         Failure(
-          message: e.message ?? 'Failed to update user profile',
-          code: e.code,
+          message: e.message,
+          code: e.statusCode?.toString(),
         ),
       );
     } catch (e) {
@@ -81,11 +80,11 @@ class ProfileRepositoryImpl implements ProfileRepository {
         'profileCompleted': data.profileCompleted,
       });
       return Result.success(null);
-    } on BackendFunctionException catch (e) {
+    } on BackendApiException catch (e) {
       return Result.failure(
         Failure(
-          message: e.message ?? 'Failed to save basic info',
-          code: e.code,
+          message: e.message,
+          code: e.statusCode?.toString(),
         ),
       );
     } catch (e) {

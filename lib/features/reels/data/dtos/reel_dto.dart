@@ -1,5 +1,4 @@
 import 'package:laqta/core/services/backend_config.dart';
-import 'package:laqta/core/utils/legacy_data_compat.dart';
 
 class ReelDto {
   final String id;
@@ -36,27 +35,6 @@ class ReelDto {
     required this.isVerified,
   });
 
-  factory ReelDto.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return ReelDto(
-      id: doc.id,
-      photographerId: _readString(data, 'photographerId'),
-      photographerName: _readString(data, 'photographerName'),
-      photographerPhotoUrl: _readNullableString(data, 'photographerPhotoUrl'),
-      mediaId: _readNullableString(data, 'mediaId'),
-      videoUrl: _resolveMediaUrl(data),
-      thumbnailUrl: _readNullableString(data, 'thumbnailUrl'),
-      caption: _readString(data, 'caption'),
-      tags: _readStringList(data['tags']),
-      views: _readInt(data, 'views'),
-      likes: _readInt(data, 'likes'),
-      comments: _readInt(data, 'comments'),
-      shares: _readInt(data, 'shares'),
-      createdAt: _readDateTime(data['createdAt']),
-      isVerified: _readBool(data, 'isVerified'),
-    );
-  }
-
   factory ReelDto.fromJson(Map<String, dynamic> data) {
     return ReelDto(
       id: _readString(data, 'id'),
@@ -91,7 +69,7 @@ class ReelDto {
       'likes': likes,
       'comments': comments,
       'shares': shares,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
       'isVerified': isVerified,
     };
   }
@@ -164,15 +142,8 @@ class ReelDto {
   }
 
   static DateTime _readDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
-    if (value is String && value.isNotEmpty) {
-      return DateTime.tryParse(value) ?? DateTime.now();
-    }
+    if (value is DateTime) return value;
+    if (value is String && value.isNotEmpty) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
   }
 }

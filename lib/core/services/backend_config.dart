@@ -31,18 +31,6 @@ class BackendConfig {
     return 'http://$_localLoopback:4000';
   }
 
-  static bool get useBackendRequests =>
-      const bool.fromEnvironment('LAQTA_USE_BACKEND_REQUESTS');
-
-  static bool get useBackendChat =>
-      const bool.fromEnvironment('LAQTA_USE_BACKEND_CHAT');
-
-  static bool get useBackendDeliveries =>
-      const bool.fromEnvironment('LAQTA_USE_BACKEND_DELIVERIES');
-
-  static bool get useBackendDisputes =>
-      const bool.fromEnvironment('LAQTA_USE_BACKEND_DISPUTES');
-
   static Uri apiUri(String path) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
     return Uri.parse('$baseUrl/api/v1$normalizedPath');

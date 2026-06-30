@@ -1,24 +1,20 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
 class PhotographerModel {
   final String uid;
   final List<String> specialties;
   final List<String> governorates;
-  final double rate; // 0-5
+  final double rate;
   final int reviewsCount;
   final double basePrice;
-  final String currency; // IQD
+  final String currency;
   final String bio;
   final String? instagram;
   final String? tiktok;
-  final GeoPoint? geo;
-  final bool isVerified; // Verified badge
-  final DateTime? verifiedAt; // Verification date
+  final bool isVerified;
+  final DateTime? verifiedAt;
   final DateTime updatedAt;
 
-  // Getter for compatibility - same as 'rate'
   double get rating => rate;
 
   PhotographerModel({
@@ -32,16 +28,14 @@ class PhotographerModel {
     required this.bio,
     this.instagram,
     this.tiktok,
-    this.geo,
     this.isVerified = false,
     this.verifiedAt,
     required this.updatedAt,
   });
 
-  factory PhotographerModel.fromFirestore(DocumentSnapshot doc) {
-    final data = firestoreMap(doc.data());
+  factory PhotographerModel.fromMap(String id, Map<String, dynamic> data) {
     return PhotographerModel(
-      uid: doc.id,
+      uid: id,
       specialties: readStringList(data, 'specialties'),
       governorates: readStringList(data, 'governorates'),
       rate: readDouble(data, 'rate'),
@@ -51,14 +45,13 @@ class PhotographerModel {
       bio: readString(data, 'bio'),
       instagram: readNullableString(data, 'instagram'),
       tiktok: readNullableString(data, 'tiktok'),
-      geo: readGeoPoint(data, 'geo'),
       isVerified: readBool(data, 'isVerified'),
       verifiedAt: readDate(data['verifiedAt']),
       updatedAt: readDateTime(data, 'updatedAt'),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'specialties': specialties,
       'governorates': governorates,
@@ -69,10 +62,9 @@ class PhotographerModel {
       'bio': bio,
       'instagram': instagram,
       'tiktok': tiktok,
-      'geo': geo,
       'isVerified': isVerified,
-      'verifiedAt': verifiedAt != null ? Timestamp.fromDate(verifiedAt!) : null,
-      'updatedAt': Timestamp.fromDate(updatedAt),
+      'verifiedAt': verifiedAt?.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -88,7 +80,6 @@ class PhotographerModel {
     String? bio,
     String? instagram,
     String? tiktok,
-    GeoPoint? geo,
     bool? isVerified,
     DateTime? verifiedAt,
     DateTime? updatedAt,
@@ -104,7 +95,6 @@ class PhotographerModel {
       bio: bio ?? this.bio,
       instagram: instagram ?? this.instagram,
       tiktok: tiktok ?? this.tiktok,
-      geo: geo ?? this.geo,
       isVerified: isVerified ?? this.isVerified,
       verifiedAt: verifiedAt ?? this.verifiedAt,
       updatedAt: updatedAt ?? DateTime.now(),

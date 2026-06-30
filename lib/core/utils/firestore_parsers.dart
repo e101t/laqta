@@ -1,16 +1,10 @@
-import 'package:laqta/core/utils/legacy_data_compat.dart';
-
 Map<String, dynamic> firestoreMap(dynamic data) {
   if (data is Map<String, dynamic>) return data;
   if (data is Map) return Map<String, dynamic>.from(data);
   return <String, dynamic>{};
 }
 
-String readString(
-  Map<String, dynamic> data,
-  String key, {
-  String defaultValue = '',
-}) {
+String readString(Map<String, dynamic> data, String key, {String defaultValue = ''}) {
   final value = data[key];
   if (value == null) return defaultValue;
   if (value is String) return value;
@@ -40,11 +34,7 @@ int? readNullableInt(Map<String, dynamic> data, String key) {
   return null;
 }
 
-double readDouble(
-  Map<String, dynamic> data,
-  String key, {
-  double defaultValue = 0.0,
-}) {
+double readDouble(Map<String, dynamic> data, String key, {double defaultValue = 0.0}) {
   final value = data[key];
   if (value is double) return value;
   if (value is num) return value.toDouble();
@@ -60,11 +50,7 @@ double? readNullableDouble(Map<String, dynamic> data, String key) {
   return null;
 }
 
-bool readBool(
-  Map<String, dynamic> data,
-  String key, {
-  bool defaultValue = false,
-}) {
+bool readBool(Map<String, dynamic> data, String key, {bool defaultValue = false}) {
   final value = data[key];
   if (value is bool) return value;
   if (value is num) return value != 0;
@@ -78,44 +64,31 @@ bool readBool(
 
 DateTime? readDate(dynamic value) {
   if (value == null) return null;
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
-  if (value is num) {
-    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-  }
+  if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
   if (value is String) {
     final parsed = DateTime.tryParse(value);
     if (parsed != null) return parsed;
     final millis = int.tryParse(value);
-    if (millis != null) {
-      return DateTime.fromMillisecondsSinceEpoch(millis);
-    }
+    if (millis != null) return DateTime.fromMillisecondsSinceEpoch(millis);
   }
   return null;
 }
 
-DateTime readDateTime(
-  Map<String, dynamic> data,
-  String key, {
-  DateTime? defaultValue,
-}) {
+DateTime readDateTime(Map<String, dynamic> data, String key, {DateTime? defaultValue}) {
   return readDate(data[key]) ?? defaultValue ?? DateTime.now();
 }
 
 List<String> readStringList(Map<String, dynamic> data, String key) {
   final value = data[key];
-  if (value is List) {
-    return value.whereType<String>().toList();
-  }
+  if (value is List) return value.whereType<String>().toList();
   return const [];
 }
 
 List<String>? readStringListOrNull(Map<String, dynamic> data, String key) {
   if (!data.containsKey(key)) return null;
   final value = data[key];
-  if (value is List) {
-    return value.whereType<String>().toList();
-  }
+  if (value is List) return value.whereType<String>().toList();
   return null;
 }
 
@@ -135,9 +108,4 @@ List<Map<String, dynamic>> readMapList(Map<String, dynamic> data, String key) {
         .toList();
   }
   return const [];
-}
-
-GeoPoint? readGeoPoint(Map<String, dynamic> data, String key) {
-  final value = data[key];
-  return value is GeoPoint ? value : null;
 }

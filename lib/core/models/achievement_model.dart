@@ -1,25 +1,12 @@
 // Achievements & Gamification System
 
-class Timestamp {
-  final DateTime dateTime;
-  Timestamp.fromDate(this.dateTime);
-  DateTime toDate() => dateTime;
-}
-
-class DocumentSnapshot {
-  final String id;
-  final Map<String, dynamic>? _data;
-  DocumentSnapshot(this.id, this._data);
-  Map<String, dynamic>? data() => _data;
-}
-
 class Achievement {
   final String achievementId;
   final String title;
   final String description;
   final String icon;
   final int requiredCount;
-  final String type; // bookings, reviews, followers, revenue, etc.
+  final String type;
   final int rewardPoints;
 
   Achievement({
@@ -75,7 +62,7 @@ class Achievement {
         title: 'الأعلى تقييماً 🏆',
         description: 'متوسط تقييمك 4.8+',
         icon: '🏆',
-        requiredCount: 48, // 4.8 * 10
+        requiredCount: 48,
         type: 'rating',
         rewardPoints: 800,
       ),
@@ -134,24 +121,23 @@ class UserAchievement {
     this.unlockedAt,
   });
 
-  factory UserAchievement.fromFirestore(dynamic doc) {
-    final data = _safeData(doc);
+  factory UserAchievement.fromJson(Map<String, dynamic> json) {
     return UserAchievement(
-      userId: _readString(data['userId']),
-      achievementId: _readString(data['achievementId']),
-      currentProgress: _readInt(data['currentProgress']),
-      isUnlocked: _readBool(data['isUnlocked']),
-      unlockedAt: _readDate(data['unlockedAt']),
+      userId: _readString(json['userId']),
+      achievementId: _readString(json['achievementId']),
+      currentProgress: _readInt(json['currentProgress']),
+      isUnlocked: _readBool(json['isUnlocked']),
+      unlockedAt: _readDate(json['unlockedAt']),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       'userId': userId,
       'achievementId': achievementId,
       'currentProgress': currentProgress,
       'isUnlocked': isUnlocked,
-      'unlockedAt': unlockedAt != null ? Timestamp.fromDate(unlockedAt!) : null,
+      'unlockedAt': unlockedAt?.toIso8601String(),
     };
   }
 
@@ -173,18 +159,6 @@ class UserAchievement {
       unlockedAt: unlockedAt ?? this.unlockedAt,
     );
   }
-}
-
-Map<String, dynamic> _safeData(dynamic doc) {
-  if (doc is Map<String, dynamic>) return doc;
-  if (doc is Map) return Map<String, dynamic>.from(doc);
-  if (doc is DocumentSnapshot) return doc.data() ?? <String, dynamic>{};
-  try {
-    final raw = doc?.data();
-    if (raw is Map<String, dynamic>) return raw;
-    if (raw is Map) return Map<String, dynamic>.from(raw);
-  } catch (_) {}
-  return <String, dynamic>{};
 }
 
 String _readString(dynamic value) {
@@ -212,18 +186,13 @@ bool _readBool(dynamic value) {
 }
 
 DateTime? _readDate(dynamic value) {
-  if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
-  if (value is num) {
-    return DateTime.fromMillisecondsSinceEpoch(value.toInt());
-  }
+  if (value is num) return DateTime.fromMillisecondsSinceEpoch(value.toInt());
   if (value is String) {
     final parsed = DateTime.tryParse(value);
     if (parsed != null) return parsed;
     final millis = int.tryParse(value);
-    if (millis != null) {
-      return DateTime.fromMillisecondsSinceEpoch(millis);
-    }
+    if (millis != null) return DateTime.fromMillisecondsSinceEpoch(millis);
   }
   return null;
 }
