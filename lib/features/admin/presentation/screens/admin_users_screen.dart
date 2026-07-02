@@ -45,7 +45,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         '${q.isNotEmpty ? '&search=${Uri.encodeComponent(q)}' : ''}';
     final response = await _apiClient.get(path);
     if (response is! Map<String, dynamic>) return const [];
-    final list = response['users'];
+    final list = response['items'];
     if (list is! List) return const [];
     return list
         .whereType<Map<Object?, Object?>>()
