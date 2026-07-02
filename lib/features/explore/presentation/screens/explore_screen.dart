@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/marketplace_assets.dart';
+import 'package:laqta/core/presentation/widgets/empty_state_widget.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
 import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
@@ -200,8 +201,10 @@ class _ExploreMarketplaceView extends StatelessWidget {
                   ),
                 )
               else if (nearbyPlaces.isEmpty && hasAnyResults)
-                const _ExploreStateMessage(
-                  message: 'لا توجد أماكن تصوير حالياً',
+                const EmptyStateWidget(
+                  icon: Icons.location_on_outlined,
+                  title: 'لا توجد أماكن تصوير حالياً',
+                  subtitle: 'جرّب البحث في منطقة مختلفة',
                 )
               else
                 SizedBox(

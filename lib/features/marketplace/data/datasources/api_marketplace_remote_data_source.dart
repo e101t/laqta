@@ -9,6 +9,8 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
 
   final BackendApiClient _apiClient;
 
+  // TODO(pre-launch): delete test accounts (ali aggg / LAQTA QA Admin) from
+  // production DB so their content no longer appears in the public feed.
   @override
   Future<List<MarketplaceFeedEntry>> getHomeFeed({
     required int limit,
