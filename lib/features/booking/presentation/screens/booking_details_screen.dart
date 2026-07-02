@@ -215,18 +215,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
             ? timeline.confirmedAt!.toIso8601String()
             : _booking!.createdAt.toIso8601String(),
         'inProgressAt': DateTime.now().toIso8601String(),
-        'deliveredAt': timeline.deliveredAt != null
-            ? timeline.deliveredAt!.toIso8601String()
-            : null,
-        'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? timeline.revisionRequestedAt!.toIso8601String()
-            : null,
-        'completedAt': timeline.completedAt != null
-            ? timeline.completedAt!.toIso8601String()
-            : null,
-        'canceledAt': timeline.canceledAt != null
-            ? timeline.canceledAt!.toIso8601String()
-            : null,
+        'deliveredAt': timeline.deliveredAt?.toIso8601String(),
+        'revisionRequestedAt': timeline.revisionRequestedAt?.toIso8601String(),
+        'completedAt': timeline.completedAt?.toIso8601String(),
+        'canceledAt': timeline.canceledAt?.toIso8601String(),
       },
     };
 
@@ -265,19 +257,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         'confirmedAt': timeline.confirmedAt != null
             ? timeline.confirmedAt!.toIso8601String()
             : _booking!.createdAt.toIso8601String(),
-        'inProgressAt': timeline.inProgressAt != null
-            ? timeline.inProgressAt!.toIso8601String()
-            : null,
+        'inProgressAt': timeline.inProgressAt?.toIso8601String(),
         'deliveredAt': DateTime.now().toIso8601String(),
-        'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? timeline.revisionRequestedAt!.toIso8601String()
-            : null,
-        'completedAt': timeline.completedAt != null
-            ? timeline.completedAt!.toIso8601String()
-            : null,
-        'canceledAt': timeline.canceledAt != null
-            ? timeline.canceledAt!.toIso8601String()
-            : null,
+        'revisionRequestedAt': timeline.revisionRequestedAt?.toIso8601String(),
+        'completedAt': timeline.completedAt?.toIso8601String(),
+        'canceledAt': timeline.canceledAt?.toIso8601String(),
       },
     };
 
@@ -304,19 +288,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         'confirmedAt': timeline.confirmedAt != null
             ? timeline.confirmedAt!.toIso8601String()
             : _booking!.createdAt.toIso8601String(),
-        'inProgressAt': timeline.inProgressAt != null
-            ? timeline.inProgressAt!.toIso8601String()
-            : null,
-        'deliveredAt': timeline.deliveredAt != null
-            ? timeline.deliveredAt!.toIso8601String()
-            : null,
-        'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? timeline.revisionRequestedAt!.toIso8601String()
-            : null,
+        'inProgressAt': timeline.inProgressAt?.toIso8601String(),
+        'deliveredAt': timeline.deliveredAt?.toIso8601String(),
+        'revisionRequestedAt': timeline.revisionRequestedAt?.toIso8601String(),
         'completedAt': DateTime.now().toIso8601String(),
-        'canceledAt': timeline.canceledAt != null
-            ? timeline.canceledAt!.toIso8601String()
-            : null,
+        'canceledAt': timeline.canceledAt?.toIso8601String(),
       },
     };
 
@@ -441,19 +417,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         'confirmedAt': timeline.confirmedAt != null
             ? timeline.confirmedAt!.toIso8601String()
             : _booking!.createdAt.toIso8601String(),
-        'inProgressAt': timeline.inProgressAt != null
-            ? timeline.inProgressAt!.toIso8601String()
-            : null,
-        'deliveredAt': timeline.deliveredAt != null
-            ? timeline.deliveredAt!.toIso8601String()
-            : null,
+        'inProgressAt': timeline.inProgressAt?.toIso8601String(),
+        'deliveredAt': timeline.deliveredAt?.toIso8601String(),
         'revisionRequestedAt': DateTime.now().toIso8601String(),
-        'completedAt': timeline.completedAt != null
-            ? timeline.completedAt!.toIso8601String()
-            : null,
-        'canceledAt': timeline.canceledAt != null
-            ? timeline.canceledAt!.toIso8601String()
-            : null,
+        'completedAt': timeline.completedAt?.toIso8601String(),
+        'canceledAt': timeline.canceledAt?.toIso8601String(),
       },
     };
 
@@ -599,18 +567,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         'confirmedAt': timeline.confirmedAt != null
             ? timeline.confirmedAt!.toIso8601String()
             : _booking!.createdAt.toIso8601String(),
-        'inProgressAt': timeline.inProgressAt != null
-            ? timeline.inProgressAt!.toIso8601String()
-            : null,
-        'deliveredAt': timeline.deliveredAt != null
-            ? timeline.deliveredAt!.toIso8601String()
-            : null,
-        'revisionRequestedAt': timeline.revisionRequestedAt != null
-            ? timeline.revisionRequestedAt!.toIso8601String()
-            : null,
-        'completedAt': timeline.completedAt != null
-            ? timeline.completedAt!.toIso8601String()
-            : null,
+        'inProgressAt': timeline.inProgressAt?.toIso8601String(),
+        'deliveredAt': timeline.deliveredAt?.toIso8601String(),
+        'revisionRequestedAt': timeline.revisionRequestedAt?.toIso8601String(),
+        'completedAt': timeline.completedAt?.toIso8601String(),
         'canceledAt': DateTime.now().toIso8601String(),
       },
     });
@@ -1492,4 +1452,3 @@ class _DisputeBanner extends StatelessWidget {
     );
   }
 }
-
