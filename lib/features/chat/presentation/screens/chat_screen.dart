@@ -207,10 +207,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              localizations.delete,
-              style: const TextStyle(color: Colors.red),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
             ),
+            child: Text(localizations.delete),
           ),
         ],
       ),

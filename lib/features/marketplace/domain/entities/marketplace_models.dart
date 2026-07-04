@@ -246,6 +246,7 @@ class MarketplaceExploreData {
   final List<MarketplaceVenue> nearbyPlaces;
   final List<MarketplaceReelSummary> trendingReels;
   final List<MarketplacePhotographerSummary> recommendedCreators;
+  final int availablePhotographerCount;
 
   const MarketplaceExploreData({
     required this.trendingPhotographers,
@@ -253,6 +254,7 @@ class MarketplaceExploreData {
     required this.nearbyPlaces,
     required this.trendingReels,
     required this.recommendedCreators,
+    this.availablePhotographerCount = 0,
   });
 }
 

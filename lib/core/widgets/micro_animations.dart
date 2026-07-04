@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:laqta/core/theme/laqta_tokens.dart';
 
@@ -98,6 +99,7 @@ class _ShutterHeartButtonState extends State<ShutterHeartButton>
   }
 
   void _handleTap() {
+    HapticFeedback.lightImpact();
     widget.onToggle();
     // Play the animation optimistically when moving into favorited state.
     if (!widget.isFavorited) {

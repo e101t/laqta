@@ -292,6 +292,7 @@ class MarketplaceExploreDto {
               .whereType<Map<String, dynamic>>()
               .map(MarketplacePhotographerSummaryDto.fromJson)
               .toList(growable: false),
+      availablePhotographerCount: _readInt(json['availablePhotographerCount']),
     );
   }
 }

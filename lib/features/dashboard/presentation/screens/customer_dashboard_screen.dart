@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/marketplace_assets.dart';
 import 'package:laqta/core/services/backend_config.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
 import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
@@ -119,12 +120,11 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             children: [
               Row(
-                textDirection: TextDirection.ltr,
                 children: [
                   Text(
                     'LAQTA',
                     style: textTheme.headlineSmall?.copyWith(
-                      color: const Color(0xFFD6A44A),
+                      color: LaqtaColors.accent,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2,
                     ),
@@ -170,7 +170,7 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: const Color(0xFFD6A44A),
+                                      color: LaqtaColors.accent,
                                       width: 1.3,
                                     ),
                                   ),
@@ -183,7 +183,7 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                                     child: story.id == 'follow'
                                         ? const Icon(
                                             Icons.add_rounded,
-                                            color: Color(0xFFD6A44A),
+                                            color: LaqtaColors.accent,
                                             size: 28,
                                           )
                                         : null,
@@ -224,7 +224,7 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                               _tabs[index],
                               style: textTheme.titleSmall?.copyWith(
                                 color: selected
-                                    ? const Color(0xFFD6A44A)
+                                    ? LaqtaColors.accent
                                     : Colors.white70,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -235,7 +235,7 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                               width: selected ? 28 : 0,
                               height: 2,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD6A44A),
+                                color: LaqtaColors.accent,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                             ),
@@ -414,7 +414,7 @@ class _FeedCard extends StatelessWidget {
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFD6A44A),
+                                    color: LaqtaColors.accent,
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: Text(

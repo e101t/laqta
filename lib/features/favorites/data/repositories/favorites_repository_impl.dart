@@ -66,6 +66,28 @@ class FavoritesRepositoryImpl implements FavoritesRepository {
   }
 
   @override
+  Future<Result<void>> addFavorite({required String photographerId}) async {
+    try {
+      await _remoteDataSource.addFavorite(photographerId);
+      return Result.success(null);
+    } catch (_) {
+      return Result.failure(
+        const Failure(message: 'Failed to add favorite'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<bool>> checkFavorite({required String photographerId}) async {
+    try {
+      final isFav = await _remoteDataSource.checkFavorite(photographerId);
+      return Result.success(isFav);
+    } catch (_) {
+      return Result.success(false);
+    }
+  }
+
+  @override
   Future<Result<void>> removeFavorite({
     required String userId,
     required String photographerId,

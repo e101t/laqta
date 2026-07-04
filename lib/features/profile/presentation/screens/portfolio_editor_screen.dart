@@ -337,7 +337,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
               Navigator.of(context).pop();
               _removeImage(index);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             child: const Text('حذف'),
           ),
         ],

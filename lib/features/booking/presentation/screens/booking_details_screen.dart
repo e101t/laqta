@@ -74,6 +74,17 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     if (widget.initialBooking != null) {
       _booking = widget.initialBooking;
       _isLoading = false;
+      if (_currentUserId.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _maybeFireConfetti());
+      } else {
+        Future.microtask(() async {
+          if (!mounted) return;
+          final userResult = await AuthDependencies.getCurrentUser().call();
+          if (!mounted) return;
+          setState(() => _currentUserId = userResult.valueOrNull?.id ?? '');
+          _maybeFireConfetti();
+        });
+      }
       return;
     }
     if (widget.loadOnInit) {
@@ -1278,8 +1289,9 @@ class _DeliverySection extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     itemBuilder: (context, index) {
                       final url = delivery!.photoUrls[index];
-                      return GestureDetector(
+                      return InkWell(
                         onTap: () => onOpenFile(url),
+                        borderRadius: BorderRadius.circular(8),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: BackendMediaImage(

@@ -6,6 +6,10 @@ abstract class FavoritesRepository {
     required String userId,
   });
 
+  Future<Result<void>> addFavorite({required String photographerId});
+
+  Future<Result<bool>> checkFavorite({required String photographerId});
+
   Future<Result<void>> removeFavorite({
     required String userId,
     required String photographerId,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// One selectable photography mood.
 class MoodOption {
@@ -86,7 +87,10 @@ class _MoodFilterState extends State<MoodFilter> {
           return _MoodCard(
             mood: mood,
             selected: selected,
-            onTap: () => widget.onSelect(selected ? null : mood.id),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              widget.onSelect(selected ? null : mood.id);
+            },
           );
         },
       ),

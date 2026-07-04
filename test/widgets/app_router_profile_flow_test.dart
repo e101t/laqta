@@ -31,7 +31,10 @@ void main() {
   });
 
   testWidgets('signed in without role routes to basic info', (tester) async {
-    SharedPreferences.setMockInitialValues({'language': 'en'});
+    SharedPreferences.setMockInitialValues({
+      'language': 'en',
+      'onboarding_seen': true,
+    });
 
     final session = MockBackendSessionService();
     final profileRepo = MockProfileRepository();
@@ -83,7 +86,10 @@ void main() {
   });
 
   testWidgets('signed in with role routes to basic info', (tester) async {
-    SharedPreferences.setMockInitialValues({'language': 'en'});
+    SharedPreferences.setMockInitialValues({
+      'language': 'en',
+      'onboarding_seen': true,
+    });
 
     final session = MockBackendSessionService();
     final profileRepo = MockProfileRepository();
@@ -137,7 +143,10 @@ void main() {
   testWidgets(
     'signed in incomplete user may stay on sign up details while finishing onboarding',
     (tester) async {
-      SharedPreferences.setMockInitialValues({'language': 'en'});
+      SharedPreferences.setMockInitialValues({
+        'language': 'en',
+        'onboarding_seen': true,
+      });
 
       final session = MockBackendSessionService();
       final profileRepo = MockProfileRepository();

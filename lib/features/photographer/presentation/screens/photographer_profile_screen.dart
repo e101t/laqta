@@ -11,6 +11,7 @@ import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
 import 'package:laqta/core/widgets/masonry_grid.dart';
 import 'package:laqta/core/widgets/micro_animations.dart';
 import 'package:laqta/features/chat/chat_dependencies.dart';
+import 'package:laqta/features/favorites/favorites_dependencies.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
 import 'package:laqta/features/marketplace/marketplace_dependencies.dart';
 import 'package:laqta/features/marketplace/presentation/controllers/marketplace_controllers.dart';
@@ -44,15 +45,49 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   bool _isFavorited = false;
+  bool _favoriteLoading = false;
   bool _trustStripVisible = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    Future.delayed(Duration.zero, () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _trustStripVisible = true);
+      _loadFavoriteState();
     });
+  }
+
+  Future<void> _loadFavoriteState() async {
+    final photographerId =
+        context.read<PhotographerProfileController>().photographerId;
+    final result = await FavoritesDependencies.checkFavorite().call(
+      photographerId: photographerId,
+    );
+    if (!mounted) return;
+    setState(() => _isFavorited = result.valueOrNull ?? false);
+  }
+
+  Future<void> _toggleFavorite(String photographerId) async {
+    if (_favoriteLoading) return;
+    setState(() {
+      _favoriteLoading = true;
+      _isFavorited = !_isFavorited; // optimistic update
+    });
+    final result = _isFavorited
+        ? await FavoritesDependencies.addFavorite().call(
+            photographerId: photographerId,
+          )
+        : await FavoritesDependencies.removeFavorite().call(
+            userId: '',
+            photographerId: photographerId,
+          );
+    if (!mounted) return;
+    if (!result.isSuccess) {
+      // revert on failure
+      setState(() => _isFavorited = !_isFavorited);
+    }
+    setState(() => _favoriteLoading = false);
   }
 
   @override
@@ -201,9 +236,9 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                   ),
                   const Positioned(
                     top: 18,
-                    left: 18,
+                    right: 18,
                     child: Icon(
-                      Icons.chevron_left_rounded,
+                      Icons.chevron_right_rounded,
                       color: Colors.white,
                       size: 22,
                     ),
@@ -216,8 +251,11 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                       children: [
                         ShutterHeartButton(
                           isFavorited: _isFavorited,
-                          onToggle: () =>
-                              setState(() => _isFavorited = !_isFavorited),
+                          onToggle: () => _toggleFavorite(
+                            context
+                                .read<PhotographerProfileController>()
+                                .photographerId,
+                          ),
                         ),
                         IconButton(
                           visualDensity: VisualDensity.compact,
@@ -248,7 +286,7 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: Container(
                         padding: const EdgeInsets.all(2.2),
                         decoration: BoxDecoration(
@@ -279,7 +317,6 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                     ),
                     const SizedBox(height: 10),
                     Row(
-                      textDirection: TextDirection.ltr,
                       children: [
                         Text(
                           profile.name,
@@ -293,14 +330,13 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                         if (profile.verified)
                           const Icon(
                             Icons.verified_rounded,
-                            color: Color(0xFF3B82F6),
+                            color: LaqtaColors.verifiedBlue,
                             size: 22,
                           ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Row(
-                      textDirection: TextDirection.ltr,
                       children: [
                         Text(
                           'مصور زفاف',
@@ -358,7 +394,6 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                       duration: const Duration(milliseconds: 400),
                       curve: Curves.easeOut,
                       child: Row(
-                        textDirection: TextDirection.ltr,
                         children: [
                           LaqtaMetricColumn(
                             value: '${profile.projectsCount}',
@@ -379,7 +414,6 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                     ),
                     const SizedBox(height: 18),
                     Row(
-                      textDirection: TextDirection.ltr,
                       children: [
                         LaqtaPrimaryAction(
                           label: 'احجز الآن',
@@ -395,38 +429,34 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                     ),
                     const SizedBox(height: 20),
                     Row(
-                      textDirection: TextDirection.ltr,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: _quickSections()
                           .map((item) => _quickCircle(item.$1, item.$2))
                           .toList(growable: false),
                     ),
                     const SizedBox(height: 18),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: TabBar(
-                        controller: _tabController,
-                        isScrollable: true,
-                        labelColor: LaqtaColors.accent,
-                        unselectedLabelColor: Colors.white54,
-                        indicatorColor: LaqtaColors.accent,
-                        tabs: const [
-                          Tab(text: 'المتابعة'),
-                          Tab(text: 'ريلز'),
-                          Tab(text: 'المراجعات'),
-                          Tab(text: 'الأعمال'),
-                        ],
-                      ),
+                    TabBar(
+                      controller: _tabController,
+                      isScrollable: true,
+                      labelColor: LaqtaColors.accent,
+                      unselectedLabelColor: Colors.white54,
+                      indicatorColor: LaqtaColors.accent,
+                      tabs: const [
+                        Tab(text: 'الأعمال'),
+                        Tab(text: 'المراجعات'),
+                        Tab(text: 'ريلز'),
+                        Tab(text: 'المتابعة'),
+                      ],
                     ),
                     SizedBox(
                       height: 420,
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          _galleryGrid(profile.portfolio.take(3).toList()),
-                          _reelsGrid(profile.reels),
-                          _reviewsPreview(profile),
                           _galleryGrid(profile.portfolio),
+                          _reviewsPreview(profile),
+                          _reelsGrid(profile.reels),
+                          _galleryGrid(profile.portfolio.take(3).toList()),
                         ],
                       ),
                     ),
@@ -658,7 +688,10 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                             ),
                       ),
                       const SizedBox(height: 6),
-                      const StarLightsRating(value: 5, size: 16),
+                      StarLightsRating(
+                        value: (profile.ratingAverage?.round() ?? 0).clamp(0, 5),
+                        size: 16,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         'تخصص موثّق ضمن ملف المصور الحالي مع جاهزية للحجز والترويج.',

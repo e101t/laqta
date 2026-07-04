@@ -38,7 +38,10 @@ class ApiPhotographerRemoteDataSource implements PhotographerRemoteDataSource {
       if (response is! Map<String, dynamic>) return null;
       final profile = response['profile'];
       if (profile is! Map<String, dynamic>) return null;
-      return PhotographerDetailsDto.fromJson({...profile, 'id': photographerId});
+      return PhotographerDetailsDto.fromJson({
+        ...profile,
+        'id': photographerId,
+      });
     } catch (_) {
       return null;
     }
@@ -59,8 +62,9 @@ class ApiPhotographerRemoteDataSource implements PhotographerRemoteDataSource {
           ? portfolio
                 .whereType<Map<dynamic, dynamic>>()
                 .map(
-                  (item) =>
-                      PortfolioImageDto.fromMap(Map<String, dynamic>.from(item)),
+                  (item) => PortfolioImageDto.fromMap(
+                    Map<String, dynamic>.from(item),
+                  ),
                 )
                 .toList()
           : <PortfolioImageDto>[];
@@ -102,10 +106,10 @@ class ApiPhotographerRemoteDataSource implements PhotographerRemoteDataSource {
   Future<bool> isFavorite(String userId, String photographerId) async {
     try {
       final response = await _apiClient.get(
-        '/favorites/${Uri.encodeComponent(photographerId)}',
+        '/favorites/check/${Uri.encodeComponent(photographerId)}',
       );
       if (response is! Map<String, dynamic>) return false;
-      return response['isFavorite'] == true;
+      return response['isFavorited'] == true || response['isFavorite'] == true;
     } catch (_) {
       return false;
     }
@@ -119,8 +123,8 @@ class ApiPhotographerRemoteDataSource implements PhotographerRemoteDataSource {
   ) async {
     if (isFavorite) {
       await _apiClient.post(
-        '/favorites',
-        body: {'photographerId': photographerId},
+        '/favorites/${Uri.encodeComponent(photographerId)}',
+        body: {},
       );
     } else {
       await _apiClient.delete(

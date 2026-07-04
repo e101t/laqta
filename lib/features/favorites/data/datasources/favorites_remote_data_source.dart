@@ -11,5 +11,9 @@ abstract class FavoritesRemoteDataSource {
     List<String> photographerIds,
   );
 
+  Future<void> addFavorite(String photographerId);
+
+  Future<bool> checkFavorite(String photographerId);
+
   Future<void> removeFavorite(String userId, String photographerId);
 }

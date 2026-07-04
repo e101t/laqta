@@ -17,6 +17,7 @@ class LaqtaColors {
   static const Color success = Color(0xFF2BB673);
   static const Color warning = Color(0xFFF2B705);
   static const Color error = Color(0xFFE24A3B);
+  static const Color verifiedBlue = Color(0xFF3B82F6);
 
   static const Color glassFill = Color(0x12FFFFFF);
   static const Color glassBorder = Color(0x2AFFFFFF);

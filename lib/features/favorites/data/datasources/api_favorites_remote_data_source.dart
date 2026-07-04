@@ -66,6 +66,29 @@ class ApiFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
   }
 
   @override
+  Future<void> addFavorite(String photographerId) async {
+    await _apiClient.post(
+      '/favorites/${Uri.encodeComponent(photographerId)}',
+      body: {},
+    );
+  }
+
+  @override
+  Future<bool> checkFavorite(String photographerId) async {
+    try {
+      final response = await _apiClient.get(
+        '/favorites/check/${Uri.encodeComponent(photographerId)}',
+      );
+      if (response is Map<String, dynamic>) {
+        return response['isFavorited'] == true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
   Future<void> removeFavorite(String userId, String photographerId) async {
     await _apiClient.delete(
       '/favorites/${Uri.encodeComponent(photographerId)}',

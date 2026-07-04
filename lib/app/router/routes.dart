@@ -2,6 +2,7 @@ class Routes {
   // Paths
   static const String splash = '/';
   static const String language = '/language';
+  static const String onboarding = '/onboarding';
   static const String auth = '/auth';
   static const String signUpDetails = '/sign-up';
   static const String role = '/role';
@@ -69,6 +70,7 @@ class Routes {
   // Names (GoRoute name:)
   static const String nSplash = 'splash';
   static const String nLanguage = 'language';
+  static const String nOnboarding = 'onboarding';
   static const String nAuth = 'auth';
   static const String nSignUpDetails = 'sign_up_details';
   static const String nRole = 'role';

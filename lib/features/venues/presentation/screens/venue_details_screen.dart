@@ -109,12 +109,13 @@ class _VenueDetailsView extends StatelessWidget {
                           icon: Icons.ios_share_rounded,
                         ),
                         const SizedBox(width: 10),
-                        GestureDetector(
+                        InkWell(
                           onTap: () => showReportContentSheet(
                             context: context,
                             targetType: 'venue',
                             targetId: venue.id,
                           ),
+                          customBorder: const CircleBorder(),
                           child: const LaqtaHeroOverlayIconButton(
                             icon: Icons.report_gmailerrorred_outlined,
                           ),

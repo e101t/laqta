@@ -21,6 +21,7 @@ import 'package:laqta/features/auth/presentation/screens/auth_screen.dart';
 import 'package:laqta/features/auth/presentation/screens/sign_up_details_screen.dart';
 import 'package:laqta/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:laqta/features/onboarding/presentation/screens/language_select_screen.dart';
+import 'package:laqta/features/onboarding/presentation/screens/onboarding_screen.dart';
 
 import 'package:laqta/features/role/presentation/screens/role_picker_screen.dart';
 import 'package:laqta/features/profile/presentation/screens/basic_info_screen.dart';
@@ -119,6 +120,11 @@ class AppRouter {
           path: Routes.language,
           name: Routes.nLanguage,
           builder: (context, state) => const LanguageSelectScreen(),
+        ),
+        GoRoute(
+          path: Routes.onboarding,
+          name: Routes.nOnboarding,
+          builder: (context, state) => const OnboardingScreen(),
         ),
         GoRoute(
           path: Routes.auth,
@@ -619,6 +625,15 @@ class AppRouter {
     if (isLanguage) {
       return null;
     }
+
+    // Show onboarding once per install, after language selection, before auth.
+    final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
+    final isOnboarding = path == Routes.onboarding;
+    if (!onboardingSeen && !isOnboarding && !shouldBypassLanguage) {
+      return Routes.onboarding;
+    }
+    if (isOnboarding) return null;
+
     final hasValidBackendSession = await _sessionService.hasValidToken();
     final userId = await _sessionService.getUserId();
     if (!hasValidBackendSession || userId == null || userId.isEmpty) {

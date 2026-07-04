@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 
 enum _AuthMode { login, register, forgotPassword }
@@ -173,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen> {
           onSubmitted: (_) => _login(),
         ),
         Align(
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerEnd,
           child: TextButton(
             onPressed: _isLoading
                 ? null
@@ -971,7 +972,7 @@ class _AuthHeader extends StatelessWidget {
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
-              colors: [Color(0xFFE7B85A), Color(0xFF8A6426)],
+              colors: [LaqtaColors.accent, Color(0xFF8A6426)],
             ),
           ),
           child: const Icon(
@@ -1014,7 +1015,7 @@ class _StepProgress extends StatelessWidget {
         Text(
           'الخطوة $currentStep من $totalSteps',
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFFE7B85A)),
+          style: const TextStyle(color: LaqtaColors.accent),
         ),
         const SizedBox(height: 8),
         ClipRRect(
@@ -1023,7 +1024,7 @@ class _StepProgress extends StatelessWidget {
             minHeight: 6,
             value: currentStep / totalSteps,
             backgroundColor: Colors.white.withValues(alpha: .08),
-            valueColor: const AlwaysStoppedAnimation(Color(0xFFE7B85A)),
+            valueColor: const AlwaysStoppedAnimation(LaqtaColors.accent),
           ),
         ),
       ],
@@ -1095,7 +1096,7 @@ class _LabeledField extends StatelessWidget {
         labelStyle: const TextStyle(color: Color(0xFFB8C0CC)),
         hintStyle: const TextStyle(color: Color(0xFF657080)),
         suffixIcon: suffixIcon,
-        suffixIconColor: const Color(0xFFE7B85A),
+        suffixIconColor: LaqtaColors.accent,
         filled: true,
         fillColor: Colors.white.withValues(alpha: .055),
         enabledBorder: OutlineInputBorder(
@@ -1104,7 +1105,7 @@ class _LabeledField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFE7B85A)),
+          borderSide: const BorderSide(color: LaqtaColors.accent),
         ),
       ),
     );
@@ -1134,18 +1135,18 @@ class _ChoiceCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFE7B85A).withValues(alpha: .16)
+              ? LaqtaColors.accent.withValues(alpha: .16)
               : Colors.white.withValues(alpha: .05),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected
-                ? const Color(0xFFE7B85A)
+                ? LaqtaColors.accent
                 : Colors.white.withValues(alpha: .08),
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFFE7B85A)),
+            Icon(icon, color: LaqtaColors.accent),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -1157,7 +1158,7 @@ class _ChoiceCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFFE7B85A)),
+              const Icon(Icons.check_circle_rounded, color: LaqtaColors.accent),
           ],
         ),
       ),
@@ -1196,7 +1197,7 @@ class _PickerTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFFE7B85A)),
+            Icon(icon, color: LaqtaColors.accent),
             const SizedBox(width: 12),
             Text(value, style: const TextStyle(color: Colors.white)),
           ],
@@ -1224,7 +1225,7 @@ class _DropdownTile extends StatelessWidget {
     return DropdownButtonFormField<String>(
       initialValue: value,
       dropdownColor: const Color(0xFF111827),
-      iconEnabledColor: const Color(0xFFE7B85A),
+      iconEnabledColor: LaqtaColors.accent,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
@@ -1237,7 +1238,7 @@ class _DropdownTile extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFE7B85A)),
+          borderSide: const BorderSide(color: LaqtaColors.accent),
         ),
       ),
       items: items
@@ -1263,7 +1264,7 @@ class _InfoText extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: Color(0xFFE7B85A), fontSize: 13),
+      style: const TextStyle(color: LaqtaColors.accent, fontSize: 13),
     );
   }
 }
@@ -1279,7 +1280,7 @@ class _PrimaryActionButton extends StatelessWidget {
     return FilledButton(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFFE7B85A),
+        backgroundColor: LaqtaColors.accent,
         foregroundColor: const Color(0xFF0B0F14),
         disabledBackgroundColor: const Color(0xFF6B7280),
         minimumSize: const Size.fromHeight(54),
@@ -1301,7 +1302,7 @@ class _SecondaryActionButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFFE7B85A),
+        foregroundColor: LaqtaColors.accent,
         side: BorderSide(color: Colors.white.withValues(alpha: .14)),
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
@@ -1334,7 +1335,7 @@ class _SwitchModeButton extends StatelessWidget {
             TextSpan(
               text: action,
               style: const TextStyle(
-                color: Color(0xFFE7B85A),
+                color: LaqtaColors.accent,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1353,7 +1354,7 @@ class _AuthLoadingBarrier extends StatelessWidget {
     return ColoredBox(
       color: Colors.black54,
       child: const Center(
-        child: CircularProgressIndicator(color: Color(0xFFE7B85A)),
+        child: CircularProgressIndicator(color: LaqtaColors.accent),
       ),
     );
   }

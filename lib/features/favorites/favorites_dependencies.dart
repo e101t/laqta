@@ -2,6 +2,8 @@ import 'package:laqta/features/favorites/data/datasources/api_favorites_remote_d
 import 'package:laqta/features/favorites/data/datasources/favorites_remote_data_source.dart';
 import 'package:laqta/features/favorites/data/repositories/favorites_repository_impl.dart';
 import 'package:laqta/features/favorites/domain/repositories/favorites_repository.dart';
+import 'package:laqta/features/favorites/domain/usecases/add_favorite.dart';
+import 'package:laqta/features/favorites/domain/usecases/check_favorite.dart';
 import 'package:laqta/features/favorites/domain/usecases/get_favorites.dart';
 import 'package:laqta/features/favorites/domain/usecases/remove_favorite.dart';
 
@@ -13,6 +15,10 @@ class FavoritesDependencies {
   );
 
   static GetFavorites getFavorites() => GetFavorites(_repository);
+
+  static AddFavorite addFavorite() => AddFavorite(_repository);
+
+  static CheckFavorite checkFavorite() => CheckFavorite(_repository);
 
   static RemoveFavorite removeFavorite() => RemoveFavorite(_repository);
 }

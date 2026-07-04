@@ -9,6 +9,7 @@ import 'package:laqta/core/widgets/golden_hour_widget.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
 import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
 import 'package:laqta/core/widgets/mood_filter.dart';
+import 'package:laqta/core/presentation/widgets/shimmers/creator_card_shimmer.dart';
 import 'package:laqta/features/marketplace/marketplace_dependencies.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
 import 'package:laqta/features/marketplace/presentation/controllers/marketplace_controllers.dart';
@@ -105,6 +106,54 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
         .toList(growable: false);
   }
 
+  Widget _buildCreatorsHeader(
+    List<MarketplacePhotographerSummary> creators,
+  ) {
+    if (_selectedMoodId == null) {
+      return const LaqtaSectionHeader(
+        title: 'المبدعون المقترحون',
+        action: 'عرض الكل',
+      );
+    }
+    final mood = MoodFilter.defaults.firstWhere(
+      (m) => m.id == _selectedMoodId,
+      orElse: () => MoodFilter.defaults.first,
+    );
+    final count = creators
+        .where((c) => _moodFor(c).id == _selectedMoodId)
+        .length;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'مزاج ${mood.label}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: mood.moodColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: mood.moodColor.withValues(alpha: 0.35)),
+          ),
+          child: Text(
+            '$count مبدع',
+            style: TextStyle(
+              color: mood.moodColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ExploreMarketplaceController>();
@@ -129,7 +178,6 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             children: [
               Row(
-                textDirection: TextDirection.ltr,
                 children: [
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
@@ -151,10 +199,8 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
               ),
               const SizedBox(height: 14),
               GoldenHourBanner(
-                city: 'الرياض',
-                time: '5:47 م',
-                availableCount: 3,
                 onTap: () => AppRouter.goToSearch(context),
+                photographerCount: data?.availablePhotographerCount,
               ),
               if (recommendedCreators.isNotEmpty) ...[
                 const SizedBox(height: 18),
@@ -175,7 +221,6 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
               ],
               const SizedBox(height: 18),
               Row(
-                textDirection: TextDirection.ltr,
                 children: [
                   Expanded(
                     child: _CategoryCard(
@@ -212,10 +257,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
               ),
               const SizedBox(height: 24),
               if (controller.isLoading && data == null)
-                const LaqtaSkeletonBox(
-                  height: 230,
-                  borderRadius: BorderRadius.all(Radius.circular(24)),
-                )
+                const ExploreCreatorsShimmer()
               else if (controller.error != null && data == null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
@@ -359,10 +401,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                 ),
               if (recommendedCreators.isNotEmpty) ...[
                 const SizedBox(height: 24),
-                const LaqtaSectionHeader(
-                  title: 'المبدعون المقترحون',
-                  action: 'عرض الكل',
-                ),
+                _buildCreatorsHeader(recommendedCreators),
                 const SizedBox(height: 12),
                 MoodFilter(
                   selectedMoodId: _selectedMoodId,
@@ -614,6 +653,17 @@ class _CreatorMoodCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (creator.basePrice != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'يبدأ من ${creator.basePrice!.toStringAsFixed(0)} IQD',
+                      style: const TextStyle(
+                        color: LaqtaColors.accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

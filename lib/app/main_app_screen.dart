@@ -16,6 +16,7 @@ import 'package:laqta/features/profile/profile_dependencies.dart';
 import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:laqta/features/profile/presentation/screens/profile_screen.dart';
 import 'package:laqta/features/explore/presentation/screens/explore_screen.dart';
+import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/frosted_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -346,32 +347,18 @@ class _MainAppScreenState extends State<MainAppScreen> {
     List<BottomNavItem> navItems,
   ) {
     final isExtended = Responsive.isDesktop(context);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0E1014),
       body: Row(
         children: [
-          SafeArea(
-            child: NavigationRail(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: _setTab,
-              extended: isExtended,
-              labelType: isExtended
-                  ? NavigationRailLabelType.none
-                  : NavigationRailLabelType.all,
-              minWidth: 72,
-              minExtendedWidth: 220,
-              backgroundColor: colorScheme.surface,
-              destinations: navItems.map((item) {
-                return NavigationRailDestination(
-                  icon: _buildRailIcon(item, false),
-                  selectedIcon: _buildRailIcon(item, true),
-                  label: Text(item.label),
-                );
-              }).toList(),
-            ),
+          _FrostedSideBar(
+            currentIndex: _currentIndex,
+            navItems: navItems,
+            isExtended: isExtended,
+            onSelect: _setTab,
+            onPrimaryAction: () => _setTab(_centerActionIndex),
           ),
-          const VerticalDivider(width: 1, thickness: 1),
           Expanded(child: _buildContent(screenBuilders)),
         ],
       ),
@@ -406,92 +393,45 @@ class _MainAppScreenState extends State<MainAppScreen> {
     );
   }
 
-  Widget _buildRailIcon(BottomNavItem item, bool isActive) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final icon = Icon(
-      isActive ? item.activeIcon : item.icon,
-      color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
-      size: 24,
-    );
-
-    if (item.badge == null || item.badge! <= 0) {
-      return icon;
-    }
-
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        icon,
-        Positioned(
-          right: -6,
-          top: -4,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  colorScheme.error,
-                  colorScheme.error.withValues(alpha: 0.85),
-                ],
-              ),
-            ),
-            constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-            child: Text(
-              item.badge! > 9 ? '9+' : '${item.badge}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 8,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Future<void> _showCreateSheet() async {
     if (!mounted) return;
     final actions = _userRole == AppConstants.rolePhotographer
         ? const [
             _CreateAction(
               title: 'ريل جديد',
-              icon: Icons.ondemand_video_rounded,
+              icon: FluentIcons.video_24_regular,
               route: Routes.createPost,
             ),
             _CreateAction(
               title: 'ستوري جديدة',
-              icon: Icons.bolt_outlined,
+              icon: FluentIcons.flash_24_regular,
               route: Routes.createStory,
             ),
             _CreateAction(
               title: 'إعلان ممول',
-              icon: Icons.campaign_outlined,
+              icon: FluentIcons.megaphone_24_regular,
               route: Routes.sponsoredAd,
             ),
             _CreateAction(
               title: 'الباقات',
-              icon: Icons.workspace_premium_outlined,
+              icon: FluentIcons.star_24_regular,
               route: Routes.subscriptionPlans,
             ),
           ]
         : const [
             _CreateAction(
               title: 'طلب جديد',
-              icon: Icons.add_box_outlined,
+              icon: FluentIcons.add_square_24_regular,
               route: Routes.requestCreate,
             ),
             _CreateAction(
               title: 'القاعات',
-              icon: Icons.chair_alt_outlined,
+              icon: FluentIcons.building_24_regular,
               route: Routes.venues,
             ),
             _CreateAction(
               title: 'أماكن التصوير',
-              icon: Icons.landscape_outlined,
+              icon: FluentIcons.image_24_regular,
               route: '/locations/salam-garden',
             ),
           ];
@@ -524,7 +464,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
                     backgroundColor: const Color(
                       0xFFD6A44A,
                     ).withValues(alpha: 0.15),
-                    child: Icon(action.icon, color: const Color(0xFFD6A44A)),
+                    child: Icon(action.icon, color: LaqtaColors.accent),
                   ),
                   title: Text(
                     action.title,
@@ -572,4 +512,255 @@ class _CreateAction {
     required this.icon,
     required this.route,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Frosted sidebar — tablet / desktop replacement for NavigationRail
+// ---------------------------------------------------------------------------
+
+class _FrostedSideBar extends StatelessWidget {
+  final int currentIndex;
+  final List<BottomNavItem> navItems;
+  final bool isExtended;
+  final ValueChanged<int> onSelect;
+  final VoidCallback onPrimaryAction;
+
+  const _FrostedSideBar({
+    required this.currentIndex,
+    required this.navItems,
+    required this.isExtended,
+    required this.onSelect,
+    required this.onPrimaryAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final width = isExtended ? 200.0 : 72.0;
+
+    return SafeArea(
+      child: Container(
+        width: width,
+        decoration: const BoxDecoration(
+          color: Color(0xFF0E1014),
+          border: Border(
+            left: BorderSide(
+              color: Color(0xFF1E2028),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            // Logo / brand mark
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: isExtended
+                  ? Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        'لقطة',
+                        style: TextStyle(
+                          color: LaqtaColors.accent,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: LaqtaColors.accent.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.camera_rounded,
+                        color: LaqtaColors.accent,
+                        size: 18,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: navItems.length,
+                itemBuilder: (context, index) {
+                  final item = navItems[index];
+                  if (item.isPrimaryAction) {
+                    return _SideBarPrimaryAction(
+                      isExtended: isExtended,
+                      onTap: onPrimaryAction,
+                    );
+                  }
+                  final isActive = index == currentIndex;
+                  return _SideBarItem(
+                    item: item,
+                    isActive: isActive,
+                    isExtended: isExtended,
+                    onTap: () => onSelect(index),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SideBarItem extends StatelessWidget {
+  final BottomNavItem item;
+  final bool isActive;
+  final bool isExtended;
+  final VoidCallback onTap;
+
+  const _SideBarItem({
+    required this.item,
+    required this.isActive,
+    required this.isExtended,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: isActive
+                ? LaqtaColors.accent.withValues(alpha: 0.10)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    isActive ? item.activeIcon : item.icon,
+                    color: isActive ? LaqtaColors.accent : Colors.white38,
+                    size: 22,
+                  ),
+                  if (item.badge != null && item.badge! > 0)
+                    Positioned(
+                      right: -5,
+                      top: -4,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        child: Center(
+                          child: Text(
+                            item.badge! > 9 ? '9+' : '${item.badge}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 7,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (isExtended) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item.label,
+                    style: TextStyle(
+                      color: isActive ? LaqtaColors.accent : Colors.white54,
+                      fontWeight:
+                          isActive ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isActive)
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: LaqtaColors.accent,
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SideBarPrimaryAction extends StatelessWidget {
+  final bool isExtended;
+  final VoidCallback onTap;
+
+  const _SideBarPrimaryAction({
+    required this.isExtended,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                LaqtaColors.accent,
+                LaqtaColors.accent.withValues(alpha: 0.75),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisAlignment: isExtended
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add_rounded, color: Colors.black, size: 22),
+              if (isExtended) ...[
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'إنشاء',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
