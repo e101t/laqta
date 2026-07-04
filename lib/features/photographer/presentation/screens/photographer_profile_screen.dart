@@ -8,6 +8,8 @@ import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/trust_safety/reporting_service.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
 import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
+import 'package:laqta/core/widgets/masonry_grid.dart';
+import 'package:laqta/core/widgets/micro_animations.dart';
 import 'package:laqta/features/chat/chat_dependencies.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
 import 'package:laqta/features/marketplace/marketplace_dependencies.dart';
@@ -41,11 +43,16 @@ class _PhotographerProfileView extends StatefulWidget {
 class _PhotographerProfileViewState extends State<_PhotographerProfileView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool _isFavorited = false;
+  bool _trustStripVisible = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    Future.delayed(Duration.zero, () {
+      if (mounted) setState(() => _trustStripVisible = true);
+    });
   }
 
   @override
@@ -204,18 +211,28 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                   Positioned(
                     top: 18,
                     right: 18,
-                    child: IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: const Icon(
-                        Icons.more_vert_rounded,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => showReportContentSheet(
-                        context: context,
-                        targetType: 'user',
-                        targetId: profile.id,
-                        blockUserId: profile.id,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ShutterHeartButton(
+                          isFavorited: _isFavorited,
+                          onToggle: () =>
+                              setState(() => _isFavorited = !_isFavorited),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(
+                            Icons.more_vert_rounded,
+                            color: Colors.white,
+                          ),
+                          onPressed: () => showReportContentSheet(
+                            context: context,
+                            targetType: 'user',
+                            targetId: profile.id,
+                            blockUserId: profile.id,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -335,48 +352,47 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                           height: 1.5,
                         ),
                       ),
-                    const SizedBox(height: 16),
-                    _trustSignalStrip(profile),
                     const SizedBox(height: 18),
-                    Row(
-                      textDirection: TextDirection.ltr,
-                      children: [
-                        LaqtaMetricColumn(
-                          value: '${profile.projectsCount}',
-                          label: 'المشاريع',
-                        ),
-                        _divider(),
-                        LaqtaMetricColumn(
-                          value: _formatFollowers(profile.followersCount),
-                          label: 'المتابعون',
-                        ),
-                        _divider(),
-                        LaqtaMetricColumn(
-                          value: '${profile.followingCount}',
-                          label: 'متابع',
-                        ),
-                      ],
+                    AnimatedOpacity(
+                      opacity: _trustStripVisible ? 1 : 0,
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeOut,
+                      child: Row(
+                        textDirection: TextDirection.ltr,
+                        children: [
+                          LaqtaMetricColumn(
+                            value: '${profile.projectsCount}',
+                            label: 'المشاريع',
+                          ),
+                          _divider(),
+                          LaqtaMetricColumn(
+                            value: _formatFollowers(profile.followersCount),
+                            label: 'المتابعون',
+                          ),
+                          _divider(),
+                          LaqtaMetricColumn(
+                            value: '${profile.followingCount}',
+                            label: 'متابع',
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 18),
                     Row(
                       textDirection: TextDirection.ltr,
                       children: [
                         LaqtaPrimaryAction(
-                          label: 'اطلب عرض سعر',
-                          icon: Icons.request_quote_outlined,
+                          label: 'احجز الآن',
                           onTap: () => AppRouter.goToCreateRequest(context),
                         ),
                         const SizedBox(width: 12),
                         LaqtaPrimaryAction(
                           label: 'تواصل',
-                          icon: Icons.chat_bubble_outline_rounded,
                           outlined: true,
                           onTap: () => _openDirectChat(profile),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
-                    _packageHintCard(profile),
                     const SizedBox(height: 20),
                     Row(
                       textDirection: TextDirection.ltr,
@@ -426,126 +442,6 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
 
   Widget _divider() =>
       Container(width: 1, height: 36, color: const Color(0xFF292B31));
-
-  Widget _trustSignalStrip(MarketplacePhotographerProfile profile) {
-    final ratingLabel = profile.ratingAverage == null
-        ? 'تقييم جديد'
-        : '${profile.ratingAverage!.toStringAsFixed(1)} تقييم';
-    final projectLabel = profile.projectsCount > 0
-        ? '${profile.projectsCount} أعمال'
-        : 'معرض أعمال';
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _trustChip(
-          icon: profile.verified
-              ? Icons.verified_rounded
-              : Icons.shield_outlined,
-          label: profile.verified ? 'مصور موثّق' : 'قابل للتوثيق',
-          highlighted: profile.verified,
-        ),
-        _trustChip(icon: Icons.star_rounded, label: ratingLabel),
-        _trustChip(icon: Icons.photo_library_outlined, label: projectLabel),
-        _trustChip(icon: Icons.lock_outline_rounded, label: 'تواصل داخل LAQTA'),
-      ],
-    );
-  }
-
-  Widget _trustChip({
-    required IconData icon,
-    required String label,
-    bool highlighted = false,
-  }) {
-    final borderColor = highlighted
-        ? LaqtaColors.accent.withValues(alpha: 0.9)
-        : const Color(0xFF2A2D33);
-    final textColor = highlighted ? LaqtaColors.accent : Colors.white70;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: highlighted
-            ? LaqtaColors.accent.withValues(alpha: 0.1)
-            : const Color(0xFF17191F),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: borderColor),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 15, color: textColor),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _packageHintCard(MarketplacePhotographerProfile profile) {
-    final price = profile.basePrice == null
-        ? 'اطلب السعر المناسب لمناسبتك'
-        : 'يبدأ من ${profile.basePrice!.toStringAsFixed(0)}';
-
-    return LaqtaLuxurySurface(
-      padding: const EdgeInsets.all(14),
-      radius: 18,
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: LaqtaColors.accent.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.auto_awesome_motion_outlined,
-              color: LaqtaColors.accent,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'باقات تصوير جاهزة للتفاوض',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => AppRouter.goToCreateRequest(context),
-            child: const Text('ابدأ'),
-          ),
-        ],
-      ),
-    );
-  }
 
   String _formatFollowers(int value) {
     if (value >= 1000) {
@@ -597,34 +493,39 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
       );
     }
 
-    return GridView.builder(
+    const fallbackGallery = [
+      'assets/images/marketplace/groom_portrait.png',
+      MarketplaceAssets.heroSoft,
+      'assets/images/marketplace/couple_portrait.png',
+      MarketplaceAssets.heroWedding,
+      MarketplaceAssets.heroVenue,
+      MarketplaceAssets.heroLocation,
+    ];
+    // Alternate natural proportions so the masonry columns feel organic.
+    const aspectCycle = [0.75, 1.2, 0.85, 1.0];
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.only(top: 18),
       physics: const BouncingScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 0.78,
+      child: MasonryGrid(
+        columns: 2,
+        gap: 8,
+        items: [
+          for (var index = 0; index < gallery.length; index++)
+            MasonryItem(
+              aspectRatio: aspectCycle[index % aspectCycle.length],
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: LaqtaRemoteImage(
+                  imageUrl: gallery[index].url,
+                  fallbackAssetPath:
+                      fallbackGallery[index % fallbackGallery.length],
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+        ],
       ),
-      itemCount: gallery.length,
-      itemBuilder: (context, index) {
-        const fallbackGallery = [
-          'assets/images/marketplace/groom_portrait.png',
-          MarketplaceAssets.heroSoft,
-          'assets/images/marketplace/couple_portrait.png',
-          MarketplaceAssets.heroWedding,
-          MarketplaceAssets.heroVenue,
-          MarketplaceAssets.heroLocation,
-        ];
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: LaqtaRemoteImage(
-            imageUrl: gallery[index].url,
-            fallbackAssetPath: fallbackGallery[index % fallbackGallery.length],
-            fit: BoxFit.cover,
-          ),
-        );
-      },
     );
   }
 
@@ -757,16 +658,7 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                             ),
                       ),
                       const SizedBox(height: 6),
-                      Row(
-                        children: List.generate(
-                          5,
-                          (_) => const Icon(
-                            Icons.star_rounded,
-                            size: 16,
-                            color: LaqtaColors.accent,
-                          ),
-                        ),
-                      ),
+                      const StarLightsRating(value: 5, size: 16),
                       const SizedBox(height: 8),
                       Text(
                         'تخصص موثّق ضمن ملف المصور الحالي مع جاهزية للحجز والترويج.',

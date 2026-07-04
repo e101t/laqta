@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/marketplace_assets.dart';
-import 'package:laqta/core/presentation/widgets/empty_state_widget.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
+import 'package:laqta/core/widgets/available_today_stories.dart';
+import 'package:laqta/core/widgets/golden_hour_widget.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
 import 'package:laqta/core/widgets/laqta_marketplace_widgets.dart';
+import 'package:laqta/core/widgets/mood_filter.dart';
 import 'package:laqta/features/marketplace/marketplace_dependencies.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
 import 'package:laqta/features/marketplace/presentation/controllers/marketplace_controllers.dart';
@@ -48,8 +50,60 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
-class _ExploreMarketplaceView extends StatelessWidget {
+class _ExploreMarketplaceView extends StatefulWidget {
   const _ExploreMarketplaceView();
+
+  @override
+  State<_ExploreMarketplaceView> createState() =>
+      _ExploreMarketplaceViewState();
+}
+
+class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
+  String? _selectedMoodId;
+
+  /// Deterministically assigns a mood to each creator so the mood filter
+  /// has a visible effect until real mood data exists on the backend.
+  MoodOption _moodFor(MarketplacePhotographerSummary creator) {
+    final moods = MoodFilter.defaults;
+    return moods[creator.id.hashCode.abs() % moods.length];
+  }
+
+  List<Widget> _buildCreatorCards(
+    BuildContext context,
+    List<MarketplacePhotographerSummary> creators,
+  ) {
+    final filtered = _selectedMoodId == null
+        ? creators
+        : creators
+              .where((creator) => _moodFor(creator).id == _selectedMoodId)
+              .toList(growable: false);
+
+    if (filtered.isEmpty) {
+      return const [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: _ExploreStateMessage(
+            message: 'لا يوجد مبدعون بهذا المزاج حالياً',
+            subtitle: 'جرّب اختيار مزاج آخر',
+          ),
+        ),
+      ];
+    }
+
+    return filtered
+        .map<Widget>(
+          (creator) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _CreatorMoodCard(
+              creator: creator,
+              mood: _moodFor(creator),
+              onTap: () =>
+                  AppRouter.goToPhotographerProfile(context, creator.id),
+            ),
+          ),
+        )
+        .toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +149,30 @@ class _ExploreMarketplaceView extends StatelessWidget {
                 hint: 'ابحث عن مصور، قاعة، مكان...',
                 onTap: () => AppRouter.goToSearch(context),
               ),
+              const SizedBox(height: 14),
+              GoldenHourBanner(
+                city: 'الرياض',
+                time: '5:47 م',
+                availableCount: 3,
+                onTap: () => AppRouter.goToSearch(context),
+              ),
+              if (recommendedCreators.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                AvailableTodayStories(
+                  photographers: recommendedCreators
+                      .map(
+                        (creator) => AvailableTodayItem(
+                          id: creator.id,
+                          name: creator.name,
+                          photoUrl: creator.photoUrl,
+                          fallbackAsset: MarketplaceAssets.avatar,
+                        ),
+                      )
+                      .toList(growable: false),
+                  onTapItem: (item) =>
+                      AppRouter.goToPhotographerProfile(context, item.id),
+                ),
+              ],
               const SizedBox(height: 18),
               Row(
                 textDirection: TextDirection.ltr,
@@ -103,6 +181,7 @@ class _ExploreMarketplaceView extends StatelessWidget {
                     child: _CategoryCard(
                       title: 'المصورون',
                       icon: Icons.camera_alt_outlined,
+                      gradientStart: const Color(0xFF1A1400),
                       onTap: () => AppRouter.goToExplore(context),
                     ),
                   ),
@@ -111,6 +190,7 @@ class _ExploreMarketplaceView extends StatelessWidget {
                     child: _CategoryCard(
                       title: 'القاعات',
                       icon: Icons.location_city_outlined,
+                      gradientStart: const Color(0xFF001220),
                       onTap: () => AppRouter.goToVenues(context),
                     ),
                   ),
@@ -119,20 +199,13 @@ class _ExploreMarketplaceView extends StatelessWidget {
                     child: _CategoryCard(
                       title: 'أماكن التصوير',
                       icon: Icons.landscape_outlined,
+                      gradientStart: const Color(0xFF001A0A),
                       onTap: () {
                         final first = nearbyPlaces.firstOrNull;
                         if (first != null) {
                           AppRouter.goToLocationDetails(context, first.id);
                         }
                       },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _CategoryCard(
-                      title: 'دورات تعليمية',
-                      icon: Icons.school_outlined,
-                      onTap: () => AppRouter.goToCourses(context),
                     ),
                   ),
                 ],
@@ -201,10 +274,8 @@ class _ExploreMarketplaceView extends StatelessWidget {
                   ),
                 )
               else if (nearbyPlaces.isEmpty && hasAnyResults)
-                const EmptyStateWidget(
-                  icon: Icons.location_on_outlined,
-                  title: 'لا توجد أماكن تصوير حالياً',
-                  subtitle: 'جرّب البحث في منطقة مختلفة',
+                const _ExploreStateMessage(
+                  message: 'لا توجد أماكن تصوير حالياً',
                 )
               else
                 SizedBox(
@@ -293,65 +364,13 @@ class _ExploreMarketplaceView extends StatelessWidget {
                   action: 'عرض الكل',
                 ),
                 const SizedBox(height: 12),
-                ...recommendedCreators.map(
-                  (creator) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: InkWell(
-                      onTap: () => AppRouter.goToPhotographerProfile(
-                        context,
-                        creator.id,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      child: LaqtaLuxurySurface(
-                        padding: const EdgeInsets.all(12),
-                        radius: 20,
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: const Color(0xFF1C1E23),
-                              backgroundImage: const AssetImage(
-                                MarketplaceAssets.avatar,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    creator.name,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    creator.governorate ?? 'العراق',
-                                    style: const TextStyle(
-                                      color: Colors.white60,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(
-                              Icons.arrow_forward_ios_rounded,
-                              color: LaqtaColors.accent,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                MoodFilter(
+                  selectedMoodId: _selectedMoodId,
+                  onSelect: (moodId) =>
+                      setState(() => _selectedMoodId = moodId),
                 ),
+                const SizedBox(height: 14),
+                ..._buildCreatorCards(context, recommendedCreators),
               ],
             ],
           ),
@@ -366,10 +385,16 @@ class _CategoryCard extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
+  /// Top color of the card gradient — a soft tint matching the category's
+  /// identity (warm for photographers, cool for venues, green for locations,
+  /// purple for courses). Fades into the shared canvas tone.
+  final Color gradientStart;
+
   const _CategoryCard({
     required this.title,
     required this.icon,
     required this.onTap,
+    this.gradientStart = const Color(0xFF17191F),
   });
 
   @override
@@ -380,10 +405,10 @@ class _CategoryCard extends StatelessWidget {
       child: Container(
         height: 96,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF17191F), Color(0xFF13151A)],
+            colors: [gradientStart, const Color(0xFF13151A)],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFF2A2D33)),
@@ -494,6 +519,110 @@ class _FeaturedVenueCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CreatorMoodCard extends StatelessWidget {
+  final MarketplacePhotographerSummary creator;
+  final MoodOption mood;
+  final VoidCallback onTap;
+
+  const _CreatorMoodCard({
+    required this.creator,
+    required this.mood,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: LaqtaLuxurySurface(
+        padding: const EdgeInsets.all(12),
+        radius: 20,
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: mood.moodColor.withValues(alpha: 0.7),
+                  width: 1.4,
+                ),
+              ),
+              child: const CircleAvatar(
+                radius: 24,
+                backgroundColor: Color(0xFF1C1E23),
+                backgroundImage: AssetImage(MarketplaceAssets.avatar),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    creator.name,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          creator.governorate ?? 'العراق',
+                          style: const TextStyle(color: Colors.white60),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: mood.moodColor.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(mood.icon, color: mood.moodColor, size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              mood.label,
+                              style: TextStyle(
+                                color: mood.moodColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: LaqtaColors.accent,
+              size: 16,
+            ),
+          ],
         ),
       ),
     );
