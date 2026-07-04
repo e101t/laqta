@@ -11,6 +11,7 @@ import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/widgets/loading_widgets.dart';
 import 'package:laqta/core/widgets/empty_states.dart';
 import 'package:laqta/core/widgets/backend_media_image.dart';
+import 'package:laqta/core/widgets/micro_animations.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/booking/booking_dependencies.dart';
 import 'package:laqta/features/booking/presentation/mappers/booking_presentation_mapper.dart';
@@ -51,6 +52,10 @@ class BookingDetailsScreen extends StatefulWidget {
 
 class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   final BackendMediaService _backendMediaService = BackendMediaService();
+  final GlobalKey<BookingConfettiWrapperState> _confettiKey =
+      GlobalKey<BookingConfettiWrapperState>();
+  bool _confettiFired = false;
+
   BookingModel? _booking;
   Delivery? _delivery;
   Dispute? _dispute;
@@ -132,7 +137,20 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
     if (mounted) {
       setState(() => _isLoading = false);
+      _maybeFireConfetti();
     }
+  }
+
+  void _maybeFireConfetti() {
+    if (_confettiFired) return;
+    final booking = _booking;
+    if (booking == null) return;
+    if (booking.status != AppConstants.bookingConfirmed) return;
+    if (booking.customerId != _currentUserId) return;
+    _confettiFired = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _confettiKey.currentState?.trigger();
+    });
   }
 
   bool get _isPhotographer =>
@@ -703,15 +721,17 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     final booking = _booking!;
     final statusColor = _getStatusColor(booking.status);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(localizations.bookingRoom),
-        actions: [
-          IconButton(icon: const Icon(Icons.message), onPressed: _openChat),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _loadBookingDetails,
+    return BookingConfettiWrapper(
+      key: _confettiKey,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(localizations.bookingRoom),
+          actions: [
+            IconButton(icon: const Icon(Icons.message), onPressed: _openChat),
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: _loadBookingDetails,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -787,6 +807,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
             _buildActions(),
           ],
         ),
+      ),
       ),
     );
   }
