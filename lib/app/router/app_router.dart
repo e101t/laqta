@@ -33,6 +33,7 @@ import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:laqta/features/chat/presentation/screens/chat_screen.dart';
 import 'package:laqta/features/booking/presentation/screens/booking_details_screen.dart';
 import 'package:laqta/features/booking/presentation/screens/my_bookings_screen.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/payment/presentation/screens/payment_screen.dart';
 import 'package:laqta/features/reels/presentation/screens/create_post_screen.dart';
 import 'package:laqta/features/requests/presentation/screens/create_request_screen.dart';
@@ -499,31 +500,20 @@ class AppRouter {
           name: Routes.nPayment,
           builder: (context, state) {
             final bookingId = state.uri.queryParameters['bookingId'];
-            final amount = double.tryParse(
-              state.uri.queryParameters['amount'] ?? '',
-            );
+            // amount is NOT read from URI — fetched server-side to prevent
+            // deep-link confused deputy attacks (attacker-supplied amount)
             final photographerName =
                 state.uri.queryParameters['photographerName'] ?? '';
             final sessionType = state.uri.queryParameters['sessionType'] ?? '';
 
-            if (!AppConstants.paymentsConfigured) {
-              return PaymentScreen(
-                bookingId: bookingId ?? '',
-                amount: amount ?? 0,
-                photographerName: photographerName,
-                sessionType: sessionType,
-              );
-            }
-
-            if (bookingId == null || amount == null) {
+            if (bookingId == null || bookingId.isEmpty) {
               return const Scaffold(
-                body: Center(child: Text('Missing payment information')),
+                body: Center(child: Text('Missing booking information')),
               );
             }
 
-            return PaymentScreen(
+            return _BookingPaymentLoader(
               bookingId: bookingId,
-              amount: amount,
               photographerName: photographerName,
               sessionType: sessionType,
             );
@@ -1041,4 +1031,65 @@ class _ProfileStatus {
     required this.role,
     required this.isBlocked,
   });
+}
+
+/// Fetches booking price from the backend before opening [PaymentScreen].
+/// This prevents deep-link attacks where an attacker supplies a fake `amount`
+/// in the URI (e.g. laqta://payment?bookingId=X&amount=1).
+class _BookingPaymentLoader extends StatefulWidget {
+  const _BookingPaymentLoader({
+    required this.bookingId,
+    required this.photographerName,
+    required this.sessionType,
+  });
+
+  final String bookingId;
+  final String photographerName;
+  final String sessionType;
+
+  @override
+  State<_BookingPaymentLoader> createState() => _BookingPaymentLoaderState();
+}
+
+class _BookingPaymentLoaderState extends State<_BookingPaymentLoader> {
+  late final Future<double> _amountFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountFuture = _fetchBookingAmount();
+  }
+
+  Future<double> _fetchBookingAmount() async {
+    final response = await BackendApiClient().get(
+      '/bookings/${widget.bookingId}',
+    );
+    final booking = response['booking'] as Map<String, dynamic>?;
+    return double.tryParse(booking?['priceAmount']?.toString() ?? '') ?? 0.0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<double>(
+      future: _amountFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError || snapshot.data == null) {
+          return const Scaffold(
+            body: Center(child: Text('فشل تحميل بيانات الحجز')),
+          );
+        }
+        return PaymentScreen(
+          bookingId: widget.bookingId,
+          amount: snapshot.data!,
+          photographerName: widget.photographerName,
+          sessionType: widget.sessionType,
+        );
+      },
+    );
+  }
 }
