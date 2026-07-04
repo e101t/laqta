@@ -62,9 +62,13 @@ class CertificatePinner {
         }
       }
 
+      // Verify pin before fetching new pins — prevents MITM from serving
+      // fake rotation data through an unpinned channel (H1).
+      final pinUrl = BackendConfig.apiUri('/security/pins');
+      await verifyHost(pinUrl);
       final response = await _client
           .get(
-            BackendConfig.apiUri('/security/pins'),
+            pinUrl,
             headers: const <String, String>{'Accept': 'application/json'},
           )
           .timeout(const Duration(seconds: 4));

@@ -27,7 +27,7 @@ class CertificatePinning {
 
   static final Map<String, DateTime> _verifiedUntil = <String, DateTime>{};
   static final Set<String> _runtimePins = <String>{};
-  static const Duration _cacheDuration = Duration(minutes: 10);
+  static const Duration _cacheDuration = Duration(seconds: 60);
 
   static Set<String> get pinnedHosts {
     final hosts = <String>{};
