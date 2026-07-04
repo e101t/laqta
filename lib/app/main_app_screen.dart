@@ -16,6 +16,7 @@ import 'package:laqta/features/profile/profile_dependencies.dart';
 import 'package:laqta/features/chat/presentation/screens/chat_list_screen.dart';
 import 'package:laqta/features/profile/presentation/screens/profile_screen.dart';
 import 'package:laqta/features/explore/presentation/screens/explore_screen.dart';
+import 'package:laqta/core/widgets/frosted_nav_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MainAppScreen extends StatefulWidget {
@@ -378,144 +379,29 @@ class _MainAppScreenState extends State<MainAppScreen> {
   }
 
   Widget _buildBottomNav(List<BottomNavItem> navItems) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF111317),
-        border: Border(
-          top: BorderSide(color: const Color(0xFF23262D), width: 1),
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-          child: Row(
-            textDirection: TextDirection.ltr,
-            children: List.generate(
-              navItems.length,
-              (index) => Expanded(child: _buildNavItem(index, navItems)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+    final visibleItems = <FrostedNavItem>[];
+    final visibleTabIndexes = <int>[];
 
-  Widget _buildNavItem(int index, List<BottomNavItem> navItems) {
-    final item = navItems[index];
-    if (item.isPrimaryAction) {
-      return _buildPrimaryActionNavItem(item);
+    for (var index = 0; index < navItems.length; index++) {
+      final item = navItems[index];
+      if (item.isPrimaryAction) continue;
+      visibleTabIndexes.add(index);
+      visibleItems.add(
+        FrostedNavItem(
+          icon: item.icon,
+          activeIcon: item.activeIcon,
+          label: item.label,
+        ),
+      );
     }
-    final isActive = _currentIndex == index;
-    final iconColor = isActive ? const Color(0xFFD6A44A) : Colors.white54;
 
-    return SizedBox(
-      height: 54,
-      child: Semantics(
-        button: true,
-        selected: isActive,
-        label: item.label,
-        child: Tooltip(
-          message: item.label,
-          child: GestureDetector(
-            onTap: () => _setTab(index),
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: double.infinity,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Icon(
-                        isActive ? item.activeIcon : item.icon,
-                        color: iconColor,
-                        size: isActive ? 23 : 22,
-                      ),
-                      if (item.badge != null && item.badge! > 0)
-                        PositionedDirectional(
-                          top: -5,
-                          end: -8,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.redAccent,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 14,
-                              minHeight: 14,
-                            ),
-                            child: Text(
-                              item.badge! > 9 ? '9+' : '${item.badge}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                                height: 1,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        item.label,
-                        maxLines: 1,
-                        style: TextStyle(
-                          color: iconColor,
-                          fontSize: 9.0,
-                          fontWeight: isActive
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPrimaryActionNavItem(BottomNavItem item) {
-    return SizedBox(
-      height: 56,
-      child: Center(
-        child: GestureDetector(
-          onTap: () => _setTab(_centerActionIndex),
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFD6A44A),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFD6A44A).withValues(alpha: 0.35),
-                  blurRadius: 10,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
-          ),
-        ),
+    return Semantics(
+      label: 'التنقل الرئيسي',
+      child: FrostedNavBar(
+        activeIndex: visibleTabIndexes.indexOf(_currentIndex),
+        items: visibleItems,
+        onPrimaryAction: () => _setTab(_centerActionIndex),
+        onTap: (index) => _setTab(visibleTabIndexes[index]),
       ),
     );
   }
