@@ -9,13 +9,8 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
 
   final BackendApiClient _apiClient;
 
-  // TODO(pre-launch): delete test accounts (ali aggg / LAQTA QA Admin) from
-  // production DB so their content no longer appears in the public feed.
   @override
-  Future<List<MarketplaceFeedEntry>> getHomeFeed({
-    required int limit,
-    String? city,
-  }) async {
+  Future<List<MarketplaceFeedEntry>> getHomeFeed({required int limit, String? city}) async {
     final response = await _apiClient.get(
       '/explore/feed${_buildQuery({'limit': '$limit', if (city != null && city.isNotEmpty) 'city': city})}',
       authorized: false,
@@ -29,10 +24,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
   }
 
   @override
-  Future<MarketplaceExploreData> getExploreMarketplace({
-    required int limit,
-    String? city,
-  }) async {
+  Future<MarketplaceExploreData> getExploreMarketplace({required int limit, String? city}) async {
     final response = await _apiClient.get(
       '/explore/marketplace${_buildQuery({'limit': '$limit', if (city != null && city.isNotEmpty) 'city': city})}',
       authorized: false,
@@ -41,16 +33,12 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
   }
 
   @override
-  Future<MarketplacePhotographerProfile> getPhotographerProfile(
-    String photographerId,
-  ) async {
+  Future<MarketplacePhotographerProfile> getPhotographerProfile(String photographerId) async {
     final response = await _apiClient.get(
       '/explore/photographers/$photographerId',
       authorized: false,
     );
-    return MarketplacePhotographerProfileDto.fromJson(
-      _readNestedMap(response, 'profile'),
-    );
+    return MarketplacePhotographerProfileDto.fromJson(_readNestedMap(response, 'profile'));
   }
 
   @override
@@ -76,10 +64,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
 
   @override
   Future<MarketplaceVenue> getVenueById(String venueId) async {
-    final response = await _apiClient.get(
-      '/venues/$venueId',
-      authorized: false,
-    );
+    final response = await _apiClient.get('/venues/$venueId', authorized: false);
     return MarketplaceVenueDto.fromJson(_readNestedMap(response, 'venue'));
   }
 
@@ -103,19 +88,13 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
 
   @override
   Future<MarketplaceVenue> getLocationById(String locationId) async {
-    final response = await _apiClient.get(
-      '/locations/$locationId',
-      authorized: false,
-    );
+    final response = await _apiClient.get('/locations/$locationId', authorized: false);
     return MarketplaceVenueDto.fromJson(_readNestedMap(response, 'location'));
   }
 
   @override
   Future<List<SubscriptionPlanEntity>> listSubscriptionPlans() async {
-    final response = await _apiClient.get(
-      '/subscriptions/plans',
-      authorized: false,
-    );
+    final response = await _apiClient.get('/subscriptions/plans', authorized: false);
     final plans = _readNestedList(response, 'plans');
     return plans.map(SubscriptionPlanDto.fromJson).toList(growable: false);
   }
@@ -129,9 +108,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
       return UserSubscriptionDto.fromJson(subscription);
     }
     if (subscription is Map) {
-      return UserSubscriptionDto.fromJson(
-        Map<String, dynamic>.from(subscription),
-      );
+      return UserSubscriptionDto.fromJson(Map<String, dynamic>.from(subscription));
     }
     return null;
   }
@@ -151,9 +128,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
         'paymentProvider': 'manual_pending',
       },
     );
-    return UserSubscriptionDto.fromJson(
-      _readNestedMap(response, 'subscription'),
-    );
+    return UserSubscriptionDto.fromJson(_readNestedMap(response, 'subscription'));
   }
 
   @override
@@ -173,8 +148,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
       body: {
         'type': _campaignTypeValue(type),
         'title': title,
-        if (description != null && description.trim().isNotEmpty)
-          'description': description.trim(),
+        if (description != null && description.trim().isNotEmpty) 'description': description.trim(),
         'budgetTotal': budgetTotal,
         'dailyBudget': dailyBudget,
         'currency': currency,
@@ -222,10 +196,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
     String currency = 'USD',
   }) async {
     final trimmedNote = note?.trim();
-    final body = <String, dynamic>{
-      'eventDate': eventDate.toIso8601String(),
-      'currency': currency,
-    };
+    final body = <String, dynamic>{'eventDate': eventDate.toIso8601String(), 'currency': currency};
     if (guestCount case final value?) {
       body['guestCount'] = value;
     }
@@ -239,10 +210,7 @@ class ApiMarketplaceRemoteDataSource implements MarketplaceRemoteDataSource {
       body['depositAmount'] = value;
     }
 
-    final response = await _apiClient.post(
-      '/venues/$venueId/bookings',
-      body: body,
-    );
+    final response = await _apiClient.post('/venues/$venueId/bookings', body: body);
     return VenueBookingDto.fromJson(_readNestedMap(response, 'booking'));
   }
 

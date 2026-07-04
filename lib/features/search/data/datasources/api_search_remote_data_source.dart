@@ -32,7 +32,7 @@ class ApiSearchRemoteDataSource implements SearchRemoteDataSource {
       authorized: false,
     );
     if (response is! Map<String, dynamic>) return const [];
-    final list = response['photographers'];
+    final list = response['trendingPhotographers'];
     if (list is! List) return const [];
     return list
         .whereType<Map<Object?, Object?>>()

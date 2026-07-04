@@ -1,0 +1,19 @@
+LAQTA v4 Release Manifest
+=========================
+File: app-production-release-v4-obfuscated.aab
+Size: 68.6 MB
+SHA256: AC6ECB4902E93AA8AD42A3A99EE3BF497115D61137696805418C8806207ADEEC
+Built: 2026-07-05 13:21
+Flavor: production
+Obfuscated: yes (--obfuscate --split-debug-info)
+Version: 1.0.0+4
+
+Debug symbols: debug-info-v4\
+  - app.android-arm.symbols
+  - app.android-arm64.symbols
+  - app.android-x64.symbols
+
+Upload to Play Console:
+  1. Internal Testing > Create new release
+  2. Upload .aab file
+  3. Upload debug-info-v4\ symbols (for deobfuscation)

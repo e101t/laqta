@@ -14,9 +14,6 @@ class ApiChatRemoteDataSource implements ChatRemoteDataSource {
     return 'msg_${DateTime.now().microsecondsSinceEpoch}';
   }
 
-  // TODO(pre-launch-screenshots): delete the "Laqta_E2E_test" chat room from
-  // production DB — it shows in the Messages screen preview and must be removed
-  // before Play Console screenshots.
   @override
   Future<List<ChatDto>> getChatsForUser(String userId) async {
     final response = await _apiClient.get(
