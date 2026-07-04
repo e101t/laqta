@@ -71,17 +71,21 @@ if [[ -z "$UNALIGNED_APK" || ! -f "$UNALIGNED_APK" ]]; then
 fi
 rm -f "$ALIGNED_APK" "$SIGNED_APK"
 "$ZIPALIGN" -p -f -v 4 "$UNALIGNED_APK" "$ALIGNED_APK"
+# Use env: so passwords are not visible in `ps` output
+export _LAQTA_KS_PASS="$storePassword"
+export _LAQTA_KEY_PASS="$keyPassword"
 "$APKSIGNER" sign \
   --min-sdk-version 23 \
   --ks "$KEYSTORE_PATH" \
   --ks-key-alias "$keyAlias" \
-  --ks-pass "pass:$storePassword" \
-  --key-pass "pass:$keyPassword" \
+  --ks-pass "env:_LAQTA_KS_PASS" \
+  --key-pass "env:_LAQTA_KEY_PASS" \
   --v1-signing-enabled true \
   --v2-signing-enabled true \
   --v3-signing-enabled true \
   --out "$SIGNED_APK" \
   "$ALIGNED_APK"
+unset _LAQTA_KS_PASS _LAQTA_KEY_PASS
 "$APKSIGNER" verify --verbose --min-sdk-version 23 "$SIGNED_APK"
 "$ZIPALIGN" -c -v 4 "$SIGNED_APK"
 
