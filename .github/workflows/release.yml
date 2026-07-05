@@ -54,6 +54,7 @@ jobs:
           --split-debug-info=build/debug-info
           --dart-define=FLAVOR=prod
           --dart-define=BACKEND_BASE_URL=$BACKEND_BASE_URL
+          --dart-define=PLAY_INTEGRITY_REQUIRED=true
 
       - name: Build, align, and sign production APK
         env:
