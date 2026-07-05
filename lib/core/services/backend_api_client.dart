@@ -299,7 +299,8 @@ class BackendApiClient {
           message = decoded;
         }
       } catch (_) {
-        message = response.body;
+        // Raw server body (HTML, stack trace, proxy banner) must never reach
+        // the user — keep the generic message.
       }
     }
 

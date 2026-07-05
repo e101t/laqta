@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:laqta/core/config/app_config.dart';
 import 'package:laqta/core/services/backend_config.dart';
 
@@ -164,15 +165,46 @@ class CertificatePinning {
 }
 
 class PinnedHttpClient extends http.BaseClient {
-  PinnedHttpClient({http.Client? inner}) : _inner = inner ?? http.Client();
+  PinnedHttpClient._internal(this._inner);
+
+  /// Builds a client that enforces the SPKI pin **inside** the TLS handshake
+  /// on the exact connection carrying the request.  The old pattern (separate
+  /// SecureSocket probe → unpinned _inner.send) had a TOCTOU window where the
+  /// data socket was never verified; this eliminates it.
+  ///
+  /// Pass [inner] only in tests to inject a fake client.
+  factory PinnedHttpClient({http.Client? inner}) {
+    if (inner != null) return PinnedHttpClient._internal(inner);
+
+    // withTrustedRoots:false forces every HTTPS connection through
+    // badCertificateCallback regardless of CA trust, so we can verify the pin
+    // on the live socket rather than a throwaway probe socket.
+    final ctx = SecurityContext(withTrustedRoots: false);
+    final ioClient = HttpClient(context: ctx)
+      ..connectionTimeout = const Duration(seconds: 15)
+      ..badCertificateCallback = (cert, host, port) {
+        final uri = Uri(scheme: 'https', host: host, port: port);
+        if (!CertificatePinning.shouldPin(uri)) return false;
+        try {
+          final pin = CertificatePinning._spkiSha256Pin(cert.pem);
+          final ok = CertificatePinning.acceptedPins.contains(pin);
+          CertificatePinning.lastFailure.value = ok
+              ? null
+              : CertificatePinningException(host, 'SPKI pin mismatch: $pin');
+          return ok;
+        } catch (_) {
+          return false;
+        }
+      };
+
+    return PinnedHttpClient._internal(IOClient(ioClient));
+  }
 
   final http.Client _inner;
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    await CertificatePinning.verifyHost(request.url);
-    return _inner.send(request);
-  }
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      _inner.send(request);
 
   @override
   void close() {

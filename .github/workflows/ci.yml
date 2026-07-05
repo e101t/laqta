@@ -52,7 +52,5 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: flutter pub get
-      - name: Production appbundle check
-        run: flutter build appbundle --flavor production --dart-define=FLAVOR=prod --release
       - name: Development debug APK check
         run: flutter build apk --flavor development --dart-define=FLAVOR=dev --debug

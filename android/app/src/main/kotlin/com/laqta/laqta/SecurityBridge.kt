@@ -157,7 +157,11 @@ class SecurityBridge(private val context: Context) {
         }
 
         return mapOf(
-            "detected" to vectors.any { it == "signature_mismatch" || it == "package_name_mismatch" },
+            "detected" to vectors.any {
+                it == "signature_mismatch" ||
+                it == "package_name_mismatch" ||
+                it == "expected_signature_not_configured"
+            },
             "vectors" to vectors,
             "packageName" to packageName,
             "installer" to installer,
