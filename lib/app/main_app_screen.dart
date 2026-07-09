@@ -182,28 +182,28 @@ class _MainAppScreenState extends State<MainAppScreen> {
         BottomNavItem(
           icon: FluentIcons.home_24_regular,
           activeIcon: FluentIcons.home_24_filled,
-          label: 'الرئيسية',
+          label: AppLocalizations.current.home,
         ),
         BottomNavItem(
           icon: FluentIcons.compass_northwest_24_regular,
           activeIcon: FluentIcons.compass_northwest_24_filled,
-          label: 'اكتشف',
+          label: AppLocalizations.current.explore,
         ),
         BottomNavItem(
           icon: FluentIcons.add_24_regular,
           activeIcon: FluentIcons.add_24_filled,
-          label: 'إنشاء',
+          label: AppLocalizations.current.createLabel,
           isPrimaryAction: true,
         ),
         BottomNavItem(
           icon: FluentIcons.chat_24_regular,
           activeIcon: FluentIcons.chat_24_filled,
-          label: 'الرسائل',
+          label: AppLocalizations.current.messages,
         ),
         BottomNavItem(
           icon: FluentIcons.person_24_regular,
           activeIcon: FluentIcons.person_24_filled,
-          label: 'الملف الشخصي',
+          label: AppLocalizations.current.profileTab,
         ),
       ];
     }
@@ -212,28 +212,28 @@ class _MainAppScreenState extends State<MainAppScreen> {
       BottomNavItem(
         icon: FluentIcons.home_24_regular,
         activeIcon: FluentIcons.home_24_filled,
-        label: 'الرئيسية',
+        label: AppLocalizations.current.home,
       ),
       BottomNavItem(
         icon: FluentIcons.compass_northwest_24_regular,
         activeIcon: FluentIcons.compass_northwest_24_filled,
-        label: 'اكتشف',
+        label: AppLocalizations.current.explore,
       ),
       BottomNavItem(
         icon: FluentIcons.add_24_regular,
         activeIcon: FluentIcons.add_24_filled,
-        label: 'إنشاء',
+        label: AppLocalizations.current.createLabel,
         isPrimaryAction: true,
       ),
       BottomNavItem(
         icon: FluentIcons.chat_24_regular,
         activeIcon: FluentIcons.chat_24_filled,
-        label: 'الرسائل',
+        label: AppLocalizations.current.messages,
       ),
       BottomNavItem(
         icon: FluentIcons.person_24_regular,
         activeIcon: FluentIcons.person_24_filled,
-        label: 'الملف الشخصي',
+        label: AppLocalizations.current.profileTab,
       ),
     ];
   }
@@ -383,7 +383,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
     }
 
     return Semantics(
-      label: 'التنقل الرئيسي',
+      label: AppLocalizations.current.mainNavigationLabel,
       child: FrostedNavBar(
         activeIndex: visibleTabIndexes.indexOf(_currentIndex),
         items: visibleItems,
@@ -396,41 +396,41 @@ class _MainAppScreenState extends State<MainAppScreen> {
   Future<void> _showCreateSheet() async {
     if (!mounted) return;
     final actions = _userRole == AppConstants.rolePhotographer
-        ? const [
+        ? [
             _CreateAction(
-              title: 'ريل جديد',
+              title: AppLocalizations.current.newReel,
               icon: FluentIcons.video_24_regular,
               route: Routes.createPost,
             ),
             _CreateAction(
-              title: 'ستوري جديدة',
+              title: AppLocalizations.current.newStory,
               icon: FluentIcons.flash_24_regular,
               route: Routes.createStory,
             ),
             _CreateAction(
-              title: 'إعلان ممول',
+              title: AppLocalizations.current.sponsoredAdTitle,
               icon: FluentIcons.megaphone_24_regular,
               route: Routes.sponsoredAd,
             ),
             _CreateAction(
-              title: 'الباقات',
+              title: AppLocalizations.current.plansTitle,
               icon: FluentIcons.star_24_regular,
               route: Routes.subscriptionPlans,
             ),
           ]
-        : const [
+        : [
             _CreateAction(
-              title: 'طلب جديد',
+              title: AppLocalizations.current.newRequest,
               icon: FluentIcons.add_square_24_regular,
               route: Routes.requestCreate,
             ),
             _CreateAction(
-              title: 'القاعات',
+              title: AppLocalizations.current.venuesTitle,
               icon: FluentIcons.building_24_regular,
               route: Routes.venues,
             ),
             _CreateAction(
-              title: 'أماكن التصوير',
+              title: AppLocalizations.current.photoSpotsTitle,
               icon: FluentIcons.image_24_regular,
               route: '/locations/salam-garden',
             ),
@@ -450,7 +450,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ماذا تريد أن تنشئ؟',
+                AppLocalizations.current.whatToCreate,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -746,10 +746,10 @@ class _SideBarPrimaryAction extends StatelessWidget {
               const Icon(Icons.add_rounded, color: Colors.black, size: 22),
               if (isExtended) ...[
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'إنشاء',
-                    style: TextStyle(
+                    AppLocalizations.current.createLabel,
+                    style: const TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,

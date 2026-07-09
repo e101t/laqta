@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/app_constants.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 
@@ -19,6 +20,8 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
+  AppLocalizations get _loc => AppLocalizations.of(context);
+
   final _loginIdentifierController = TextEditingController();
   final _loginPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
@@ -52,30 +55,30 @@ class _AuthScreenState extends State<AuthScreen> {
   Timer? _forgotTimer;
 
   static const _roleOptions = <_RoleOption>[
-    _RoleOption('customer', 'عميل', Icons.person_outline_rounded),
-    _RoleOption('photographer', 'مصور', Icons.photo_camera_outlined),
-    _RoleOption('venue_owner', 'صاحب قاعة', Icons.apartment_rounded),
+    _RoleOption('customer', 'customer', Icons.person_outline_rounded),
+    _RoleOption('photographer', 'photographer', Icons.photo_camera_outlined),
+    _RoleOption('venue_owner', 'venueOwner', Icons.apartment_rounded),
   ];
 
   static const _provinceOptions = <_ProvinceOption>[
-    _ProvinceOption('baghdad', 'بغداد'),
-    _ProvinceOption('basra', 'البصرة'),
-    _ProvinceOption('nineveh', 'نينوى'),
-    _ProvinceOption('erbil', 'أربيل'),
-    _ProvinceOption('najaf', 'النجف'),
-    _ProvinceOption('karbala', 'كربلاء'),
-    _ProvinceOption('kirkuk', 'كركوك'),
-    _ProvinceOption('dhi_qar', 'ذي قار'),
-    _ProvinceOption('sulaymaniyah', 'السليمانية'),
-    _ProvinceOption('anbar', 'الأنبار'),
-    _ProvinceOption('diyala', 'ديالى'),
-    _ProvinceOption('saladin', 'صلاح الدين'),
-    _ProvinceOption('maysan', 'ميسان'),
-    _ProvinceOption('wasit', 'واسط'),
-    _ProvinceOption('muthanna', 'المثنى'),
-    _ProvinceOption('qadisiyah', 'القادسية'),
-    _ProvinceOption('babil', 'بابل'),
-    _ProvinceOption('duhok', 'دهوك'),
+    _ProvinceOption('baghdad', 'province_baghdad'),
+    _ProvinceOption('basra', 'province_basra'),
+    _ProvinceOption('nineveh', 'province_nineveh'),
+    _ProvinceOption('erbil', 'province_erbil'),
+    _ProvinceOption('najaf', 'province_najaf'),
+    _ProvinceOption('karbala', 'province_karbala'),
+    _ProvinceOption('kirkuk', 'province_kirkuk'),
+    _ProvinceOption('dhi_qar', 'province_dhi_qar'),
+    _ProvinceOption('sulaymaniyah', 'province_sulaymaniyah'),
+    _ProvinceOption('anbar', 'province_anbar'),
+    _ProvinceOption('diyala', 'province_diyala'),
+    _ProvinceOption('saladin', 'province_saladin'),
+    _ProvinceOption('maysan', 'province_maysan'),
+    _ProvinceOption('wasit', 'province_wasit'),
+    _ProvinceOption('muthanna', 'province_muthanna'),
+    _ProvinceOption('qadisiyah', 'province_qadisiyah'),
+    _ProvinceOption('babil', 'province_babil'),
+    _ProvinceOption('duhok', 'province_duhok'),
   ];
 
   @override
@@ -101,7 +104,9 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: ui.TextDirection.rtl,
+      textDirection: _loc.locale.languageCode == 'ar'
+          ? ui.TextDirection.rtl
+          : ui.TextDirection.ltr,
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         body: Stack(
@@ -147,20 +152,20 @@ class _AuthScreenState extends State<AuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const _AuthHeader(
-          title: 'مرحباً بك في LAQTA',
-          subtitle: 'سجّل الدخول للوصول إلى حسابك',
+        _AuthHeader(
+          title: _loc.welcomeToLaqta,
+          subtitle: _loc.loginSubtitle,
         ),
         const SizedBox(height: 28),
         _LabeledField(
           controller: _loginIdentifierController,
-          label: 'رقم الهاتف أو اسم المستخدم',
+          label: _loc.phoneOrUsername,
           textInputAction: TextInputAction.next,
         ),
         const SizedBox(height: 14),
         _LabeledField(
           controller: _loginPasswordController,
-          label: 'كلمة المرور',
+          label: _loc.passwordLabel,
           obscureText: !_passwordVisible,
           suffixIcon: IconButton(
             onPressed: () =>
@@ -179,18 +184,18 @@ class _AuthScreenState extends State<AuthScreen> {
             onPressed: _isLoading
                 ? null
                 : () => setState(() => _mode = _AuthMode.forgotPassword),
-            child: const Text('نسيت كلمة المرور؟'),
+            child: Text(_loc.forgotPasswordQ),
           ),
         ),
         const SizedBox(height: 12),
         _PrimaryActionButton(
-          label: 'تسجيل الدخول',
+          label: _loc.loginAction,
           onPressed: _isLoading ? null : _login,
         ),
         const SizedBox(height: 18),
         _SwitchModeButton(
-          prompt: 'ليس لديك حساب؟',
-          action: 'إنشاء حساب',
+          prompt: _loc.noAccountPrompt,
+          action: _loc.createAccountAction,
           onPressed: _isLoading
               ? null
               : () => setState(() {
@@ -208,9 +213,9 @@ class _AuthScreenState extends State<AuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const _AuthHeader(
-          title: 'مرحباً بك في LAQTA',
-          subtitle: 'أنشئ حسابك بخطوات قصيرة وآمنة',
+        _AuthHeader(
+          title: _loc.welcomeToLaqta,
+          subtitle: _loc.registerSubtitle,
         ),
         const SizedBox(height: 18),
         _StepProgress(currentStep: _step + 1, totalSteps: 4),
@@ -222,14 +227,14 @@ class _AuthScreenState extends State<AuthScreen> {
             if (_step > 0)
               Expanded(
                 child: _SecondaryActionButton(
-                  label: 'رجوع',
+                  label: _loc.back,
                   onPressed: _isLoading ? null : () => setState(() => _step--),
                 ),
               ),
             if (_step > 0) const SizedBox(width: 12),
             Expanded(
               child: _PrimaryActionButton(
-                label: _step == 3 ? 'إنشاء الحساب' : 'التالي',
+                label: _step == 3 ? _loc.createAccountAction : _loc.next,
                 onPressed: _isLoading ? null : _nextRegistrationStep,
               ),
             ),
@@ -237,8 +242,8 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 18),
         _SwitchModeButton(
-          prompt: 'لديك حساب؟',
-          action: 'تسجيل الدخول',
+          prompt: _loc.haveAccountPrompt,
+          action: _loc.loginAction,
           onPressed: _isLoading
               ? null
               : () => setState(() {
@@ -268,13 +273,13 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionTitle('اختر نوع الحساب'),
+        _SectionTitle(_loc.chooseAccountType),
         const SizedBox(height: 12),
         for (final option in _roleOptions) ...[
           _ChoiceCard(
             selected: _selectedRole == option.value,
             icon: option.icon,
-            label: option.label,
+            label: _loc.translate(option.label),
             onTap: () => setState(() => _selectedRole = option.value),
           ),
           const SizedBox(height: 10),
@@ -287,24 +292,24 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionTitle('المعلومات الأساسية'),
+        _SectionTitle(_loc.basicInfoSection),
         const SizedBox(height: 12),
         _LabeledField(
           controller: _firstNameController,
-          label: 'الاسم الأول',
+          label: _loc.firstNameLabel,
           textInputAction: TextInputAction.next,
         ),
         const SizedBox(height: 12),
         _LabeledField(
           controller: _lastNameController,
-          label: 'اسم العائلة',
+          label: _loc.lastNameLabel,
           textInputAction: TextInputAction.next,
         ),
         const SizedBox(height: 12),
         _LabeledField(
           controller: _usernameController,
-          label: 'اسم المستخدم',
-          hint: 'مثال: ali.photography',
+          label: _loc.usernameLabel,
+          hint: _loc.usernameHint,
           textDirection: ui.TextDirection.ltr,
           inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'\s'))],
         ),
@@ -316,7 +321,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionTitle('المعلومات الشخصية'),
+        _SectionTitle(_loc.personalInfoSection),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -324,7 +329,7 @@ class _AuthScreenState extends State<AuthScreen> {
               child: _ChoiceCard(
                 selected: _selectedGender == 'male',
                 icon: Icons.male_rounded,
-                label: 'ذكر',
+                label: _loc.male,
                 onTap: () => setState(() => _selectedGender = 'male'),
               ),
             ),
@@ -333,7 +338,7 @@ class _AuthScreenState extends State<AuthScreen> {
               child: _ChoiceCard(
                 selected: _selectedGender == 'female',
                 icon: Icons.female_rounded,
-                label: 'أنثى',
+                label: _loc.female,
                 onTap: () => setState(() => _selectedGender = 'female'),
               ),
             ),
@@ -341,16 +346,16 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         const SizedBox(height: 12),
         _PickerTile(
-          label: 'تاريخ الميلاد',
+          label: _loc.birthdateLabel,
           value: _birthdate == null
-              ? 'اختر تاريخ الميلاد'
+              ? _loc.chooseBirthdate
               : intl.DateFormat('yyyy-MM-dd').format(_birthdate!),
           icon: Icons.calendar_month_outlined,
           onTap: _pickBirthdate,
         ),
         const SizedBox(height: 12),
         _DropdownTile(
-          label: 'المحافظة',
+          label: _loc.provinceLabel,
           value: _selectedProvince,
           items: _provinceOptions,
           onChanged: (value) => setState(() => _selectedProvince = value),
@@ -364,11 +369,11 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _SectionTitle('التحقق من الهاتف'),
+        _SectionTitle(_loc.phoneVerificationSection),
         const SizedBox(height: 12),
         _LabeledField(
           controller: _phoneController,
-          label: 'رقم الهاتف',
+          label: _loc.phoneNumber,
           hint: '077xxxxxxxx',
           keyboardType: TextInputType.phone,
           textDirection: ui.TextDirection.ltr,
@@ -379,19 +384,19 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 10),
         _SecondaryActionButton(
           label: _registrationResendSeconds > 0
-              ? 'إعادة الإرسال خلال $_registrationResendSeconds ثانية'
-              : 'إرسال رمز التحقق عبر SMS',
+              ? _loc.resendInSeconds(_registrationResendSeconds)
+              : _loc.sendOtpViaSms,
           onPressed: _isLoading || _registrationResendSeconds > 0
               ? null
               : _sendRegistrationOtp,
         ),
         if (otpSent) ...[
           const SizedBox(height: 12),
-          _InfoText('تم إرسال رمز التحقق عبر رسالة SMS'),
+          _InfoText(_loc.otpSentSuccess),
           const SizedBox(height: 12),
           _LabeledField(
             controller: _otpController,
-            label: 'أدخل رمز التحقق',
+            label: _loc.enterOTP,
             keyboardType: TextInputType.number,
             textDirection: ui.TextDirection.ltr,
             maxLength: AppConstants.otpLength,
@@ -401,7 +406,7 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 12),
         _LabeledField(
           controller: _passwordController,
-          label: 'كلمة المرور',
+          label: _loc.passwordLabel,
           obscureText: !_passwordVisible,
           suffixIcon: IconButton(
             onPressed: () =>
@@ -416,7 +421,7 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 12),
         _LabeledField(
           controller: _confirmPasswordController,
-          label: 'تأكيد كلمة المرور',
+          label: _loc.confirmPasswordLabel,
           obscureText: !_confirmPasswordVisible,
           suffixIcon: IconButton(
             onPressed: () => setState(
@@ -440,14 +445,14 @@ class _AuthScreenState extends State<AuthScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const _AuthHeader(
-          title: 'نسيت كلمة المرور',
-          subtitle: 'سنرسل رمز تحقق برسالة SMS لإعادة تعيينها',
+        _AuthHeader(
+          title: _loc.forgotPasswordTitle,
+          subtitle: _loc.forgotPasswordSubtitle,
         ),
         const SizedBox(height: 24),
         _LabeledField(
           controller: _forgotPhoneController,
-          label: 'رقم الهاتف',
+          label: _loc.phoneNumber,
           hint: '077xxxxxxxx',
           keyboardType: TextInputType.phone,
           textDirection: ui.TextDirection.ltr,
@@ -458,19 +463,19 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 10),
         _SecondaryActionButton(
           label: _forgotResendSeconds > 0
-              ? 'إعادة الإرسال خلال $_forgotResendSeconds ثانية'
-              : 'إرسال رمز التحقق عبر SMS',
+              ? _loc.resendInSeconds(_forgotResendSeconds)
+              : _loc.sendOtpViaSms,
           onPressed: _isLoading || _forgotResendSeconds > 0
               ? null
               : _sendForgotOtp,
         ),
         if (otpSent) ...[
           const SizedBox(height: 12),
-          _InfoText('تم إرسال رمز التحقق عبر رسالة SMS'),
+          _InfoText(_loc.otpSentSuccess),
           const SizedBox(height: 12),
           _LabeledField(
             controller: _forgotOtpController,
-            label: 'أدخل رمز التحقق',
+            label: _loc.enterOTP,
             keyboardType: TextInputType.number,
             textDirection: ui.TextDirection.ltr,
             maxLength: AppConstants.otpLength,
@@ -479,7 +484,7 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 12),
           _LabeledField(
             controller: _forgotPasswordController,
-            label: 'كلمة المرور الجديدة',
+            label: _loc.newPasswordLabel,
             obscureText: !_forgotPasswordVisible,
             suffixIcon: IconButton(
               onPressed: () => setState(
@@ -495,7 +500,7 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 12),
           _LabeledField(
             controller: _forgotConfirmPasswordController,
-            label: 'تأكيد كلمة المرور',
+            label: _loc.confirmPasswordLabel,
             obscureText: !_forgotConfirmPasswordVisible,
             suffixIcon: IconButton(
               onPressed: () => setState(
@@ -512,13 +517,13 @@ class _AuthScreenState extends State<AuthScreen> {
         ],
         const SizedBox(height: 22),
         _PrimaryActionButton(
-          label: 'تعيين كلمة المرور',
+          label: _loc.setPasswordAction,
           onPressed: _isLoading || !otpSent ? null : _resetPassword,
         ),
         const SizedBox(height: 18),
         _SwitchModeButton(
-          prompt: 'تذكرت كلمة المرور؟',
-          action: 'تسجيل الدخول',
+          prompt: _loc.rememberedPasswordPrompt,
+          action: _loc.loginAction,
           onPressed: _isLoading
               ? null
               : () => setState(() => _mode = _AuthMode.login),
@@ -531,7 +536,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final identifier = _loginIdentifierController.text.trim();
     final password = _loginPasswordController.text;
     if (identifier.isEmpty || password.isEmpty) {
-      _showSnackBar('يرجى إدخال رقم الهاتف أو اسم المستخدم وكلمة المرور');
+      _showSnackBar(_loc.loginMissingCredentials);
       return;
     }
     await _runAuthAction(() async {
@@ -540,7 +545,7 @@ class _AuthScreenState extends State<AuthScreen> {
         password: password,
       );
       if (!result.isSuccess) {
-        throw _AuthUiException('بيانات الدخول غير صحيحة');
+        throw _AuthUiException(_loc.invalidCredentials);
       }
       if (!mounted) return;
       AppRouter.goToHome(context);
@@ -566,23 +571,23 @@ class _AuthScreenState extends State<AuthScreen> {
     final lastName = _lastNameController.text.trim();
     final username = _usernameController.text.trim().toLowerCase();
     if (firstName.isEmpty) {
-      _showSnackBar('الاسم الأول مطلوب');
+      _showSnackBar(_loc.firstNameRequired);
       return false;
     }
     if (lastName.isEmpty) {
-      _showSnackBar('اسم العائلة مطلوب');
+      _showSnackBar(_loc.lastNameRequired);
       return false;
     }
     if (username.length < 3 || username.length > 30) {
-      _showSnackBar('اسم المستخدم يجب أن يكون بين 3 و30 حرفاً');
+      _showSnackBar(_loc.usernameLengthError);
       return false;
     }
     if (username.contains(RegExp(r'\s'))) {
-      _showSnackBar('اسم المستخدم لا يجب أن يحتوي على مسافات');
+      _showSnackBar(_loc.usernameNoSpaces);
       return false;
     }
     if (!RegExp(r'^[\u0600-\u06FFA-Za-z0-9_.]+$').hasMatch(username)) {
-      _showSnackBar('اسم المستخدم يحتوي على أحرف غير مسموحة');
+      _showSnackBar(_loc.usernameInvalidChars);
       return false;
     }
     _usernameController.text = username;
@@ -591,19 +596,19 @@ class _AuthScreenState extends State<AuthScreen> {
 
   bool _validatePersonalDetails() {
     if (_selectedGender == null) {
-      _showSnackBar('يرجى اختيار الجنس');
+      _showSnackBar(_loc.chooseGenderError);
       return false;
     }
     if (_birthdate == null) {
-      _showSnackBar('يرجى اختيار تاريخ الميلاد');
+      _showSnackBar(_loc.chooseBirthdateError);
       return false;
     }
     if (!_isAdult(_birthdate!)) {
-      _showSnackBar('عذراً، يجب أن يكون عمرك 18 سنة أو أكثر لاستخدام LAQTA.');
+      _showSnackBar(_loc.agePolicyError);
       return false;
     }
     if (_selectedProvince == null) {
-      _showSnackBar('يرجى اختيار المحافظة');
+      _showSnackBar(_loc.chooseProvinceError);
       return false;
     }
     return true;
@@ -611,21 +616,21 @@ class _AuthScreenState extends State<AuthScreen> {
 
   bool _validatePhonePassword({required bool requireOtp}) {
     if (_phoneController.text.trim().isEmpty) {
-      _showSnackBar('رقم الهاتف غير صحيح');
+      _showSnackBar(_loc.invalidPhoneError);
       return false;
     }
     if (requireOtp &&
         _otpController.text.trim().length != AppConstants.otpLength) {
-      _showSnackBar('أدخل رمز التحقق');
+      _showSnackBar(_loc.enterOtpError);
       return false;
     }
     final password = _passwordController.text;
     if (!_isValidPassword(password)) {
-      _showSnackBar('كلمة المرور يجب أن تكون 8 أحرف وتحتوي حرفاً ورقماً');
+      _showSnackBar(_loc.passwordPolicyError);
       return false;
     }
     if (password != _confirmPasswordController.text) {
-      _showSnackBar('كلمة المرور غير متطابقة');
+      _showSnackBar(_loc.passwordMismatchError);
       return false;
     }
     return true;
@@ -634,7 +639,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _sendRegistrationOtp() async {
     if (!_validateBasicInfo() || !_validatePersonalDetails()) return;
     if (_phoneController.text.trim().isEmpty) {
-      _showSnackBar('رقم الهاتف غير صحيح');
+      _showSnackBar(_loc.invalidPhoneError);
       return;
     }
     await _runAuthAction(() async {
@@ -659,13 +664,13 @@ class _AuthScreenState extends State<AuthScreen> {
         _registrationResendSeconds = otp.resendAfterSeconds;
       });
       _startRegistrationTimer();
-      _showSnackBar('تم إرسال رمز التحقق عبر رسالة SMS');
+      _showSnackBar(_loc.otpSentSuccess);
     });
   }
 
   Future<void> _completeRegistration() async {
     if (_registrationRequestId == null) {
-      _showSnackBar('أرسل رمز التحقق عبر SMS أولاً');
+      _showSnackBar(_loc.sendOtpFirstError);
       return;
     }
     if (!_validatePhonePassword(requireOtp: true)) return;
@@ -688,7 +693,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _sendForgotOtp() async {
     if (_forgotPhoneController.text.trim().isEmpty) {
-      _showSnackBar('رقم الهاتف غير صحيح');
+      _showSnackBar(_loc.invalidPhoneError);
       return;
     }
     await _runAuthAction(() async {
@@ -696,7 +701,7 @@ class _AuthScreenState extends State<AuthScreen> {
         phone: _forgotPhoneController.text.trim(),
       );
       if (!result.isSuccess || result.valueOrNull == null) {
-        throw _AuthUiException('تعذر إرسال رمز التحقق عبر SMS');
+        throw _AuthUiException(_loc.otpSendFailedError);
       }
       final otp = result.valueOrNull!;
       setState(() {
@@ -704,26 +709,26 @@ class _AuthScreenState extends State<AuthScreen> {
         _forgotResendSeconds = otp.resendAfterSeconds;
       });
       _startForgotTimer();
-      _showSnackBar('تم إرسال رمز التحقق عبر رسالة SMS');
+      _showSnackBar(_loc.otpSentSuccess);
     });
   }
 
   Future<void> _resetPassword() async {
     if (_forgotRequestId == null) {
-      _showSnackBar('أرسل رمز التحقق عبر SMS أولاً');
+      _showSnackBar(_loc.sendOtpFirstError);
       return;
     }
     if (_forgotOtpController.text.trim().length != AppConstants.otpLength) {
-      _showSnackBar('أدخل رمز التحقق');
+      _showSnackBar(_loc.enterOtpError);
       return;
     }
     if (!_isValidPassword(_forgotPasswordController.text)) {
-      _showSnackBar('كلمة المرور يجب أن تكون 8 أحرف وتحتوي حرفاً ورقماً');
+      _showSnackBar(_loc.passwordPolicyError);
       return;
     }
     if (_forgotPasswordController.text !=
         _forgotConfirmPasswordController.text) {
-      _showSnackBar('كلمة المرور غير متطابقة');
+      _showSnackBar(_loc.passwordMismatchError);
       return;
     }
     await _runAuthAction(() async {
@@ -751,7 +756,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } on _AuthUiException catch (error) {
       _showSnackBar(error.message);
     } catch (_) {
-      _showSnackBar('يرجى المحاولة لاحقاً');
+      _showSnackBar(_loc.tryAgainLater);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -767,9 +772,9 @@ class _AuthScreenState extends State<AuthScreen> {
       initialDate: initial,
       firstDate: DateTime(1920),
       lastDate: DateTime(now.year, now.month, now.day),
-      helpText: 'تاريخ الميلاد',
-      cancelText: 'إلغاء',
-      confirmText: 'اختيار',
+      helpText: _loc.birthdateLabel,
+      cancelText: _loc.cancel,
+      confirmText: _loc.datePickerChoose,
     );
     if (picked != null) {
       setState(() => _birthdate = picked);
@@ -825,24 +830,24 @@ class _AuthScreenState extends State<AuthScreen> {
         lowered.contains('page not found') ||
         lowered.contains('not found') ||
         lowered.contains('backend request failed')) {
-      return 'الخدمة غير متاحة حالياً. يرجى تحديث التطبيق أو المحاولة لاحقاً.';
+      return _loc.serviceUnavailableUpdate;
     }
     if (message.contains('username') || message.contains('اسم المستخدم')) {
-      return 'اسم المستخدم مستخدم بالفعل';
+      return _loc.usernameTaken;
     }
     if (message.contains('phone') || message.contains('رقم الهاتف')) {
-      return 'رقم الهاتف مستخدم بالفعل';
+      return _loc.phoneTaken;
     }
     if (message.contains('expired') || message.contains('صلاحية')) {
-      return 'انتهت صلاحية الرمز';
+      return _loc.codeExpired;
     }
     if (message.contains('Invalid') || message.contains('رمز')) {
-      return 'رمز التحقق غير صحيح';
+      return _loc.invalidOtpCode;
     }
     if (message.contains('Too many') || message.contains('wait')) {
-      return 'يرجى الانتظار قبل طلب رمز جديد';
+      return _loc.waitBeforeNewCode;
     }
-    return message.isEmpty ? 'يرجى المحاولة لاحقاً' : message;
+    return message.isEmpty ? _loc.tryAgainLater : message;
   }
 
   void _showSnackBar(String message) {
@@ -1013,7 +1018,7 @@ class _StepProgress extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'الخطوة $currentStep من $totalSteps',
+          AppLocalizations.of(context).stepOf(currentStep, totalSteps),
           textAlign: TextAlign.center,
           style: const TextStyle(color: LaqtaColors.accent),
         ),
@@ -1245,7 +1250,7 @@ class _DropdownTile extends StatelessWidget {
           .map(
             (item) => DropdownMenuItem<String>(
               value: item.value,
-              child: Text(item.label),
+              child: Text(AppLocalizations.of(context).translate(item.label)),
             ),
           )
           .toList(),

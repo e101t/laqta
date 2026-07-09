@@ -97,6 +97,14 @@ class AppConfig {
     defaultValue: '',
   );
 
+  /// Comma-separated E.164 prefixes accepted at sign-up. Launch market is
+  /// Iraq; expanding to a new market is a build-config change, not a code
+  /// change.
+  static const String supportedPhonePrefixes = String.fromEnvironment(
+    'SUPPORTED_PHONE_PREFIXES',
+    defaultValue: '+9647',
+  );
+
   static const bool requestSigningEnabled = bool.fromEnvironment(
     'REQUEST_SIGNING_ENABLED',
     defaultValue: true,

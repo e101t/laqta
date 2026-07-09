@@ -9,11 +9,11 @@ void main() {
       await tester.pumpWidget(wrapWithMaterial(const ExploreScreen()));
       await tester.pump(const Duration(seconds: 1));
 
-      expect(find.text('اكتشف'), findsOneWidget);
-      expect(find.text('ابحث عن مصور، قاعة، مكان...'), findsOneWidget);
-      expect(find.text('المصورون'), findsOneWidget);
-      expect(find.text('القاعات'), findsOneWidget);
-      expect(find.text('أماكن التصوير'), findsOneWidget);
+      expect(find.text('Discover'), findsOneWidget);
+      expect(find.text('Search for a photographer, venue, place...'), findsOneWidget);
+      expect(find.text('Photographers'), findsOneWidget);
+      expect(find.text('Venues'), findsOneWidget);
+      expect(find.text('Photo spots'), findsOneWidget);
       expect(find.text('قاعة رويال لايف'), findsNothing);
       expect(find.text('حديقة السلام'), findsNothing);
     },
@@ -25,7 +25,7 @@ void main() {
     await tester.pumpWidget(wrapWithMaterial(const ExploreScreen()));
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('اكتشف'), findsOneWidget);
+    expect(find.text('Discover'), findsOneWidget);
     expect(find.text('مقهى نوفا'), findsNothing);
     expect(find.text('منتجع دجلة'), findsNothing);
     expect(tester.takeException(), isNull);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
@@ -90,7 +91,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
                   Text(
-                    'دوراتي',
+                    AppLocalizations.current.myCoursesTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -123,13 +124,13 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
       );
     }
     if (_hasError) {
-      return const [
+      return [
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(vertical: 24),
           child: Center(
             child: Text(
-              'حدث خطأ في تحميل دوراتك',
-              style: TextStyle(color: Colors.white70),
+              AppLocalizations.current.myCoursesLoadError,
+              style: const TextStyle(color: Colors.white70),
             ),
           ),
         ),
@@ -140,18 +141,21 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
         const SizedBox(height: 60),
         const Icon(Icons.menu_book_outlined, color: Colors.white38, size: 48),
         const SizedBox(height: 12),
-        const Text(
-          'لم تسجّل في أي دورة بعد',
+        Text(
+          AppLocalizations.current.notEnrolledYet,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 6),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            'تصفّح دورات تعليم التصوير وسجّل في أول دورة لك.',
+            AppLocalizations.current.browseCoursesPrompt,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70),
+            style: const TextStyle(color: Colors.white70),
           ),
         ),
         const SizedBox(height: 16),
@@ -159,7 +163,7 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
           textDirection: TextDirection.ltr,
           children: [
             LaqtaPrimaryAction(
-              label: 'تصفح الدورات',
+              label: AppLocalizations.current.browseCourses,
               onTap: () => AppRouter.goToCourses(context),
             ),
           ],
@@ -169,9 +173,9 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
     return _enrollments.map((enrollment) {
       final course = _coursesById[enrollment.courseId];
       final statusLabel = switch (enrollment.status) {
-        'confirmed' => 'مؤكدة',
-        'canceled' => 'ملغاة',
-        _ => 'بانتظار الدفع',
+        'confirmed' => AppLocalizations.current.enrollmentConfirmed,
+        'canceled' => AppLocalizations.current.enrollmentCanceled,
+        _ => AppLocalizations.current.awaitingPayment,
       };
       final statusColor = switch (enrollment.status) {
         'confirmed' => LaqtaColors.success,

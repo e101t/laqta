@@ -70,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'تعذّر تحميل الملف الشخصي';
+        _errorMessage = AppLocalizations.current.profileLoadFailed;
         _isLoading = false;
       });
     }
@@ -156,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (!mounted) return;
         messenger.showSnackBar(
-          const SnackBar(content: Text('تم تحديث صورة الملف الشخصي')),
+          SnackBar(content: Text(AppLocalizations.current.profilePhotoUpdated)),
         );
       } finally {
         if (mounted) {
@@ -166,7 +166,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isUploading = false);
-      messenger.showSnackBar(const SnackBar(content: Text('فشل رفع الصورة')));
+      messenger.showSnackBar(
+        SnackBar(content: Text(AppLocalizations.current.imageUploadFailed)),
+      );
     }
   }
 
@@ -181,10 +183,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final newValue = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('تعديل $title'),
+        title: Text(AppLocalizations.current.editFieldTitle(title)),
         content: AppTextField(
           controller: controller,
-          hint: 'اكتب $title',
+          hint: AppLocalizations.current.enterField(title),
           label: title,
           keyboardType: fieldKey == 'phone'
               ? TextInputType.phone
@@ -195,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             final value = controller.text.trim();
             if (value.isEmpty) {
               messenger.showSnackBar(
-                SnackBar(content: Text('$title لا يمكن أن يكون فارغاً')),
+                SnackBar(content: Text(AppLocalizations.current.fieldCannotBeEmpty(title))),
               );
               return;
             }
@@ -205,20 +207,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إلغاء'),
+            child: Text(AppLocalizations.current.cancel),
           ),
           TextButton(
             onPressed: () {
               final value = controller.text.trim();
               if (value.isEmpty) {
                 messenger.showSnackBar(
-                  SnackBar(content: Text('$title لا يمكن أن يكون فارغاً')),
+                  SnackBar(content: Text(AppLocalizations.current.fieldCannotBeEmpty(title))),
                 );
                 return;
               }
               Navigator.of(context).pop(value);
             },
-            child: const Text('حفظ'),
+            child: Text(AppLocalizations.current.save),
           ),
         ],
       ),
@@ -228,10 +230,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await _updateUser({fieldKey: newValue});
         messenger.showSnackBar(
-          SnackBar(content: Text('تم تحديث $title بنجاح')),
+          SnackBar(content: Text(AppLocalizations.current.fieldUpdated(title))),
         );
       } catch (e) {
-        messenger.showSnackBar(SnackBar(content: Text('تعذّر تحديث $title')));
+        messenger.showSnackBar(
+          SnackBar(content: Text(AppLocalizations.current.fieldUpdateFailed(title))),
+        );
       }
     }
   }
@@ -249,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('حسابي')),
+        appBar: AppBar(title: Text(AppLocalizations.current.myAccountTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -264,10 +268,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                CTAButton(text: 'إعادة المحاولة', onPressed: _loadUser),
+                CTAButton(text: AppLocalizations.current.retry, onPressed: _loadUser),
                 const SizedBox(height: 8),
                 SecondaryButton(
-                  text: 'إكمال البيانات الأساسية',
+                  text: AppLocalizations.current.completeBasicInfo,
                   onPressed: () => AppRouter.goToBasicInfo(
                     context,
                     AppConstants.roleCustomer,
@@ -282,15 +286,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final user = _user!;
     final genderLabel = user.gender == 'female'
-        ? 'أنثى'
+        ? AppLocalizations.current.female
         : user.gender == 'male'
-        ? 'ذكر'
+        ? AppLocalizations.current.male
         : null;
-    final ageLabel = user.age != null ? '${user.age} سنة' : null;
+    final ageLabel = user.age != null
+        ? '${user.age} ${AppLocalizations.current.translate('yearsOldSuffix')}'
+        : null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('حسابي'),
+        title: Text(AppLocalizations.current.myAccountTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -414,7 +420,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoCard(
               icon: Icons.email,
               title: 'Email',
-              value: user.email ?? 'غير مضاف',
+              value: user.email ?? AppLocalizations.current.notAdded,
               fieldKey: 'email',
             ),
             const SizedBox(height: 12),
@@ -422,15 +428,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: Icons.phone,
               title: localizations.phoneNumber,
               value: user.phone == null || user.phone!.trim().isEmpty
-                  ? 'غير مضاف'
+                  ? AppLocalizations.current.notAdded
                   : formatPhoneNumberForDisplay(user.phone),
               fieldKey: 'phone',
             ),
             const SizedBox(height: 12),
             _buildInfoCard(
               icon: Icons.person_outline,
-              title: 'اسم المستخدم',
-              value: user.username ?? 'غير مضاف',
+              title: AppLocalizations.current.usernameLabel,
+              value: user.username ?? AppLocalizations.current.notAdded,
               fieldKey: 'username',
               editable: false,
             ),
@@ -440,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: localizations.governorate,
               value: user.governorate.isNotEmpty
                   ? user.governorate
-                  : 'غير مضاف',
+                  : AppLocalizations.current.notAdded,
               fieldKey: 'governorate',
             ),
             const SizedBox(height: 24),
@@ -463,7 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'دوراتي',
+                text: AppLocalizations.current.myCoursesTitle,
                 icon: Icons.school_outlined,
                 onPressed: () {
                   AppRouter.goToMyCourses(context);
@@ -479,7 +485,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'معرض الأعمال',
+                text: AppLocalizations.current.portfolioTitle,
                 icon: Icons.photo_library,
                 onPressed: () {
                   AppRouter.goToPortfolioEditor(context);
@@ -487,7 +493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'الباقات والاشتراكات',
+                text: AppLocalizations.current.plansAndSubscriptions,
                 icon: Icons.workspace_premium_outlined,
                 onPressed: () {
                   AppRouter.goToSubscriptionPlans(context);
@@ -495,7 +501,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'إعلان ممول',
+                text: AppLocalizations.current.sponsoredAdTitle,
                 icon: Icons.campaign_outlined,
                 onPressed: () {
                   AppRouter.goToSponsoredAd(context);
@@ -503,7 +509,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'توثيق الحساب',
+                text: AppLocalizations.current.accountVerification,
                 icon: Icons.verified_user_outlined,
                 onPressed: () {
                   AppRouter.goToPhotographerVerification(context);
@@ -511,7 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               SecondaryButton(
-                text: 'إدارة الدورات التعليمية',
+                text: AppLocalizations.current.manageTeachingCourses,
                 icon: Icons.school_outlined,
                 onPressed: () {
                   AppRouter.goToCourseManagement(context);
@@ -519,7 +525,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ] else ...[
               PrimaryButton(
-                text: 'لوحة تحكم الإدارة',
+                text: AppLocalizations.current.adminPanel,
                 icon: Icons.admin_panel_settings,
                 onPressed: () {
                   AppRouter.goToHome(context);

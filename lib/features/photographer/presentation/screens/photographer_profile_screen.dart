@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
@@ -106,8 +107,8 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
     final chat = result.valueOrNull;
     if (!result.isSuccess || chat == null) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('تعذر فتح المحادثة. يرجى المحاولة بعد الحجز.'),
+        SnackBar(
+          content: Text(AppLocalizations.current.chatOpenAfterBooking),
         ),
       );
       return;
@@ -172,7 +173,7 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              controller.error ?? 'تعذر تحميل ملف المصور.',
+              controller.error ?? AppLocalizations.current.photographerLoadFailed,
               style: const TextStyle(color: Colors.white70),
               textAlign: TextAlign.center,
             ),
@@ -339,7 +340,7 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                     Row(
                       children: [
                         Text(
-                          'مصور زفاف',
+                          AppLocalizations.current.weddingPhotographer,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(color: Colors.white70),
                         ),
@@ -356,7 +357,7 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          profile.governorate ?? 'العراق',
+                          profile.governorate ?? AppLocalizations.current.iraqLabel,
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(color: Colors.white70),
                         ),
@@ -397,17 +398,17 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                         children: [
                           LaqtaMetricColumn(
                             value: '${profile.projectsCount}',
-                            label: 'المشاريع',
+                            label: AppLocalizations.current.projectsLabel,
                           ),
                           _divider(),
                           LaqtaMetricColumn(
                             value: _formatFollowers(profile.followersCount),
-                            label: 'المتابعون',
+                            label: AppLocalizations.current.followersLabel,
                           ),
                           _divider(),
                           LaqtaMetricColumn(
                             value: '${profile.followingCount}',
-                            label: 'متابع',
+                            label: AppLocalizations.current.followingLabel,
                           ),
                         ],
                       ),
@@ -416,12 +417,12 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                     Row(
                       children: [
                         LaqtaPrimaryAction(
-                          label: 'احجز الآن',
+                          label: AppLocalizations.current.bookNow,
                           onTap: () => AppRouter.goToCreateRequest(context),
                         ),
                         const SizedBox(width: 12),
                         LaqtaPrimaryAction(
-                          label: 'تواصل',
+                          label: AppLocalizations.current.contactAction,
                           outlined: true,
                           onTap: () => _openDirectChat(profile),
                         ),
@@ -441,11 +442,11 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                       labelColor: LaqtaColors.accent,
                       unselectedLabelColor: Colors.white54,
                       indicatorColor: LaqtaColors.accent,
-                      tabs: const [
-                        Tab(text: 'الأعمال'),
-                        Tab(text: 'المراجعات'),
-                        Tab(text: 'ريلز'),
-                        Tab(text: 'المتابعة'),
+                      tabs: [
+                        Tab(text: AppLocalizations.current.worksTab),
+                        Tab(text: AppLocalizations.current.reviewsTab),
+                        Tab(text: AppLocalizations.current.reelsTab),
+                        Tab(text: AppLocalizations.current.followTabLabel),
                       ],
                     ),
                     SizedBox(
@@ -481,11 +482,11 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
   }
 
   List<(String, IconData)> _quickSections() {
-    return const [
-      ('تواصل', Icons.people_alt_outlined),
-      ('جلسات', Icons.camera_alt_outlined),
-      ('كواليس', Icons.workspaces_outline),
-      ('استوديو', Icons.photo_camera_back_outlined),
+    return [
+      (AppLocalizations.current.contactAction, Icons.people_alt_outlined),
+      (AppLocalizations.current.sessionsHighlight, Icons.camera_alt_outlined),
+      (AppLocalizations.current.behindScenes, Icons.workspaces_outline),
+      (AppLocalizations.current.studioHighlight, Icons.photo_camera_back_outlined),
     ];
   }
 
@@ -515,10 +516,10 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
 
   Widget _galleryGrid(List<MarketplaceMediaAsset> gallery) {
     if (gallery.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'لا توجد أعمال معروضة بعد.',
-          style: TextStyle(color: Colors.white54),
+          AppLocalizations.current.noWorksYet,
+          style: const TextStyle(color: Colors.white54),
         ),
       );
     }
@@ -561,10 +562,10 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
 
   Widget _reelsGrid(List<MarketplaceReelSummary> reels) {
     if (reels.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
-          'لا توجد ريلز منشورة بعد.',
-          style: TextStyle(color: Colors.white54),
+          AppLocalizations.current.noReelsYet,
+          style: const TextStyle(color: Colors.white54),
         ),
       );
     }
@@ -624,9 +625,9 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'ملخص التقييم',
-                style: TextStyle(
+              Text(
+                AppLocalizations.current.ratingSummary,
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
                 ),
@@ -645,7 +646,10 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'من ${profile.ratingCount} تقييمات موثقة، مع ${profile.projectsCount} مشاريع منفذة.',
+                      AppLocalizations.current.ratingSummaryText(
+                        profile.ratingCount,
+                        profile.projectsCount,
+                      ),
                       style: const TextStyle(
                         color: Colors.white70,
                         height: 1.6,
@@ -694,7 +698,7 @@ class _PhotographerProfileViewState extends State<_PhotographerProfileView>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'تخصص موثّق ضمن ملف المصور الحالي مع جاهزية للحجز والترويج.',
+                        AppLocalizations.current.verifiedSpecialtyNote,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white70,
                           height: 1.6,

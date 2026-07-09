@@ -62,10 +62,10 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    const statusOptions = [
-      ('الكل', 'all'),
-      ('مفتوح', 'open'),
-      ('محلول', 'resolved'),
+    final statusOptions = [
+      (AppLocalizations.current.allFilter, 'all'),
+      (AppLocalizations.current.openFilter, 'open'),
+      (AppLocalizations.current.resolvedFilter, 'resolved'),
     ];
 
     return Scaffold(

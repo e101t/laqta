@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
@@ -62,7 +63,7 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
           );
       if (!mounted) return;
       if (!intentResult.isSuccess || intentResult.valueOrNull == null) {
-        setState(() => _error = 'فشل بدء عملية الدفع');
+        setState(() => _error = AppLocalizations.current.paymentStartFailed);
         return;
       }
       final intent = intentResult.valueOrNull!;
@@ -85,7 +86,7 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
           );
       if (!mounted) return;
       if (!confirmResult.isSuccess) {
-        setState(() => _error = 'فشل تأكيد الدفع، تواصل مع الدعم');
+        setState(() => _error = AppLocalizations.current.paymentConfirmFailed);
         return;
       }
 
@@ -95,7 +96,7 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
       _showSuccess();
     } catch (e) {
       _logger.e('Course payment error: $e');
-      if (mounted) setState(() => _error = 'حدث خطأ أثناء عملية الدفع');
+      if (mounted) setState(() => _error = AppLocalizations.current.paymentProcessError);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -107,7 +108,7 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
       final currentUserResult = await AuthDependencies.getCurrentUser()
           .call();
       final currentUserId = currentUserResult.valueOrNull?.id ?? '';
-      String studentName = 'متدرب';
+      String studentName = AppLocalizations.current.traineeFallback;
       if (currentUserId.isNotEmpty) {
         final profileResult = await ProfileDependencies.getUserProfile().call(
           userId: currentUserId,
@@ -117,8 +118,8 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
       final notification = NotificationModel(
         notificationId: '',
         userId: widget.photographerId,
-        title: 'تسجيل جديد في دورتك',
-        body: 'سجّل $studentName في "${widget.courseTitle}" ودفع رسوم الدورة.',
+        title: AppLocalizations.current.newEnrollmentTitle,
+        body: AppLocalizations.current.newEnrollmentBody(studentName, widget.courseTitle),
         type: 'course',
         data: {'courseEnrollmentId': widget.enrollmentId},
         createdAt: DateTime.now(),
@@ -134,12 +135,12 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF17191F),
-        title: const Text(
-          'تم الدفع بنجاح',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          AppLocalizations.current.paymentSuccessTitle,
+          style: const TextStyle(color: Colors.white),
         ),
         content: Text(
-          'تم تسجيلك في "${widget.courseTitle}" بنجاح.',
+          AppLocalizations.current.enrolledInCourse(widget.courseTitle),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -148,7 +149,7 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
               Navigator.of(context).pop();
               Navigator.of(context).pop(true);
             },
-            child: const Text('حسنًا'),
+            child: Text(AppLocalizations.current.okAction),
           ),
         ],
       ),
@@ -165,15 +166,15 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: const [
-                Row(
+              children: [
+                const Row(
                   textDirection: TextDirection.ltr,
                   children: [LaqtaHeaderBackButton()],
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 Text(
-                  'بوابة الدفع غير مُفعّلة في هذا الإصدار.',
-                  style: TextStyle(color: Colors.white70),
+                  AppLocalizations.current.paymentGatewayDisabled,
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ],
             ),
@@ -232,7 +233,7 @@ class _CoursePaymentScreenState extends State<CoursePaymentScreen> {
                 textDirection: TextDirection.ltr,
                 children: [
                   LaqtaPrimaryAction(
-                    label: _isLoading ? 'جارٍ الدفع...' : 'ادفع الآن',
+                    label: _isLoading ? AppLocalizations.current.payingProgress : AppLocalizations.current.payNow,
                     onTap: _isLoading ? null : _processPayment,
                   ),
                 ],

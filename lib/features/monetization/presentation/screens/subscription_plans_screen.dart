@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/core/theme/laqta_tokens.dart';
@@ -45,7 +46,7 @@ class _SubscriptionPlansView extends StatelessWidget {
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
                   Text(
-                    'الباقات والاشتراكات',
+                    AppLocalizations.current.plansAndSubscriptions,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -68,14 +69,14 @@ class _SubscriptionPlansView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _cycleToggle(
-                        label: 'سنوي (خصم)',
+                        label: AppLocalizations.current.yearlyDiscount,
                         selected: controller.yearly,
                         onTap: () => controller.setYearly(true),
                       ),
                     ),
                     Expanded(
                       child: _cycleToggle(
-                        label: 'شهري',
+                        label: AppLocalizations.current.monthly,
                         selected: !controller.yearly,
                         onTap: () => controller.setYearly(false),
                       ),
@@ -101,12 +102,12 @@ class _SubscriptionPlansView extends StatelessWidget {
                   ),
                 )
               else if (plans.isEmpty)
-                const SizedBox(
+                SizedBox(
                   height: 220,
                   child: Center(
                     child: Text(
-                      'لا توجد باقات متاحة حالياً',
-                      style: TextStyle(color: Colors.white70),
+                      AppLocalizations.current.noPlansAvailable,
+                      style: const TextStyle(color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -146,9 +147,9 @@ class _SubscriptionPlansView extends StatelessWidget {
                                           SnackBar(
                                             content: Text(
                                               success
-                                                  ? 'تم تفعيل باقة ${plan.name}.'
+                                                  ? AppLocalizations.current.planActivated(plan.name)
                                                   : (controller.error ??
-                                                        'تعذر تفعيل الباقة.'),
+                                                        AppLocalizations.current.planActivationFailed),
                                             ),
                                           ),
                                         );
@@ -168,9 +169,9 @@ class _SubscriptionPlansView extends StatelessWidget {
                   color: LaqtaColors.accent,
                   size: 18,
                 ),
-                label: const Text(
-                  'مقارنة الباقات',
-                  style: TextStyle(
+                label: Text(
+                  AppLocalizations.current.comparePlans,
+                  style: const TextStyle(
                     color: LaqtaColors.accent,
                     fontWeight: FontWeight.w700,
                   ),
@@ -242,12 +243,12 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final features = [
-      '${plan.portfolioLimit} صور في البورتفوليو',
-      '${plan.reelsLimit} ريلز شهريًا',
-      if (plan.featuredEnabled) 'ظهور أفضل في البحث',
-      if (plan.analyticsEnabled) 'إحصائيات أساسية',
-      if (plan.sponsoredDiscountPercent > 0) 'خصم على الإعلانات',
-      if (plan.code == 'elite') 'دعم أسرع',
+      AppLocalizations.current.portfolioImages(plan.portfolioLimit),
+      AppLocalizations.current.reelsPerMonth(plan.reelsLimit),
+      if (plan.featuredEnabled) AppLocalizations.current.betterSearchVisibility,
+      if (plan.analyticsEnabled) AppLocalizations.current.basicAnalytics,
+      if (plan.sponsoredDiscountPercent > 0) AppLocalizations.current.adsDiscount,
+      if (plan.code == 'elite') AppLocalizations.current.fasterSupport,
     ];
 
     return Container(
@@ -289,7 +290,7 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
           Text(
-            'شهريًا',
+            AppLocalizations.current.perMonth,
             style: const TextStyle(
               color: Colors.white70,
               fontSize: 12,
@@ -357,7 +358,7 @@ class _PlanCard extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      isCurrent ? 'مفعّلة' : 'اختر الباقة',
+                      isCurrent ? AppLocalizations.current.activePlan : AppLocalizations.current.choosePlan,
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
             ),

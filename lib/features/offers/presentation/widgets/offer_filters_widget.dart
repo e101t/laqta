@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Offer Filters: Sort by Price, Trust Score, Delivery Time, Distance
 class OfferFiltersWidget extends StatefulWidget {
@@ -38,28 +39,28 @@ class _OfferFiltersWidgetState extends State<OfferFiltersWidget> {
         children: [
           _buildFilterChip(
             icon: '💰',
-            label: 'السعر: الأقل أولاً',
+            label: AppLocalizations.current.sortPriceLowFirst,
             isSelected: _selectedFilter == OfferFilterCriteria.priceLowToHigh,
             onTap: () => _updateFilter(OfferFilterCriteria.priceLowToHigh),
           ),
           const SizedBox(width: 12),
           _buildFilterChip(
             icon: '⭐',
-            label: 'الأعلى ثقة',
+            label: AppLocalizations.current.sortTopTrust,
             isSelected: _selectedFilter == OfferFilterCriteria.trustScoreHigh,
             onTap: () => _updateFilter(OfferFilterCriteria.trustScoreHigh),
           ),
           const SizedBox(width: 12),
           _buildFilterChip(
             icon: '⏱️',
-            label: 'التسليم الأسرع',
+            label: AppLocalizations.current.sortFastestDelivery,
             isSelected: _selectedFilter == OfferFilterCriteria.deliveryFastest,
             onTap: () => _updateFilter(OfferFilterCriteria.deliveryFastest),
           ),
           const SizedBox(width: 12),
           _buildFilterChip(
             icon: '📍',
-            label: 'الأقرب',
+            label: AppLocalizations.current.sortNearest,
             isSelected: _selectedFilter == OfferFilterCriteria.distanceClosest,
             onTap: () => _updateFilter(OfferFilterCriteria.distanceClosest),
           ),
@@ -121,13 +122,13 @@ extension OfferFilterDescription on OfferFilterCriteria {
   String get description {
     switch (this) {
       case OfferFilterCriteria.priceLowToHigh:
-        return 'السعر: الأقل إلى الأعلى';
+        return AppLocalizations.current.sortPriceLowToHigh;
       case OfferFilterCriteria.trustScoreHigh:
-        return 'أعلى درجة ثقة';
+        return AppLocalizations.current.sortHighestTrust;
       case OfferFilterCriteria.deliveryFastest:
-        return 'أسرع تسليم';
+        return AppLocalizations.current.sortFastestDeliveryLong;
       case OfferFilterCriteria.distanceClosest:
-        return 'الأقرب إلى موقعك';
+        return AppLocalizations.current.sortNearestToYou;
     }
   }
 

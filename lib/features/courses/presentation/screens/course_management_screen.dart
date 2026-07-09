@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
@@ -60,21 +61,24 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF17191F),
-        title: const Text('حذف الدورة', style: TextStyle(color: Colors.white)),
+        title: Text(
+          AppLocalizations.current.deleteCourseTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Text(
-          'هل تريد حذف "${course.title}"؟',
+          AppLocalizations.current.deleteCourseConfirm(course.title),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('إلغاء'),
+            child: Text(AppLocalizations.current.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text(
-              'حذف',
-              style: TextStyle(color: Color(0xFFE24A3B)),
+            child: Text(
+              AppLocalizations.current.delete,
+              style: const TextStyle(color: Color(0xFFE24A3B)),
             ),
           ),
         ],
@@ -91,7 +95,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('فشل حذف الدورة')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.current.deleteCourseFailed)));
     }
   }
 
@@ -107,9 +111,9 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
           if (created == true) _load();
         },
         icon: const Icon(Icons.add),
-        label: const Text(
-          'دورة جديدة',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        label: Text(
+          AppLocalizations.current.newCourse,
+          style: const TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
       body: SafeArea(
@@ -124,7 +128,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
                   Text(
-                    'دوراتي التعليمية',
+                    AppLocalizations.current.myTeachingCourses,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -158,40 +162,44 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
       );
     }
     if (_hasError) {
-      return const [
+      return [
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(vertical: 24),
           child: Center(
             child: Text(
-              'حدث خطأ في تحميل الدورات',
-              style: TextStyle(color: Colors.white70),
+              AppLocalizations.current.coursesLoadError,
+              style: const TextStyle(color: Colors.white70),
             ),
           ),
         ),
       ];
     }
     if (_courses.isEmpty) {
-      return const [
-        SizedBox(height: 60),
+      return [
+        const SizedBox(height: 60),
         Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               children: [
-                Icon(Icons.school_outlined, color: Colors.white38, size: 48),
-                SizedBox(height: 12),
+                const Icon(
+                  Icons.school_outlined,
+                  color: Colors.white38,
+                  size: 48,
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  'لا توجد دورات بعد',
-                  style: TextStyle(
+                  AppLocalizations.current.noCoursesYet,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
-                  'أنشئ أول دورة تصوير تعليمية لك للبدء باستقبال المتدربين.',
+                  AppLocalizations.current.createFirstCourse,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70),
+                  style: const TextStyle(color: Colors.white70),
                 ),
               ],
             ),
@@ -268,8 +276,8 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${course.isInPerson ? "حضوري" : "أونلاين"} • '
-                          '${course.seatsRemaining}/${course.capacity} مقعد',
+                          '${course.isInPerson ? AppLocalizations.current.inPersonLabel : AppLocalizations.current.onlineLabel} • '
+                          '${AppLocalizations.current.seatsRatio(course.seatsRemaining, course.capacity)}',
                           textAlign: TextAlign.right,
                           style: const TextStyle(color: Color(0xFFB7B9BE)),
                         ),
@@ -286,7 +294,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            course.isPublished ? 'منشورة' : 'مسودة',
+                            course.isPublished ? AppLocalizations.current.published : AppLocalizations.current.draft,
                             style: TextStyle(
                               color: course.isPublished
                                   ? LaqtaColors.success

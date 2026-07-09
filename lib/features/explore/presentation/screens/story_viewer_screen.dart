@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/models/story_model.dart';
@@ -158,7 +159,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                         context,
                         widget.stories[_currentIndex].photographerId,
                       ),
-                      child: const Text('عرض المصور'),
+                      child: Text(AppLocalizations.current.viewPhotographer),
                     ),
                   ),
                   if (widget.isCustomer) ...[
@@ -168,7 +169,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                         onPressed: () => widget.onCreateRequest(
                           widget.stories[_currentIndex],
                         ),
-                        child: const Text('طلب نفس الأسلوب'),
+                        child: Text(AppLocalizations.current.requestSameStyle),
                       ),
                     ),
                   ],

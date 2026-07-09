@@ -1,3 +1,4 @@
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/network/cache/cache_interceptor.dart';
 import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/core/services/backend_notification_sync_service.dart';
@@ -168,7 +169,7 @@ class BackendAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<void> deleteCurrentUser() async {
-    throw UnsupportedError('حذف الحساب يتم عبر سياسة حذف الحساب حالياً.');
+    throw UnsupportedError(AppLocalizations.current.deleteViaPolicy);
   }
 
   AuthOtpStartDto _parseOtpStart(Object? decoded) {

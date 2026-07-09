@@ -1,3 +1,5 @@
+import 'package:laqta/core/localization/app_localizations.dart';
+
 import 'package:laqta/core/config/app_config.dart';
 
 /// App-wide constants
@@ -7,6 +9,23 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // Iraqi Governorates
+  /// Locale-aware views over the parallel AR/EN catalogs below. Screens
+  /// should use these instead of picking a language-specific list.
+  static List<String> localizedGovernorates() =>
+      AppLocalizations.current.locale.languageCode == 'ar'
+      ? iraqiGovernoratesAr
+      : iraqiGovernoratesEn;
+
+  static List<String> localizedSpecialties() =>
+      AppLocalizations.current.locale.languageCode == 'ar'
+      ? specialtiesAr
+      : specialtiesEn;
+
+  static List<String> localizedReportReasons() =>
+      AppLocalizations.current.locale.languageCode == 'ar'
+      ? reportReasonsAr
+      : reportReasonsEn;
+
   static const List<String> iraqiGovernoratesAr = [
     'بغداد',
     'البصرة',

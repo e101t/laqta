@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
@@ -80,12 +81,12 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
               .toList(growable: false);
 
     if (filtered.isEmpty) {
-      return const [
+      return [
         Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: _ExploreStateMessage(
-            message: 'لا يوجد مبدعون بهذا المزاج حالياً',
-            subtitle: 'جرّب اختيار مزاج آخر',
+            message: AppLocalizations.current.noCreatorsForMood,
+            subtitle: AppLocalizations.current.tryAnotherMood,
           ),
         ),
       ];
@@ -110,9 +111,9 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
     List<MarketplacePhotographerSummary> creators,
   ) {
     if (_selectedMoodId == null) {
-      return const LaqtaSectionHeader(
-        title: 'المبدعون المقترحون',
-        action: 'عرض الكل',
+      return LaqtaSectionHeader(
+        title: AppLocalizations.current.suggestedCreators,
+        action: AppLocalizations.current.viewAll,
       );
     }
     final mood = MoodFilter.defaults.firstWhere(
@@ -126,7 +127,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
       children: [
         Expanded(
           child: Text(
-            'مزاج ${mood.label}',
+            AppLocalizations.current.moodPrefix(AppLocalizations.current.translate(mood.label)),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w800,
@@ -142,7 +143,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
             border: Border.all(color: mood.moodColor.withValues(alpha: 0.35)),
           ),
           child: Text(
-            '$count مبدع',
+            AppLocalizations.current.creatorsCount(count),
             style: TextStyle(
               color: mood.moodColor,
               fontWeight: FontWeight.w700,
@@ -182,7 +183,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
                   Text(
-                    'اكتشف',
+                    AppLocalizations.current.discoverTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -194,7 +195,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
               ),
               const SizedBox(height: 14),
               LaqtaLuxurySearchBar(
-                hint: 'ابحث عن مصور، قاعة، مكان...',
+                hint: AppLocalizations.current.exploreSearchHint,
                 onTap: () => AppRouter.goToSearch(context),
               ),
               const SizedBox(height: 14),
@@ -224,7 +225,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                 children: [
                   Expanded(
                     child: _CategoryCard(
-                      title: 'المصورون',
+                      title: AppLocalizations.current.photographersSection,
                       icon: Icons.camera_alt_outlined,
                       gradientStart: const Color(0xFF1A1400),
                       onTap: () => AppRouter.goToExplore(context),
@@ -233,7 +234,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _CategoryCard(
-                      title: 'القاعات',
+                      title: AppLocalizations.current.venuesTitle,
                       icon: Icons.location_city_outlined,
                       gradientStart: const Color(0xFF001220),
                       onTap: () => AppRouter.goToVenues(context),
@@ -242,7 +243,7 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _CategoryCard(
-                      title: 'أماكن التصوير',
+                      title: AppLocalizations.current.photoSpotsTitle,
                       icon: Icons.landscape_outlined,
                       gradientStart: const Color(0xFF001A0A),
                       onTap: () {
@@ -264,17 +265,17 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                   child: _ExploreStateMessage(message: controller.error!),
                 )
               else if (!hasAnyResults)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                   child: _ExploreStateMessage(
-                    message: 'لا توجد نتائج حالياً',
-                    subtitle: 'جرّب تحديث الصفحة أو البحث بكلمة مختلفة',
+                    message: AppLocalizations.current.noResultsNow,
+                    subtitle: AppLocalizations.current.tryRefreshOrSearch,
                   ),
                 )
               else if (featuredVenues.isNotEmpty) ...[
                 LaqtaSectionHeader(
-                  title: 'القاعات المميزة',
-                  action: 'عرض الكل',
+                  title: AppLocalizations.current.featuredVenues,
+                  action: AppLocalizations.current.viewAll,
                   onAction: () => AppRouter.goToVenues(context),
                 ),
                 const SizedBox(height: 12),
@@ -296,9 +297,9 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                 ),
               ],
               const SizedBox(height: 24),
-              const LaqtaSectionHeader(
-                title: 'أماكن تصوير مميزة',
-                action: 'عرض الكل',
+              LaqtaSectionHeader(
+                title: AppLocalizations.current.featuredPhotoSpots,
+                action: AppLocalizations.current.viewAll,
               ),
               const SizedBox(height: 12),
               if (controller.isLoading && data == null)
@@ -316,8 +317,8 @@ class _ExploreMarketplaceViewState extends State<_ExploreMarketplaceView> {
                   ),
                 )
               else if (nearbyPlaces.isEmpty && hasAnyResults)
-                const _ExploreStateMessage(
-                  message: 'لا توجد أماكن تصوير حالياً',
+                _ExploreStateMessage(
+                  message: AppLocalizations.current.noPhotoSpotsNow,
                 )
               else
                 SizedBox(
@@ -619,7 +620,7 @@ class _CreatorMoodCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          creator.governorate ?? 'العراق',
+                          creator.governorate ?? AppLocalizations.current.iraqLabel,
                           style: const TextStyle(color: Colors.white60),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -656,7 +657,7 @@ class _CreatorMoodCard extends StatelessWidget {
                   if (creator.basePrice != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'يبدأ من ${creator.basePrice!.toStringAsFixed(0)} IQD',
+                      AppLocalizations.current.startsFrom(creator.basePrice!.toStringAsFixed(0)),
                       style: const TextStyle(
                         color: LaqtaColors.accent,
                         fontSize: 11,

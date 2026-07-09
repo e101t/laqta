@@ -1,8 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/update/force_update_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+String _localizedReleaseNotes(
+  AppLocalizations localizations,
+  AppVersionInfo info,
+) {
+  final isArabic = localizations.locale.languageCode == 'ar';
+  final preferred = isArabic ? info.releaseNotesAr : info.releaseNotesEn;
+  final fallback = isArabic ? info.releaseNotesEn : info.releaseNotesAr;
+  if (preferred.isNotEmpty) return preferred;
+  return fallback;
+}
+
+TextDirection _directionFor(AppLocalizations localizations) {
+  return localizations.locale.languageCode == 'ar'
+      ? TextDirection.rtl
+      : TextDirection.ltr;
+}
 
 class ForceUpdateGate extends StatefulWidget {
   const ForceUpdateGate({
@@ -60,34 +78,39 @@ class _ForceUpdateGateState extends State<ForceUpdateGate> {
     await showModalBottomSheet<void>(
       context: context,
       isDismissible: true,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('تحديث متاح', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                result.info.releaseNotesAr.isEmpty
-                    ? 'يتوفر إصدار جديد من LAQTA.'
-                    : result.info.releaseNotesAr,
-              ),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () => _openStore(result.info.updateUrl),
-                child: const Text('تحديث'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('لاحقاً'),
-              ),
-            ],
+      builder: (context) {
+        final localizations = AppLocalizations.resolve(context);
+        final notes = _localizedReleaseNotes(localizations, result.info);
+        return Directionality(
+          textDirection: _directionFor(localizations),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  localizations.updateAvailableTitle,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  notes.isEmpty ? localizations.updateAvailableBody : notes,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => _openStore(result.info.updateUrl),
+                  child: Text(localizations.updateAction),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(localizations.laterAction),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -118,8 +141,10 @@ class _ForceUpdateBlocker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.resolve(context);
+    final notes = _localizedReleaseNotes(localizations, result.info);
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: _directionFor(localizations),
       child: PopScope(
         canPop: false,
         child: Scaffold(
@@ -133,21 +158,19 @@ class _ForceUpdateBlocker extends StatelessWidget {
                   const Icon(Icons.system_update_rounded, size: 64),
                   const SizedBox(height: 18),
                   Text(
-                    'تحديث إلزامي',
+                    localizations.forceUpdateTitle,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    result.info.releaseNotesAr.isEmpty
-                        ? 'يجب تحديث التطبيق للمتابعة.'
-                        : result.info.releaseNotesAr,
+                    notes.isEmpty ? localizations.forceUpdateBody : notes,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: onUpdate,
-                    child: const Text('تحديث الآن'),
+                    child: Text(localizations.updateNowAction),
                   ),
                 ],
               ),

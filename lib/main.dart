@@ -187,23 +187,35 @@ class LaqtaApp extends StatelessWidget {
             darkTheme: themeProvider.darkThemeFor(locale),
             themeMode: themeProvider.themeMode,
             routerConfig: AppRouter.router,
-            builder: (context, child) => ErrorBoundary(
-              child: OfflineBanner(
-                child: ForceUpdateGate(
-                  child: LaunchGate(
-                    child: InAppNotificationBannerHost(
-                      child: CertificatePinningMaintenanceGate(
-                        child: RaspSecurityGate(
-                          child: DeviceSecurityWarningGate(
-                            child: child ?? const SizedBox.shrink(),
+            builder: (context, child) {
+              // Respect OS font scaling but clamp it so fixed-height layouts
+              // degrade gracefully instead of overflowing.
+              final mediaQuery = MediaQuery.of(context);
+              final clampedScaler = mediaQuery.textScaler.clamp(
+                minScaleFactor: 0.8,
+                maxScaleFactor: 1.3,
+              );
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: clampedScaler),
+                child: ErrorBoundary(
+                  child: OfflineBanner(
+                    child: ForceUpdateGate(
+                      child: LaunchGate(
+                        child: InAppNotificationBannerHost(
+                          child: CertificatePinningMaintenanceGate(
+                            child: RaspSecurityGate(
+                              child: DeviceSecurityWarningGate(
+                                child: child ?? const SizedBox.shrink(),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
@@ -273,16 +285,19 @@ class _RaspSecurityGateState extends State<RaspSecurityGate>
       if (!mounted) return;
       await showDialog<void>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('تنبيه أمني'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('حسنًا'),
-            ),
-          ],
-        ),
+        builder: (context) {
+          final localizations = AppLocalizations.resolve(context);
+          return AlertDialog(
+            title: Text(localizations.securityAlertTitle),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(localizations.okAction),
+              ),
+            ],
+          );
+        },
       );
       if (!mounted) return;
       if (status.requiresImmediateLogout) {
@@ -329,18 +344,19 @@ class _DeviceSecurityWarningGateState extends State<DeviceSecurityWarningGate> {
       if (!mounted) return;
       showDialog<void>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('تنبيه أمني'),
-          content: const Text(
-            'تم اكتشاف بيئة جهاز غير موثوقة. بعض العمليات الحساسة قد تكون مقيدة لحماية حسابك.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('متابعة'),
-            ),
-          ],
-        ),
+        builder: (context) {
+          final localizations = AppLocalizations.resolve(context);
+          return AlertDialog(
+            title: Text(localizations.securityAlertTitle),
+            content: Text(localizations.untrustedDeviceWarning),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(localizations.continueAction),
+              ),
+            ],
+          );
+        },
       );
     });
   }

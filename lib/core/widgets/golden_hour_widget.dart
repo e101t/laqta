@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/utils/golden_hour_service.dart';
@@ -94,7 +95,7 @@ class _GoldenHourBannerState extends State<GoldenHourBanner> {
                   const SizedBox(height: 4),
                   Text(
                     _data.isActive
-                        ? 'جارية الآن · ${_data.timeDisplay}'
+                        ? AppLocalizations.current.happeningNow(_data.timeDisplay)
                         : _data.countdownText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -122,7 +123,7 @@ class _GoldenHourBannerState extends State<GoldenHourBanner> {
                   ),
                 ),
                 child: Text(
-                  '${widget.photographerCount} مصور',
+                  AppLocalizations.current.photographersCount(widget.photographerCount!),
                   style: const TextStyle(
                     color: LaqtaColors.accent,
                     fontSize: 11,

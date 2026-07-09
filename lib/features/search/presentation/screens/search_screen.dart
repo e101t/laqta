@@ -108,7 +108,7 @@ class _SearchScreenState extends State<SearchScreen>
       if (!mounted) return;
       if (generation != _searchGeneration) return;
       _results.clear();
-      _errorMessage = 'تعذر إكمال البحث. حاول مرة أخرى.';
+      _errorMessage = AppLocalizations.current.searchFailedTryAgain;
     }
 
     if (!mounted) return;
@@ -271,7 +271,9 @@ class _SearchScreenState extends State<SearchScreen>
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: AppConstants.specialtiesAr.take(6).map((specialty) {
+          children: AppConstants.localizedSpecialties().take(6).map((
+            specialty,
+          ) {
             return ActionChip(
               label: Text(specialty),
               onPressed: () {

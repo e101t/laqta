@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/network/connectivity/connectivity_service.dart';
 
 class OfflineBanner extends StatefulWidget {
@@ -114,48 +115,64 @@ class _Banner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDegraded = snapshot?.isDegraded ?? false;
+    final localizations = AppLocalizations.resolve(context);
     final text = isDegraded
-        ? 'الاتصال ضعيف، البيانات المعروضة قد لا تكون محدثة'
-        : 'لا يوجد اتصال بالإنترنت';
+        ? localizations.offlineWeakConnection
+        : localizations.offlineNoConnection;
     final lastOnline = snapshot?.lastOnlineAt;
+    // Rendered above the router's localization scope; derive direction from
+    // the active locale.
+    final direction = localizations.locale.languageCode == 'ar'
+        ? TextDirection.rtl
+        : TextDirection.ltr;
     return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Material(
-            color: isDegraded
-                ? const Color(0xE69A5B00)
-                : const Color(0xE6B3261E),
-            elevation: 8,
-            shadowColor: Colors.black38,
-            borderRadius: BorderRadius.circular(999),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    isDegraded
-                        ? Icons.wifi_tethering_error_rounded
-                        : Icons.wifi_off,
-                    color: Colors.white,
-                    size: 17,
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      lastOnline == null
-                          ? text
-                          : '$text • آخر اتصال: ${_format(lastOnline)}',
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+      textDirection: direction,
+      child: Semantics(
+        liveRegion: true,
+        label: text,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Material(
+              color: isDegraded
+                  ? const Color(0xE69A5B00)
+                  : const Color(0xE6B3261E),
+              elevation: 8,
+              shadowColor: Colors.black38,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isDegraded
+                          ? Icons.wifi_tethering_error_rounded
+                          : Icons.wifi_off,
+                      color: Colors.white,
+                      size: 17,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        lastOnline == null
+                            ? text
+                            : '$text • ${localizations.lastOnlineLabel}: ${_format(context, lastOnline)}',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -164,9 +181,10 @@ class _Banner extends StatelessWidget {
     );
   }
 
-  String _format(DateTime value) {
+  String _format(BuildContext context, DateTime value) {
+    final localizations = AppLocalizations.resolve(context);
     final minutes = DateTime.now().difference(value).inMinutes;
-    if (minutes <= 0) return 'الآن';
-    return 'منذ $minutes دقيقة';
+    if (minutes <= 0) return localizations.justNow;
+    return localizations.minutesAgo(minutes);
   }
 }

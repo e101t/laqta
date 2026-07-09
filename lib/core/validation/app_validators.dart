@@ -1,3 +1,5 @@
+import 'package:laqta/core/config/app_config.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/features/auth/data/utils/phone_number_utils.dart';
 
 class ValidationResult {
@@ -20,13 +22,27 @@ class AppValidators {
   static final RegExp _namePattern = RegExp(r"^[\u0600-\u06FFA-Za-z\s'-]+$");
   static final RegExp _otpPattern = RegExp(r'^\d{6}$');
 
-  static ValidationResult iraqiPhone(String value) {
+  static final RegExp _e164Pattern = RegExp(r'^\+[1-9]\d{7,14}$');
+
+  static List<String> get _supportedPhonePrefixes => AppConfig
+      .supportedPhonePrefixes
+      .split(',')
+      .map((prefix) => prefix.trim())
+      .where((prefix) => prefix.isNotEmpty)
+      .toList();
+
+  /// E.164 phone validation limited to the markets enabled via
+  /// `SUPPORTED_PHONE_PREFIXES` (defaults to Iraqi mobile numbers).
+  static ValidationResult phone(String value) {
     final normalized = normalizePhoneNumberForOtp(value);
-    if (RegExp(r'^\+9647\d{9}$').hasMatch(normalized)) {
+    final matchesMarket = _supportedPhonePrefixes.any(normalized.startsWith);
+    if (_e164Pattern.hasMatch(normalized) && matchesMarket) {
       return const ValidationResult.valid();
     }
-    return const ValidationResult.invalid('رقم الهاتف غير صحيح');
+    return ValidationResult.invalid(AppLocalizations.current.invalidPhoneError);
   }
+
+  static ValidationResult iraqiPhone(String value) => phone(value);
 
   static String normalizeIraqiPhone(String value) {
     return normalizePhoneNumberForOtp(value);
@@ -35,7 +51,7 @@ class AppValidators {
   static ValidationResult email(String value) {
     final trimmed = value.trim();
     if (trimmed.isEmpty || !_emailPattern.hasMatch(trimmed)) {
-      return const ValidationResult.invalid('البريد الإلكتروني غير صحيح');
+      return ValidationResult.invalid(AppLocalizations.current.emailInvalid);
     }
     return const ValidationResult.valid();
   }
@@ -43,13 +59,15 @@ class AppValidators {
   static ValidationResult requiredName(String value, {int maxLength = 60}) {
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      return const ValidationResult.invalid('الاسم مطلوب');
+      return ValidationResult.invalid(AppLocalizations.current.nameRequired);
     }
     if (trimmed.length > maxLength) {
-      return const ValidationResult.invalid('الاسم طويل جداً');
+      return ValidationResult.invalid(AppLocalizations.current.nameTooLong);
     }
     if (!_namePattern.hasMatch(trimmed)) {
-      return const ValidationResult.invalid('الاسم يحتوي على أحرف غير مسموحة');
+      return ValidationResult.invalid(
+      AppLocalizations.current.nameInvalidChars,
+    );
     }
     return const ValidationResult.valid();
   }
@@ -58,7 +76,7 @@ class AppValidators {
     if (_otpPattern.hasMatch(value.trim())) {
       return const ValidationResult.valid();
     }
-    return const ValidationResult.invalid('أدخل رمز تحقق مكون من 6 أرقام');
+    return ValidationResult.invalid(AppLocalizations.current.otpSixDigits);
   }
 
   static ValidationResult futureDate(DateTime value, {DateTime? now}) {
@@ -67,7 +85,9 @@ class AppValidators {
     if (target.isAfter(today)) {
       return const ValidationResult.valid();
     }
-    return const ValidationResult.invalid('يجب اختيار تاريخ مستقبلي');
+    return ValidationResult.invalid(
+      AppLocalizations.current.futureDateRequired,
+    );
   }
 
   static ValidationResult adultBirthdate(DateTime value, {DateTime? now}) {
@@ -80,7 +100,7 @@ class AppValidators {
     if (age >= 18) {
       return const ValidationResult.valid();
     }
-    return const ValidationResult.invalid('يجب أن يكون العمر 18 سنة أو أكثر');
+    return ValidationResult.invalid(AppLocalizations.current.mustBeAdult);
   }
 
   static DateTime _dateOnly(DateTime value) {

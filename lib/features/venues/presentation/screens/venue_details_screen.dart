@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
@@ -47,7 +48,7 @@ class _VenueDetailsView extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              controller.error ?? 'تعذر تحميل تفاصيل القاعة.',
+              controller.error ?? AppLocalizations.current.venueDetailsLoadFailed,
               style: const TextStyle(color: Colors.white70),
               textAlign: TextAlign.center,
             ),
@@ -201,7 +202,10 @@ class _VenueDetailsView extends StatelessWidget {
                         LaqtaFeaturePill(
                           icon: Icons.groups_2_outlined,
                           label:
-                              '${venue.capacityMin ?? 0}-${venue.capacityMax ?? 0} السعة',
+                              AppLocalizations.current.capacityLabel(
+                                venue.capacityMin ?? 0,
+                                venue.capacityMax ?? 0,
+                              ),
                         ),
                       ...venue.services
                           .take(3)
@@ -218,11 +222,11 @@ class _VenueDetailsView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 22),
-                  const LaqtaSectionHeader(title: 'نبذة عن القاعة'),
+                  LaqtaSectionHeader(title: AppLocalizations.current.aboutVenue),
                   const SizedBox(height: 10),
                   LaqtaLuxurySurface(
                     child: Text(
-                      venue.description ?? 'لا يوجد وصف متاح حاليًا.',
+                      venue.description ?? AppLocalizations.current.noDescriptionAvailable,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.white70,
                         height: 1.7,
@@ -231,7 +235,7 @@ class _VenueDetailsView extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   if (venue.availability.isNotEmpty) ...[
-                    const LaqtaSectionHeader(title: 'التوفر القادم'),
+                    LaqtaSectionHeader(title: AppLocalizations.current.upcomingAvailability),
                     const SizedBox(height: 10),
                     LaqtaLuxurySurface(
                       child: Column(
@@ -269,13 +273,13 @@ class _VenueDetailsView extends StatelessWidget {
                     textDirection: TextDirection.ltr,
                     children: [
                       LaqtaPrimaryAction(
-                        label: 'احجز الآن',
+                        label: AppLocalizations.current.bookNow,
                         onTap: () =>
                             AppRouter.goToVenueBooking(context, venue.id),
                       ),
                       const SizedBox(width: 12),
                       LaqtaPrimaryAction(
-                        label: 'مراسلة',
+                        label: AppLocalizations.current.messageAction,
                         outlined: true,
                         onTap: () {},
                       ),

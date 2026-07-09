@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:laqta/core/logging/app_logger.dart';
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/features/auth/auth_dependencies.dart';
 import 'package:laqta/features/loyalty/domain/entities/loyalty_points.dart';
 import 'package:laqta/features/loyalty/loyalty_dependencies.dart';
@@ -68,7 +69,7 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('نقاط الولاء 🎁'),
+        title: Text(AppLocalizations.current.loyaltyPointsTitle),
         centerTitle: true,
         actions: [
           IconButton(
@@ -96,8 +97,11 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('السجل', style: textTheme.titleLarge),
-              TextButton(onPressed: () {}, child: const Text('عرض الكل')),
+              Text(AppLocalizations.current.historyLabel, style: textTheme.titleLarge),
+              TextButton(
+                onPressed: () {},
+                child: Text(AppLocalizations.current.viewAll),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -133,7 +137,7 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'نقاطك المتاحة',
+                AppLocalizations.current.yourAvailablePoints,
                 style: textTheme.titleMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
@@ -155,7 +159,7 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'نقطة',
+            AppLocalizations.current.pointSingular,
             style: textTheme.bodyLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.8),
             ),
@@ -170,20 +174,26 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildPointsStat('المجموع', '${_loyaltyPoints.totalPoints}'),
-                Container(
-                  width: 1,
-                  height: 30,
-                  color: Colors.white.withValues(alpha: 0.3),
+                _buildPointsStat(
+                  AppLocalizations.current.totalLabel,
+                  '${_loyaltyPoints.totalPoints}',
                 ),
-                _buildPointsStat('المستخدم', '${_loyaltyPoints.usedPoints}'),
                 Container(
                   width: 1,
                   height: 30,
                   color: Colors.white.withValues(alpha: 0.3),
                 ),
                 _buildPointsStat(
-                  'الخصم',
+                  AppLocalizations.current.usedLabel,
+                  '${_loyaltyPoints.usedPoints}',
+                ),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+                _buildPointsStat(
+                  AppLocalizations.current.discountLabel,
                   '${_loyaltyPoints.getDiscountPercentage()}%',
                 ),
               ],
@@ -236,10 +246,10 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('التقدم للمستوى التالي', style: textTheme.titleMedium),
+              Text(AppLocalizations.current.nextLevelProgress, style: textTheme.titleMedium),
               if (nextTierPoints > 0)
                 Text(
-                  'باقي $nextTierPoints نقطة',
+                  AppLocalizations.current.pointsToNextTier(nextTierPoints),
                   style: textTheme.bodySmall?.copyWith(
                     color: scheme.primary,
                     fontWeight: FontWeight.bold,
@@ -261,10 +271,10 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('🥉 برونزي', style: textTheme.bodySmall),
-              Text('🥈 فضي', style: textTheme.bodySmall),
-              Text('🥇 ذهبي', style: textTheme.bodySmall),
-              Text('💎 بلاتينيوم', style: textTheme.bodySmall),
+              Text(AppLocalizations.current.tierBronze, style: textTheme.bodySmall),
+              Text(AppLocalizations.current.tierSilver, style: textTheme.bodySmall),
+              Text(AppLocalizations.current.tierGold, style: textTheme.bodySmall),
+              Text(AppLocalizations.current.tierPlatinum, style: textTheme.bodySmall),
             ],
           ),
         ],
@@ -285,27 +295,27 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('كيف تكسب النقاط؟', style: textTheme.titleMedium),
+          Text(AppLocalizations.current.howToEarnPoints, style: textTheme.titleMedium),
           const SizedBox(height: 16),
           _buildEarnMethod(
             '📅',
-            'إتمام حجز',
-            '+${PointsRules.bookingCompleted} نقطة',
+            AppLocalizations.current.completeBookingAction,
+            AppLocalizations.current.plusPoints(PointsRules.bookingCompleted),
           ),
           _buildEarnMethod(
             '👥',
-            'دعوة صديق',
-            '+${PointsRules.referralSuccess} نقطة',
+            AppLocalizations.current.loyaltyReferFriend,
+            AppLocalizations.current.plusPoints(PointsRules.referralSuccess),
           ),
           _buildEarnMethod(
             '⭐',
-            'كتابة تقييم',
-            '+${PointsRules.reviewWritten} نقطة',
+            AppLocalizations.current.loyaltyWriteReview,
+            AppLocalizations.current.plusPoints(PointsRules.reviewWritten),
           ),
           _buildEarnMethod(
             '🎉',
-            'أول حجز',
-            '+${PointsRules.firstBooking} نقطة',
+            AppLocalizations.current.loyaltyFirstBooking,
+            AppLocalizations.current.plusPoints(PointsRules.firstBooking),
           ),
         ],
       ),
@@ -404,9 +414,9 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
     final now = DateTime.now();
     final diff = now.difference(date);
 
-    if (diff.inDays == 0) return 'اليوم';
-    if (diff.inDays == 1) return 'أمس';
-    if (diff.inDays < 7) return 'منذ ${diff.inDays} أيام';
+    if (diff.inDays == 0) return AppLocalizations.current.todayLabel;
+    if (diff.inDays == 1) return AppLocalizations.current.yesterday;
+    if (diff.inDays < 7) return AppLocalizations.current.daysAgoLong(diff.inDays);
     return '${date.day}/${date.month}/${date.year}';
   }
 
@@ -425,16 +435,12 @@ class _LoyaltyPointsScreenState extends State<LoyaltyPointsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'معلومات النقاط',
+              AppLocalizations.current.pointsInfoTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             Text(
-              '• كل ${PointsRules.pointsToIQD} نقطة = 1,000 دينار عراقي\n'
-              '• يمكن استخدام النقاط كخصم على الحجوزات\n'
-              '• النقاط لا تنتهي صلاحيتها\n'
-              '• كلما ارتفع مستواك، زادت الخصومات\n'
-              '• شارك رمز الإحالة واكسب نقاط إضافية',
+              AppLocalizations.current.pointsInfo(PointsRules.pointsToIQD),
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(height: 1.8),

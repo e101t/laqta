@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Calculates morning/evening golden-hour windows for Iraq (Baghdad centre).
 ///
@@ -34,18 +35,18 @@ class GoldenHourService {
       final endsAt = _minutesToTime(morningEnd);
       return GoldenHourData(
         isActive: true,
-        label: 'الساعة الذهبية الصباحية',
-        timeDisplay: 'تنتهي $endsAt',
-        sessionLabel: 'صباحية',
+        label: AppLocalizations.current.goldenHourMorning,
+        timeDisplay: AppLocalizations.current.endsAt(endsAt),
+        sessionLabel: AppLocalizations.current.morningLabel,
       );
     }
     if (currentMin >= eveningStart && currentMin < eveningEnd) {
       final endsAt = _minutesToTime(eveningEnd);
       return GoldenHourData(
         isActive: true,
-        label: 'الساعة الذهبية المسائية',
-        timeDisplay: 'تنتهي $endsAt',
-        sessionLabel: 'مسائية',
+        label: AppLocalizations.current.goldenHourEvening,
+        timeDisplay: AppLocalizations.current.endsAt(endsAt),
+        sessionLabel: AppLocalizations.current.eveningLabel,
       );
     }
 
@@ -55,10 +56,10 @@ class GoldenHourService {
       final diff = morningStart - currentMin;
       return GoldenHourData(
         isActive: false,
-        label: 'الساعة الذهبية القادمة',
+        label: AppLocalizations.current.goldenHourNext,
         timeDisplay: _minutesToTime(morningStart),
         minutesUntil: diff,
-        sessionLabel: 'صباحية',
+        sessionLabel: AppLocalizations.current.morningLabel,
       );
     }
     if (currentMin < eveningStart) {
@@ -66,10 +67,10 @@ class GoldenHourService {
       final diff = eveningStart - currentMin;
       return GoldenHourData(
         isActive: false,
-        label: 'الساعة الذهبية القادمة',
+        label: AppLocalizations.current.goldenHourNext,
         timeDisplay: _minutesToTime(eveningStart),
         minutesUntil: diff,
-        sessionLabel: 'مسائية',
+        sessionLabel: AppLocalizations.current.eveningLabel,
       );
     }
     // Past both windows — next is tomorrow's morning
@@ -77,10 +78,10 @@ class GoldenHourService {
     final diff = (24 * 60 - currentMin) + tomorrowSunrise;
     return GoldenHourData(
       isActive: false,
-      label: 'الساعة الذهبية القادمة',
+      label: AppLocalizations.current.goldenHourNext,
       timeDisplay: _minutesToTime(tomorrowSunrise),
       minutesUntil: diff,
-      sessionLabel: 'صباحية غداً',
+      sessionLabel: AppLocalizations.current.tomorrowMorningLabel,
     );
   }
 
@@ -134,7 +135,7 @@ class GoldenHourService {
   static String _minutesToTime(int totalMinutes) {
     final h = totalMinutes ~/ 60;
     final m = totalMinutes % 60;
-    final period = h < 12 ? 'ص' : 'م';
+    final period = h < 12 ? AppLocalizations.current.amMarker : AppLocalizations.current.pmMarker;
     final displayH = h == 0 ? 12 : (h > 12 ? h - 12 : h);
     return '$displayH:${m.toString().padLeft(2, '0')} $period';
   }
@@ -159,15 +160,10 @@ class GoldenHourData {
 
   String get countdownText {
     if (isActive) return timeDisplay;
-    if (minutesUntil < 60) return 'بعد $minutesUntil دقيقة';
+    if (minutesUntil < 60) return AppLocalizations.current.inMinutes(minutesUntil);
     final h = minutesUntil ~/ 60;
     final m = minutesUntil % 60;
-    if (m == 0) return 'بعد $h ساعة';
-    final buf = StringBuffer('بعد ')
-      ..write(h)
-      ..write('س ')
-      ..write(m)
-      ..write('د');
-    return buf.toString();
+    if (m == 0) return AppLocalizations.current.inHours(h);
+    return AppLocalizations.current.inHoursMinutes(h, m);
   }
 }

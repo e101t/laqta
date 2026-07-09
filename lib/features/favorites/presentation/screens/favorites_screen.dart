@@ -62,7 +62,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     if (userId == null || userId.isEmpty) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'يرجى تسجيل الدخول لعرض المفضلة';
+        _errorMessage = AppLocalizations.current.loginToViewFavorites;
       });
       return;
     }
@@ -87,7 +87,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'تعذر تحميل المفضلة';
+        _errorMessage = AppLocalizations.current.favoritesLoadFailed;
       });
     }
   }
@@ -98,7 +98,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     final userId = userResult.valueOrNull?.id;
     if (userId == null || userId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى تسجيل الدخول لإدارة المفضلة')),
+        SnackBar(
+          content: Text(AppLocalizations.current.loginToManageFavorites),
+        ),
       );
       return;
     }
@@ -124,9 +126,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تمت الإزالة من المفضلة'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(AppLocalizations.current.removedFromFavorites),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -137,7 +139,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           _favorites.insert(removedIndex, removedPhotographer);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر الإزالة من المفضلة')),
+          SnackBar(
+            content: Text(AppLocalizations.current.removeFromFavoritesFailed),
+          ),
         );
       }
     }
@@ -172,8 +176,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           ? Center(
               child: EmptyState(
                 icon: Icons.favorite_border,
-                title: 'لا توجد مفضلة',
-                message: 'لم تقم بإضافة أي مصور إلى المفضلة بعد',
+                title: AppLocalizations.of(context).noFavoritesTitle,
+                message: AppLocalizations.of(context).noFavoritesMessage,
               ),
             )
           : Column(
@@ -206,8 +210,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       return Center(
         child: EmptyState(
           icon: Icons.search_off,
-          title: 'لا توجد نتائج',
-          message: 'جرّب البحث بالاسم أو التخصص أو المحافظة',
+          title: AppLocalizations.of(context).noResults,
+          message: AppLocalizations.of(context).searchTipFavorites,
         ),
       );
     }

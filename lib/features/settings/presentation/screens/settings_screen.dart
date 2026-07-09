@@ -310,13 +310,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.person_remove_outlined),
-            title: const Text('سياسة حذف الحساب'),
+            title: Text(AppLocalizations.current.deleteAccountPolicy),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => AppRouter.goToDeleteAccountPolicy(context),
           ),
           ListTile(
             leading: const Icon(Icons.report_gmailerrorred_outlined),
-            title: const Text('سياسة المحتوى'),
+            title: Text(AppLocalizations.current.contentPolicy),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => AppRouter.goToContentPolicy(context),
           ),

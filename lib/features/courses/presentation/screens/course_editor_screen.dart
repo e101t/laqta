@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:laqta/core/media/image_picker_service.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
@@ -73,7 +74,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
     if (course == null) {
       setState(() {
         _isLoading = false;
-        _error = 'تعذر تحميل بيانات الدورة';
+        _error = AppLocalizations.current.courseLoadFailed;
       });
       return;
     }
@@ -115,7 +116,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('فشل رفع الصورة')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.current.imageUploadFailed)));
       }
     } finally {
       if (mounted) setState(() => _isUploadingThumbnail = false);
@@ -156,7 +157,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
     final endMinutes = end.hour * 60 + end.minute;
     if (endMinutes <= startMinutes) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('وقت النهاية يجب أن يكون بعد وقت البداية')),
+        SnackBar(content: Text(AppLocalizations.current.endTimeAfterStart)),
       );
       return;
     }
@@ -186,25 +187,25 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
   Future<void> _save() async {
     if (_titleController.text.trim().isEmpty ||
         _descriptionController.text.trim().isEmpty) {
-      setState(() => _error = 'أكمل عنوان ووصف الدورة');
+      setState(() => _error = AppLocalizations.current.completeCourseTitleDesc);
       return;
     }
     final price = double.tryParse(_priceController.text.trim());
     if (price == null || price <= 0) {
-      setState(() => _error = 'سعر غير صحيح');
+      setState(() => _error = AppLocalizations.current.invalidPrice);
       return;
     }
     final capacity = int.tryParse(_capacityController.text.trim());
     if (capacity == null || capacity < 1) {
-      setState(() => _error = 'عدد مقاعد غير صحيح');
+      setState(() => _error = AppLocalizations.current.invalidSeatsCount);
       return;
     }
     if (_sessions.isEmpty) {
-      setState(() => _error = 'أضف على الأقل جلسة واحدة للدورة');
+      setState(() => _error = AppLocalizations.current.addAtLeastOneSession);
       return;
     }
     if (_type == 'online' && _meetingLinkController.text.trim().isEmpty) {
-      setState(() => _error = 'أدخل رابط الجلسة الأونلاين');
+      setState(() => _error = AppLocalizations.current.enterOnlineSessionLink);
       return;
     }
 
@@ -218,7 +219,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
     if (userId == null || userId.isEmpty) {
       setState(() {
         _isSaving = false;
-        _error = 'تعذر التحقق من المستخدم الحالي';
+        _error = AppLocalizations.current.currentUserCheckFailed;
       });
       return;
     }
@@ -261,7 +262,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
     if (result.isSuccess) {
       Navigator.of(context).pop(true);
     } else {
-      setState(() => _error = 'فشل حفظ الدورة، حاول مرة أخرى');
+      setState(() => _error = AppLocalizations.current.courseSaveFailed);
     }
   }
 
@@ -318,7 +319,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                       const LaqtaHeaderBackButton(),
                       const Spacer(),
                       Text(
-                        widget.isEditing ? 'تعديل الدورة' : 'دورة جديدة',
+                        widget.isEditing ? AppLocalizations.current.editCourse : AppLocalizations.current.newCourse,
                         style: Theme.of(context).textTheme.titleLarge
                             ?.copyWith(
                               color: Colors.white,
@@ -331,8 +332,8 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                           onPressed: _togglePublish,
                           child: Text(
                             _existingCourse!.isPublished
-                                ? 'إلغاء النشر'
-                                : 'نشر',
+                                ? AppLocalizations.current.unpublish
+                                : AppLocalizations.current.publish,
                             style: const TextStyle(color: LaqtaColors.accent),
                           ),
                         )
@@ -356,19 +357,21 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                                 ),
                               )
                             : _thumbnailUrl == null || _thumbnailUrl!.isEmpty
-                            ? const Center(
+                            ? Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.add_photo_alternate_outlined,
                                       color: LaqtaColors.accent,
                                       size: 32,
                                     ),
-                                    SizedBox(height: 8),
+                                    const SizedBox(height: 8),
                                     Text(
-                                      'أضف صورة غلاف للدورة',
-                                      style: TextStyle(color: Colors.white70),
+                                      AppLocalizations.current.addCourseCover,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -402,23 +405,25 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                   ),
                   const SizedBox(height: 16),
                   CourseFieldCard(
-                    label: 'عنوان الدورة',
+                    label: AppLocalizations.current.courseTitleLabel,
                     child: TextField(
                       controller: _titleController,
                       textAlign: TextAlign.right,
                       style: const TextStyle(color: Colors.white),
-                      decoration: _darkInputDecoration('مثال: أساسيات تصوير الأعراس'),
+                      decoration: _darkInputDecoration(AppLocalizations.current.courseTitleHint),
                     ),
                   ),
                   const SizedBox(height: 12),
                   CourseFieldCard(
-                    label: 'الوصف',
+                    label: AppLocalizations.current.descriptionLabel,
                     child: TextField(
                       controller: _descriptionController,
                       maxLines: 3,
                       textAlign: TextAlign.right,
                       style: const TextStyle(color: Colors.white),
-                      decoration: _darkInputDecoration('وصف مختصر عن محتوى الدورة'),
+                      decoration: _darkInputDecoration(
+                        AppLocalizations.current.courseDescriptionHint,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -426,7 +431,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                     children: [
                       Expanded(
                         child: ChoiceChip(
-                          label: const Text('حضوري'),
+                          label: Text(AppLocalizations.current.inPersonLabel),
                           selected: _type == 'in_person',
                           selectedColor: LaqtaColors.accent,
                           backgroundColor: const Color(0xFF191B20),
@@ -443,7 +448,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: ChoiceChip(
-                          label: const Text('أونلاين'),
+                          label: Text(AppLocalizations.current.onlineLabel),
                           selected: _type == 'online',
                           selectedColor: LaqtaColors.accent,
                           backgroundColor: const Color(0xFF191B20),
@@ -461,19 +466,19 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                   const SizedBox(height: 12),
                   if (_type == 'in_person')
                     CourseFieldCard(
-                      label: 'موقع الدورة',
+                      label: AppLocalizations.current.courseLocationLabel,
                       child: TextField(
                         controller: _locationTextController,
                         textAlign: TextAlign.right,
                         style: const TextStyle(color: Colors.white),
                         decoration: _darkInputDecoration(
-                          'مثال: استوديو بغداد',
+                          AppLocalizations.current.courseLocationHint,
                         ),
                       ),
                     )
                   else
                     CourseFieldCard(
-                      label: 'رابط الجلسة الأونلاين',
+                      label: AppLocalizations.current.onlineSessionLink,
                       child: TextField(
                         controller: _meetingLinkController,
                         textAlign: TextAlign.right,
@@ -486,7 +491,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                     children: [
                       Expanded(
                         child: CourseFieldCard(
-                          label: 'السعر (د.ع)',
+                          label: AppLocalizations.current.priceIqdLabel,
                           child: TextField(
                             controller: _priceController,
                             keyboardType: TextInputType.number,
@@ -499,7 +504,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: CourseFieldCard(
-                          label: 'عدد المقاعد',
+                          label: AppLocalizations.current.seatsCountLabel,
                           child: TextField(
                             controller: _capacityController,
                             keyboardType: TextInputType.number,
@@ -513,7 +518,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                   ),
                   const SizedBox(height: 16),
                   CourseFieldCard(
-                    label: 'التخصصات',
+                    label: AppLocalizations.current.specialties,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -542,7 +547,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                                 textAlign: TextAlign.right,
                                 style: const TextStyle(color: Colors.white),
                                 decoration: _darkInputDecoration(
-                                  'أضف تخصصًا (مثل: زفاف)',
+                                  AppLocalizations.current.addSpecialtyHint,
                                 ),
                                 onSubmitted: (_) => _addSpecialty(),
                               ),
@@ -569,14 +574,14 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                           Icons.add,
                           color: LaqtaColors.accent,
                         ),
-                        label: const Text(
-                          'إضافة جلسة',
-                          style: TextStyle(color: LaqtaColors.accent),
+                        label: Text(
+                          AppLocalizations.current.addSession,
+                          style: const TextStyle(color: LaqtaColors.accent),
                         ),
                       ),
                       const Spacer(),
                       Text(
-                        'الجلسات',
+                        AppLocalizations.current.sessionsLabel,
                         style: Theme.of(context).textTheme.titleSmall
                             ?.copyWith(
                               color: Colors.white,
@@ -643,7 +648,7 @@ class _CourseEditorScreenState extends State<CourseEditorScreen> {
                     textDirection: TextDirection.ltr,
                     children: [
                       LaqtaPrimaryAction(
-                        label: _isSaving ? 'جارٍ الحفظ...' : 'حفظ',
+                        label: _isSaving ? AppLocalizations.current.savingProgress : AppLocalizations.current.save,
                         onTap: _isSaving ? null : _save,
                       ),
                     ],

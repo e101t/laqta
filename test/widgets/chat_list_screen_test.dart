@@ -31,16 +31,16 @@ void main() {
     await tester.pumpWidget(wrapWithMaterial(const ChatListScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('الرسائل'), findsOneWidget);
-    expect(find.text('ابحث في الرسائل'), findsOneWidget);
-    expect(find.text('الكل'), findsOneWidget);
-    expect(find.text('المصورون'), findsOneWidget);
-    expect(find.text('القاعات'), findsOneWidget);
-    expect(find.text('الترتيبات'), findsOneWidget);
+    expect(find.text('Messages'), findsOneWidget);
+    expect(find.text('Search messages'), findsOneWidget);
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Photographers'), findsOneWidget);
+    expect(find.text('Venues'), findsOneWidget);
+    expect(find.text('Arrangements'), findsOneWidget);
     expect(find.text('Ahmed Aliraqi'), findsOneWidget);
     expect(find.text('قاعة رويال لايف'), findsOneWidget);
 
-    await tester.tap(find.text('القاعات'));
+    await tester.tap(find.text('Venues'));
     await tester.pumpAndSettle();
 
     expect(find.text('قاعة رويال لايف'), findsOneWidget);

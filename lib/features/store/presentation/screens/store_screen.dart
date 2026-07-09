@@ -1,8 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/utils/currency_formatter.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:laqta/core/widgets/empty_states.dart';
@@ -11,30 +11,30 @@ import 'package:laqta/features/requests/presentation/screens/create_request_scre
 class StoreScreen extends StatelessWidget {
   const StoreScreen({super.key});
 
-  static const List<_StoreProduct> _demoProducts = [
+  static List<_StoreProduct> get _demoProducts => [
     _StoreProduct(
       id: 'demo_product_1',
-      title: 'إطار صور فاخر',
-      subtitle: 'خشب طبيعي + زجاج مقاوم للخدش',
+      title: AppLocalizations.current.storeLuxuryFrame,
+      subtitle: AppLocalizations.current.storeLuxuryFrameSub,
       priceIQD: 35000,
       imageAssetPath: 'assets/images/hero_auth.png',
-      badge: 'جديد',
+      badge: AppLocalizations.current.newBadge,
     ),
     _StoreProduct(
       id: 'demo_product_2',
-      title: 'ألبوم مطبوع',
-      subtitle: 'ورق عالي الجودة + تصميم أنيق',
+      title: AppLocalizations.current.storePrintedAlbum,
+      subtitle: AppLocalizations.current.storePrintedAlbumSub,
       priceIQD: 65000,
       imageAssetPath: 'assets/images/hero_role.png',
-      badge: 'الأكثر مبيعًا',
+      badge: AppLocalizations.current.bestSeller,
     ),
     _StoreProduct(
       id: 'demo_product_3',
-      title: 'جلسة تصوير منتجات',
-      subtitle: 'باقة مناسبة للمتاجر والمتاجر الإلكترونية',
+      title: AppLocalizations.current.storeProductSession,
+      subtitle: AppLocalizations.current.storeProductSessionSub,
       priceIQD: 120000,
       imageAssetPath: 'assets/images/offers/offer_3.png',
-      badge: 'عرض',
+      badge: AppLocalizations.current.offerBadge,
     ),
   ];
 
@@ -70,7 +70,7 @@ class StoreScreen extends StatelessWidget {
                 children: [
                   _StoreHeroCard(
                     title: localizations.featuredProducts,
-                    subtitle: 'منتجات مختارة بعناية لتكمل تجربة التصوير.',
+                    subtitle: AppLocalizations.current.storeCuratedSubtitle,
                     onTap: () => _showCatalogGuidanceSnackBar(context),
                   ),
                   const SizedBox(height: 16),
@@ -94,7 +94,7 @@ class StoreScreen extends StatelessWidget {
                         ),
                     itemBuilder: (context, index) => _ProductCard(
                       product: products[index],
-                      priceLabel: _formatIQD(products[index].priceIQD, locale),
+                      priceLabel: _formatIQD(products[index].priceIQD),
                       onTap: () => _showProductBottomSheet(
                         context,
                         products[index],
@@ -110,9 +110,8 @@ class StoreScreen extends StatelessWidget {
     );
   }
 
-  static String _formatIQD(int amount, String locale) {
-    final formatted = NumberFormat.decimalPattern(locale).format(amount);
-    return '$formatted د.ع';
+  static String _formatIQD(int amount) {
+    return CurrencyFormatter.format(amount);
   }
 
   static void _showCatalogGuidanceSnackBar(BuildContext context) {
@@ -120,7 +119,7 @@ class StoreScreen extends StatelessWidget {
       SnackBar(
         content: Text(
           Localizations.localeOf(context).languageCode == 'ar'
-              ? 'اختر منتجًا ثم أرسل طلبك من داخل التطبيق.'
+              ? AppLocalizations.current.storeOrderInstruction
               : 'Choose a product, then send your request from inside the app.',
         ),
         behavior: SnackBarBehavior.floating,
@@ -133,14 +132,14 @@ class StoreScreen extends StatelessWidget {
     _StoreProduct product,
     String locale,
   ) {
-    final priceLabel = _formatIQD(product.priceIQD, locale);
+    final priceLabel = _formatIQD(product.priceIQD);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     if (isArabic) {
-      return '''مهتم بهذا المنتج من المتجر:
-الاسم: ${product.title}
-التفاصيل: ${product.subtitle}
-السعر: $priceLabel
-أحتاج متابعة لإتمام الطلب.''';
+      return AppLocalizations.current.storeOrderMessage(
+        product.title,
+        product.subtitle,
+        priceLabel,
+      );
     }
     return '''I am interested in this store item:
 Name: ${product.title}
@@ -196,7 +195,7 @@ Please contact me to complete the order.''';
               ),
               const SizedBox(height: 12),
               Text(
-                _formatIQD(product.priceIQD, locale),
+                _formatIQD(product.priceIQD),
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: LaqtaColors.accent,

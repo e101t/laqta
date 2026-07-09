@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -56,7 +57,7 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
           : venue == null
           ? Center(
               child: Text(
-                controller.error ?? 'تعذر تحميل بيانات القاعة.',
+                controller.error ?? AppLocalizations.current.venueLoadFailed,
                 style: const TextStyle(color: Colors.white70),
               ),
             )
@@ -69,7 +70,7 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                       const LaqtaHeaderBackButton(),
                       const Spacer(),
                       Text(
-                        'حجز القاعة',
+                        AppLocalizations.current.venueBookingTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -100,7 +101,7 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                         const SizedBox(height: 10),
                         Text(
                           venue.description ??
-                              'احجز موعدك وأرسل التفاصيل الأولية للقاعة.',
+                              AppLocalizations.current.venueBookingSubtitle,
                           style: const TextStyle(
                             color: Colors.white70,
                             height: 1.6,
@@ -111,12 +112,12 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                   ),
                   const SizedBox(height: 16),
                   _FieldCard(
-                    label: 'تاريخ المناسبة',
+                    label: AppLocalizations.current.eventDateLabel,
                     child: ListTile(
                       contentPadding: EdgeInsets.zero,
                       title: Text(
                         _eventDate == null
-                            ? 'اختر التاريخ'
+                            ? AppLocalizations.current.selectDate
                             : DateFormat('yyyy/MM/dd').format(_eventDate!),
                         style: const TextStyle(color: Colors.white),
                       ),
@@ -143,28 +144,28 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                   ),
                   const SizedBox(height: 12),
                   _FieldCard(
-                    label: 'عدد الضيوف',
+                    label: AppLocalizations.current.guestCountLabel,
                     child: TextField(
                       controller: _guestController,
                       keyboardType: TextInputType.number,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'مثال: 250',
-                        hintStyle: TextStyle(color: Colors.white38),
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.current.guestCountHint,
+                        hintStyle: const TextStyle(color: Colors.white38),
                         border: InputBorder.none,
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   _FieldCard(
-                    label: 'ملاحظات إضافية',
+                    label: AppLocalizations.current.extraNotesLabel,
                     child: TextField(
                       controller: _noteController,
                       maxLines: 4,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'اذكر تفاصيل المناسبة أو الخدمة المطلوبة...',
-                        hintStyle: TextStyle(color: Colors.white38),
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.current.eventDetailsHint,
+                        hintStyle: const TextStyle(color: Colors.white38),
                         border: InputBorder.none,
                       ),
                     ),
@@ -178,8 +179,10 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                           : () async {
                               if (_eventDate == null) {
                                 messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text('اختر تاريخ المناسبة أولًا.'),
+                                  SnackBar(
+                                    content: Text(
+                                      AppLocalizations.current.chooseEventDateFirst,
+                                    ),
                                   ),
                                 );
                                 return;
@@ -199,8 +202,10 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
 
                               if (success) {
                                 messenger.showSnackBar(
-                                  const SnackBar(
-                                    content: Text('تم إرسال طلب الحجز بنجاح.'),
+                                  SnackBar(
+                                    content: Text(
+                                      AppLocalizations.current.bookingRequestSent,
+                                    ),
                                   ),
                                 );
                                 navigator.pop();
@@ -210,7 +215,7 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                               messenger.showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    controller.error ?? 'تعذر إرسال الحجز.',
+                                    controller.error ?? AppLocalizations.current.bookingSendFailed,
                                   ),
                                 ),
                               );
@@ -230,9 +235,11 @@ class _VenueBookingViewState extends State<_VenueBookingView> {
                                 strokeWidth: 2.2,
                               ),
                             )
-                          : const Text(
-                              'تأكيد الحجز',
-                              style: TextStyle(fontWeight: FontWeight.w900),
+                          : Text(
+                              AppLocalizations.current.confirmBooking,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                     ),
                   ),

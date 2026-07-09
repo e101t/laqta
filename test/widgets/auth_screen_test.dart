@@ -19,11 +19,11 @@ void main() {
     await tester.pumpWidget(wrapWithMaterial(const AuthScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('مرحباً بك في LAQTA'), findsOneWidget);
-    expect(find.text('رقم الهاتف أو اسم المستخدم'), findsOneWidget);
-    expect(find.text('تسجيل الدخول'), findsOneWidget);
+    expect(find.text('Welcome to Laqta'), findsOneWidget);
+    expect(find.text('Phone number or username'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
     expect(
-      find.textContaining('إنشاء حساب', findRichText: true),
+      find.textContaining('Create account', findRichText: true),
       findsOneWidget,
     );
   });
@@ -41,13 +41,13 @@ void main() {
     await tester.tap(registerButton);
     await tester.pumpAndSettle();
 
-    expect(find.text('الخطوة 1 من 4'), findsOneWidget);
-    expect(find.text('اختر نوع الحساب'), findsOneWidget);
-    expect(find.text('عميل'), findsOneWidget);
-    expect(find.text('مصور'), findsOneWidget);
-    expect(find.text('صاحب قاعة'), findsOneWidget);
+    expect(find.text('Step 1 of 4'), findsOneWidget);
+    expect(find.text('Choose account type'), findsOneWidget);
+    expect(find.text('Customer'), findsOneWidget);
+    expect(find.text('Photographer'), findsOneWidget);
+    expect(find.text('Venue owner'), findsOneWidget);
     expect(
-      find.textContaining('تسجيل الدخول', findRichText: true),
+      find.textContaining('Sign in', findRichText: true),
       findsOneWidget,
     );
   });

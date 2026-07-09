@@ -188,9 +188,7 @@ class AppRouter {
           builder: (context, state) {
             final bookingId = state.pathParameters['id'];
             if (bookingId == null || bookingId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing booking id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return BookingDetailsScreen(bookingId: bookingId);
           },
@@ -216,9 +214,7 @@ class AppRouter {
           builder: (context, state) {
             final requestId = state.pathParameters['id'];
             if (requestId == null || requestId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing request id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return RequestDetailsScreen(requestId: requestId);
           },
@@ -229,9 +225,7 @@ class AppRouter {
           builder: (context, state) {
             final requestId = state.pathParameters['id'];
             if (requestId == null || requestId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing request id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return OfferSubmitScreen(requestId: requestId);
           },
@@ -247,9 +241,7 @@ class AppRouter {
           builder: (context, state) {
             final chatId = state.pathParameters['id'];
             if (chatId == null || chatId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing chat id')),
-              );
+              return const _RouteFallbackScreen();
             }
             final otherUserName =
                 state.uri.queryParameters['name'] ?? 'Unknown';
@@ -262,9 +254,7 @@ class AppRouter {
           builder: (context, state) {
             final photographerId = state.pathParameters['id'];
             if (photographerId == null || photographerId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing photographer id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return PhotographerProfileScreen(photographerId: photographerId);
           },
@@ -292,9 +282,7 @@ class AppRouter {
           builder: (context, state) {
             final venueId = state.pathParameters['id'];
             if (venueId == null || venueId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing venue id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return VenueDetailsScreen(venueId: venueId);
           },
@@ -305,9 +293,7 @@ class AppRouter {
           builder: (context, state) {
             final venueId = state.pathParameters['id'];
             if (venueId == null || venueId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing venue id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return VenueBookingScreen(venueId: venueId);
           },
@@ -318,9 +304,7 @@ class AppRouter {
           builder: (context, state) {
             final locationId = state.pathParameters['id'];
             if (locationId == null || locationId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing location id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return PhotoLocationDetailsScreen(locationId: locationId);
           },
@@ -341,9 +325,7 @@ class AppRouter {
           builder: (context, state) {
             final campaignId = state.pathParameters['id'];
             if (campaignId == null || campaignId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing campaign id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return CampaignAnalyticsScreen(campaignId: campaignId);
           },
@@ -379,9 +361,7 @@ class AppRouter {
           builder: (context, state) {
             final courseId = state.pathParameters['id'];
             if (courseId == null || courseId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing course id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return CourseEditorScreen(courseId: courseId);
           },
@@ -398,9 +378,7 @@ class AppRouter {
             final photographerId =
                 state.uri.queryParameters['photographerId'] ?? '';
             if (enrollmentId == null || enrollmentId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing enrollment id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return CoursePaymentScreen(
               enrollmentId: enrollmentId,
@@ -416,9 +394,7 @@ class AppRouter {
           builder: (context, state) {
             final courseId = state.pathParameters['id'];
             if (courseId == null || courseId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing course id')),
-              );
+              return const _RouteFallbackScreen();
             }
             return CourseDetailsScreen(courseId: courseId);
           },
@@ -513,9 +489,7 @@ class AppRouter {
             final sessionType = state.uri.queryParameters['sessionType'] ?? '';
 
             if (bookingId == null || bookingId.isEmpty) {
-              return const Scaffold(
-                body: Center(child: Text('Missing booking information')),
-              );
+              return const _RouteFallbackScreen();
             }
 
             return _BookingPaymentLoader(
@@ -569,8 +543,8 @@ class AppRouter {
           builder: (context, state) => const CreateStoryScreen(),
         ),
       ],
-      errorBuilder: (context, state) => Scaffold(
-        body: Center(child: Text('Page not found: ${state.uri.path}')),
+      errorBuilder: (context, state) => _RouteFallbackScreen(
+        message: AppLocalizations.of(context).pageNotFound,
       ),
     );
   }
@@ -1094,8 +1068,8 @@ class _BookingPaymentLoaderState extends State<_BookingPaymentLoader> {
           );
         }
         if (snapshot.hasError || snapshot.data == null) {
-          return const Scaffold(
-            body: Center(child: Text('فشل تحميل بيانات الحجز')),
+          return _RouteFallbackScreen(
+            message: AppLocalizations.of(context).bookingLoadFailed,
           );
         }
         return PaymentScreen(
@@ -1105,6 +1079,50 @@ class _BookingPaymentLoaderState extends State<_BookingPaymentLoader> {
           sessionType: widget.sessionType,
         );
       },
+    );
+  }
+}
+
+class _RouteFallbackScreen extends StatelessWidget {
+  const _RouteFallbackScreen({this.message});
+
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.explore_off_rounded,
+                  size: 56,
+                  color: theme.colorScheme.outline,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  message ?? localizations.missingRouteParam,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.go(Routes.main),
+                  child: Text(localizations.goHomeAction),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
 
 DateTime? _readDate(dynamic value) {
@@ -107,7 +108,7 @@ class MarketplacePhotographerSummaryDto {
   static MarketplacePhotographerSummary fromJson(Map<String, dynamic> json) {
     return MarketplacePhotographerSummary(
       id: json['id'] as String,
-      name: json['name'] as String? ?? 'مصوّر',
+      name: json['name'] as String? ?? AppLocalizations.current.photographer,
       photoUrl: _readString(json['photoUrl']),
       governorate: _readString(json['governorate']),
       bio: _readString(json['bio']),
@@ -128,7 +129,8 @@ class MarketplaceReelSummaryDto {
     return MarketplaceReelSummary(
       id: json['id'] as String,
       photographerId: json['photographerId'] as String? ?? '',
-      photographerName: json['photographerName'] as String? ?? 'مستخدم',
+      photographerName:
+          json['photographerName'] as String? ?? AppLocalizations.current.userLabel,
       photographerPhotoUrl: _readString(json['photographerPhotoUrl']),
       mediaId: json['mediaId'] as String? ?? '',
       mediaUrl: json['mediaUrl'] as String? ?? '',
@@ -154,7 +156,7 @@ class MarketplaceVenueDto {
       id: json['id'] as String,
       ownerUserId: json['ownerUserId'] as String? ?? '',
       type: json['type'] as String? ?? 'venue',
-      name: json['name'] as String? ?? 'مكان',
+      name: json['name'] as String? ?? AppLocalizations.current.placeLabel,
       slug: json['slug'] as String? ?? '',
       city: json['city'] as String? ?? '',
       area: _readString(json['area']),
@@ -303,7 +305,7 @@ class MarketplacePhotographerProfileDto {
   static MarketplacePhotographerProfile fromJson(Map<String, dynamic> json) {
     return MarketplacePhotographerProfile(
       id: json['id'] as String,
-      name: json['name'] as String? ?? 'مصوّر',
+      name: json['name'] as String? ?? AppLocalizations.current.photographer,
       photoUrl: _readString(json['photoUrl']),
       governorate: _readString(json['governorate']),
       bio: _readString(json['bio']),

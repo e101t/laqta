@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 
@@ -48,7 +49,7 @@ class _PhotoLocationDetailsView extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              controller.error ?? 'تعذر تحميل تفاصيل المكان.',
+              controller.error ?? AppLocalizations.current.placeLoadFailed,
               style: const TextStyle(color: Colors.white70),
               textAlign: TextAlign.center,
             ),
@@ -192,11 +193,11 @@ class _PhotoLocationDetailsView extends StatelessWidget {
                         .toList(growable: false),
                   ),
                   const SizedBox(height: 22),
-                  const LaqtaSectionHeader(title: 'وصف المكان'),
+                  LaqtaSectionHeader(title: AppLocalizations.current.placeDescription),
                   const SizedBox(height: 10),
                   LaqtaLuxurySurface(
                     child: Text(
-                      location.description ?? 'لا يوجد وصف متاح حاليًا.',
+                      location.description ?? AppLocalizations.current.noDescriptionAvailable,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.white70,
                         height: 1.7,
@@ -223,7 +224,7 @@ class _PhotoLocationDetailsView extends StatelessWidget {
                         );
                       },
                       icon: const Icon(Icons.location_on_outlined),
-                      label: const Text('الموقع على الخريطة'),
+                      label: Text(AppLocalizations.current.locationOnMap),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
                         foregroundColor: LaqtaColors.accent,

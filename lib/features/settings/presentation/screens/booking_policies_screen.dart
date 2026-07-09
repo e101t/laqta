@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 class BookingPoliciesScreen extends StatelessWidget {
   const BookingPoliciesScreen({super.key});
@@ -11,34 +12,36 @@ class BookingPoliciesScreen extends StatelessWidget {
 
     final sections = [
       _PolicySection(
-        title: 'سياسة الضمان (Escrow)',
-        content:
-            'عربون الحجز يبقى داخل لقطه ولا يُحرَّر للمصور إلا بعد قبول العميل للتسليم أو انتهاء فترة الاعتراض (72 ساعة بعد التسليم).',
+        title: AppLocalizations.current.escrowPolicyTitle,
+        content: AppLocalizations.current.escrowPolicyBody,
       ),
       _PolicySection(
-        title: 'سياسة التعديل',
+        title: AppLocalizations.current.editPolicyTitle,
         content:
-            'تعديل واحد مجاني ضمن نطاق وصف الطلب، وكل ما يتجاوز الوعد يتحول إلى خدمة إضافية تتطلب عرضاً جديداً أو مبلغاً إضافياً.',
+            AppLocalizations.current.editPolicyBody,
       ),
       _PolicySection(
-        title: 'سياسة الإلغاء',
+        title: AppLocalizations.current.cancelPolicyTitle,
         content:
-            'قبل 48 ساعة: استرجاع كامل للعربون. خلال 48 ساعة: استرجاع جزئي + تعويض للمصور. إذا المصور لم يحضر/ألغى: استرجاع كامل + أثر على الثقة.',
+            AppLocalizations.current.cancelPolicyBody,
       ),
       _PolicySection(
-        title: 'سياسة الخصوصية',
+        title: AppLocalizations.current.privacyPolicyTitle,
         content:
-            'لا نشارك أرقام الهواتف قبل تأكيد الحجز؛ كل التواصل داخل المنصة، والملفات تظل ضمن الخوادم مع روابط تحميل مؤقتة.',
+            AppLocalizations.current.privacyPolicyBody,
       ),
       _PolicySection(
-        title: 'سياسة النزاعات',
+        title: AppLocalizations.current.disputesPolicyTitle,
         content:
-            'النزاع يُفتح داخل الحجز فقط. الطرفان يرفعان أدلة (صور/دردشة/وقت)، والإدارة تصدر قراراً نهائياً خلال 3 أيام.',
+            AppLocalizations.current.disputesPolicyBody,
       ),
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('سياسات غرف الحجز'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(AppLocalizations.current.bookingPoliciesTitle),
+        centerTitle: true,
+      ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: sections.length,

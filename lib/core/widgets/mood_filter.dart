@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:flutter/services.dart';
 
 /// One selectable photography mood.
@@ -35,31 +36,31 @@ class MoodFilter extends StatefulWidget {
   static const List<MoodOption> defaults = [
     MoodOption(
       id: 'warm',
-      label: 'دافئ وناعم',
+      label: 'moodWarmSoft',
       icon: Icons.wb_sunny_outlined,
       moodColor: Color(0xFFD6A44A),
     ),
     MoodOption(
       id: 'urban',
-      label: 'حضري وحاد',
+      label: 'moodUrbanSharp',
       icon: Icons.location_city_outlined,
       moodColor: Color(0xFF5B8DEF),
     ),
     MoodOption(
       id: 'romantic',
-      label: 'رومانسي',
+      label: 'moodRomantic',
       icon: Icons.favorite_outline,
       moodColor: Color(0xFFE85D9A),
     ),
     MoodOption(
       id: 'outdoor',
-      label: 'طبيعي خارجي',
+      label: 'moodNaturalOutdoor',
       icon: Icons.landscape_outlined,
       moodColor: Color(0xFF4CAF50),
     ),
     MoodOption(
       id: 'dramatic',
-      label: 'درامي وعميق',
+      label: 'moodDramaticDeep',
       icon: Icons.contrast_outlined,
       moodColor: Color(0xFF9C27B0),
     ),
@@ -137,7 +138,7 @@ class _MoodCard extends StatelessWidget {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  mood.label,
+                  AppLocalizations.current.translate(mood.label),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

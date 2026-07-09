@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
@@ -72,7 +73,7 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
                   Text(
-                    'دورات تعليم التصوير',
+                    AppLocalizations.current.coursesListTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -93,7 +94,9 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
                       itemBuilder: (context, index) {
                         final chip = specialties[index];
                         return LaqtaFilterPill(
-                          label: chip,
+                          label: chip == 'الكل'
+                              ? AppLocalizations.current.allFilter
+                              : chip,
                           selected: chip == _selectedSpecialty,
                           onTap: () =>
                               setState(() => _selectedSpecialty = chip),
@@ -118,22 +121,22 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
                   ),
                 )
               else if (visibleItems.isEmpty && _hasError)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
-                      'حدث خطأ في تحميل الدورات',
-                      style: TextStyle(color: Colors.white70),
+                      AppLocalizations.current.coursesLoadError,
+                      style: const TextStyle(color: Colors.white70),
                     ),
                   ),
                 )
               else if (visibleItems.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
-                      'لا توجد دورات متاحة حالياً',
-                      style: TextStyle(color: Colors.white70),
+                      AppLocalizations.current.noCoursesAvailable,
+                      style: const TextStyle(color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -195,7 +198,9 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    course.isInPerson ? 'حضوري' : 'أونلاين',
+                                    course.isInPerson
+                                        ? AppLocalizations.current.inPersonLabel
+                                        : AppLocalizations.current.onlineLabel,
                                     textAlign: TextAlign.right,
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
@@ -206,16 +211,18 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
                                   Row(
                                     children: [
                                       if (course.isFull)
-                                        const Text(
-                                          'مكتملة',
-                                          style: TextStyle(
+                                        Text(
+                                          AppLocalizations.current.courseFull,
+                                          style: const TextStyle(
                                             color: Color(0xFFE24A3B),
                                             fontWeight: FontWeight.w700,
                                           ),
                                         )
                                       else
                                         Text(
-                                          '${course.seatsRemaining} مقاعد',
+                                          AppLocalizations.current.seatsCount(
+                                            course.seatsRemaining,
+                                          ),
                                           style: const TextStyle(
                                             color: Colors.white,
                                           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/backend_media_service.dart';
 import 'package:laqta/features/downloads/domain/entities/download_link_entity.dart';
 import 'package:laqta/features/downloads/presentation/providers/download_provider.dart';
@@ -237,7 +238,9 @@ class _DownloadLinkCard extends StatelessWidget {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر فتح رابط التحميل حالياً')),
+        SnackBar(
+          content: Text(AppLocalizations.current.downloadLinkOpenFailed),
+        ),
       );
     }
   }

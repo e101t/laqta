@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:laqta/app/router/routes.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -21,23 +22,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   static const _slides = [
     _Slide(
       icon: Icons.camera_alt_rounded,
-      title: 'التقط اللحظة',
-      subtitle:
-          'اكتشف أفضل المصورين في مدينتك واحجز جلستك في ثوانٍ',
+      titleKey: 'onboardingSlide1Title',
+      subtitleKey: 'onboardingSlide1Body',
       color: Color(0xFFD6A44A),
     ),
     _Slide(
       icon: Icons.wb_sunny_rounded,
-      title: 'الساعة الذهبية',
-      subtitle:
-          'احجز خلال الساعة الذهبية للحصول على أجمل إضاءة طبيعية لصورك',
+      titleKey: 'onboardingSlide2Title',
+      subtitleKey: 'onboardingSlide2Body',
       color: Color(0xFFFF9500),
     ),
     _Slide(
       icon: Icons.explore_rounded,
-      title: 'ابدأ رحلتك',
-      subtitle:
-          'سجّل حسابك الآن وانضم إلى آلاف العملاء والمصورين في منصة لقطة',
+      titleKey: 'onboardingSlide3Title',
+      subtitleKey: 'onboardingSlide3Body',
       color: Color(0xFF3B82F6),
     ),
   ];
@@ -82,6 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     final slide = _slides[_page];
+    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0E1014),
@@ -93,9 +92,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               alignment: AlignmentDirectional.topEnd,
               child: TextButton(
                 onPressed: _finish,
-                child: const Text(
-                  'تخطي',
-                  style: TextStyle(color: Colors.white38, fontSize: 14),
+                child: Text(
+                  localizations.skip,
+                  style: const TextStyle(color: Colors.white38, fontSize: 14),
                 ),
               ),
             ),
@@ -155,7 +154,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         elevation: 0,
                       ),
                       child: Text(
-                        _page < _slides.length - 1 ? 'التالي' : 'ابدأ الآن',
+                        _page < _slides.length - 1
+                            ? localizations.next
+                            : localizations.startNow,
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -179,6 +180,7 @@ class _SlideView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
@@ -207,7 +209,7 @@ class _SlideView extends StatelessWidget {
           ),
           const SizedBox(height: 40),
           Text(
-            slide.title,
+            localizations.translate(slide.titleKey),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
@@ -217,7 +219,7 @@ class _SlideView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            slide.subtitle,
+            localizations.translate(slide.subtitleKey),
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white60,
@@ -233,14 +235,14 @@ class _SlideView extends StatelessWidget {
 
 class _Slide {
   final IconData icon;
-  final String title;
-  final String subtitle;
+  final String titleKey;
+  final String subtitleKey;
   final Color color;
 
   const _Slide({
     required this.icon,
-    required this.title,
-    required this.subtitle,
+    required this.titleKey,
+    required this.subtitleKey,
     required this.color,
   });
 }

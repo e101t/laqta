@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
@@ -40,7 +41,7 @@ class AvailableTodayStories extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'متاح اليوم',
+          AppLocalizations.current.availableTodayBadge,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w800,

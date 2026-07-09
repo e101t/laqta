@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 /// Empty state widget for various scenarios
 class EmptyState extends StatelessWidget {
@@ -117,10 +118,10 @@ class EmptyStates {
   static Widget noBookings({VoidCallback? onBrowse}) {
     return EmptyState(
       icon: Icons.calendar_today_outlined,
-      title: 'لا توجد حجوزات',
-      message: 'لم تقم بأي حجوزات بعد.\nابدأ بالبحث عن مصورك المفضل!',
+      title: AppLocalizations.current.emptyBookingsTitle,
+      message: AppLocalizations.current.emptyBookingsMessage,
       emoji: '📅',
-      actionLabel: 'تصفح المصورين',
+      actionLabel: AppLocalizations.current.browsePhotographers,
       onAction: onBrowse,
     );
   }
@@ -128,10 +129,10 @@ class EmptyStates {
   static Widget noFavorites({VoidCallback? onExplore}) {
     return EmptyState(
       icon: Icons.favorite_border,
-      title: 'لا توجد مفضلات',
-      message: 'لم تضف أي مصور للمفضلة بعد.\nاستكشف المصورين وأضفهم!',
+      title: AppLocalizations.current.emptyFavoritesTitle,
+      message: AppLocalizations.current.emptyFavoritesMessage,
       emoji: '❤️',
-      actionLabel: 'استكشف الآن',
+      actionLabel: AppLocalizations.current.exploreNow,
       onAction: onExplore,
     );
   }
@@ -139,19 +140,19 @@ class EmptyStates {
   static Widget noChats({VoidCallback? onStart}) {
     return EmptyState(
       icon: Icons.chat_bubble_outline,
-      title: 'لا توجد محادثات',
-      message: 'لم تبدأ أي محادثة بعد.\nابدأ محادثة مع مصور!',
+      title: AppLocalizations.current.emptyChatsTitle,
+      message: AppLocalizations.current.emptyChatsMessage,
       emoji: '💬',
-      actionLabel: 'ابحث عن مصور',
+      actionLabel: AppLocalizations.current.findPhotographer,
       onAction: onStart,
     );
   }
 
   static Widget noNotifications() {
-    return const EmptyState(
+    return EmptyState(
       icon: Icons.notifications_none,
-      title: 'لا توجد إشعارات',
-      message: 'لم تستلم أي إشعارات بعد.\nسنخبرك عند وجود جديد!',
+      title: AppLocalizations.current.emptyNotificationsTitle,
+      message: AppLocalizations.current.emptyNotificationsMessage,
       emoji: '🔔',
     );
   }
@@ -159,19 +160,19 @@ class EmptyStates {
   static Widget noSearchResults({String? query}) {
     return EmptyState(
       icon: Icons.search_off,
-      title: 'لا توجد نتائج',
+      title: AppLocalizations.current.noResults,
       message: query != null
-          ? 'لم نجد نتائج لـ "$query".\nجرب كلمات بحث أخرى!'
-          : 'لم نجد أي نتائج.\nجرب تغيير الفلاتر!',
+          ? AppLocalizations.current.emptySearchQuery(query)
+          : AppLocalizations.current.emptySearchFiltersMessage,
       emoji: '🔍',
     );
   }
 
   static Widget noStories() {
-    return const EmptyState(
+    return EmptyState(
       icon: Icons.photo_library_outlined,
-      title: 'لا توجد قصص',
-      message: 'لا توجد قصص جديدة الآن.\nتابع المصورين لمشاهدة قصصهم!',
+      title: AppLocalizations.current.emptyStoriesTitle,
+      message: AppLocalizations.current.emptyStoriesMessage,
       emoji: '📸',
     );
   }
@@ -179,10 +180,10 @@ class EmptyStates {
   static Widget noReviews({VoidCallback? onWrite}) {
     return EmptyState(
       icon: Icons.rate_review_outlined,
-      title: 'لا توجد تقييمات',
-      message: 'لم يتم كتابة أي تقييمات بعد.\nكن أول من يقيّم!',
+      title: AppLocalizations.current.emptyReviewsTitle,
+      message: AppLocalizations.current.emptyReviewsMessage,
       emoji: '⭐',
-      actionLabel: 'اكتب تقييم',
+      actionLabel: AppLocalizations.current.writeReviewAction,
       onAction: onWrite,
     );
   }
@@ -190,19 +191,19 @@ class EmptyStates {
   static Widget noPortfolio({VoidCallback? onUpload}) {
     return EmptyState(
       icon: Icons.photo_camera_outlined,
-      title: 'لا توجد أعمال',
-      message: 'لم تضف أي أعمال لمعرضك بعد.\nابدأ بإضافة صورك!',
+      title: AppLocalizations.current.emptyPortfolioTitle,
+      message: AppLocalizations.current.emptyPortfolioMessage,
       emoji: '🎨',
-      actionLabel: 'إضافة صور',
+      actionLabel: AppLocalizations.current.addPhotosAction,
       onAction: onUpload,
     );
   }
 
   static Widget noTransactions() {
-    return const EmptyState(
+    return EmptyState(
       icon: Icons.receipt_long_outlined,
-      title: 'لا توجد معاملات',
-      message: 'لم تجري أي معاملات مالية بعد.\nستظهر هنا عند إتمام حجز!',
+      title: AppLocalizations.current.emptyTransactionsTitle,
+      message: AppLocalizations.current.emptyTransactionsMessage,
       emoji: '💰',
     );
   }
@@ -210,10 +211,10 @@ class EmptyStates {
   static Widget error({String? message, VoidCallback? onRetry}) {
     return EmptyState(
       icon: Icons.error_outline,
-      title: 'حدث خطأ',
-      message: message ?? 'حدث خطأ ما.\nيرجى المحاولة مرة أخرى!',
+      title: AppLocalizations.current.errorOccurredTitle,
+      message: message ?? AppLocalizations.current.errorGenericMessage,
       emoji: '⚠️',
-      actionLabel: 'إعادة المحاولة',
+      actionLabel: AppLocalizations.current.retry,
       onAction: onRetry,
     );
   }
@@ -221,10 +222,10 @@ class EmptyStates {
   static Widget offline({VoidCallback? onRetry}) {
     return EmptyState(
       icon: Icons.wifi_off,
-      title: 'لا يوجد اتصال',
-      message: 'يرجى التحقق من اتصالك بالإنترنت\nوالمحاولة مرة أخرى!',
+      title: AppLocalizations.current.noConnectionTitle,
+      message: AppLocalizations.current.noConnectionMessage,
       emoji: '📡',
-      actionLabel: 'إعادة المحاولة',
+      actionLabel: AppLocalizations.current.retry,
       onAction: onRetry,
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
@@ -46,10 +47,10 @@ class _SponsoredAdView extends StatelessWidget {
     final targetLabel =
         controller.selectedTarget?.label ??
         switch (controller.selectedType) {
-          MarketplaceCampaignType.promoteProfile => 'حسابي',
-          MarketplaceCampaignType.promoteReel => 'ريل مميز',
-          MarketplaceCampaignType.promoteStory => 'ستوري مميزة',
-          MarketplaceCampaignType.promoteVenue => 'قاعة أو مكان',
+          MarketplaceCampaignType.promoteProfile => AppLocalizations.current.myAccountOption,
+          MarketplaceCampaignType.promoteReel => AppLocalizations.current.featuredReel,
+          MarketplaceCampaignType.promoteStory => AppLocalizations.current.featuredStory,
+          MarketplaceCampaignType.promoteVenue => AppLocalizations.current.venueOrPlace,
         };
 
     return Scaffold(
@@ -64,7 +65,7 @@ class _SponsoredAdView extends StatelessWidget {
                 const LaqtaHeaderBackButton(),
                 const Spacer(),
                 Text(
-                  'إعلان ممول',
+                  AppLocalizations.current.sponsoredAdTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -76,7 +77,7 @@ class _SponsoredAdView extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             Text(
-              'اختر ما تريد ترويجه',
+              AppLocalizations.current.chooseWhatToPromote,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -91,7 +92,7 @@ class _SponsoredAdView extends StatelessWidget {
                     context,
                     controller,
                     MarketplaceCampaignType.promoteProfile,
-                    'الحساب',
+                    AppLocalizations.current.accountOption,
                     Icons.person_outline_rounded,
                   ),
                 ),
@@ -101,7 +102,7 @@ class _SponsoredAdView extends StatelessWidget {
                     context,
                     controller,
                     MarketplaceCampaignType.promoteReel,
-                    'ريل',
+                    AppLocalizations.current.reelOption,
                     Icons.ondemand_video_rounded,
                   ),
                 ),
@@ -111,7 +112,7 @@ class _SponsoredAdView extends StatelessWidget {
                     context,
                     controller,
                     MarketplaceCampaignType.promoteStory,
-                    'ستوري',
+                    AppLocalizations.current.storyOption,
                     Icons.circle_outlined,
                   ),
                 ),
@@ -119,7 +120,7 @@ class _SponsoredAdView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'العنصر المستهدف',
+              AppLocalizations.current.targetItemLabel,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -145,7 +146,7 @@ class _SponsoredAdView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'مدة الإعلان',
+              AppLocalizations.current.adDurationLabel,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -177,7 +178,7 @@ class _SponsoredAdView extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              '$value ${value == 14 ? 'يوم' : 'أيام'}',
+                              '$value ${value == 14 ? AppLocalizations.current.dayUnit : AppLocalizations.current.daysUnit}',
                               style: TextStyle(
                                 color: controller.selectedDurationDays == value
                                     ? LaqtaColors.accent
@@ -194,7 +195,7 @@ class _SponsoredAdView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'المنطقة',
+              AppLocalizations.current.regionLabel,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -205,12 +206,31 @@ class _SponsoredAdView extends StatelessWidget {
               textDirection: TextDirection.ltr,
               children: [
                 Expanded(
-                  child: _regionButton(context, controller, 'كل العراق'),
+                  child: _regionButton(
+                    context,
+                    controller,
+                    'كل العراق',
+                    AppLocalizations.current.allIraq,
+                  ),
                 ),
                 const SizedBox(width: 10),
-                Expanded(child: _regionButton(context, controller, 'محافظة')),
+                Expanded(
+                  child: _regionButton(
+                    context,
+                    controller,
+                    'محافظة',
+                    AppLocalizations.current.governorateOption,
+                  ),
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: _regionButton(context, controller, 'بغداد')),
+                Expanded(
+                  child: _regionButton(
+                    context,
+                    controller,
+                    'بغداد',
+                    AppLocalizations.current.provinceName('baghdad'),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -226,9 +246,9 @@ class _SponsoredAdView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'الميزانية',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.current.budgetLabel,
+                    style: const TextStyle(
                       color: Colors.white60,
                       fontWeight: FontWeight.w700,
                     ),
@@ -279,9 +299,9 @@ class _SponsoredAdView extends StatelessWidget {
                     : () async {
                         if (controller.selectedTarget == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                'سجّل الدخول أولًا أو اختر عنصرًا صالحًا للترويج.',
+                                AppLocalizations.current.loginFirstOrChooseItem,
                               ),
                             ),
                           );
@@ -295,15 +315,17 @@ class _SponsoredAdView extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                controller.error ?? 'تعذر إنشاء الحملة.',
+                                controller.error ?? AppLocalizations.current.campaignCreateFailed,
                               ),
                             ),
                           );
                           return;
                         }
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تم إنشاء الحملة وإرسالها للمراجعة.'),
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.current.campaignCreatedForReview,
+                            ),
                           ),
                         );
                         AppRouter.goToCampaignAnalytics(context, campaign.id);
@@ -321,9 +343,9 @@ class _SponsoredAdView extends StatelessWidget {
                         height: 22,
                         child: CircularProgressIndicator(strokeWidth: 2.2),
                       )
-                    : const Text(
-                        'متابعة',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                    : Text(
+                        AppLocalizations.current.continueAction,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
               ),
             ),
@@ -375,6 +397,7 @@ class _SponsoredAdView extends StatelessWidget {
     BuildContext context,
     SponsoredAdController controller,
     String value,
+    String label,
   ) {
     final selected = controller.selectedRegion == value;
     return InkWell(
@@ -394,7 +417,7 @@ class _SponsoredAdView extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              value,
+              label,
               style: TextStyle(
                 color: selected ? LaqtaColors.accent : Colors.white,
                 fontWeight: FontWeight.w700,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/backend_notification_sync_service.dart';
 import 'package:laqta/core/services/notification_navigation_service.dart';
 
@@ -63,25 +64,23 @@ class FcmService {
 
     final shouldRequest = await showDialog<bool>(
       context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('تفعيل الإشعارات'),
-          content: const Text(
-            'نريد إرسال إشعارات لك عند تلقي رسائل أو تفاعلات جديدة',
-          ),
+      builder: (context) {
+        final localizations = AppLocalizations.resolve(context);
+        return AlertDialog(
+          title: Text(localizations.enableNotificationsTitle),
+          content: Text(localizations.enableNotificationsBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('لاحقاً'),
+              child: Text(localizations.laterAction),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('السماح'),
+              child: Text(localizations.allowAction),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
 
     if (shouldRequest != true) return;

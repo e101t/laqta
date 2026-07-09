@@ -26,19 +26,23 @@ class MarketplaceAssets {
   static const List<MarketplaceShortcutAsset> storyShortcuts = [
     MarketplaceShortcutAsset(
       id: 'locations',
-      title: 'الأماكن',
+      title: 'placesTitle',
       imagePath: heroLocation,
     ),
     MarketplaceShortcutAsset(
       id: 'venues',
-      title: 'القاعات',
+      title: 'venuesTitle',
       imagePath: heroVenue,
     ),
     MarketplaceShortcutAsset(
       id: 'photographers',
-      title: 'المصورين',
+      title: 'photographersTitle',
       imagePath: heroPhotographer,
     ),
-    MarketplaceShortcutAsset(id: 'follow', title: 'تابع', imagePath: heroSoft),
+    MarketplaceShortcutAsset(
+      id: 'follow',
+      title: 'followTab',
+      imagePath: heroSoft,
+    ),
   ];
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/models/achievement_model.dart';
 import 'package:laqta/core/widgets/skeleton_loaders.dart';
 import 'package:laqta/features/achievements/achievements_dependencies.dart';
@@ -101,7 +102,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('الإنجازات 🏆'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).achievementsTitle),
+        centerTitle: true,
+      ),
       body: _isLoading
           ? SkeletonList(
               itemBuilder: const _AchievementSkeleton(),
@@ -124,7 +128,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _loadAchievements,
-                      child: const Text('إعادة المحاولة'),
+                      child: Text(AppLocalizations.of(context).retry),
                     ),
                   ],
                 ),
@@ -138,13 +142,19 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 const SizedBox(height: 24),
 
                 // Progress Overview
-                Text('التقدم', style: textTheme.titleLarge),
+                Text(
+                  AppLocalizations.of(context).progressLabel,
+                  style: textTheme.titleLarge,
+                ),
                 const SizedBox(height: 12),
                 _buildProgressCard(),
                 const SizedBox(height: 24),
 
                 // Achievements List
-                Text('جميع الإنجازات', style: textTheme.titleLarge),
+                Text(
+                  AppLocalizations.of(context).allAchievements,
+                  style: textTheme.titleLarge,
+                ),
                 const SizedBox(height: 12),
                 ..._achievements.map((achievement) {
                   final userAchievement =
@@ -192,7 +202,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'إنجاز مفتوح',
+            AppLocalizations.of(context).achievementUnlocked,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
             ),
@@ -210,7 +220,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 const Icon(Icons.stars, color: Colors.white),
                 const SizedBox(width: 8),
                 Text(
-                  '$_totalPoints نقطة مكتسبة',
+                  AppLocalizations.of(context).pointsEarned(_totalPoints),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -243,7 +253,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('التقدم الكلي', style: textTheme.titleMedium),
+              Text(
+                AppLocalizations.of(context).totalProgress,
+                style: textTheme.titleMedium,
+              ),
               Text(
                 '${(progress * 100).toStringAsFixed(0)}%',
                 style: textTheme.titleMedium?.copyWith(
@@ -401,7 +414,9 @@ class _AchievementCard extends StatelessWidget {
                         Icon(Icons.stars, size: 14, color: scheme.secondary),
                         const SizedBox(width: 4),
                         Text(
-                          '+${achievement.rewardPoints} نقطة',
+                          AppLocalizations.of(
+                            context,
+                          ).rewardPointsLabel(achievement.rewardPoints),
                           style: textTheme.labelSmall?.copyWith(
                             color: scheme.secondary,
                             fontWeight: FontWeight.bold,

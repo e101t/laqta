@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 import 'package:laqta/core/widgets/laqta_async_widgets.dart';
@@ -39,7 +40,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     setState(() {
       _isLoading = false;
       _course = result.valueOrNull;
-      if (!result.isSuccess) _error = 'تعذر تحميل بيانات الدورة';
+      if (!result.isSuccess) _error = AppLocalizations.current.courseLoadFailed;
     });
   }
 
@@ -63,7 +64,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     if (!enrollResult.isSuccess || enrollResult.valueOrNull == null) {
       setState(() => _isEnrolling = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر إنشاء التسجيل، حاول مرة أخرى')),
+        SnackBar(content: Text(AppLocalizations.current.enrollmentCreateFailed)),
       );
       return;
     }
@@ -98,7 +99,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Text(
-                    _error ?? 'لم يتم العثور على الدورة',
+                    _error ?? AppLocalizations.current.courseNotFound,
                     style: const TextStyle(color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
@@ -141,7 +142,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                         icon: course.isInPerson
                             ? Icons.location_on_outlined
                             : Icons.videocam_outlined,
-                        label: course.isInPerson ? 'حضوري' : 'أونلاين',
+                        label: course.isInPerson
+                            ? AppLocalizations.current.inPersonLabel
+                            : AppLocalizations.current.onlineLabel,
                       ),
                       for (final specialty in course.specialties)
                         LaqtaFeaturePill(
@@ -171,12 +174,15 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${course.seatsRemaining} من ${course.capacity}',
+                              AppLocalizations.current.seatsOf(
+                                course.seatsRemaining,
+                                course.capacity,
+                              ),
                               style: const TextStyle(color: Colors.white),
                             ),
-                            const Text(
-                              'المقاعد المتاحة',
-                              style: TextStyle(color: Color(0xFFB7B9BE)),
+                            Text(
+                              AppLocalizations.current.availableSeats,
+                              style: const TextStyle(color: Color(0xFFB7B9BE)),
                             ),
                           ],
                         ),
@@ -192,9 +198,11 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                                 course.location!.text!,
                                 style: const TextStyle(color: Colors.white),
                               ),
-                              const Text(
-                                'الموقع',
-                                style: TextStyle(color: Color(0xFFB7B9BE)),
+                              Text(
+                                AppLocalizations.current.location,
+                                style: const TextStyle(
+                                  color: Color(0xFFB7B9BE),
+                                ),
                               ),
                             ],
                           ),
@@ -203,7 +211,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  LaqtaSectionHeader(title: 'الجلسات'),
+                  LaqtaSectionHeader(title: AppLocalizations.current.sessionsLabel),
                   const SizedBox(height: 8),
                   LaqtaLuxurySurface(
                     child: Column(
@@ -256,8 +264,10 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                     children: [
                       LaqtaPrimaryAction(
                         label: course.isFull
-                            ? 'الدورة مكتملة'
-                            : (_isEnrolling ? 'جارٍ التسجيل...' : 'سجّل الآن'),
+                            ? AppLocalizations.current.courseCompleted
+                            : (_isEnrolling
+                                  ? AppLocalizations.current.enrolling
+                                  : AppLocalizations.current.enrollNow),
                         onTap: (course.isFull || _isEnrolling)
                             ? null
                             : _enroll,

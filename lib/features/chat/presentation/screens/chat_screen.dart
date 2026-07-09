@@ -37,11 +37,11 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _hasError = false;
   String _currentUserId = '';
 
-  static const List<String> _quickMessages = [
-    'كم سعر جلسة تصوير؟',
-    'هل أنت متاح هذا الأسبوع؟',
-    'أريد تصوير مناسبة',
-    'ممكن أشوف باقاتك؟',
+  static List<String> get _quickMessages => [
+    AppLocalizations.current.quickAskPrice,
+    AppLocalizations.current.quickAskAvailable,
+    AppLocalizations.current.quickAskEvent,
+    AppLocalizations.current.quickAskPackages,
   ];
 
   @override

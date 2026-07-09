@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/backend_api_client.dart';
 import 'package:laqta/features/marketplace/domain/entities/marketplace_models.dart';
 import 'package:laqta/features/marketplace/domain/repositories/marketplace_repository.dart';
@@ -315,7 +316,7 @@ class SponsoredAdController extends MarketplaceController {
             .map(
               (reel) => MarketplaceTargetOption(
                 entityId: reel.id,
-                label: reel.caption ?? 'ريل ${reel.id.substring(0, 6)}',
+                label: reel.caption ?? AppLocalizations.current.reelFallback(reel.id.substring(0, 6)),
                 targetType: 'reel',
                 imageUrl: reel.mediaUrl,
               ),
@@ -329,7 +330,7 @@ class SponsoredAdController extends MarketplaceController {
             .map(
               (story) => MarketplaceTargetOption(
                 entityId: story.id,
-                label: story.caption ?? 'ستوري ${story.id.substring(0, 6)}',
+                label: story.caption ?? AppLocalizations.current.storyFallback(story.id.substring(0, 6)),
                 targetType: 'story',
                 imageUrl: story.mediaUrl,
               ),
@@ -353,7 +354,7 @@ class SponsoredAdController extends MarketplaceController {
     setLoading(true);
     final currentUserId = _currentUserId;
     if (currentUserId == null || currentUserId.isEmpty) {
-      setError('تعذر تحديد المستخدم الحالي.');
+      setError(AppLocalizations.current.currentUserUnknown);
       setLoading(false);
       return;
     }
@@ -415,7 +416,7 @@ class SponsoredAdController extends MarketplaceController {
   Future<SponsoredCampaignEntity?> createAndSubmit() async {
     final target = selectedTarget;
     if (target == null) {
-      setError('اختر العنصر الذي تريد ترويجه أولًا.');
+      setError(AppLocalizations.current.chooseItemToPromote);
       return null;
     }
 
@@ -427,7 +428,7 @@ class SponsoredAdController extends MarketplaceController {
       () => _repository.createCampaign(
         type: selectedType,
         title: _campaignTitle(),
-        description: 'حملة ممولة من تطبيق LAQTA',
+        description: AppLocalizations.current.sponsoredCampaignDesc,
         budgetTotal: budget.toDouble(),
         dailyBudget: (budget / selectedDurationDays)
             .clamp(1, budget)
@@ -468,13 +469,13 @@ class SponsoredAdController extends MarketplaceController {
   String _campaignTitle() {
     switch (selectedType) {
       case MarketplaceCampaignType.promoteProfile:
-        return 'ترويج الحساب';
+        return AppLocalizations.current.promoteAccount;
       case MarketplaceCampaignType.promoteReel:
-        return 'ترويج ريل';
+        return AppLocalizations.current.promoteReel;
       case MarketplaceCampaignType.promoteStory:
-        return 'ترويج ستوري';
+        return AppLocalizations.current.promoteStory;
       case MarketplaceCampaignType.promoteVenue:
-        return 'ترويج مكان/قاعة';
+        return AppLocalizations.current.promoteVenuePlace;
     }
   }
 }

@@ -1,3 +1,5 @@
+import 'package:laqta/core/localization/app_localizations.dart';
+
 class NotificationModel {
   final String notificationId;
   final String userId;
@@ -66,15 +68,15 @@ class NotificationModel {
     final difference = now.difference(createdAt);
 
     if (difference.inSeconds < 60) {
-      return 'الآن';
+      return AppLocalizations.current.justNow;
     } else if (difference.inMinutes < 60) {
-      return 'منذ ${difference.inMinutes} دقيقة';
+      return AppLocalizations.current.minutesAgo(difference.inMinutes);
     } else if (difference.inHours < 24) {
-      return 'منذ ${difference.inHours} ساعة';
+      return AppLocalizations.current.hoursAgo(difference.inHours);
     } else if (difference.inDays < 7) {
-      return 'منذ ${difference.inDays} يوم';
+      return AppLocalizations.current.daysAgo(difference.inDays);
     } else if (difference.inDays < 30) {
-      return 'منذ ${(difference.inDays / 7).floor()} أسبوع';
+      return AppLocalizations.current.weeksAgo((difference.inDays / 7).floor());
     } else {
       return '${createdAt.day}/${createdAt.month}/${createdAt.year}';
     }

@@ -82,7 +82,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'ابحث في البلاغات...',
+                hintText: AppLocalizations.current.searchReportsHint,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -105,7 +105,7 @@ void main() {
     await tester.pumpWidget(wrapWithMaterial(const CoursesListScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('لا توجد دورات متاحة حالياً'), findsOneWidget);
+    expect(find.text('No courses available right now'), findsOneWidget);
   });
 
   testWidgets('renders published courses with title and seat count', (
@@ -123,7 +123,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Wedding Photography Basics'), findsOneWidget);
-    expect(find.textContaining('5 مقاعد'), findsOneWidget);
+    expect(find.textContaining('5 seats'), findsOneWidget);
   });
 
   testWidgets('shows a full-course chip when seatsRemaining is zero', (
@@ -140,7 +140,7 @@ void main() {
     await tester.pumpWidget(wrapWithMaterial(const CoursesListScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('مكتملة'), findsOneWidget);
+    expect(find.text('Full'), findsOneWidget);
   });
 
   testWidgets('shows an error message when loading fails', (tester) async {
@@ -151,6 +151,6 @@ void main() {
     await tester.pumpWidget(wrapWithMaterial(const CoursesListScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('حدث خطأ في تحميل الدورات'), findsOneWidget);
+    expect(find.text('Error loading courses'), findsOneWidget);
   });
 }

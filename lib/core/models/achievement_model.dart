@@ -1,3 +1,5 @@
+import 'package:laqta/core/localization/app_localizations.dart';
+
 // Achievements & Gamification System
 
 class Achievement {
@@ -23,8 +25,8 @@ class Achievement {
     return [
       Achievement(
         achievementId: 'first_booking',
-        title: 'أول حجز 🎉',
-        description: 'أتممت أول حجز لك',
+        title: AppLocalizations.current.achFirstBookingTitle,
+        description: AppLocalizations.current.achFirstBookingDesc,
         icon: '🎉',
         requiredCount: 1,
         type: 'bookings',
@@ -32,8 +34,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'booking_master',
-        title: 'خبير الحجوزات ⭐',
-        description: 'أتممت 10 حجوزات',
+        title: AppLocalizations.current.achBookingExpertTitle,
+        description: AppLocalizations.current.achBookingExpertDesc,
         icon: '⭐',
         requiredCount: 10,
         type: 'bookings',
@@ -41,8 +43,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'booking_pro',
-        title: 'محترف الحجوزات 🌟',
-        description: 'أتممت 50 حجز',
+        title: AppLocalizations.current.achBookingProTitle,
+        description: AppLocalizations.current.achBookingProDesc,
         icon: '🌟',
         requiredCount: 50,
         type: 'bookings',
@@ -50,8 +52,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'review_collector',
-        title: 'جامع التقييمات 💬',
-        description: 'حصلت على 50 تقييم',
+        title: AppLocalizations.current.achReviewCollectorTitle,
+        description: AppLocalizations.current.achReviewCollectorDesc,
         icon: '💬',
         requiredCount: 50,
         type: 'reviews',
@@ -59,8 +61,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'top_rated',
-        title: 'الأعلى تقييماً 🏆',
-        description: 'متوسط تقييمك 4.8+',
+        title: AppLocalizations.current.achTopRatedTitle,
+        description: AppLocalizations.current.achTopRatedDesc,
         icon: '🏆',
         requiredCount: 48,
         type: 'rating',
@@ -68,8 +70,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'popular',
-        title: 'مشهور 👥',
-        description: 'لديك 100 متابع',
+        title: AppLocalizations.current.achPopularTitle,
+        description: AppLocalizations.current.achPopularDesc,
         icon: '👥',
         requiredCount: 100,
         type: 'followers',
@@ -77,8 +79,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'early_bird',
-        title: 'الطائر المبكر 🐦',
-        description: 'أتممت 5 حجوزات قبل الساعة 9 صباحاً',
+        title: AppLocalizations.current.achEarlyBirdTitle,
+        description: AppLocalizations.current.achEarlyBirdDesc,
         icon: '🐦',
         requiredCount: 5,
         type: 'early_bookings',
@@ -86,8 +88,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'night_owl',
-        title: 'بومة الليل 🦉',
-        description: 'أتممت 5 حجوزات بعد الساعة 8 مساءً',
+        title: AppLocalizations.current.achNightOwlTitle,
+        description: AppLocalizations.current.achNightOwlDesc,
         icon: '🦉',
         requiredCount: 5,
         type: 'late_bookings',
@@ -95,8 +97,8 @@ class Achievement {
       ),
       Achievement(
         achievementId: 'money_maker',
-        title: 'صانع المال 💰',
-        description: 'حققت إيرادات 5 مليون دينار',
+        title: AppLocalizations.current.achMoneyMakerTitle,
+        description: AppLocalizations.current.achMoneyMakerDesc,
         icon: '💰',
         requiredCount: 5000000,
         type: 'revenue',

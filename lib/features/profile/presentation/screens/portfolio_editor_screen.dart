@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:laqta/core/media/image_picker_service.dart';
 import 'package:laqta/core/models/portfolio_model.dart';
@@ -41,7 +42,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'يرجى تسجيل الدخول لعرض معرض الأعمال';
+        _errorMessage = AppLocalizations.current.loginToViewPortfolio;
       });
       return;
     }
@@ -66,7 +67,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'تعذر تحميل معرض الأعمال';
+        _errorMessage = AppLocalizations.current.portfolioLoadFailed;
       });
     }
   }
@@ -75,7 +76,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
     if (_portfolioImages.length >= 20) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('الحد الأقصى 20 صورة')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.current.maxPortfolioImages)));
       return;
     }
 
@@ -114,14 +115,14 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تمت إضافة الصورة بنجاح')),
+            SnackBar(content: Text(AppLocalizations.current.imageAddedSuccess)),
           );
         }
       } catch (e) {
         if (mounted) {
           final message = e is StateError
               ? e.message.toString()
-              : 'تعذر إضافة الصورة';
+              : AppLocalizations.current.imageAddFailed;
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(message)));
@@ -137,15 +138,15 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
   String _portfolioUploadErrorMessage(String? rawMessage) {
     final normalized = rawMessage?.toLowerCase().trim() ?? '';
     if (normalized.contains('active subscription')) {
-      return 'يتطلب رفع المزيد من أعمالك اشتراكًا نشطًا.';
+      return AppLocalizations.current.portfolioNeedsSubscription;
     }
     if (normalized.contains('only photographers')) {
-      return 'رفع معرض الأعمال متاح لحسابات المصورين فقط.';
+      return AppLocalizations.current.portfolioPhotographersOnly;
     }
     if (normalized.contains('limit')) {
-      return 'وصلت إلى حد معرض الأعمال في خطتك الحالية.';
+      return AppLocalizations.current.portfolioLimitReached;
     }
-    return 'تعذر إضافة الصورة';
+    return AppLocalizations.current.imageAddFailed;
   }
 
   Future<void> _removeImage(int index) async {
@@ -167,7 +168,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
     if (mounted) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('تم حذف الصورة بنجاح')));
+      ).showSnackBar(SnackBar(content: Text(AppLocalizations.current.imageDeletedSuccess)));
     }
   }
 
@@ -188,7 +189,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('تعذر حفظ معرض الأعمال')));
+        ).showSnackBar(SnackBar(content: Text(AppLocalizations.current.portfolioSaveFailed)));
       }
     }
   }
@@ -201,7 +202,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('معرض الأعمال'),
+        title: Text(AppLocalizations.current.portfolioTitle),
         actions: [
           if (_isUploading)
             const Padding(
@@ -237,7 +238,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
                     ),
                     const SizedBox(height: 16),
                     SecondaryButton(
-                      text: 'إعادة المحاولة',
+                      text: AppLocalizations.current.retry,
                       onPressed: _loadPortfolio,
                     ),
                   ],
@@ -256,12 +257,12 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'لا توجد صور في معرض الأعمال',
+                    AppLocalizations.current.noPortfolioImages,
                     style: textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'أضف صورًا تعرض جودة أعمالك للعملاء',
+                    AppLocalizations.current.portfolioShowQuality,
                     style: textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -269,7 +270,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
                   ),
                   const SizedBox(height: 24),
                   PrimaryButton(
-                    text: 'إضافة أول صورة',
+                    text: AppLocalizations.current.addFirstImage,
                     icon: Icons.add,
                     onPressed: _addImage,
                   ),
@@ -325,12 +326,12 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف الصورة'),
-        content: const Text('هل تريد حذف هذه الصورة من معرض أعمالك؟'),
+        title: Text(AppLocalizations.current.deleteImageTitle),
+        content: Text(AppLocalizations.current.deleteImageConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إلغاء'),
+            child: Text(AppLocalizations.current.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -338,7 +339,7 @@ class _PortfolioEditorScreenState extends State<PortfolioEditorScreen> {
               _removeImage(index);
             },
             style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('حذف'),
+            child: Text(AppLocalizations.current.delete),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 typedef PageLoader<T> = Future<List<T>> Function(int page, int pageSize);
 typedef PageItemBuilder<T> =
@@ -118,8 +119,11 @@ class _PaginatedListWidgetState<T> extends State<PaginatedListWidget<T>> {
       setState(() => _pageLoading = false);
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
-          content: const Text('فشل تحميل المزيد'),
-          action: SnackBarAction(label: 'إعادة', onPressed: _loadNextPage),
+          content: Text(AppLocalizations.current.loadMoreFailed),
+          action: SnackBarAction(
+            label: AppLocalizations.current.retry,
+            onPressed: _loadNextPage,
+          ),
         ),
       );
     }
@@ -183,7 +187,7 @@ class _DefaultEmptyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text('لا توجد عناصر'));
+    return Center(child: Text(AppLocalizations.current.noItems));
   }
 }
 
@@ -198,9 +202,9 @@ class _DefaultErrorWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('فشل التحميل'),
+          Text(AppLocalizations.current.loadFailed),
           const SizedBox(height: 12),
-          FilledButton(onPressed: onRetry, child: const Text('إعادة المحاولة')),
+          FilledButton(onPressed: onRetry, child: Text(AppLocalizations.current.retry)),
         ],
       ),
     );

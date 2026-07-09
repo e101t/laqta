@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
@@ -18,12 +19,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final List<String> _filters = const [
-    'الكل',
-    'المصورون',
-    'القاعات',
-    'الترتيبات',
+    'allFilter',
+    'photographersFilter',
+    'venuesTitle',
+    'arrangementsFilter',
   ];
-  String _selectedFilter = 'الكل';
+  String _selectedFilter = 'allFilter';
   String _search = '';
   bool _isLoading = true;
   String? _errorMessage;
@@ -90,27 +91,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
       setState(() {
         _conversations = const [];
         _isLoading = false;
-        _errorMessage = 'تعذر تحميل الرسائل';
+        _errorMessage = AppLocalizations.current.chatsLoadFailed;
       });
     }
   }
 
   bool _matchesSelectedFilter(ChatThreadPreview conversation) {
-    if (_selectedFilter == 'الكل') return true;
+    if (_selectedFilter == 'allFilter') return true;
     final name = conversation.userName.toLowerCase();
     final message = conversation.lastMessage.toLowerCase();
-    if (_selectedFilter == 'القاعات') {
+    if (_selectedFilter == 'venuesTitle') {
       return name.contains('قاعة') ||
           name.contains('hall') ||
           name.contains('venue');
     }
-    if (_selectedFilter == 'الترتيبات') {
+    if (_selectedFilter == 'arrangementsFilter') {
       return message.contains('حجز') ||
           message.contains('طلب') ||
           message.contains('booking') ||
           message.contains('request');
     }
-    if (_selectedFilter == 'المصورون') {
+    if (_selectedFilter == 'photographersFilter') {
       return !name.contains('قاعة') &&
           !name.contains('hall') &&
           !name.contains('venue');
@@ -120,19 +121,19 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   String _displayName(ChatThreadPreview conversation) {
     final name = conversation.userName.trim();
-    return name.isEmpty ? 'محادثة' : name;
+    return name.isEmpty ? AppLocalizations.current.conversationFallback : name;
   }
 
   String _lastMessage(ChatThreadPreview conversation) {
     final message = conversation.lastMessage.trim();
-    return message.isEmpty ? 'لا توجد رسائل بعد' : message;
+    return message.isEmpty ? AppLocalizations.current.noMessagesYet : message;
   }
 
   String _timeLabel(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
     if (difference.inDays >= 1) {
-      return 'أمس';
+      return AppLocalizations.current.yesterday;
     }
     final hour = timestamp.hour % 12 == 0 ? 12 : timestamp.hour % 12;
     final minute = timestamp.minute.toString().padLeft(2, '0');
@@ -265,7 +266,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _loadConversations,
-                child: const Text('إعادة المحاولة'),
+                child: Text(AppLocalizations.current.retry),
               ),
             ],
           ),
@@ -275,14 +276,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     final visible = _visibleConversations;
     if (visible.isEmpty) {
-      return const SliverFillRemaining(
+      return SliverFillRemaining(
         hasScrollBody: false,
         child: Padding(
-          padding: EdgeInsets.only(top: 80),
+          padding: const EdgeInsets.only(top: 80),
           child: Center(
             child: Text(
-              'لا توجد محادثات بعد',
-              style: TextStyle(color: Colors.white70, fontSize: 15),
+              AppLocalizations.current.noChatsYet,
+              style: const TextStyle(color: Colors.white70, fontSize: 15),
             ),
           ),
         ),
@@ -319,7 +320,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     ),
                     const Spacer(),
                     Text(
-                      'الرسائل',
+                      AppLocalizations.current.messages,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -338,7 +339,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               sliver: SliverToBoxAdapter(
                 child: LaqtaLuxurySearchBar(
-                  hint: 'ابحث في الرسائل',
+                  hint: AppLocalizations.current.searchMessagesHint,
                   controller: _searchController,
                   focusNode: _searchFocusNode,
                   readOnly: false,
@@ -360,7 +361,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     itemBuilder: (context, index) {
                       final filter = _filters[index];
                       return LaqtaFilterPill(
-                        label: filter,
+                        label: AppLocalizations.current.translate(filter),
                         selected: filter == _selectedFilter,
                         onTap: () => setState(() => _selectedFilter = filter),
                       );

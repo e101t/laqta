@@ -1002,7 +1002,7 @@ class _ContactCard extends StatelessWidget {
                   Text(
                     contactAllowed
                         ? (phone ?? 'No phone number available')
-                        : 'رقم الهاتف يظهر بعد تأكيد الحجز',
+                        : AppLocalizations.current.phoneAfterBooking,
                     style: textTheme.bodyMedium?.copyWith(
                       fontWeight: contactAllowed
                           ? FontWeight.w600
@@ -1011,7 +1011,7 @@ class _ContactCard extends StatelessWidget {
                   ),
                   if (!contactAllowed)
                     Text(
-                      'هذا جزء من سياسة الخصوصية لضمان التواصل داخل المنصة.',
+                      AppLocalizations.current.privacyContactNote,
                       style: textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -1025,7 +1025,7 @@ class _ContactCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: scheme.primary,
                 ),
-                child: const Text('اتصال'),
+                child: Text(AppLocalizations.current.callAction),
               ),
           ],
         ),

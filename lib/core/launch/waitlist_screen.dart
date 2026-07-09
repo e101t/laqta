@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/launch/launch_config.dart';
 import 'package:laqta/core/launch/launch_config_service.dart';
 
@@ -63,7 +64,7 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذّر إرسال الطلب، حاول مرة أخرى.')),
+        SnackBar(content: Text(AppLocalizations.current.waitlistSubmitFailed)),
       );
     }
   }
@@ -73,11 +74,11 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final title = widget.capacityReached
-        ? 'اكتمل العدد الحالي للتجربة'
-        : 'LAQTA متاح حاليًا في بغداد فقط ضمن الإطلاق التجريبي.';
+        ? AppLocalizations.current.waitlistFullMsg
+        : AppLocalizations.current.waitlistBaghdadOnly;
     final subtitle = widget.capacityReached
-        ? 'سجّل اهتمامك وسنخبرك عند التوسعة.'
-        : 'سجّل اهتمامك وسنخبرك عندما نفتح مدينتك.';
+        ? AppLocalizations.current.waitlistNotifyExpansion
+        : AppLocalizations.current.waitlistNotifyCity;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -120,12 +121,12 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
                           TextFormField(
                             controller: _nameController,
                             textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'الاسم',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.current.nameLabel,
                             ),
                             validator: (value) =>
                                 value == null || value.trim().length < 2
-                                ? 'اكتب الاسم'
+                                ? AppLocalizations.current.enterName
                                 : null,
                           ),
                           const SizedBox(height: 12),
@@ -133,44 +134,45 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
                             textInputAction: TextInputAction.next,
-                            decoration: const InputDecoration(
-                              labelText: 'رقم الهاتف',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.current.phoneNumber,
                             ),
                             validator: (value) =>
                                 value == null || value.trim().length < 6
-                                ? 'اكتب رقم هاتف صحيح'
+                                ? AppLocalizations.current.enterValidPhone
                                 : null,
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _cityController,
                             textInputAction: TextInputAction.done,
-                            decoration: const InputDecoration(
-                              labelText: 'المدينة',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.current.cityLabel,
                             ),
                             validator: (value) =>
                                 value == null || value.trim().length < 2
-                                ? 'اكتب المدينة'
+                                ? AppLocalizations.current.enterCity
                                 : null,
                           ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             initialValue: _roleInterest,
-                            decoration: const InputDecoration(
-                              labelText: 'نوع الحساب',
+                            decoration: InputDecoration(
+                              labelText:
+                                  AppLocalizations.current.accountTypeLabel,
                             ),
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: 'customer',
-                                child: Text('مستخدم'),
+                                child: Text(AppLocalizations.current.userLabel),
                               ),
                               DropdownMenuItem(
                                 value: 'photographer',
-                                child: Text('مصور'),
+                                child: Text(AppLocalizations.current.photographer),
                               ),
                               DropdownMenuItem(
                                 value: 'venue',
-                                child: Text('قاعة / مكان'),
+                                child: Text(AppLocalizations.current.venuePlaceLabel),
                               ),
                             ],
                             onChanged: (value) {
@@ -190,11 +192,11 @@ class _WaitlistScreenState extends State<WaitlistScreen> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Text('سجّل اهتمامك'),
+                                : Text(AppLocalizations.current.registerInterest),
                           ),
                           TextButton(
                             onPressed: widget.onRetry,
-                            child: const Text('إعادة التحقق'),
+                            child: Text(AppLocalizations.current.recheckAction),
                           ),
                         ],
                       ),
@@ -221,19 +223,19 @@ class _SubmittedState extends StatelessWidget {
         Icon(Icons.check_circle, color: theme.colorScheme.primary, size: 64),
         const SizedBox(height: 16),
         Text(
-          'تم تسجيل اهتمامك',
+          AppLocalizations.current.interestRegistered,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'سنخبرك فور توسعة الإطلاق التجريبي.',
+          AppLocalizations.current.notifyOnExpand,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
         ),
         const SizedBox(height: 20),
-        OutlinedButton(onPressed: onRetry, child: const Text('إعادة التحقق')),
+        OutlinedButton(onPressed: onRetry, child: Text(AppLocalizations.current.recheckAction)),
       ],
     );
   }

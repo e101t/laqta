@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/monitoring/crash_reporter.dart';
 
 class ErrorBoundary extends StatefulWidget {
@@ -50,9 +51,10 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     );
     if (!mounted) return;
     setState(() => _reportedId = id);
-    ScaffoldMessenger.maybeOf(
-      context,
-    )?.showSnackBar(SnackBar(content: Text('تم إرسال التقرير: $id')));
+    final localizations = AppLocalizations.resolve(context);
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(content: Text('${localizations.reportSent}: $id')),
+    );
   }
 
   @override
@@ -107,8 +109,14 @@ class _FriendlyErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.resolve(context);
+    // May render above the MaterialApp localization scope, so derive the
+    // direction from the resolved locale instead of the inherited one.
+    final direction = localizations.locale.languageCode == 'ar'
+        ? TextDirection.rtl
+        : TextDirection.ltr;
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: direction,
       child: Scaffold(
         backgroundColor: theme.colorScheme.surface,
         body: SafeArea(
@@ -125,7 +133,7 @@ class _FriendlyErrorScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'حدث خطأ غير متوقع',
+                    localizations.errorUnexpected,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -133,14 +141,14 @@ class _FriendlyErrorScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'يرجى إعادة تشغيل التطبيق',
+                    localizations.restartAppPrompt,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium,
                   ),
                   if (errorId != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'رقم التقرير: $errorId',
+                      '${localizations.reportIdLabel}: $errorId',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall,
                     ),
@@ -148,11 +156,11 @@ class _FriendlyErrorScreen extends StatelessWidget {
                   const SizedBox(height: 22),
                   FilledButton(
                     onPressed: onRetry,
-                    child: const Text('إعادة المحاولة'),
+                    child: Text(localizations.retry),
                   ),
                   TextButton(
                     onPressed: onReport,
-                    child: const Text('إرسال تقرير'),
+                    child: Text(localizations.sendReport),
                   ),
                 ],
               ),

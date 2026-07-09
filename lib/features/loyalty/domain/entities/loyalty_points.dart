@@ -1,3 +1,5 @@
+import 'package:laqta/core/localization/app_localizations.dart';
+
 // Loyalty Points System
 
 // Tier thresholds
@@ -28,13 +30,13 @@ class LoyaltyPoints {
   String getTierName() {
     switch (tier) {
       case 'platinum':
-        return 'بلاتينيوم بلس';
+        return AppLocalizations.current.tierPlatinumPlus;
       case 'gold':
-        return 'ذهبي بلس';
+        return AppLocalizations.current.tierGoldPlus;
       case 'silver':
-        return 'فضي بلس';
+        return AppLocalizations.current.tierSilverPlus;
       default:
-        return 'برونزي بلس';
+        return AppLocalizations.current.tierBronzePlus;
     }
   }
 
@@ -125,17 +127,17 @@ class PointTransaction {
   String getTitle() {
     switch (source) {
       case 'booking':
-        return 'حجز مكتمل';
+        return AppLocalizations.current.loyaltyBookingCompleted;
       case 'referral':
-        return 'دعوة صديق';
+        return AppLocalizations.current.loyaltyReferFriend;
       case 'review':
-        return 'كتابة تقييم';
+        return AppLocalizations.current.loyaltyWriteReview;
       case 'first_booking':
-        return 'أول حجز';
+        return AppLocalizations.current.loyaltyFirstBooking;
       case 'redeemed':
-        return 'استبدال النقاط';
+        return AppLocalizations.current.loyaltyRedeem;
       default:
-        return 'نقاط';
+        return AppLocalizations.current.pointsLabel;
     }
   }
 }

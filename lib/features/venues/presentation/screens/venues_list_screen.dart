@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
@@ -46,7 +47,7 @@ class _VenuesListView extends StatelessWidget {
                   const LaqtaHeaderBackButton(),
                   const Spacer(),
                   Text(
-                    'القاعات',
+                    AppLocalizations.current.venuesTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -57,7 +58,7 @@ class _VenuesListView extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-              const LaqtaLuxurySearchBar(hint: 'ابحث عن قاعة زفاف'),
+              LaqtaLuxurySearchBar(hint: AppLocalizations.current.venueSearchHint),
               const SizedBox(height: 16),
               SizedBox(
                 height: 42,
@@ -69,7 +70,9 @@ class _VenuesListView extends StatelessWidget {
                       final chip = visibleCities[index];
                       final selected = chip == selectedCity;
                       return LaqtaFilterPill(
-                        label: chip,
+                        label: chip == 'الكل'
+                            ? AppLocalizations.current.allFilter
+                            : chip,
                         selected: selected,
                         onTap: () => controller.setCity(chip),
                       );
@@ -102,12 +105,12 @@ class _VenuesListView extends StatelessWidget {
                   ),
                 )
               else if (visibleItems.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
                     child: Text(
-                      'لا توجد قاعات حالياً',
-                      style: TextStyle(color: Colors.white70),
+                      AppLocalizations.current.venuesLoadEmpty,
+                      style: const TextStyle(color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                   ),

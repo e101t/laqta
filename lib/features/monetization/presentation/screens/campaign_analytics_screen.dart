@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/core/theme/laqta_tokens.dart';
@@ -37,7 +38,7 @@ class _CampaignAnalyticsView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: LaqtaColors.canvasDark,
         foregroundColor: Colors.white,
-        title: const Text('تحليلات الحملة'),
+        title: Text(AppLocalizations.current.campaignAnalyticsTitle),
       ),
       body: controller.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -53,10 +54,10 @@ class _CampaignAnalyticsView extends StatelessWidget {
               ),
             )
           : campaign == null
-          ? const Center(
+          ? Center(
               child: Text(
-                'لا توجد حملة لعرضها.',
-                style: TextStyle(color: Colors.white70),
+                AppLocalizations.current.noCampaignToShow,
+                style: const TextStyle(color: Colors.white70),
               ),
             )
           : ListView(
@@ -87,14 +88,14 @@ class _CampaignAnalyticsView extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _MetricTile(
-                              label: 'الانطباعات',
+                              label: AppLocalizations.current.impressionsLabel,
                               value: '${campaign.analytics.impressions}',
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: _MetricTile(
-                              label: 'النقرات',
+                              label: AppLocalizations.current.clicksLabel,
                               value: '${campaign.analytics.clicks}',
                             ),
                           ),
@@ -113,7 +114,7 @@ class _CampaignAnalyticsView extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: _MetricTile(
-                              label: 'الإنفاق',
+                              label: AppLocalizations.current.spendLabel,
                               value:
                                   '\$${campaign.analytics.spendAmount.toStringAsFixed(2)}',
                             ),
@@ -128,20 +129,26 @@ class _CampaignAnalyticsView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'الميزانية',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.current.budgetLabel,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 14),
                       _BudgetRow(
-                        label: 'الإجمالي',
+                        label: AppLocalizations.current.totalBudgetLabel,
                         value: campaign.budgetTotal,
                       ),
-                      _BudgetRow(label: 'اليومي', value: campaign.dailyBudget),
-                      _BudgetRow(label: 'المصروف', value: campaign.spentAmount),
+                      _BudgetRow(
+                        label: AppLocalizations.current.dailyBudgetLabel,
+                        value: campaign.dailyBudget,
+                      ),
+                      _BudgetRow(
+                        label: AppLocalizations.current.spentLabel,
+                        value: campaign.spentAmount,
+                      ),
                     ],
                   ),
                 ),
@@ -150,9 +157,9 @@ class _CampaignAnalyticsView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'الأهداف',
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.current.targetsLabel,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
@@ -190,19 +197,19 @@ class _CampaignAnalyticsView extends StatelessWidget {
   String _statusLabel(MarketplaceCampaignStatus status) {
     switch (status) {
       case MarketplaceCampaignStatus.pendingReview:
-        return 'قيد المراجعة';
+        return AppLocalizations.current.statusUnderReview;
       case MarketplaceCampaignStatus.approved:
-        return 'تمت الموافقة';
+        return AppLocalizations.current.statusApproved;
       case MarketplaceCampaignStatus.rejected:
-        return 'مرفوضة';
+        return AppLocalizations.current.statusRejectedF;
       case MarketplaceCampaignStatus.active:
-        return 'نشطة';
+        return AppLocalizations.current.statusActive;
       case MarketplaceCampaignStatus.paused:
-        return 'متوقفة';
+        return AppLocalizations.current.statusPaused;
       case MarketplaceCampaignStatus.completed:
-        return 'مكتملة';
+        return AppLocalizations.current.statusCompletedF;
       case MarketplaceCampaignStatus.draft:
-        return 'مسودة';
+        return AppLocalizations.current.statusDraft;
     }
   }
 }

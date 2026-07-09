@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/theme/laqta_tokens.dart';
 
 class LaqtaLuxurySearchBar extends StatelessWidget {
@@ -458,12 +459,12 @@ class LaqtaMarketplaceBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const items = <(IconData, String)>[
-      (Icons.home_rounded, 'الرئيسية'),
-      (Icons.search_rounded, 'اكتشف'),
+    final items = <(IconData, String)>[
+      (Icons.home_rounded, AppLocalizations.current.home),
+      (Icons.search_rounded, AppLocalizations.current.explore),
       (Icons.add_rounded, ''),
-      (Icons.chat_bubble_outline_rounded, 'الرسائل'),
-      (Icons.person_outline_rounded, 'الملف الشخصي'),
+      (Icons.chat_bubble_outline_rounded, AppLocalizations.current.messages),
+      (Icons.person_outline_rounded, AppLocalizations.current.profileTab),
     ];
 
     return Container(

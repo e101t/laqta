@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class SelectLocationScreen extends StatefulWidget {
@@ -68,7 +69,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
     final scheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('حدد الموقع على الخريطة')),
+      appBar: AppBar(title: Text(AppLocalizations.current.selectLocationOnMap)),
       body: Column(
         children: [
           if (governorate != null) ...[
@@ -80,7 +81,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'المحافظة: $governorate',
+                      AppLocalizations.current.governoratePrefix(governorate),
                       style: textTheme.bodyMedium,
                     ),
                   ),
@@ -114,13 +115,13 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('الوصف (اختياري)', style: textTheme.labelSmall),
+                Text(AppLocalizations.current.descriptionOptional, style: textTheme.labelSmall),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _labelController,
                   decoration: InputDecoration(
                     hintText:
-                        'مثلاً: قاعة الريان، نفس الموقع المدخل في الخريطة',
+                        AppLocalizations.current.locationDescriptionHint,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -133,7 +134,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _onSave,
                         icon: const Icon(Icons.check),
-                        label: const Text('حفظ الموقع'),
+                        label: Text(AppLocalizations.current.saveLocation),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: scheme.primary,
                           shape: RoundedRectangleBorder(

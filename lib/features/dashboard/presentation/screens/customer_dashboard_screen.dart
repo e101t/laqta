@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:laqta/app/router/app_router.dart';
@@ -33,11 +34,11 @@ class _CustomerDashboardView extends StatefulWidget {
 
 class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
   final List<String> _tabs = const [
-    'لك',
-    'الأكثر مشاهدة',
-    'زفاف',
-    'جلسات',
-    'نقاشات',
+    'forYouTab',
+    'mostViewedTab',
+    'weddingsTab',
+    'sessionsTab',
+    'discussionsTab',
   ];
   int _selectedTab = 0;
 
@@ -144,7 +145,7 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
               ),
               const SizedBox(height: 14),
               LaqtaLuxurySearchBar(
-                hint: 'ابحث عن مصور، قاعة، مكان...',
+                hint: AppLocalizations.of(context).dashboardSearchHint,
                 onTap: () => AppRouter.goToSearch(context),
               ),
               const SizedBox(height: 16),
@@ -191,7 +192,9 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  story.title,
+                                  AppLocalizations.of(
+                                    context,
+                                  ).translate(story.title),
                                   style: textTheme.labelMedium?.copyWith(
                                     color: Colors.white,
                                   ),
@@ -221,7 +224,9 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                         child: Column(
                           children: [
                             Text(
-                              _tabs[index],
+                              AppLocalizations.of(
+                                context,
+                              ).translate(_tabs[index]),
                               style: textTheme.titleSmall?.copyWith(
                                 color: selected
                                     ? LaqtaColors.accent
@@ -264,11 +269,11 @@ class _CustomerDashboardViewState extends State<_CustomerDashboardView> {
                   child: _DashboardStateMessage(message: controller.error!),
                 )
               else if (feedItems.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: _DashboardStateMessage(
-                    message: 'لا توجد منشورات بعد',
-                    subtitle: 'ابدأ بمتابعة مصورين أو استكشف القاعات والأماكن',
+                    message: AppLocalizations.of(context).noPostsYet,
+                    subtitle: AppLocalizations.of(context).noPostsSubtitle,
                   ),
                 )
               else
@@ -418,7 +423,13 @@ class _FeedCard extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: Text(
-                                    item.isSponsored ? 'ممول' : 'مميز',
+                                    item.isSponsored
+                                        ? AppLocalizations.of(
+                                            context,
+                                          ).sponsoredLabel
+                                        : AppLocalizations.of(
+                                            context,
+                                          ).featuredLabel,
                                     style: const TextStyle(
                                       color: Colors.black,
                                       fontWeight: FontWeight.w900,

@@ -1,30 +1,32 @@
+import 'package:laqta/core/localization/app_localizations.dart';
+
 class ErrorMapper {
   ErrorMapper._();
 
   static String messageForStatusCode(int code) {
     switch (code) {
       case 400:
-        return 'طلب غير صحيح';
+        return AppLocalizations.current.errBadRequest;
       case 401:
-        return 'انتهت جلستك';
+        return AppLocalizations.current.errorSessionExpired;
       case 403:
-        return 'ليس لديك صلاحية';
+        return AppLocalizations.current.errForbidden;
       case 404:
-        return 'المحتوى غير موجود';
+        return AppLocalizations.current.errNotFound;
       case 409:
-        return 'تعارض في البيانات';
+        return AppLocalizations.current.errConflict;
       case 422:
-        return 'يرجى مراجعة الحقول المطلوبة';
+        return AppLocalizations.current.errValidation;
       case 429:
-        return 'يرجى الانتظار قبل المحاولة مجدداً';
+        return AppLocalizations.current.errRateLimited;
       case 500:
-        return 'خطأ في الخادم';
+        return AppLocalizations.current.errServer;
       case 503:
-        return 'الخدمة غير متاحة مؤقتاً';
+        return AppLocalizations.current.errServiceUnavailable;
       case -1:
-        return 'لا يوجد اتصال بالإنترنت';
+        return AppLocalizations.current.offlineNoConnection;
       default:
-        return 'حدث خطأ غير متوقع';
+        return AppLocalizations.current.errorUnexpected;
     }
   }
 }

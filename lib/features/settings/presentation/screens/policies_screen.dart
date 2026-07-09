@@ -36,7 +36,7 @@ class PoliciesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'فهم واضح للحقوق والواجبات على منصة لقطة',
+                    AppLocalizations.current.policiesSubtitle,
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -92,19 +92,19 @@ class PoliciesScreen extends StatelessWidget {
               children: [
                 _CancellationRow(
                   icon: '⏰',
-                  title: 'قبل 48 ساعة',
+                  title: AppLocalizations.current.before48h,
                   desc: localizations.cancellation48Hours,
                 ),
                 const SizedBox(height: 8),
                 _CancellationRow(
                   icon: '⏳',
-                  title: 'خلال 48 ساعة',
+                  title: AppLocalizations.current.within48h,
                   desc: localizations.cancellation48HoursAfter,
                 ),
                 const SizedBox(height: 8),
                 _CancellationRow(
                   icon: '⚠️',
-                  title: 'عدم الحضور',
+                  title: AppLocalizations.current.noShow,
                   desc: localizations.cancellationPhotographer,
                 ),
               ],

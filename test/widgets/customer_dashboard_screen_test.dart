@@ -10,15 +10,15 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.text('LAQTA'), findsOneWidget);
-    expect(find.text('ابحث عن مصور، قاعة، مكان...'), findsOneWidget);
-    expect(find.text('الأماكن'), findsOneWidget);
-    expect(find.text('القاعات'), findsOneWidget);
-    expect(find.text('المصورين'), findsOneWidget);
-    expect(find.text('تابع'), findsOneWidget);
-    expect(find.text('لك'), findsOneWidget);
-    expect(find.text('الأكثر مشاهدة'), findsOneWidget);
-    expect(find.text('جلسات'), findsOneWidget);
-    expect(find.text('زفاف'), findsOneWidget);
+    expect(find.text('Search for a photographer, venue, place...'), findsOneWidget);
+    expect(find.text('Places'), findsOneWidget);
+    expect(find.text('Venues'), findsOneWidget);
+    expect(find.text('Photographers'), findsOneWidget);
+    expect(find.text('Follow'), findsOneWidget);
+    expect(find.text('For you'), findsOneWidget);
+    expect(find.text('Most viewed'), findsOneWidget);
+    expect(find.text('Sessions'), findsOneWidget);
+    expect(find.text('Weddings'), findsOneWidget);
     expect(find.text('جلسة في الطبيعة'), findsNothing);
     expect(find.text('قاعة رويال لايف'), findsNothing);
   });
@@ -31,11 +31,11 @@ void main() {
       );
       await tester.pump(const Duration(seconds: 1));
 
-      await tester.tap(find.text('جلسات'));
+      await tester.tap(find.text('Sessions'));
       await tester.pump();
-      await tester.tap(find.text('زفاف'));
+      await tester.tap(find.text('Weddings'));
       await tester.pump();
-      await tester.tap(find.text('لك'));
+      await tester.tap(find.text('For you'));
       await tester.pump();
 
       expect(find.text('جلسة في الطبيعة'), findsNothing);

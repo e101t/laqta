@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/notification_navigation_service.dart';
 import 'package:laqta/features/notifications/data/fcm_service.dart';
 
@@ -93,14 +94,20 @@ class _Banner extends StatelessWidget {
     final title = message?.notification?.title ?? 'LAQTA';
     final body =
         message?.notification?.body ?? _fallbackNotificationBody(message?.data);
+    final localizations = AppLocalizations.resolve(context);
     return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Material(
+      textDirection: localizations.locale.languageCode == 'ar'
+          ? TextDirection.rtl
+          : TextDirection.ltr,
+      child: Semantics(
+        liveRegion: true,
+        label: '$title. $body',
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Material(
               color: const Color(0xF211151B),
               elevation: 8,
               shadowColor: Colors.black38,
@@ -158,6 +165,7 @@ class _Banner extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

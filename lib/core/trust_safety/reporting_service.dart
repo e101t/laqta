@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/backend_api_client.dart';
 
 class ReportingService {
@@ -34,13 +35,13 @@ class ReportingService {
   }
 }
 
-const reportReasonsAr = <String>[
-  'محتوى غير لائق',
-  'احتيال أو انتحال',
-  'إساءة أو مضايقة',
-  'صور مسروقة',
-  'معلومات مضللة',
-  'أخرى',
+List<String> get reportReasonsAr => <String>[
+  AppLocalizations.current.reportInappropriate,
+  AppLocalizations.current.reportFraudImpersonation,
+  AppLocalizations.current.reportAbuse,
+  AppLocalizations.current.reportStolenImages,
+  AppLocalizations.current.reportMisinformation,
+  AppLocalizations.current.otherLabel,
 ];
 
 Future<void> showReportContentSheet({
@@ -74,7 +75,7 @@ Future<void> showReportContentSheet({
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'إرسال بلاغ',
+                    AppLocalizations.current.sendReportAction,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -82,7 +83,9 @@ Future<void> showReportContentSheet({
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: selectedReason,
-                    decoration: const InputDecoration(labelText: 'سبب البلاغ'),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.current.reportReasonField,
+                    ),
                     items: reportReasonsAr
                         .map(
                           (reason) => DropdownMenuItem(
@@ -104,8 +107,8 @@ Future<void> showReportContentSheet({
                     controller: descriptionController,
                     minLines: 2,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'تفاصيل إضافية (اختياري)',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.current.extraDetailsOptional,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -127,20 +130,16 @@ Future<void> showReportContentSheet({
                               if (!context.mounted) return;
                               Navigator.of(sheetContext).pop();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'تم إرسال البلاغ، شكرًا لمساعدتنا في الحفاظ على أمان المجتمع.',
-                                  ),
+                                SnackBar(
+                                  content: Text(AppLocalizations.current.reportSentThanks),
                                 ),
                               );
                             } catch (_) {
                               if (!context.mounted) return;
                               setState(() => submitting = false);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'تعذّر إرسال البلاغ، حاول مرة أخرى.',
-                                  ),
+                                SnackBar(
+                                  content: Text(AppLocalizations.current.reportSendFailed),
                                 ),
                               );
                             }
@@ -151,7 +150,7 @@ Future<void> showReportContentSheet({
                             height: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('إرسال البلاغ'),
+                        : Text(AppLocalizations.current.submitReportAction),
                   ),
                 ],
               ),

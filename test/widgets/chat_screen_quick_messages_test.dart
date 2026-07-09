@@ -36,13 +36,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('كم سعر جلسة تصوير؟'), findsOneWidget);
+    expect(find.text('How much is a photo session?'), findsOneWidget);
 
-    await tester.tap(find.text('كم سعر جلسة تصوير؟'));
+    await tester.tap(find.text('How much is a photo session?'));
     await tester.pumpAndSettle();
 
     expect(
-      find.widgetWithText(TextFormField, 'كم سعر جلسة تصوير؟'),
+      find.widgetWithText(TextFormField, 'How much is a photo session?'),
       findsOneWidget,
     );
     expect(_FakeChatRepository.sendMessageCalls, 0);

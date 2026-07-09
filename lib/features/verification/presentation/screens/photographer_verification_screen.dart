@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/features/verification/data/verification_service.dart';
 
 class PhotographerVerificationScreen extends StatefulWidget {
@@ -25,14 +26,16 @@ class _PhotographerVerificationScreenState
         _submitting = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إرسال طلب التوثيق للمراجعة.')),
+        SnackBar(content: Text(AppLocalizations.current.verificationRequestSent)),
       );
     } catch (_) {
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('تعذّر إرسال طلب التوثيق.')));
+      ).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.current.verificationRequestFailed)),
+      );
     }
   }
 
@@ -40,7 +43,7 @@ class _PhotographerVerificationScreenState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('توثيق المصور')),
+      appBar: AppBar(title: Text(AppLocalizations.current.photographerVerificationTitle)),
       body: FutureBuilder<VerificationStatusModel>(
         future: _future,
         builder: (context, snapshot) {
@@ -52,36 +55,42 @@ class _PhotographerVerificationScreenState
             padding: const EdgeInsets.all(20),
             children: [
               Text(
-                'وثّق حسابك لزيادة ثقة العملاء ورفع فرص ظهورك.',
+                AppLocalizations.current.verifyAccountPrompt,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 18),
               _StatusTile(
-                title: 'حالة الطلب',
+                title: AppLocalizations.current.requestStatus,
                 value: _statusLabel(status.status),
                 done: status.status == 'verified',
               ),
               _StatusTile(
-                title: 'رقم الهاتف',
-                value: status.phoneVerified ? 'موثّق' : 'غير موثّق',
+                title: AppLocalizations.current.phoneNumber,
+                value: status.phoneVerified
+                    ? AppLocalizations.current.verifiedLabel
+                    : AppLocalizations.current.notVerifiedLabel,
                 done: status.phoneVerified,
               ),
               _StatusTile(
-                title: 'مراجعة البورتفوليو',
-                value: status.portfolioReviewed ? 'مكتملة' : 'بانتظار المراجعة',
+                title: AppLocalizations.current.portfolioReview,
+                value: status.portfolioReviewed
+                    ? AppLocalizations.current.completedLabel
+                    : AppLocalizations.current.awaitingReview,
                 done: status.portfolioReviewed,
               ),
               _StatusTile(
-                title: 'مراجعة الهوية',
-                value: status.identityReviewed ? 'مكتملة' : 'بانتظار المراجعة',
+                title: AppLocalizations.current.identityReview,
+                value: status.identityReviewed
+                    ? AppLocalizations.current.completedLabel
+                    : AppLocalizations.current.awaitingReview,
                 done: status.identityReviewed,
               ),
               if (status.rejectionReason != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'سبب الرفض: ${status.rejectionReason}',
+                  AppLocalizations.current.rejectionReason('${status.rejectionReason}'),
                   style: TextStyle(color: theme.colorScheme.error),
                 ),
               ],
@@ -96,7 +105,7 @@ class _PhotographerVerificationScreenState
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('إرسال طلب التوثيق'),
+                    : Text(AppLocalizations.current.sendVerificationRequest),
               ),
             ],
           );
@@ -107,10 +116,10 @@ class _PhotographerVerificationScreenState
 
   String _statusLabel(String status) {
     return switch (status) {
-      'verified' => 'موثّق',
-      'pending' => 'قيد المراجعة',
-      'rejected' => 'مرفوض',
-      _ => 'لم يتم الإرسال',
+      'verified' => AppLocalizations.current.verifiedLabel,
+      'pending' => AppLocalizations.current.underReview,
+      'rejected' => AppLocalizations.current.rejectedLabel,
+      _ => AppLocalizations.current.notSubmitted,
     };
   }
 }

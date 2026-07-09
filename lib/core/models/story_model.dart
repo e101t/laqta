@@ -1,3 +1,4 @@
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/services/backend_config.dart';
 import 'package:laqta/core/utils/firestore_parsers.dart';
 
@@ -100,11 +101,11 @@ class StoryModel {
     final difference = now.difference(createdAt);
 
     if (difference.inHours > 0) {
-      return 'منذ ${difference.inHours} ساعة';
+      return AppLocalizations.current.hoursAgo(difference.inHours);
     } else if (difference.inMinutes > 0) {
-      return 'منذ ${difference.inMinutes} دقيقة';
+      return AppLocalizations.current.minutesAgo(difference.inMinutes);
     } else {
-      return 'الآن';
+      return AppLocalizations.current.justNow;
     }
   }
 
@@ -113,11 +114,11 @@ class StoryModel {
     final remaining = expiresAt.difference(now);
 
     if (remaining.inHours > 0) {
-      return 'باقي ${remaining.inHours} ساعة';
+      return AppLocalizations.current.remainingHours(remaining.inHours);
     } else if (remaining.inMinutes > 0) {
-      return 'باقي ${remaining.inMinutes} دقيقة';
+      return AppLocalizations.current.remainingMinutes(remaining.inMinutes);
     } else {
-      return 'تنتهي قريباً';
+      return AppLocalizations.current.endingSoon;
     }
   }
 }
