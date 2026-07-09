@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:laqta/core/storage/secure_storage_defaults.dart';
 import 'package:laqta/core/auth/jwt/jwt_validator.dart';
 import 'package:laqta/core/config/app_config.dart';
 import 'package:laqta/core/constants/app_constants.dart';
@@ -27,7 +28,7 @@ class TokenSnapshot {
 
 class TokenManager {
   TokenManager({FlutterSecureStorage? secureStorage})
-    : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+    : _secureStorage = secureStorage ?? hardenedSecureStorage;
 
   static const String _accessTokenKey = 'laqta.accessToken';
   static const String _refreshTokenKey = 'laqta.refreshToken';

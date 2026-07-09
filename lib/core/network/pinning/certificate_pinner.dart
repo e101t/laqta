@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:laqta/core/storage/secure_storage_defaults.dart';
 import 'package:http/http.dart' as http;
 import 'package:laqta/core/config/app_config.dart';
 import 'package:laqta/core/network/certificate_pinning.dart' as legacy;
@@ -14,7 +15,7 @@ class CertificatePinner {
     FlutterSecureStorage? secureStorage,
     http.Client? client,
   }) : _logger = logger ?? SecurityEventLogger.instance,
-       _secureStorage = secureStorage ?? const FlutterSecureStorage(),
+       _secureStorage = secureStorage ?? hardenedSecureStorage,
        _client = client ?? http.Client();
 
   static const bool _disablePinning = bool.fromEnvironment(

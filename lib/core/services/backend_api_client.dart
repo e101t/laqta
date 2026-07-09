@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:laqta/core/localization/app_localizations.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
@@ -119,13 +120,13 @@ class BackendApiClient {
         .timeout(
           _uploadTimeout,
           onTimeout: () {
-            throw const BackendApiException('انتهت مهلة رفع الملف.');
+            throw BackendApiException(AppLocalizations.current.uploadTimeout);
           },
         );
     final response = await http.Response.fromStream(streamedResponse).timeout(
       _uploadTimeout,
       onTimeout: () {
-        throw const BackendApiException('انتهت مهلة رفع الملف.');
+        throw BackendApiException(AppLocalizations.current.uploadTimeout);
       },
     );
     return _decodeOrThrow(response, defaultMessage: 'File upload failed.');
@@ -269,7 +270,7 @@ class BackendApiClient {
 
   http.Response _timeoutResponse() {
     return http.Response(
-      jsonEncode({'message': 'انتهت مهلة الاتصال. حاول مرة أخرى.'}),
+      jsonEncode({'message': AppLocalizations.current.connectionTimeoutMsg}),
       408,
       headers: const {'Content-Type': 'application/json'},
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/auth/token_manager.dart';
 import 'package:laqta/core/security/monitoring/security_event_logger.dart';
 import 'package:laqta/core/security/rasp/debugger_detector.dart';
@@ -161,16 +162,16 @@ class SecurityStatus {
 
   String get userMessage {
     if (isHooked || isDebugged) {
-      return 'تم اكتشاف تدخل غير مشروع. تم تسجيل خروجك لحماية حسابك.';
+      return AppLocalizations.current.raspIntrusionLogout;
     }
     if (isTampered) {
-      return 'تعذر التحقق من سلامة التطبيق. يرجى تثبيت النسخة الرسمية.';
+      return AppLocalizations.current.raspIntegrityFailed;
     }
     if (isRooted) {
-      return 'تم اكتشاف جهاز معدّل. بعض الميزات معطّلة لحماية بياناتك.';
+      return AppLocalizations.current.raspModifiedDevice;
     }
     if (isEmulator) {
-      return 'لا يمكن استخدام الميزات الحساسة من بيئة غير موثوقة.';
+      return AppLocalizations.current.raspUntrustedEnv;
     }
     return '';
   }

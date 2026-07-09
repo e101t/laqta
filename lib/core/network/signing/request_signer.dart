@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:laqta/core/storage/secure_storage_defaults.dart';
 import 'package:laqta/core/auth/device/device_binder.dart';
 import 'package:laqta/core/config/app_config.dart';
 import 'package:laqta/core/constants/app_constants.dart';
@@ -12,7 +13,7 @@ class RequestSigner {
   RequestSigner({
     FlutterSecureStorage? secureStorage,
     DeviceBinder? deviceBinder,
-  }) : _secureStorage = secureStorage ?? const FlutterSecureStorage(),
+  }) : _secureStorage = secureStorage ?? hardenedSecureStorage,
        _deviceBinder = deviceBinder ?? DeviceBinder.instance;
 
   static const String _installIdKey = 'laqta.installId';

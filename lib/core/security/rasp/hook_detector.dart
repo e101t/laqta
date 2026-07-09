@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:laqta/core/monitoring/crash_reporter.dart';
 import 'package:laqta/core/security/rasp/security_check_result.dart';
 import 'package:laqta/core/security/rasp/security_platform_channel.dart';
 
@@ -26,7 +27,13 @@ class HookDetector {
         details: native,
         severity: detected ? SecuritySeverity.critical : SecuritySeverity.info,
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      CrashReporter.logError(
+        'rasp_hook_check_failed',
+        error.toString(),
+        error,
+        stackTrace,
+      );
       return SecuritySignal(
         name: 'hook_detected',
         detected: false,

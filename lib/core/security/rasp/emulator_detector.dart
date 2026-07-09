@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/monitoring/crash_reporter.dart';
 import 'package:laqta/core/security/rasp/security_check_result.dart';
 import 'package:laqta/core/security/rasp/security_platform_channel.dart';
 
@@ -29,7 +30,13 @@ class EmulatorDetector {
             ? SecuritySeverity.critical
             : SecuritySeverity.warning,
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      CrashReporter.logError(
+        'rasp_emulator_check_failed',
+        error.toString(),
+        error,
+        stackTrace,
+      );
       return SecuritySignal(
         name: 'emulator_detected',
         detected: false,

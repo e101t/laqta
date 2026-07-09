@@ -4,11 +4,12 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:laqta/core/storage/secure_storage_defaults.dart';
 import 'package:uuid/uuid.dart';
 
 class DeviceBinder {
   DeviceBinder({FlutterSecureStorage? secureStorage})
-    : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+    : _secureStorage = secureStorage ?? hardenedSecureStorage;
 
   static final DeviceBinder instance = DeviceBinder();
   static const String _installUuidKey = 'laqta.device.installUuid';

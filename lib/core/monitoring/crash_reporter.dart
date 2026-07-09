@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:laqta/core/monitoring/log_redactor.dart';
+import 'package:laqta/core/monitoring/sentry_flutter_service.dart';
 
 class CrashReporter {
   CrashReporter._();
@@ -71,34 +74,27 @@ class CrashReporter {
         stackTrace: stackTrace,
       );
     }
+    if (SentryFlutterService.isEnabled) {
+      final reported = error is String ? _redact(error) ?? error : error;
+      unawaited(
+        SentryFlutterService.captureError(
+          reported,
+          stackTrace,
+          hashedUserId: _hashedUserId,
+          extras: Map<String, Object?>.from(_customKeys),
+        ),
+      );
+    }
   }
 
   Object? _redact(Object? value) {
     if (value is Uri) {
-      return _redactUrl(value.toString());
+      return LogRedactor.redact(value.toString());
     }
     if (value is String) {
-      return _redactUrl(value)
-          .replaceAll(
-            RegExp(
-              r'(token|password|secret|client_secret)=([^&\s]+)',
-              caseSensitive: false,
-            ),
-            r'$1=REDACTED',
-          )
-          .replaceAll(RegExp(r'Bearer\s+[A-Za-z0-9._-]+'), 'Bearer REDACTED');
+      return LogRedactor.redact(value);
     }
     return value;
-  }
-
-  String _redactUrl(String value) {
-    return value.replaceAll(
-      RegExp(
-        r'([?&](token|password|secret|client_secret)=)[^&]+',
-        caseSensitive: false,
-      ),
-      r'$1REDACTED',
-    );
   }
 
   bool _isSensitiveKey(String key) {

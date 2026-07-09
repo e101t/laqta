@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:laqta/core/monitoring/crash_reporter.dart';
 import 'package:laqta/core/security/rasp/security_check_result.dart';
 import 'package:laqta/core/security/rasp/security_platform_channel.dart';
 
@@ -35,7 +36,16 @@ class IntegrityVerifier {
         details: native,
         severity: detected ? SecuritySeverity.critical : SecuritySeverity.info,
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      // A native-channel failure means the integrity check silently degrades
+      // to "not detected"; surface it so a broken detector is visible in
+      // crash monitoring rather than a silent fail-open.
+      CrashReporter.logError(
+        'rasp_integrity_check_failed',
+        error.toString(),
+        error,
+        stackTrace,
+      );
       return SecuritySignal(
         name: 'tampered_apk',
         detected: false,

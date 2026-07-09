@@ -58,13 +58,22 @@ UNALIGNED_APK="build/app/outputs/flutter-apk/app-${RELEASE_APK_ABI}-production-r
 ALIGNED_APK="build/app/outputs/flutter-apk/app-${RELEASE_APK_ABI}-production-release-aligned.apk"
 SIGNED_APK="build/app/outputs/flutter-apk/app-${RELEASE_APK_ABI}-production-release-signed.apk"
 
+SENTRY_ARGS=()
+if [[ -n "${SENTRY_DSN:-}" ]]; then
+  SENTRY_ARGS+=(--dart-define=SENTRY_DSN="$SENTRY_DSN")
+  if [[ -n "${SENTRY_RELEASE:-}" ]]; then
+    SENTRY_ARGS+=(--dart-define=SENTRY_RELEASE="$SENTRY_RELEASE")
+  fi
+fi
+
 flutter build apk --release \
   --flavor production \
   --split-per-abi \
   --obfuscate \
   --split-debug-info=build/debug-info \
   --dart-define=FLAVOR=prod \
-  --dart-define=BACKEND_BASE_URL="${API_BASE_URL:-https://api.laqta.cloud}"
+  --dart-define=BACKEND_BASE_URL="${API_BASE_URL:-https://api.laqta.cloud}" \
+  ${SENTRY_ARGS[@]+"${SENTRY_ARGS[@]}"}
 if [[ -z "$UNALIGNED_APK" || ! -f "$UNALIGNED_APK" ]]; then
   echo "Release APK was not produced for ABI: $RELEASE_APK_ABI" >&2
   exit 1

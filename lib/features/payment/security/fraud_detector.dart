@@ -1,3 +1,4 @@
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/security/rasp/rasp_coordinator.dart';
 
 class FraudDetector {
@@ -16,18 +17,18 @@ class FraudDetector {
     required SecurityStatus securityStatus,
   }) {
     if (amount <= 0 || (amount - expectedAmount).abs() > 0.01) {
-      return const FraudDecision.blocked(
-        'تم إيقاف الدفع بسبب اختلاف مبلغ العملية.',
+      return FraudDecision.blocked(
+        AppLocalizations.current.fraudAmountMismatch,
       );
     }
     if (securityStatus.isEmulator) {
-      return const FraudDecision.blocked(
-        'لا يمكن تنفيذ الدفع من بيئة غير موثوقة.',
+      return FraudDecision.blocked(
+        AppLocalizations.current.fraudUntrustedEnv,
       );
     }
     if (securityStatus.isRooted) {
-      return const FraudDecision.blocked(
-        'تم إيقاف الدفع على جهاز معدّل لحماية حسابك.',
+      return FraudDecision.blocked(
+        AppLocalizations.current.fraudModifiedDevice,
       );
     }
 
@@ -36,8 +37,8 @@ class FraudDetector {
     final attempts = _paymentsByItem.putIfAbsent(itemId, () => <DateTime>[]);
     attempts.removeWhere((attempt) => attempt.isBefore(windowStart));
     if (attempts.length >= 3) {
-      return const FraudDecision.blocked(
-        'يرجى إعادة تسجيل الدخول قبل تكرار هذه العملية.',
+      return FraudDecision.blocked(
+        AppLocalizations.current.fraudRelogin,
       );
     }
     attempts.add(now);

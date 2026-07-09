@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/config/app_config.dart';
 import 'package:laqta/core/services/backend_config.dart';
 
@@ -62,9 +63,14 @@ class CertificatePinning {
   }
 
   static bool shouldPin(Uri uri) {
-    return AppConfig.certificatePinningEnabled &&
-        !AppConfig.disableCertificatePinning &&
-        !const bool.fromEnvironment('DISABLE_PINNING', defaultValue: false) &&
+    // The kill switches are only honored in debug/profile builds; a release
+    // build must never ship with pinning disabled by a stray dart-define.
+    final killSwitchActive =
+        !kReleaseMode &&
+        (!AppConfig.certificatePinningEnabled ||
+            AppConfig.disableCertificatePinning ||
+            const bool.fromEnvironment('DISABLE_PINNING', defaultValue: false));
+    return !killSwitchActive &&
         uri.scheme == 'https' &&
         pinnedHosts.contains(uri.host);
   }
@@ -226,10 +232,16 @@ class CertificatePinningMaintenanceGate extends StatelessWidget {
         if (failure == null) {
           return child;
         }
+        // Renders above the MaterialApp localization scope; resolve the
+        // active locale directly.
+        final localizations = AppLocalizations.resolve(context);
+        final direction = localizations.locale.languageCode == 'ar'
+            ? TextDirection.rtl
+            : TextDirection.ltr;
         return Material(
           color: const Color(0xFF090B0F),
           child: Directionality(
-            textDirection: TextDirection.rtl,
+            textDirection: direction,
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -242,10 +254,10 @@ class CertificatePinningMaintenanceGate extends StatelessWidget {
                       size: 48,
                     ),
                     const SizedBox(height: 16),
-                    const Text(
-                      'الخدمة قيد الصيانة الأمنية',
+                    Text(
+                      localizations.securityMaintenanceTitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -254,7 +266,7 @@ class CertificatePinningMaintenanceGate extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       kReleaseMode
-                          ? 'تعذر التحقق من الاتصال الآمن. حاول لاحقًا.'
+                          ? localizations.secureConnectionFailed
                           : failure.toString(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Color(0xFF9CA3AF)),

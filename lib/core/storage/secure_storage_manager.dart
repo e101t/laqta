@@ -1,9 +1,10 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:laqta/core/storage/secure_storage_defaults.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SecureStorageManager {
   SecureStorageManager({FlutterSecureStorage? secureStorage})
-    : _secureStorage = secureStorage ?? const FlutterSecureStorage();
+    : _secureStorage = secureStorage ?? hardenedSecureStorage;
 
   static final SecureStorageManager instance = SecureStorageManager();
 

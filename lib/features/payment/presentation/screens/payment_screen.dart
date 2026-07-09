@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:laqta/app/router/app_router.dart';
 import 'package:laqta/core/constants/app_constants.dart';
 import 'package:laqta/core/localization/app_localizations.dart';
+import 'package:laqta/core/services/backend_api_client.dart';
+import 'package:laqta/core/utils/currency_formatter.dart';
 import 'package:laqta/core/widgets/app_buttons.dart';
 import 'package:logger/logger.dart';
 import 'package:laqta/features/payment/payment_dependencies.dart';
@@ -12,7 +16,10 @@ import 'package:laqta/features/payment/security/payment_security_guard.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String bookingId;
-  final double amount; // Amount in IQD
+
+  /// Display-only hint. The authoritative amount is always re-fetched from
+  /// the backend booking record before any payment is authorized.
+  final double amount;
   final String photographerName;
   final String sessionType;
 
@@ -32,6 +39,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final Logger _logger = Logger(level: kDebugMode ? Level.debug : Level.off);
   bool _isLoading = false;
   String? _error;
+  double? _serverAmount;
+  bool _amountLoadFailed = false;
 
   @override
   void initState() {
@@ -40,6 +49,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
       // Initialize Stripe with your publishable key
       Stripe.publishableKey = AppConstants.stripePublishableKey;
     }
+    _loadServerAmount();
+  }
+
+  Future<void> _loadServerAmount() async {
+    try {
+      final response = await BackendApiClient().get(
+        '/bookings/${widget.bookingId}',
+      );
+      final booking = response['booking'] as Map<String, dynamic>?;
+      final amount = double.tryParse(
+        booking?['priceAmount']?.toString() ?? '',
+      );
+      if (!mounted) return;
+      setState(() {
+        _serverAmount = amount;
+        _amountLoadFailed = amount == null;
+      });
+    } catch (e) {
+      _logger.e('Failed to load booking amount: $e');
+      if (!mounted) return;
+      setState(() {
+        _amountLoadFailed = true;
+      });
+    }
+  }
+
+  double? get _authorizedAmount => _serverAmount;
+
+  String get _displayAmount {
+    final amount = _serverAmount ?? (widget.amount > 0 ? widget.amount : null);
+    return amount == null ? '…' : CurrencyFormatter.format(amount);
   }
 
   Future<void> _processPayment() async {
@@ -52,11 +92,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     try {
-      // Create payment intent on your backend
+      // The amount must come from the backend booking record; never trust
+      // the value passed through navigation.
+      final amount = _authorizedAmount;
+      if (amount == null || amount <= 0) {
+        if (!mounted) return;
+        setState(() {
+          _error = localizations.paymentFailed;
+        });
+        unawaited(_loadServerAmount());
+        return;
+      }
       final guardResult = await PaymentSecurityGuard.instance.authorizePayment(
         context: context,
         itemId: widget.bookingId,
-        amount: widget.amount,
+        amount: amount,
         payeeName: widget.photographerName,
       );
       if (!guardResult.allowed) {
@@ -66,7 +116,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
         return;
       }
-      final paymentIntent = await _createPaymentIntent();
+      final paymentIntent = await _createPaymentIntent(amount);
       if (!mounted) return;
 
       if (paymentIntent == null) {
@@ -83,7 +133,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       if (confirmPayment) {
         // Update booking status to paid
-        await _updateBookingPaymentStatus(paymentIntent.paymentIntentId);
+        await _updateBookingPaymentStatus(
+          paymentIntent.paymentIntentId,
+          amount,
+        );
 
         // Show success and navigate to success screen
         if (mounted) {
@@ -111,11 +164,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<PaymentIntentData?> _createPaymentIntent() async {
+  Future<PaymentIntentData?> _createPaymentIntent(double amount) async {
     try {
       final result = await PaymentDependencies.createPaymentIntent().call(
         bookingId: widget.bookingId,
-        amount: widget.amount,
+        amount: amount,
         currency: AppConstants.currencyIQD,
       );
       if (!result.isSuccess) {
@@ -160,11 +213,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  Future<void> _updateBookingPaymentStatus(String paymentIntentId) async {
+  Future<void> _updateBookingPaymentStatus(
+    String paymentIntentId,
+    double amount,
+  ) async {
     final result = await PaymentDependencies.updateBookingPaymentStatus().call(
       bookingId: widget.bookingId,
       paymentIntentId: paymentIntentId,
-      amount: widget.amount,
+      amount: amount,
     );
     if (!result.isSuccess) {
       throw StateError(
@@ -179,7 +235,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Payment Successful!'),
         content: Text(
-          'Your payment of ${widget.amount.toStringAsFixed(0)} IQD was processed successfully.',
+          'Your payment of $_displayAmount was processed successfully.',
         ),
         actions: [
           TextButton(
@@ -259,13 +315,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         widget.sessionType,
                       ),
                     ],
-                    if (widget.amount > 0) ...[
+                    if (widget.amount > 0 || _serverAmount != null) ...[
                       const SizedBox(height: 12),
-                      _buildInfoRow(
-                        Icons.attach_money,
-                        'Amount',
-                        '${widget.amount.toStringAsFixed(0)} IQD',
-                      ),
+                      _buildInfoRow(Icons.attach_money, 'Amount', _displayAmount),
                     ],
                   ],
                 ),
@@ -340,11 +392,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   const Divider(height: 24),
 
                   // Amount
-                  _buildInfoRow(
-                    Icons.attach_money,
-                    'Amount',
-                    '${widget.amount.toStringAsFixed(0)} IQD',
-                  ),
+                  _buildInfoRow(Icons.attach_money, 'Amount', _displayAmount),
                 ],
               ),
             ),
@@ -412,12 +460,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             const SizedBox(height: 24),
 
-            // Pay button
-            CTAButton(
-              text: 'Pay Now',
-              isLoading: _isLoading,
-              onPressed: _isLoading ? null : _processPayment,
-            ),
+            // Pay button (kept disabled until the backend-verified amount is
+            // available)
+            if (_amountLoadFailed) ...[
+              CTAButton(
+                text: localizations.retry,
+                onPressed: () {
+                  setState(() {
+                    _amountLoadFailed = false;
+                  });
+                  unawaited(_loadServerAmount());
+                },
+              ),
+            ] else
+              CTAButton(
+                text: 'Pay Now',
+                isLoading: _isLoading || _serverAmount == null,
+                onPressed: _isLoading || _serverAmount == null
+                    ? null
+                    : _processPayment,
+              ),
 
             const SizedBox(height: 16),
 

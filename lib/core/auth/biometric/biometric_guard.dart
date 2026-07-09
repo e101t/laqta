@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/config/app_config.dart';
 
 class BiometricGuard {
@@ -27,7 +28,7 @@ class BiometricGuard {
   }
 
   Future<bool> authenticate({
-    String reason = 'يرجى تأكيد هويتك للمتابعة',
+    String? reason,
   }) async {
     if (_failedAttempts >= 3) {
       return false;
@@ -35,7 +36,8 @@ class BiometricGuard {
     try {
       final result = await _channel
           .invokeMethod<bool>('authenticate', <String, Object?>{
-            'reason': reason,
+            'reason':
+                reason ?? AppLocalizations.current.confirmIdentityToContinue,
           })
           .timeout(const Duration(seconds: 20));
       if (result == true) {

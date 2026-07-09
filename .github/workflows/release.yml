@@ -46,6 +46,7 @@ jobs:
       - name: Build production app bundle
         env:
           BACKEND_BASE_URL: ${{ secrets.API_BASE_URL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: >-
           flutter build appbundle
           --flavor production
@@ -55,11 +56,16 @@ jobs:
           --dart-define=FLAVOR=prod
           --dart-define=BACKEND_BASE_URL=$BACKEND_BASE_URL
           --dart-define=PLAY_INTEGRITY_REQUIRED=true
+          --dart-define=SENTRY_DSN=$SENTRY_DSN
+          --dart-define=SENTRY_RELEASE=laqta-mobile@${GITHUB_REF_NAME#v}
 
       - name: Build, align, and sign production APK
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
-        run: bash build_and_sign.sh
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        run: |
+          export SENTRY_RELEASE="laqta-mobile@${GITHUB_REF_NAME#v}"
+          bash build_and_sign.sh
 
       - uses: actions/upload-artifact@v4
         with:

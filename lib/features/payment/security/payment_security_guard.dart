@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:laqta/core/auth/biometric/biometric_guard.dart';
+import 'package:laqta/core/localization/app_localizations.dart';
 import 'package:laqta/core/auth/device/device_binder.dart';
 import 'package:laqta/core/network/signing/request_signer.dart';
 import 'package:laqta/core/security/integrity_checker.dart';
@@ -66,11 +67,16 @@ class PaymentSecurityGuard {
       return PaymentSecurityResult.blocked(fraud.reason);
     }
 
+    final localizations = AppLocalizations.resolve(
+      context.mounted ? context : null,
+    );
     final biometricOk = await _biometricGuard.authenticate(
-      reason: 'يرجى تأكيد هويتك لإتمام الدفع',
+      reason: localizations.confirmIdentityForPayment,
     );
     if (!biometricOk) {
-      return const PaymentSecurityResult.blocked('تعذر تأكيد الهوية.');
+      return PaymentSecurityResult.blocked(
+        localizations.identityConfirmationFailed,
+      );
     }
 
     await _integrityChecker.verifyForOperation('payment');
@@ -80,7 +86,7 @@ class PaymentSecurityGuard {
         ? await _confirmPayment(context, amount: amount, payeeName: payeeName)
         : false;
     if (!confirmed) {
-      return const PaymentSecurityResult.blocked('تم إلغاء الدفع.');
+      return PaymentSecurityResult.blocked(localizations.paymentCancelled);
     }
 
     return PaymentSecurityResult.allowed(
@@ -95,22 +101,25 @@ class PaymentSecurityGuard {
   }) async {
     return await showDialog<bool>(
           context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('تأكيد الدفع'),
-            content: Text(
-              'أنت على وشك دفع ${amount.toStringAsFixed(0)} لـ $payeeName',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('إلغاء'),
+          builder: (dialogContext) {
+            final loc = AppLocalizations.resolve(dialogContext);
+            return AlertDialog(
+              title: Text(loc.confirmPaymentTitle),
+              content: Text(
+                loc.confirmPaymentBody(amount.toStringAsFixed(0), payeeName),
               ),
-              FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('تأكيد'),
-              ),
-            ],
-          ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: Text(loc.cancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: Text(loc.confirm),
+                ),
+              ],
+            );
+          },
         ) ??
         false;
   }
