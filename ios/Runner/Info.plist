@@ -35,6 +35,10 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>LAQTA needs camera access so users can capture profile, portfolio, and booking media.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
