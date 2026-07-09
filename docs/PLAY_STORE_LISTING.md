@@ -82,8 +82,9 @@ Policies: https://laqta.app/legal/
 > Upload the contents of `docs/legal/site/` to your web server at `https://laqta.app/legal/` before submitting (e.g. `scp -r docs/legal/site/* user@vps:/var/www/laqta.app/legal/`).
 
 ## Assets checklist
-- [x] App icon 512×512 (exists: `assets/icons/app_icon.png` — export at 512×512 PNG, no alpha)
-- [ ] Feature graphic 1024×500 (design needed — dark ink #0A1F2E background + gold LAQTA wordmark + tagline)
+- [x] App icon 512×512, no alpha: `LAQTA_closed_testing_release/store_assets/icon_512.png`
+      (upscaled from the 256px source — if you have the original vector/hi-res icon, re-export for best sharpness)
+- [x] Feature graphic 1024×500: `LAQTA_closed_testing_release/store_assets/feature_graphic_1024x500.png`
 - [ ] 8 phone screenshots 1080×1920+ (capture from a real device in Arabic: onboarding, explore, photographer profile, booking, chat, golden hour, venues, profile)
 - [x] Category: Photography
 - [x] Content rating questionnaire: user-generated content = yes, reporting/blocking = yes
